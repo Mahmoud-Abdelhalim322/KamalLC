@@ -1,0 +1,257 @@
+<div class="form-page">
+  <div class="form-header">
+    <a routerLink="/captains" class="back-link">
+      <span class="material-icons-round">arrow_forward</span>
+      العودة لقائمة الكباتن
+    </a>
+    <h1 class="page-title">{{ isEditMode ? 'تعديل بيانات الكابتن' : 'إضافة كابتن جديد' }}</h1>
+    <p class="page-subtitle" *ngIf="isEditMode">كود كمال: <span class="code">{{ kamalCode }}</span></p>
+  </div>
+
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جاري تحميل البيانات...</p>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>
+    {{ errorMessage }}
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>
+    {{ successMessage }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" *ngIf="!isLoading">
+
+    <!-- ===== البيانات الأساسية ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">badge</span>
+        البيانات الأساسية
+      </h2>
+
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">نوع الكابتن *</label>
+          <select class="form-input" formControlName="captainType" (change)="onTypeChange()">
+            <option value="EMPLOYEE">كفالة</option>
+            <option value="FREELANCE">فريلانس</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">كود كمال</label>
+          <input class="form-input readonly-input" [value]="kamalCode || '...'" readonly>
+          <p class="field-hint">
+            <span class="material-icons-round">auto_awesome</span>
+            {{ isEditMode ? 'الكود ثابت ولا يمكن تعديله' : 'يُولَّد تلقائياً حسب النوع المختار' }}
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الاسم بالعربية *</label>
+          <input class="form-input" formControlName="fullNameAr"
+                 [class.error]="isInvalid('fullNameAr')" placeholder="الاسم الرباعي">
+          <p class="form-error" *ngIf="isInvalid('fullNameAr')">الاسم بالعربية مطلوب</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الاسم بالإنجليزية</label>
+          <input class="form-input" formControlName="fullNameEn" placeholder="Full name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الجنسية</label>
+          <input class="form-input" formControlName="nationality" placeholder="مثال: مصري">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ الميلاد</label>
+          <input class="form-input" type="date" formControlName="dateOfBirth">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">رقم الجوال</label>
+          <input class="form-input" formControlName="phone" placeholder="05xxxxxxxx" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input class="form-input" type="email" formControlName="email"
+                 [class.error]="isInvalid('email')" dir="ltr" placeholder="name@example.com">
+          <p class="form-error" *ngIf="isInvalid('email')">البريد الإلكتروني غير صالح</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== الوثائق الرسمية ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">contact_page</span>
+        الوثائق الرسمية
+      </h2>
+
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">رقم الإقامة</label>
+          <input class="form-input" formControlName="iqamaNumber" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء الإقامة</label>
+          <input class="form-input" type="date" formControlName="iqamaExpiry">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">رقم الجواز</label>
+          <input class="form-input" formControlName="passportNumber" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء الجواز</label>
+          <input class="form-input" type="date" formControlName="passportExpiry">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">رقم رخصة القيادة</label>
+          <input class="form-input" formControlName="drivingLicenceNo" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء الرخصة</label>
+          <input class="form-input" type="date" formControlName="licenceExpiry">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء رخصة العمل (قوى)</label>
+          <input class="form-input" type="date" formControlName="workPermitExpiry">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">رقم التأمين</label>
+          <input class="form-input" formControlName="insuranceNumber" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">شركة التأمين الطبي</label>
+          <input class="form-input" formControlName="insuranceCompany">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء التأمين الطبي</label>
+          <input class="form-input" type="date" formControlName="insuranceExpiry">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== بيانات التوظيف ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">work_outline</span>
+        بيانات التوظيف
+      </h2>
+
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select class="form-input" formControlName="status">
+            <option value="ACTIVE">نشط</option>
+            <option value="INACTIVE">غير نشط</option>
+            <option value="TERMINATED">منتهي</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ الانضمام</label>
+          <input class="form-input" type="date" formControlName="joinDate">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ المغادرة</label>
+          <input class="form-input" type="date" formControlName="leaveDate">
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="usesOwnVehicle" (change)="onOwnVehicleChange()">
+            <span>يستخدم مركبته الخاصة</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="fuelAllowanceEligible">
+            <span>مستحق بدل بنزين</span>
+          </label>
+          <p class="field-hint">
+            بدل السيارة يتبع خيار «يستخدم مركبته الخاصة»، ويُصرف لكل شفت يحقق الحد الأدنى
+            من الساعات — بشرط تفعيله من شاشة الإعدادات، وهو منفصل عن بدل البنزين.
+          </p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ملاحظات</label>
+        <textarea class="form-input" formControlName="notes" rows="3"
+                  placeholder="أي ملاحظات إضافية عن الكابتن..."></textarea>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <a routerLink="/captains" class="btn btn-outline">إلغاء</a>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        <span class="spinner spinner-sm" *ngIf="isSaving"></span>
+        <span class="material-icons-round" *ngIf="!isSaving">save</span>
+        {{ isSaving ? 'جاري الحفظ...' : (isEditMode ? 'حفظ التعديلات' : 'حفظ وإضافة المستندات') }}
+      </button>
+    </div>
+  </form>
+
+  <!-- ===== المستندات (بعد الحفظ فقط) ===== -->
+  <section class="form-card" *ngIf="isEditMode && !isLoading">
+    <h2 class="card-title">
+      <span class="material-icons-round">folder_shared</span>
+      مستندات الكابتن
+      <span class="count-chip">{{ documents.length }}</span>
+    </h2>
+
+    <div class="upload-row">
+      <div class="form-group">
+        <label class="form-label">نوع المستند</label>
+        <select class="form-input" [(ngModel)]="selectedDocType" [ngModelOptions]="{ standalone: true }">
+          <option *ngFor="let t of documentTypes" [value]="t">{{ getDocTypeLabel(t) }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الملف (صورة أو PDF — بحد أقصى 10 ميجابايت)</label>
+        <input id="documentFile" class="form-input file-input" type="file"
+               accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+               (change)="onFileSelected($event)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ملاحظة</label>
+        <input class="form-input" [(ngModel)]="documentNote"
+               [ngModelOptions]="{ standalone: true }" placeholder="اختياري">
+      </div>
+
+      <button type="button" class="btn btn-accent upload-btn"
+              (click)="uploadDocument()" [disabled]="isUploading || !selectedFile">
+        <span class="spinner spinner-sm" *ngIf="isUploading"></span>
+        <span class="material-icons-round" *ngIf="!isUploading">upload_file</span>
+        رفع
+      </button>
+    </div>
+
+    <p class="form-error" *ngIf="documentError">{{ documentError }}</p>
+
+    <div class="empty-docs" *ngIf="documents.length === 0">
+      <span class="material-icons-round">folder_off</span>
+      <p>لا توجد مستندات مرفوعة بعد</p>
+    </div>
+
+    <app-document-gallery *ngIf="documents.length > 0"
+                          [documents]="documents" [allowDelete]="true"
+                          (deleted)="onDocumentDeleted($event)"></app-document-gallery>
+  </section>
+</div>

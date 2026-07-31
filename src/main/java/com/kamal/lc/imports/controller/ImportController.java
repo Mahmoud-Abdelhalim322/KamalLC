@@ -1,0 +1,106 @@
+package com.kamal.lc.imports.controller;
+
+import com.kamal.lc.common.dto.ApiResponse;
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.imports.dto.ImportBatchResponse;
+import com.kamal.lc.imports.dto.ImportPreviewResponse;
+import com.kamal.lc.imports.dto.ShiftImportPreviewResponse;
+import com.kamal.lc.imports.entity.ImportBatchType;
+import com.kamal.lc.imports.service.ExcelTemplateService;
+import com.kamal.lc.imports.service.ImportService;
+import com.kamal.lc.imports.service.ShiftImportService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/imports")
+@RequiredArgsConstructor
+public class ImportController {
+
+    private final ImportService importService;
+    private final ShiftImportService shiftImportService;
+    private final ExcelTemplateService templateService;
+
+    /** Blank sheet with the expected columns, so files are shaped right before upload. */
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> template() {
+        return xlsx(templateService.buildCaptains(), "captains-import-template.xlsx");
+    }
+
+    /** The supplier shift report's own layout, for when the export has to be rebuilt by hand. */
+    @GetMapping("/shifts/template")
+    public ResponseEntity<byte[]> shiftTemplate() {
+        return xlsx(templateService.buildShifts(), "supplier-shifts-import-template.xlsx");
+    }
+
+    private ResponseEntity<byte[]> xlsx(byte[] workbook, String fileName) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + fileName + "\"")
+                .body(workbook);
+    }
+
+    @PostMapping("/preview")
+    public ResponseEntity<ApiResponse<ImportPreviewResponse>> preview(@RequestParam("file") MultipartFile file) {
+        ImportPreviewResponse result = importService.preview(file);
+        return ResponseEntity.ok(ApiResponse.ok("تم تحليل الملف بنجاح", result));
+    }
+
+    @PostMapping("/{batchId}/commit")
+    public ResponseEntity<ApiResponse<ImportPreviewResponse>> commit(
+            @PathVariable UUID batchId,
+            @RequestParam("file") MultipartFile file) {
+        ImportPreviewResponse result = importService.commit(file, batchId);
+        return ResponseEntity.ok(ApiResponse.ok("تم الاستيراد بنجاح", result));
+    }
+
+    /** Supplier shift file — the daily upload that feeds reports and payroll. */
+    @PostMapping("/shifts/preview")
+    public ResponseEntity<ApiResponse<ShiftImportPreviewResponse>> previewShifts(
+            @RequestParam("file") MultipartFile file) {
+        ShiftImportPreviewResponse result = shiftImportService.preview(file);
+        return ResponseEntity.ok(ApiResponse.ok("تم تحليل ملف الشيفتات بنجاح", result));
+    }
+
+    @PostMapping("/shifts/{batchId}/commit")
+    public ResponseEntity<ApiResponse<ShiftImportPreviewResponse>> commitShifts(
+            @PathVariable UUID batchId,
+            @RequestParam("file") MultipartFile file) {
+        ShiftImportPreviewResponse result = shiftImportService.commit(file, batchId);
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم استيراد " + result.getCommittedRows() + " شفت بنجاح", result));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<ImportBatchResponse>>> history(
+            @RequestParam(required = false) ImportBatchType type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // Ordering comes from the derived query (findAllByOrderByUploadedAtDesc);
+        // adding a Sort here would produce a query with two order-by clauses.
+        Page<ImportBatchResponse> result = importService.getHistory(type, PageRequest.of(page, size));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.<ImportBatchResponse>builder()
+                .content(result.getContent())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .last(result.isLast())
+                .build()));
+    }
+
+    @GetMapping("/{batchId}")
+    public ResponseEntity<ApiResponse<ImportBatchResponse>> getBatch(@PathVariable UUID batchId) {
+        return ResponseEntity.ok(ApiResponse.ok(importService.getBatch(batchId)));
+    }
+}

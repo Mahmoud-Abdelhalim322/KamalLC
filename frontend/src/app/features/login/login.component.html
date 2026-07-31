@@ -1,0 +1,74 @@
+<div class="login-page">
+  <!-- Background decoration -->
+  <div class="login-bg">
+    <div class="bg-circle bg-circle-1"></div>
+    <div class="bg-circle bg-circle-2"></div>
+    <div class="bg-circle bg-circle-3"></div>
+  </div>
+
+  <div class="login-container animate-fade-in">
+    <!-- Logo & Title -->
+    <div class="login-header">
+      <div class="logo-icon">
+        <span class="material-icons-round">local_shipping</span>
+      </div>
+      <h1 class="login-title">كمال فود</h1>
+      <p class="login-subtitle">نظام إدارة الكباتن</p>
+    </div>
+
+    <!-- Login Form -->
+    <form class="login-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label" for="username">
+          <span class="material-icons-round label-icon">person</span>
+          اسم المستخدم
+        </label>
+        <input
+          id="username"
+          class="form-input"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="أدخل اسم المستخدم"
+          autocomplete="username"
+          [class.error]="errorMessage">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">
+          <span class="material-icons-round label-icon">lock</span>
+          كلمة المرور
+        </label>
+        <input
+          id="password"
+          class="form-input"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="أدخل كلمة المرور"
+          autocomplete="current-password"
+          [class.error]="errorMessage">
+      </div>
+
+      <!-- Error message -->
+      <div class="error-banner" *ngIf="errorMessage">
+        <span class="material-icons-round">error</span>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Submit button -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-login"
+        [disabled]="isLoading">
+        <span class="spinner spinner-sm" *ngIf="isLoading"></span>
+        <span *ngIf="!isLoading">تسجيل الدخول</span>
+        <span class="material-icons-round" *ngIf="!isLoading">login</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>© {{ currentYear }} كمال فود — جميع الحقوق محفوظة</p>
+    </div>
+  </div>
+</div>

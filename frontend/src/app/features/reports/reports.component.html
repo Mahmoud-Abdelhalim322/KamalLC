@@ -1,0 +1,465 @@
+<div class="reports-page">
+
+  <div class="page-header">
+    <h1 class="page-title">التقارير</h1>
+    <p class="page-subtitle">أداء الكباتن والربحية على أي فترة، محسوبة من الشيفتات المسجلة</p>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>{{ errorMessage }}
+  </div>
+
+  <!-- Period + tabs -->
+  <div class="toolbar">
+    <div class="date-field">
+      <label>من</label>
+      <input type="date" class="form-input" [(ngModel)]="from" (change)="onPeriodChange()">
+    </div>
+    <div class="date-field">
+      <label>إلى</label>
+      <input type="date" class="form-input" [(ngModel)]="to" (change)="onPeriodChange()">
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab" [class.active]="activeTab === 'team'" (click)="setTab('team')">
+        <span class="material-icons-round">groups</span> مقارنة الفريق
+      </button>
+      <button class="filter-tab" [class.active]="activeTab === 'individual'" (click)="setTab('individual')">
+        <span class="material-icons-round">person</span> أداء فردي
+      </button>
+      <button class="filter-tab" [class.active]="activeTab === 'profitability'" (click)="setTab('profitability')">
+        <span class="material-icons-round">trending_up</span> الربحية
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoadingTeam">
+    <div class="spinner"></div>
+    <p>جارٍ التحميل…</p>
+  </div>
+
+  <!-- ==================================================== TEAM -->
+  <ng-container *ngIf="activeTab === 'team' && !isLoadingTeam && teamReport as report">
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <span class="kpi-label">الكباتن</span>
+        <b class="kpi-value">{{ report.totals.captains }}</b>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">شفتات الحضور</span>
+        <b class="kpi-value">{{ report.totals.attendedShifts }}</b>
+      </div>
+      <div class="kpi warn" *ngIf="report.totals.absentShifts > 0">
+        <span class="kpi-label">أيام الغياب</span>
+        <b class="kpi-value">{{ report.totals.absentShifts }}</b>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">إجمالي الطلبات</span>
+        <b class="kpi-value">{{ report.totals.totalOrders }}</b>
+      </div>
+      <div class="kpi good">
+        <span class="kpi-label">حقّقوا الهدف</span>
+        <b class="kpi-value">{{ report.totals.captainsAtTarget }}</b>
+      </div>
+      <div class="kpi accent">
+        <span class="kpi-label">صافي المرتبات</span>
+        <b class="kpi-value">{{ money(report.totals.net) }}</b>
+      </div>
+    </div>
+
+    <!-- Near-target nudge list -->
+    <div class="card nudge-card" *ngIf="nearTargetRows.length > 0">
+      <div class="nudge-head">
+        <span class="material-icons-round">bolt</span>
+        <div>
+          <b>{{ nearTargetRows.length }} كابتن على بُعد خطوات من هدف الشهر</b>
+          <p>الفارق بين عدم تحقيق الهدف وتحقيقه هو مكافأة كاملة — هؤلاء أولى بالمتابعة.</p>
+        </div>
+      </div>
+      <div class="nudge-list">
+        <button *ngFor="let row of nearTargetRows" class="nudge-item" (click)="openCaptain(row)">
+          <b>{{ row.captainName }}</b>
+          <span>يحتاج {{ row.ordersToTarget }} طلب</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state card" *ngIf="report.rows.length === 0">
+      <span class="material-icons-round">query_stats</span>
+      <h3>لا توجد بيانات في هذه الفترة</h3>
+      <p>استورد ملف الشيفتات من صفحة استيراد البيانات لتظهر التقارير.</p>
+    </div>
+
+    <div class="table-wrap card" *ngIf="report.rows.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الكابتن</th>
+            <th>النوع</th>
+            <th class="sortable" (click)="sortBy('attendedShifts')">الشفتات</th>
+            <th class="sortable" (click)="sortBy('attendanceRate')">الالتزام</th>
+            <th class="sortable" (click)="sortBy('totalOrders')">الطلبات</th>
+            <th class="sortable" (click)="sortBy('avgOrdersPerShift')">طلب/شفت</th>
+            <th class="sortable" (click)="sortBy('totalHours')">الساعات</th>
+            <th class="sortable" (click)="sortBy('avgBusyUtilization')">الانشغال</th>
+            <th class="sortable" (click)="sortBy('avgHourlyUtr')">UTR</th>
+            <th class="sortable" (click)="sortBy('lateDeductions')">خصم تأخير</th>
+            <th>الهدف</th>
+            <th class="sortable" (click)="sortBy('net')">صافي الراتب</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of sortedRows" class="clickable-row" (click)="openCaptain(row)">
+            <td class="code-cell">{{ row.captainCode }}</td>
+            <td class="name">{{ row.captainName }}</td>
+            <td>
+              <span class="badge" [class.badge-employee]="row.captainType === 'EMPLOYEE'"
+                [class.badge-freelance]="row.captainType === 'FREELANCE'">
+                {{ typeLabel(row.captainType) }}
+              </span>
+            </td>
+            <td class="strong">{{ row.attendedShifts }}</td>
+            <td>
+              <div class="mini-bar">
+                <div class="mini-bar-fill" [style.width.%]="row.attendanceRate * 100"></div>
+                <span>{{ percent(row.attendanceRate) }}</span>
+              </div>
+            </td>
+            <td class="strong">{{ row.totalOrders }}</td>
+            <td>{{ num(row.avgOrdersPerShift, 1) }}</td>
+            <td>{{ num(row.totalHours, 1) }}</td>
+            <td>{{ percent(row.avgBusyUtilization) }}</td>
+            <td>{{ num(row.avgHourlyUtr, 2) }}</td>
+            <td [class.negative]="row.lateDeductions > 0">
+              {{ row.lateDeductions > 0 ? '−' + money(row.lateDeductions) : '—' }}
+            </td>
+            <td>
+              <span class="badge badge-success" *ngIf="row.targetAchieved">محقّق</span>
+              <span class="badge badge-warning" *ngIf="!row.targetAchieved">
+                باقي {{ row.ordersToTarget }}
+              </span>
+            </td>
+            <td class="net">{{ money(row.net) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">المجموع</td>
+            <td>{{ report.totals.attendedShifts }}</td>
+            <td></td>
+            <td>{{ report.totals.totalOrders }}</td>
+            <td></td>
+            <td>{{ num(report.totals.totalHours, 1) }}</td>
+            <td colspan="3"></td>
+            <td>{{ report.totals.captainsAtTarget }} / {{ report.totals.captains }}</td>
+            <td class="net">{{ money(report.totals.net) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- ==================================================== PROFITABILITY -->
+  <ng-container *ngIf="activeTab === 'profitability' && !isLoadingTeam && teamReport as report">
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <span class="kpi-label">إيراد المورد</span>
+        <b class="kpi-value">{{ money(report.totals.supplierRevenueTotal) }}</b>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">تكلفة الكباتن</span>
+        <b class="kpi-value">{{ money(report.totals.net) }}</b>
+      </div>
+      <div class="kpi" [class.good]="report.totals.margin > 0" [class.bad]="report.totals.margin < 0">
+        <span class="kpi-label">صافي الهامش</span>
+        <b class="kpi-value">{{ money(report.totals.margin) }}</b>
+      </div>
+    </div>
+
+    <p class="section-note">
+      الإيراد محسوب من قواعد المورد لكل شفت (الشفت المحقق بسعر ثابت، وغير المحقق بسعر الطلب)،
+      والتكلفة هي صافي مستحق الكابتن بعد البنود اليدوية.
+    </p>
+
+    <div class="table-wrap card" *ngIf="report.rows.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الكابتن</th>
+            <th>النوع</th>
+            <th>الشفتات</th>
+            <th>الطلبات</th>
+            <th>إيراد المورد</th>
+            <th>تكلفة الكابتن</th>
+            <th>الهامش</th>
+            <th>الهامش/شفت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of profitabilityRows" class="clickable-row" (click)="openCaptain(row)">
+            <td class="code-cell">{{ row.captainCode }}</td>
+            <td class="name">{{ row.captainName }}</td>
+            <td>
+              <span class="badge" [class.badge-employee]="row.captainType === 'EMPLOYEE'"
+                [class.badge-freelance]="row.captainType === 'FREELANCE'">
+                {{ typeLabel(row.captainType) }}
+              </span>
+            </td>
+            <td>{{ row.attendedShifts }}</td>
+            <td>{{ row.totalOrders }}</td>
+            <td>{{ money(row.supplierRevenueTotal) }}</td>
+            <td>{{ money(row.net) }}</td>
+            <td class="strong" [class.positive]="row.margin > 0" [class.negative]="row.margin < 0">
+              {{ money(row.margin) }}
+            </td>
+            <td>
+              {{ row.attendedShifts > 0 ? money(row.margin / row.attendedShifts) : '—' }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5">المجموع</td>
+            <td>{{ money(report.totals.supplierRevenueTotal) }}</td>
+            <td>{{ money(report.totals.net) }}</td>
+            <td class="strong">{{ money(report.totals.margin) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- ==================================================== INDIVIDUAL -->
+  <ng-container *ngIf="activeTab === 'individual'">
+
+    <div class="card picker-card">
+      <label class="form-label">اختر الكابتن</label>
+      <select class="form-input" [(ngModel)]="selectedCaptainId" (change)="loadCaptainReport()">
+        <option value="">— اختر كابتن —</option>
+        <option *ngFor="let row of teamReport?.rows" [value]="row.captainId">
+          {{ row.captainCode }} — {{ row.captainName }}
+        </option>
+      </select>
+      <p class="hint">القائمة تعرض الكباتن الذين لهم شيفتات في الفترة المختارة.</p>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoadingCaptain">
+      <div class="spinner"></div>
+      <p>جارٍ التحميل…</p>
+    </div>
+
+    <div class="empty-state card" *ngIf="!isLoadingCaptain && !captainReport && selectedCaptainId === ''">
+      <span class="material-icons-round">person_search</span>
+      <h3>لم يتم اختيار كابتن</h3>
+      <p>اختر كابتنًا من القائمة لعرض تقرير أدائه التفصيلي.</p>
+    </div>
+
+    <ng-container *ngIf="!isLoadingCaptain && captainReport as rep">
+
+      <div class="card captain-head">
+        <div class="captain-identity">
+          <div class="captain-avatar">{{ rep.captainName.charAt(0) }}</div>
+          <div>
+            <h2>{{ rep.captainName }}</h2>
+            <p>
+              <span class="code-cell">{{ rep.captainCode }}</span>
+              <span class="badge" [class.badge-employee]="rep.captainType === 'EMPLOYEE'"
+                [class.badge-freelance]="rep.captainType === 'FREELANCE'">
+                {{ typeLabel(rep.captainType) }}
+              </span>
+              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">سيارته الخاصة</span>
+              <span class="badge badge-info" *ngIf="rep.fuelAllowanceEligible">مستحق بدل بنزين</span>
+              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">مستحق بدل سيارة</span>
+            </p>
+            <p class="ids" *ngIf="rep.supplierExternalIds">معرفات المورد: {{ rep.supplierExternalIds }}</p>
+          </div>
+        </div>
+        <div class="captain-head-actions">
+          <span class="period">{{ rep.periodFrom }} → {{ rep.periodTo }}</span>
+          <button class="btn btn-outline" (click)="exportCaptainReport()" [disabled]="isExporting">
+            <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+            تصدير Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Target progress -->
+      <div class="card target-card">
+        <div class="target-head">
+          <div>
+            <b>هدف الشهر</b>
+            <p *ngIf="rep.ordersToTarget > 0">
+              {{ rep.totalOrders }} من {{ rep.monthlyOrderTarget }} طلب —
+              باقٍ <b class="highlight">{{ rep.ordersToTarget }}</b> طلب على المكافأة
+            </p>
+            <p *ngIf="rep.ordersToTarget === 0">
+              تحقّق الهدف — كل طلب إضافي يساوي الآن
+              <b class="highlight">{{ money(rep.nextOrderValue) }}</b> ريال
+            </p>
+          </div>
+          <span class="target-pct">{{ percent(rep.targetProgress) }}</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill" [class.done]="rep.ordersToTarget === 0"
+            [style.width.%]="rep.targetProgress > 1 ? 100 : rep.targetProgress * 100"></div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi">
+          <span class="kpi-label">شفتات الحضور</span>
+          <b class="kpi-value">{{ rep.attendedShifts }}</b>
+          <small>من {{ rep.totalShifts }} شفت</small>
+        </div>
+        <div class="kpi" [class.warn]="rep.absentShifts > 0">
+          <span class="kpi-label">الغياب</span>
+          <b class="kpi-value">{{ rep.absentShifts }}</b>
+          <small>التزام {{ percent(rep.attendanceRate) }}</small>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">الطلبات</span>
+          <b class="kpi-value">{{ rep.totalOrders }}</b>
+          <small [ngClass]="compare(rep.avgOrdersPerShift, rep.teamAvgOrdersPerShift)">
+            {{ num(rep.avgOrdersPerShift, 1) }} طلب/شفت (الفريق {{ num(rep.teamAvgOrdersPerShift, 1) }})
+          </small>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">الساعات</span>
+          <b class="kpi-value">{{ num(rep.totalHours, 1) }}</b>
+          <small>{{ num(rep.avgHoursPerShift, 1) }} ساعة/شفت</small>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">نسبة الانشغال</span>
+          <b class="kpi-value">{{ percent(rep.avgBusyUtilization) }}</b>
+          <small [ngClass]="compare(rep.avgBusyUtilization, rep.teamAvgBusyUtilization)">
+            الفريق {{ percent(rep.teamAvgBusyUtilization) }}
+          </small>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">التسليم في الوقت</span>
+          <b class="kpi-value">{{ percent(rep.avgDeliveryOntime) }}</b>
+          <small>UTR {{ num(rep.avgHourlyUtr, 2) }}</small>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Pay breakdown -->
+        <div class="card">
+          <h3 class="card-title">تفصيل المستحق</h3>
+          <div class="kv"><span>مجموع الدخل ({{ rep.attendedShifts }} شفت)</span><b>{{ money(rep.basePay) }}</b></div>
+          <div class="kv negative"><span>خصم التأخير</span><b>−{{ money(rep.lateDeductions) }}</b></div>
+          <div class="kv positive"><span>الحوافز اليومية</span><b>+{{ money(rep.dailyIncentives) }}</b></div>
+          <div class="kv positive"><span>بدل البنزين</span><b>+{{ money(rep.fuelAllowances) }}</b></div>
+          <div class="kv positive"><span>بدل السيارة</span><b>+{{ money(rep.carAllowances) }}</b></div>
+          <div class="kv positive"><span>مكافأة تحقيق الهدف</span><b>+{{ money(rep.targetBonus) }}</b></div>
+          <div class="kv positive"><span>طلبات بعد الهدف</span><b>+{{ money(rep.extraOrderPay) }}</b></div>
+          <div class="kv subtotal"><span>مجموع الراتب</span><b>{{ money(rep.gross) }}</b></div>
+          <div class="kv" [class.positive]="rep.adjustmentsTotal > 0" [class.negative]="rep.adjustmentsTotal < 0">
+            <span>البنود اليدوية</span><b>{{ money(rep.adjustmentsTotal) }}</b>
+          </div>
+          <div class="kv total"><span>صافي الراتب</span><b>{{ money(rep.net) }} ريال</b></div>
+          <p class="hint">
+            هذه أرقام تقديرية بالأسعار السارية — المسير المعتمد هو المرجع لما صُرف فعلًا.
+          </p>
+        </div>
+
+        <!-- Deduction breakdown + profitability -->
+        <div class="stack">
+          <div class="card" *ngIf="rep.deductionBreakdown.length > 0">
+            <h3 class="card-title">أين ذهبت الخصومات</h3>
+            <table class="data-table compact">
+              <thead>
+                <tr>
+                  <th>قيمة الخصم</th>
+                  <th>عدد الشفتات</th>
+                  <th>الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of rep.deductionBreakdown">
+                  <td>{{ money(item.deductionAmount) }}</td>
+                  <td>{{ item.shiftCount }}</td>
+                  <td class="negative">−{{ money(item.total) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">الربحية</h3>
+            <div class="kv"><span>إيراد المورد</span><b>{{ money(rep.supplierRevenueTotal) }}</b></div>
+            <div class="kv"><span>تكلفة الكابتن</span><b>{{ money(rep.net) }}</b></div>
+            <div class="kv total"><span>الهامش</span><b>{{ money(rep.margin) }} ريال</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily chart -->
+      <div class="card" *ngIf="rep.daily.length > 0">
+        <h3 class="card-title">الأداء اليومي</h3>
+        <div class="chart">
+          <div class="chart-col" *ngFor="let point of rep.daily" [title]="point.date">
+            <div class="bars">
+              <div class="bar orders" [style.height]="barHeight(point.orders, 'orders')"
+                [class.absent]="!point.attended">
+                <span class="bar-value" *ngIf="point.attended">{{ point.orders }}</span>
+              </div>
+              <div class="bar hours" [style.height]="barHeight(point.hours, 'hours')"></div>
+            </div>
+            <span class="chart-label">{{ point.date.slice(8) }}</span>
+            <span class="chart-flag" *ngIf="!point.attended">غياب</span>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span><i class="swatch orders"></i> الطلبات</span>
+          <span><i class="swatch hours"></i> الساعات</span>
+          <span><i class="swatch absent"></i> غياب</span>
+        </div>
+      </div>
+
+      <!-- Shift list -->
+      <div class="table-wrap card" *ngIf="rep.daily.length > 0">
+        <h3 class="card-title">شيفتات الفترة</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>المنطقة</th>
+              <th>الحالة</th>
+              <th>الساعات</th>
+              <th>الطلبات</th>
+              <th>الانشغال</th>
+              <th>UTR</th>
+              <th>خصم</th>
+              <th>صافي الشفت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let point of rep.daily" [class.row-absent]="!point.attended">
+              <td>{{ point.date }}</td>
+              <td>{{ point.zoneName || '—' }}</td>
+              <td>
+                <span class="badge badge-success" *ngIf="point.attended">حضور</span>
+                <span class="badge badge-warning" *ngIf="!point.attended">غياب</span>
+              </td>
+              <td>{{ num(point.hours) }}</td>
+              <td>{{ point.orders ?? '—' }}</td>
+              <td>{{ percent(point.busyUtilization) }}</td>
+              <td>{{ num(point.hourlyUtr) }}</td>
+              <td [class.negative]="(point.lateDeduction ?? 0) > 0">
+                {{ (point.lateDeduction ?? 0) > 0 ? '−' + money(point.lateDeduction) : '—' }}
+              </td>
+              <td class="strong">{{ money(point.netShiftPay) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

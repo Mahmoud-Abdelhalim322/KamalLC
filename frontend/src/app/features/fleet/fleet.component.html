@@ -1,0 +1,574 @@
+<div class="page-container">
+  <h1 class="page-title"><span class="material-icons-round">directions_car</span> أسطول السيارات</h1>
+
+  <!-- Messages -->
+  <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
+  <div class="alert alert-success" *ngIf="successMsg" (click)="dismissMsg()">{{ successMsg }}</div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn" [class.active]="activeTab === 'vehicles'" (click)="switchTab('vehicles')">
+      <span class="material-icons-round">directions_car</span> السيارات
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')">
+      <span class="material-icons-round">swap_horiz</span> حركات التسليم والاستلام
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'maintenance'" (click)="switchTab('maintenance')">
+      <span class="material-icons-round">build</span> الصيانة
+    </button>
+  </div>
+
+  <!-- ══════════════ VEHICLES TAB ══════════════ -->
+  <div *ngIf="activeTab === 'vehicles'" class="tab-content">
+    <div class="toolbar">
+      <div class="search-group">
+        <input type="text" class="search-input" placeholder="بحث بالاسم أو رقم اللوحة..."
+               [(ngModel)]="vehicleSearch" (keyup.enter)="searchVehicles()">
+        <select class="filter-select" [(ngModel)]="vehicleStatusFilter" (change)="searchVehicles()">
+          <option value="">كل الحالات</option>
+          <option value="AVAILABLE">متاحة</option>
+          <option value="ASSIGNED">مُسندة</option>
+          <option value="MAINTENANCE">صيانة</option>
+        </select>
+        <select class="filter-select" [(ngModel)]="vehicleOwnershipFilter" (change)="searchVehicles()">
+          <option value="">كل الملكيات</option>
+          <option value="OWNED">مملوكة</option>
+          <option value="RENTED">مؤجرة</option>
+        </select>
+        <select class="filter-select" *ngIf="vehicleOwnershipFilter === 'RENTED' || vehicleOwnershipFilter === ''" [(ngModel)]="vehicleAgentFilter" (change)="searchVehicles()">
+          <option value="">كل الوكلاء</option>
+          <option *ngFor="let a of rentalAgents" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" (click)="openAddVehicle()">
+        <span class="material-icons-round">add</span> إضافة سيارة
+      </button>
+    </div>
+
+    <div class="loading-bar" *ngIf="isLoading"></div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>رقم اللوحة</th>
+            <th>الماركة / الموديل</th>
+            <th>الملكية</th>
+            <th>العداد</th>
+            <th>الفحص</th>
+            <th>الحالة</th>
+            <th>الكابتن الحالي</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let v of vehicles" [class.rented-row]="v.ownershipType === 'RENTED'">
+            <td class="plate-cell">{{ v.plateNumber }}</td>
+            <td>{{ v.brand }} {{ v.model }} <span class="year-tag" *ngIf="v.year">{{ v.year }}</span></td>
+            <td>
+              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'">
+                {{ ownershipLabel(v.ownershipType) }}
+              </span>
+              <span class="agent-name" *ngIf="v.rentalAgentName">{{ v.rentalAgentName }}</span>
+            </td>
+            <td>{{ v.odometer ? v.odometer + ' كم' : '—' }}</td>
+            <td>{{ v.inspectionDate || '—' }}</td>
+            <td>
+              <span class="status-badge" [attr.data-status]="v.status">{{ statusLabel(v.status) }}</span>
+            </td>
+            <td>
+              <span *ngIf="v.currentCaptainName">{{ v.currentCaptainName }} ({{ v.currentCaptainCode }})</span>
+              <span class="text-muted" *ngIf="!v.currentCaptainName">—</span>
+            </td>
+            <td class="actions-cell">
+              <button class="icon-btn" title="تسليم" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE'">
+                <span class="material-icons-round">person_add</span>
+              </button>
+              <button class="icon-btn" title="تعديل" (click)="openEditVehicle(v)">
+                <span class="material-icons-round">edit</span>
+              </button>
+              <button class="icon-btn" title="صيانة" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED'">
+                <span class="material-icons-round">build</span>
+              </button>
+              <button class="icon-btn" title="تاريخ التسليم" (click)="openHistory(v)">
+                <span class="material-icons-round">history</span>
+              </button>
+              <button class="icon-btn" title="تاريخ الصيانة" (click)="openMaintenanceHistory(v)">
+                <span class="material-icons-round">plumbing</span>
+              </button>
+              <button class="icon-btn danger" title="حذف" (click)="deleteVehicle(v)">
+                <span class="material-icons-round">delete</span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="vehicles.length === 0 && !isLoading">
+            <td colspan="8" class="empty-row">لا توجد سيارات</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" *ngIf="vehicleTotalPages > 1">
+      <button (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">السابق</button>
+      <span>{{ vehiclePage + 1 }} / {{ vehicleTotalPages }}</span>
+      <button (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">التالي</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ ASSIGNMENTS TAB ══════════════ -->
+  <div *ngIf="activeTab === 'assignments'" class="tab-content">
+    <div class="toolbar">
+      <select class="filter-select" [(ngModel)]="assignmentStatusFilter" (change)="loadAssignments()">
+        <option value="">كل الحالات</option>
+        <option value="ACTIVE">نشط</option>
+        <option value="RETURNED">مُرجعة</option>
+        <option value="LATE">متأخر</option>
+      </select>
+    </div>
+
+    <div class="loading-bar" *ngIf="isLoading"></div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>السيارة</th>
+            <th>الكابتن</th>
+            <th>تاريخ التسليم</th>
+            <th>الإرجاع المتوقع</th>
+            <th>الإرجاع الفعلي</th>
+            <th>الكابتن التالي</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of assignments" [class.late-row]="a.late">
+            <td>{{ a.vehicleBrand }} {{ a.vehicleModel }} — {{ a.vehiclePlate }}</td>
+            <td>{{ a.captainName }} ({{ a.captainCode }})</td>
+            <td>{{ a.assignedAt | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ a.expectedReturnAt | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ a.actualReturnAt ? (a.actualReturnAt | date:'yyyy-MM-dd HH:mm') : '—' }}</td>
+            <td>{{ a.nextCaptainName ? a.nextCaptainName + ' (' + a.nextCaptainCode + ')' : '—' }}</td>
+            <td>
+              <span class="status-badge" [attr.data-status]="a.status">{{ statusLabel(a.status) }}</span>
+            </td>
+            <td class="actions-cell">
+              <button class="btn btn-sm btn-success" *ngIf="a.status === 'ACTIVE' || a.status === 'LATE'"
+                      (click)="returnAssignment(a)">
+                <span class="material-icons-round">assignment_return</span> استلام
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="assignments.length === 0 && !isLoading">
+            <td colspan="8" class="empty-row">لا توجد حركات</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" *ngIf="assignmentTotalPages > 1">
+      <button (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">السابق</button>
+      <span>{{ assignmentPage + 1 }} / {{ assignmentTotalPages }}</span>
+      <button (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">التالي</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAINTENANCE TAB ══════════════ -->
+  <div *ngIf="activeTab === 'maintenance'" class="tab-content">
+    <div class="toolbar">
+      <select class="filter-select" [(ngModel)]="maintenanceStatusFilter" (change)="loadMaintenance()">
+        <option value="">كل الحالات</option>
+        <option value="IN_PROGRESS">جاري الصيانة</option>
+        <option value="COMPLETED">مكتملة</option>
+        <option value="CANCELLED">ملغاة</option>
+      </select>
+    </div>
+
+    <div class="loading-bar" *ngIf="isLoading"></div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>السيارة</th>
+            <th>العطل</th>
+            <th>الورشة</th>
+            <th>التكلفة علي</th>
+            <th>تاريخ الدخول</th>
+            <th>التكلفة</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of maintenanceList">
+            <td>{{ m.vehicleBrand }} {{ m.vehicleModel }} — <span class="plate-cell">{{ m.vehiclePlate }}</span></td>
+            <td>{{ m.faultReason }}</td>
+            <td>{{ m.workshopName || '—' }}</td>
+            <td>
+              <span class="badge" [class.badge-company]="m.costBearer === 'COMPANY'" [class.badge-captain]="m.costBearer === 'CAPTAIN'">
+                {{ m.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن: ' + (m.captainName || '') }}
+              </span>
+            </td>
+            <td>{{ m.openedAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ m.totalCost !== undefined ? m.totalCost + ' ريال' : '—' }}</td>
+            <td>
+              <span class="badge" 
+                    [class.badge-rented]="m.status === 'IN_PROGRESS'" 
+                    [class.badge-completed]="m.status === 'COMPLETED'"
+                    [class.badge-cancelled]="m.status === 'CANCELLED'">
+                {{ m.status === 'IN_PROGRESS' ? 'جاري' : m.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button class="icon-btn" title="تعديل" *ngIf="m.status === 'IN_PROGRESS'" (click)="editMaintenance(m)">
+                <span class="material-icons-round">edit</span>
+              </button>
+              <button class="icon-btn" title="معاينة التفاصيل" (click)="viewMaintenanceDetails(m)">
+                <span class="material-icons-round">visibility</span>
+              </button>
+              <button class="btn btn-sm btn-success" *ngIf="m.status === 'IN_PROGRESS'" (click)="openCloseMaintenanceDialog(m)" style="margin-right: 4px;">
+                <span class="material-icons-round">check_circle</span> تقفيل
+              </button>
+              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS'" title="إلغاء" (click)="cancelMaintenance(m)">
+                <span class="material-icons-round">cancel</span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="maintenanceList.length === 0 && !isLoading">
+            <td colspan="8" class="empty-row">لا توجد أوامر صيانة</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" *ngIf="maintenanceTotalPages > 1">
+      <button (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">السابق</button>
+      <span>{{ maintenancePage + 1 }} / {{ maintenanceTotalPages }}</span>
+      <button (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">التالي</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ VEHICLE DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showVehicleDialog" (click)="showVehicleDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>{{ editingVehicle ? 'تعديل سيارة' : 'إضافة سيارة' }}</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم اللوحة *</label>
+          <input type="text" [(ngModel)]="vForm.plateNumber" placeholder="ABC-1234">
+        </div>
+        <div class="form-group">
+          <label>الملكية</label>
+          <select [(ngModel)]="vForm.ownershipType">
+            <option value="OWNED">مملوكة</option>
+            <option value="RENTED">مؤجرة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الماركة</label>
+          <input type="text" [(ngModel)]="vForm.brand" placeholder="تويوتا">
+        </div>
+        <div class="form-group">
+          <label>الموديل</label>
+          <input type="text" [(ngModel)]="vForm.model" placeholder="هايلكس">
+        </div>
+        <div class="form-group">
+          <label>السنة</label>
+          <input type="number" [(ngModel)]="vForm.year" placeholder="2024">
+        </div>
+        <div class="form-group">
+          <label>اللون</label>
+          <input type="text" [(ngModel)]="vForm.color" placeholder="أبيض">
+        </div>
+        <div class="form-group">
+          <label>العداد (كم)</label>
+          <input type="number" [(ngModel)]="vForm.odometer" placeholder="50000">
+        </div>
+        <div class="form-group">
+          <label>تاريخ الفحص</label>
+          <input type="date" [(ngModel)]="vForm.inspectionDate">
+        </div>
+
+        <!-- Rental fields -->
+        <ng-container *ngIf="vForm.ownershipType === 'RENTED'">
+          <div class="form-group full-width rental-section">
+            <label class="section-label">بيانات الوكيل</label>
+          </div>
+          <div class="form-group">
+            <label>اسم وكيل التأجير</label>
+            <input type="text" [(ngModel)]="vForm.rentalAgentName" placeholder="شركة التأجير">
+          </div>
+          <div class="form-group">
+            <label>بداية التأجير</label>
+            <input type="date" [(ngModel)]="vForm.rentalStartDate">
+          </div>
+          <div class="form-group">
+            <label>نهاية التأجير</label>
+            <input type="date" [(ngModel)]="vForm.rentalEndDate">
+          </div>
+        </ng-container>
+
+        <div class="form-group full-width">
+          <label>ملاحظات</label>
+          <textarea [(ngModel)]="vForm.notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="saveVehicle()">حفظ</button>
+        <button class="btn btn-secondary" (click)="showVehicleDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ASSIGN DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showAssignDialog" (click)="showAssignDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>تسليم سيارة</h2>
+      <p class="dialog-subtitle">{{ assignVehicleName }}</p>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>الكابتن *</label>
+          <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value, 'captain')">
+          <div class="dropdown-results" *ngIf="captainResults.length">
+            <div *ngFor="let c of captainResults" class="dropdown-item" (click)="selectCaptain(c, 'captain')">
+              {{ c.fullNameAr }} ({{ c.kamalCode }})
+            </div>
+          </div>
+          <span class="selected-hint" *ngIf="aForm.captainId">✓ تم الاختيار</span>
+        </div>
+        <div class="form-group">
+          <label>موعد الإرجاع المتوقع *</label>
+          <input type="datetime-local" [(ngModel)]="aForm.expectedReturnAt">
+        </div>
+        <div class="form-group full-width">
+          <label>الكابتن التالي (اختياري)</label>
+          <input type="text" placeholder="ابحث عن الكابتن التالي..." (input)="searchCaptains($any($event.target).value, 'next')">
+          <div class="dropdown-results" *ngIf="nextCaptainResults.length">
+            <div *ngFor="let c of nextCaptainResults" class="dropdown-item" (click)="selectCaptain(c, 'next')">
+              {{ c.fullNameAr }} ({{ c.kamalCode }})
+            </div>
+          </div>
+          <span class="selected-hint" *ngIf="aForm.nextCaptainId">✓ تم الاختيار</span>
+        </div>
+        <div class="form-group full-width">
+          <label>ملاحظات</label>
+          <textarea [(ngModel)]="aForm.notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="submitAssign()">تسليم</button>
+        <button class="btn btn-secondary" (click)="showAssignDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ HISTORY DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showHistoryDialog" (click)="showHistoryDialog = false">
+    <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
+      <h2>سجل التسليمات</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>الكابتن</th><th>التسليم</th><th>الإرجاع المتوقع</th><th>الإرجاع الفعلي</th><th>الحالة</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of historyItems" [class.late-row]="h.late">
+            <td>{{ h.captainName }} ({{ h.captainCode }})</td>
+            <td>{{ h.assignedAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ h.expectedReturnAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ h.actualReturnAt ? (h.actualReturnAt | date:'yyyy-MM-dd') : '—' }}</td>
+            <td><span class="status-badge" [attr.data-status]="h.status">{{ statusLabel(h.status) }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="showHistoryDialog = false">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAINTENANCE OPEN DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showMaintenanceOpenDialog" (click)="showMaintenanceOpenDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>{{ selectedMaintenanceId ? 'تعديل أمر الصيانة' : 'إدخال سيارة للصيانة' }}</h2>
+      <p class="dialog-subtitle">{{ maintVehicleName }}</p>
+      
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>سبب العطل *</label>
+          <textarea [(ngModel)]="mOpenForm.faultReason" rows="2" placeholder="وصف العطل..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>اسم الورشة</label>
+          <input type="text" [(ngModel)]="mOpenForm.workshopName" placeholder="اختياري">
+        </div>
+        
+        <div class="form-group">
+          <label>تحمّل التكلفة *</label>
+          <select [(ngModel)]="mOpenForm.costBearer">
+            <option value="COMPANY">الشركة</option>
+            <option value="CAPTAIN">الكابتن</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width" *ngIf="mOpenForm.costBearer === 'CAPTAIN'">
+          <label>الكابتن المسؤول *</label>
+          <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value, 'maint')">
+          <div class="dropdown-results" *ngIf="maintCaptainResults.length">
+            <div *ngFor="let c of maintCaptainResults" class="dropdown-item" (click)="selectCaptain(c, 'maint')">
+              {{ c.fullNameAr }} ({{ c.kamalCode }})
+            </div>
+          </div>
+          <span class="selected-hint" *ngIf="mOpenForm.captainId">✓ تم الاختيار</span>
+        </div>
+
+        <div class="form-group full-width">
+          <label>ملاحظات</label>
+          <textarea [(ngModel)]="mOpenForm.notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="submitOpenMaintenance()">حفظ</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceOpenDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAINTENANCE CLOSE DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showMaintenanceCloseDialog" (click)="showMaintenanceCloseDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>تقفيل أمر الصيانة</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>التكلفة الإجمالية * (ريال)</label>
+          <input type="number" [(ngModel)]="mCloseForm.totalCost">
+        </div>
+        <div class="form-group">
+          <label>قراءة العداد الحالية</label>
+          <input type="number" [(ngModel)]="mCloseForm.odometerOnClose" placeholder="اختياري">
+        </div>
+        
+        <div class="form-group full-width">
+          <label>قطع الغيار</label>
+          <div class="parts-list">
+            <div class="part-item" *ngFor="let p of mCloseForm.parts; let i = index">
+              <input type="text" class="part-input" [(ngModel)]="p.partName" placeholder="اسم القطعة">
+              <input type="number" class="cost-input" [(ngModel)]="p.partCost" placeholder="السعر">
+              <button class="icon-btn danger" (click)="removePartFromClose(i)"><span class="material-icons-round">delete</span></button>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" (click)="addPartToClose()">
+            <span class="material-icons-round">add</span> إضافة قطعة
+          </button>
+        </div>
+
+        <div class="form-group full-width">
+          <label>ملاحظات التقفيل</label>
+          <textarea [(ngModel)]="mCloseForm.notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-success" (click)="submitCloseMaintenance()">تقفيل الصيانة</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceCloseDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAINTENANCE HISTORY DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showMaintenanceHistoryDialog" (click)="showMaintenanceHistoryDialog = false">
+    <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
+      <h2>تاريخ صيانة السيارة</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>تاريخ الدخول</th><th>الورشة</th><th>العطل</th><th>التكلفة علي</th><th>التكلفة</th><th>الحالة</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of maintenanceHistoryItems">
+            <td>{{ h.openedAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ h.workshopName || '—' }}</td>
+            <td>{{ h.faultReason }}</td>
+            <td>{{ h.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن' }}</td>
+            <td>{{ h.totalCost !== undefined ? h.totalCost + ' ريال' : '—' }}</td>
+            <td>
+              <span class="badge" 
+                    [class.badge-rented]="h.status === 'IN_PROGRESS'" 
+                    [class.badge-completed]="h.status === 'COMPLETED'"
+                    [class.badge-cancelled]="h.status === 'CANCELLED'">
+                {{ h.status === 'IN_PROGRESS' ? 'جاري' : h.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="showMaintenanceHistoryDialog = false">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAINTENANCE DETAILS DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showMaintenanceDetailsDialog" (click)="showMaintenanceDetailsDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>تفاصيل الصيانة</h2>
+      <div *ngIf="selectedMaintenanceDetails" class="form-grid">
+        <div class="form-group">
+          <label>السيارة</label>
+          <div class="plate-cell">{{ selectedMaintenanceDetails.vehiclePlate }}</div>
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <div><span class="status-badge" [attr.data-status]="selectedMaintenanceDetails.status">{{ selectedMaintenanceDetails.status === 'IN_PROGRESS' ? 'جاري' : selectedMaintenanceDetails.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}</span></div>
+        </div>
+        <div class="form-group full-width">
+          <label>سبب العطل</label>
+          <div>{{ selectedMaintenanceDetails.faultReason }}</div>
+        </div>
+        <div class="form-group">
+          <label>الورشة</label>
+          <div>{{ selectedMaintenanceDetails.workshopName || '—' }}</div>
+        </div>
+        <div class="form-group">
+          <label>تاريخ الدخول</label>
+          <div>{{ selectedMaintenanceDetails.openedAt | date:'yyyy-MM-dd HH:mm' }}</div>
+        </div>
+        <div class="form-group">
+          <label>تاريخ الإغلاق</label>
+          <div>{{ selectedMaintenanceDetails.closedAt ? (selectedMaintenanceDetails.closedAt | date:'yyyy-MM-dd HH:mm') : '—' }}</div>
+        </div>
+        <div class="form-group">
+          <label>تحمل التكلفة</label>
+          <div>
+            <span class="badge" [class.badge-company]="selectedMaintenanceDetails.costBearer === 'COMPANY'" [class.badge-captain]="selectedMaintenanceDetails.costBearer === 'CAPTAIN'">
+              {{ selectedMaintenanceDetails.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن: ' + (selectedMaintenanceDetails.captainName || '') }}
+            </span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>التكلفة الإجمالية</label>
+          <div>{{ selectedMaintenanceDetails.totalCost !== undefined ? selectedMaintenanceDetails.totalCost + ' ريال' : '—' }}</div>
+        </div>
+        <div class="form-group full-width" *ngIf="selectedMaintenanceDetails.parts && selectedMaintenanceDetails.parts.length">
+          <label>قطع الغيار</label>
+          <table class="data-table" style="margin-top: 8px;">
+            <thead><tr><th>اسم القطعة</th><th>السعر</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let p of selectedMaintenanceDetails.parts">
+                <td>{{ p.partName }}</td>
+                <td>{{ p.partCost }} ريال</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-group full-width" *ngIf="selectedMaintenanceDetails.notes">
+          <label>الملاحظات</label>
+          <div>{{ selectedMaintenanceDetails.notes }}</div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="showMaintenanceDetailsDialog = false">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>

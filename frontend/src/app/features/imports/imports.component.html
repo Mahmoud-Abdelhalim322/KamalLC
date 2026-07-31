@@ -1,0 +1,427 @@
+<div class="imports-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">استيراد البيانات</h1>
+      <p class="page-subtitle">
+        {{ activeTab === 'captains'
+            ? 'رفع ملف بيانات الكباتن ومعرفات الموردين'
+            : 'رفع تقرير شيفتات المورد الذي تُبنى عليه التقارير والرواتب' }}
+      </p>
+    </div>
+    <button class="btn btn-outline" (click)="downloadTemplate()">
+      <span class="material-icons-round">download</span>
+      {{ activeTab === 'captains'
+          ? 'تحميل نموذج Excel'
+          : 'تحميل نموذج تقرير المورد' }}
+    </button>
+  </div>
+
+  <!-- ================================================================ TABS -->
+  <div class="filter-tabs">
+    <button class="filter-tab" [class.active]="activeTab === 'captains'"
+            (click)="setTab('captains')">
+      <span class="material-icons-round">badge</span>
+      استيراد بيانات الكباتن والموردين
+    </button>
+    <button class="filter-tab" [class.active]="activeTab === 'reports'"
+            (click)="setTab('reports')">
+      <span class="material-icons-round">assessment</span>
+      استيراد تقارير الموردين
+    </button>
+  </div>
+
+  <!-- ============================================================ MESSAGES -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <span class="material-icons-round">error</span>
+    <span>{{ errorMessage }}</span>
+    <button class="btn btn-sm btn-primary" *ngIf="misroutedFile" (click)="openCorrectTab()">
+      <span class="material-icons-round">swap_horiz</span>
+      افتح التبويب الصحيح
+    </button>
+    <button class="alert-close" (click)="clearMessages()">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>
+    <span>{{ successMessage }}</span>
+    <button class="alert-close" (click)="successMessage = ''">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+
+  <!-- ======================================================== UPLOAD ZONE -->
+  <div class="upload-section"
+       *ngIf="!captainPreview && !shiftPreview && !captainResult && !shiftResult">
+    <div class="upload-zone"
+         [class.dragging]="isDragging"
+         [class.uploading]="isUploading"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)"
+         (click)="fileInput.click()">
+      <input #fileInput type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden>
+
+      <div class="upload-content" *ngIf="!isUploading">
+        <div class="upload-icon">
+          <span class="material-icons-round">cloud_upload</span>
+        </div>
+        <h3>
+          {{ activeTab === 'captains'
+              ? 'اسحب ملف بيانات الكباتن هنا'
+              : 'اسحب ملف تقرير شيفتات المورد هنا' }}
+        </h3>
+        <p>أو اضغط لاختيار ملف</p>
+        <span class="upload-hint">يدعم ملفات .xlsx و .xls</span>
+      </div>
+
+      <div class="upload-loading" *ngIf="isUploading">
+        <div class="spinner"></div>
+        <p>جاري تحليل الملف...</p>
+      </div>
+    </div>
+
+    <!-- Expected sheet layout -->
+    <div class="columns-card">
+      <h3 class="columns-title">
+        <span class="material-icons-round">view_column</span>
+        أعمدة الملف
+      </h3>
+      <p class="columns-hint" *ngIf="activeTab === 'captains'">
+        ترتيب الأعمدة غير مهم — يتم التعرف عليها بالاسم. أي عمود اختياري غير موجود يتم تجاهله،
+        والتواريخ تُقبل بصيغة 2025-12-31 أو 31/12/2025.
+      </p>
+      <p class="columns-hint" *ngIf="activeTab === 'reports'">
+        ارفع ملف التقرير كما يُصدّره المورد دون تعديل. ترتيب الأعمدة غير مهم،
+        والتواريخ تُقرأ بتوقيت الرياض. رفع نفس الملف مرة أخرى يُحدّث الشيفتات ولا يكررها.
+      </p>
+
+      <div class="columns-group">
+        <span class="group-label required">مطلوبة</span>
+        <div class="chips">
+          <span class="chip chip-required"
+                *ngFor="let col of activeTab === 'captains' ? captainRequiredColumns : reportRequiredColumns">
+            {{ col }}
+          </span>
+        </div>
+      </div>
+
+      <div class="columns-group">
+        <span class="group-label">اختيارية</span>
+        <div class="chips">
+          <span class="chip"
+                *ngFor="let col of activeTab === 'captains' ? captainOptionalColumns : reportOptionalColumns">
+            {{ col }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================== CAPTAINS: PREVIEW -->
+  <div class="preview-section" *ngIf="captainPreview">
+    <div class="preview-header">
+      <div class="preview-file">
+        <span class="material-icons-round">description</span>
+        <div>
+          <h3>{{ captainPreview.fileName }}</h3>
+          <span>{{ captainPreview.totalRows }} صف</span>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-primary" (click)="confirmImport()"
+                [disabled]="isCommitting || hasCaptainErrors">
+          <span class="material-icons-round" *ngIf="!isCommitting">check</span>
+          <div class="spinner-sm" *ngIf="isCommitting"></div>
+          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-stats">
+      <div class="stat-card new">
+        <span class="material-icons-round">person_add</span>
+        <div>
+          <span class="stat-value">{{ captainPreview.newCaptains }}</span>
+          <span class="stat-label">كابتن جديد</span>
+        </div>
+      </div>
+      <div class="stat-card existing">
+        <span class="material-icons-round">person</span>
+        <div>
+          <span class="stat-value">{{ captainPreview.existingCaptains }}</span>
+          <span class="stat-label">كابتن موجود</span>
+        </div>
+      </div>
+      <div class="stat-card new">
+        <span class="material-icons-round">add_card</span>
+        <div>
+          <span class="stat-value">{{ captainPreview.newNinjaIds }}</span>
+          <span class="stat-label">معرف جديد</span>
+        </div>
+      </div>
+      <div class="stat-card existing">
+        <span class="material-icons-round">badge</span>
+        <div>
+          <span class="stat-value">{{ captainPreview.existingNinjaIds }}</span>
+          <span class="stat-label">معرف موجود</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="issues-section" *ngIf="captainPreview.issues.length > 0">
+      <h3 class="section-title">
+        <span class="material-icons-round">report</span>
+        ملاحظات ({{ captainPreview.issues.length }})
+      </h3>
+      <div class="issues-list">
+        <div class="issue-item" *ngFor="let issue of captainPreview.issues"
+             [class]="'issue-' + issue.severity.toLowerCase()">
+          <span class="material-icons-round issue-icon">
+            {{ issue.severity === 'ERROR' ? 'error' : issue.severity === 'WARNING' ? 'warning' : 'info' }}
+          </span>
+          <span class="issue-row">صف {{ issue.rowNumber }}</span>
+          <span class="issue-msg">{{ issue.message }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================== CAPTAINS: RESULT -->
+  <div class="result-card" *ngIf="captainResult">
+    <div class="result-header">
+      <span class="material-icons-round result-icon success">task_alt</span>
+      <h2>تم الاستيراد بنجاح</h2>
+    </div>
+    <div class="result-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{ captainResult.newCaptains }}</span>
+        <span class="stat-label">تم استيرادهم</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ captainResult.existingCaptains }}</span>
+        <span class="stat-label">تم تجاهلهم</span>
+      </div>
+      <div class="stat-item" *ngIf="captainResult.issues.length > 0">
+        <span class="stat-value warning">{{ captainResult.issues.length }}</span>
+        <span class="stat-label">ملاحظات</span>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" (click)="goToNinjaIds()">
+        <span class="material-icons-round">badge</span> سجل المعرفات
+      </button>
+      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف جديد</button>
+    </div>
+  </div>
+
+  <!-- =================================================== REPORTS: PREVIEW -->
+  <div class="preview-section" *ngIf="shiftPreview">
+    <div class="preview-header">
+      <div class="preview-file">
+        <span class="material-icons-round">description</span>
+        <div>
+          <h3>{{ shiftPreview.fileName }}</h3>
+          <span>{{ shiftPreview.totalRows }} صف</span>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <span class="period-badge" *ngIf="shiftPreview.periodFrom">
+          <span class="material-icons-round">event</span>
+          {{ shiftPreview.periodFrom }} → {{ shiftPreview.periodTo }}
+        </span>
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-primary" (click)="confirmImport()" [disabled]="!canCommitShifts">
+          <span class="material-icons-round" *ngIf="!isCommitting">check</span>
+          <div class="spinner-sm" *ngIf="isCommitting"></div>
+          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-stats">
+      <div class="stat-card new">
+        <span class="material-icons-round">add_task</span>
+        <div>
+          <span class="stat-value">{{ shiftPreview.newShifts }}</span>
+          <span class="stat-label">شفت جديد</span>
+        </div>
+      </div>
+      <div class="stat-card existing">
+        <span class="material-icons-round">update</span>
+        <div>
+          <span class="stat-value">{{ shiftPreview.updatedShifts }}</span>
+          <span class="stat-label">تحديث لشفت قائم</span>
+        </div>
+      </div>
+      <div class="stat-card existing">
+        <span class="material-icons-round">link</span>
+        <div>
+          <span class="stat-value">{{ shiftPreview.matchedCaptains }}</span>
+          <span class="stat-label">مرتبط بكابتن</span>
+        </div>
+      </div>
+      <div class="stat-card" [class.warn]="shiftPreview.unmatchedRows > 0">
+        <span class="material-icons-round">link_off</span>
+        <div>
+          <span class="stat-value">{{ shiftPreview.unmatchedRows }}</span>
+          <span class="stat-label">غير مرتبط</span>
+        </div>
+      </div>
+      <div class="stat-card existing">
+        <span class="material-icons-round">person_off</span>
+        <div>
+          <span class="stat-value">{{ shiftPreview.absentRows }}</span>
+          <span class="stat-label">غياب</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A locked payroll period is the only thing that blocks the whole file -->
+    <div class="alert alert-error" *ngFor="let issue of blockingIssues">
+      <span class="material-icons-round">lock</span>
+      <span>{{ issue.message }}</span>
+    </div>
+
+    <div class="issue-block issue-error" *ngIf="rowErrors.length">
+      <b>
+        <span class="material-icons-round">error_outline</span>
+        {{ rowErrors.length }} صف سيتم تخطيه
+      </b>
+      <ul>
+        <li *ngFor="let issue of rowErrors.slice(0, 10)">
+          <span class="row-no" *ngIf="issue.rowNumber">صف {{ issue.rowNumber }}:</span>
+          {{ issue.message }}
+        </li>
+      </ul>
+      <p class="muted" *ngIf="rowErrors.length > 10">و{{ rowErrors.length - 10 }} صف آخر…</p>
+    </div>
+
+    <div class="issue-block issue-warning" *ngIf="warningIssues.length">
+      <b>
+        <span class="material-icons-round">warning_amber</span>
+        {{ warningIssues.length }} تنبيه
+      </b>
+      <ul>
+        <li *ngFor="let issue of warningIssues.slice(0, 10)">
+          <span class="row-no" *ngIf="issue.rowNumber">صف {{ issue.rowNumber }}:</span>
+          {{ issue.message }}
+        </li>
+      </ul>
+      <p class="muted" *ngIf="warningIssues.length > 10">
+        و{{ warningIssues.length - 10 }} تنبيه آخر…
+      </p>
+    </div>
+
+    <div class="unmatched-box" *ngIf="shiftPreview.unmatchedExternalIds.length">
+      <b>معرّفات مورد غير مرتبطة بكابتن</b>
+      <p class="muted">
+        ستُستورد شيفتاتها وتظهر في تبويب «غير مربوط». اربطها من شاشة سجل المعرفات
+        ثم أعد الحساب لتُحتسب في الرواتب.
+      </p>
+      <div class="id-chips">
+        <code *ngFor="let id of shiftPreview.unmatchedExternalIds.slice(0, 20)">{{ id }}</code>
+        <span class="muted" *ngIf="shiftPreview.unmatchedExternalIds.length > 20">
+          +{{ shiftPreview.unmatchedExternalIds.length - 20 }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== REPORTS: RESULT -->
+  <div class="result-card" *ngIf="shiftResult">
+    <div class="result-header">
+      <span class="material-icons-round result-icon success">task_alt</span>
+      <h2>تم استيراد التقرير</h2>
+    </div>
+    <p class="result-file">
+      {{ shiftResult.fileName }}
+      <span *ngIf="shiftResult.periodFrom">
+        — {{ shiftResult.periodFrom }} → {{ shiftResult.periodTo }}
+      </span>
+    </p>
+    <div class="result-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{ shiftResult.committedRows }}</span>
+        <span class="stat-label">صف مستورد</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ shiftResult.newShifts }}</span>
+        <span class="stat-label">شفت جديد</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ shiftResult.updatedShifts }}</span>
+        <span class="stat-label">تم تحديثه</span>
+      </div>
+      <div class="stat-item" *ngIf="shiftResult.skippedRows > 0">
+        <span class="stat-value warning">{{ shiftResult.skippedRows }}</span>
+        <span class="stat-label">تم تخطيه</span>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" (click)="goToShifts()">
+        <span class="material-icons-round">list</span> عرض الشيفتات
+      </button>
+      <button class="btn btn-outline" *ngIf="shiftResult.unmatchedExternalIds.length"
+              (click)="goToNinjaIds()">
+        <span class="material-icons-round">badge</span> ربط المعرفات غير المرتبطة
+      </button>
+      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+    </div>
+  </div>
+
+  <!-- ============================================================= HISTORY -->
+  <div class="history-section">
+    <h2 class="section-title">
+      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : 'سجل استيراد تقارير الموردين' }}
+    </h2>
+
+    <div class="loading-container" *ngIf="isLoadingHistory">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoadingHistory && history.length === 0">
+      <span class="material-icons-round">inventory_2</span>
+      <p>لا يوجد عمليات استيراد سابقة</p>
+    </div>
+
+    <div class="history-table-wrap" *ngIf="!isLoadingHistory && history.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>اسم الملف</th>
+            <th>التاريخ</th>
+            <th *ngIf="activeTab === 'reports'">فترة التقرير</th>
+            <th>الصفوف</th>
+            <th>تم الاستيراد</th>
+            <th>تم التجاهل</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batch of history">
+            <td class="file-name-cell">
+              <span class="material-icons-round">description</span>
+              {{ batch.fileName }}
+            </td>
+            <td>{{ formatDate(batch.uploadedAt) }}</td>
+            <td *ngIf="activeTab === 'reports'">
+              <span *ngIf="batch.periodFrom">{{ batch.periodFrom }} → {{ batch.periodTo }}</span>
+              <span class="muted" *ngIf="!batch.periodFrom">—</span>
+            </td>
+            <td>{{ batch.rowCount }}</td>
+            <td>{{ batch.importedCount }}</td>
+            <td>{{ batch.skippedCount }}</td>
+            <td>
+              <span class="status-badge" [class]="getStatusClass(batch.status)">
+                {{ getStatusLabel(batch.status) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

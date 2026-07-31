@@ -1,0 +1,91 @@
+<div class="docs-gallery">
+  <div class="docs-grid">
+    <div class="doc-card" *ngFor="let doc of docs">
+      <!-- Thumbnail / type badge -->
+      <button type="button" class="doc-thumb" (click)="openViewer(doc)"
+              [title]="canPreview(doc) ? 'عرض المستند' : 'تحميل المستند'">
+        <img *ngIf="thumbnailUrl(doc); else thumbIcon" [src]="thumbnailUrl(doc)" [alt]="doc.fileName">
+        <ng-template #thumbIcon>
+          <span class="material-icons-round">{{ getDocIcon(doc) }}</span>
+        </ng-template>
+
+        <span class="thumb-overlay" *ngIf="canPreview(doc)">
+          <span class="material-icons-round">visibility</span>
+        </span>
+      </button>
+
+      <div class="doc-info">
+        <span class="doc-type">{{ getDocTypeLabel(doc.documentType) }}</span>
+        <span class="doc-name" [title]="doc.fileName">{{ doc.fileName }}</span>
+        <span class="doc-meta">{{ formatSize(doc.fileSize) }} · {{ doc.uploadedAt | slice:0:10 }}</span>
+        <span class="doc-note" *ngIf="doc.note">{{ doc.note }}</span>
+      </div>
+
+      <div class="doc-actions">
+        <button type="button" class="icon-btn" title="عرض" *ngIf="canPreview(doc)" (click)="openViewer(doc)">
+          <span class="material-icons-round">visibility</span>
+        </button>
+        <button type="button" class="icon-btn" title="تحميل" (click)="download(doc)">
+          <span class="material-icons-round">download</span>
+        </button>
+        <button type="button" class="icon-btn danger" title="حذف" *ngIf="allowDelete" (click)="remove(doc)">
+          <span class="material-icons-round">delete_outline</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="form-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <!-- In-page viewer -->
+  <div class="viewer-overlay" *ngIf="activeDoc" (click)="closeViewer()">
+    <div class="viewer" (click)="$event.stopPropagation()">
+      <div class="viewer-header">
+        <div class="viewer-title">
+          <span class="material-icons-round">{{ getDocIcon(activeDoc) }}</span>
+          <div>
+            <h3>{{ getDocTypeLabel(activeDoc.documentType) }}</h3>
+            <span class="viewer-file">{{ activeDoc.fileName }}</span>
+          </div>
+        </div>
+
+        <div class="viewer-tools">
+          <button type="button" class="icon-btn" title="تحميل" (click)="download(activeDoc)">
+            <span class="material-icons-round">download</span>
+          </button>
+          <button type="button" class="icon-btn" title="إغلاق" (click)="closeViewer()">
+            <span class="material-icons-round">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="viewer-body">
+        <div class="viewer-loading" *ngIf="isViewerLoading">
+          <div class="spinner"></div>
+          <p>جاري تحميل المستند...</p>
+        </div>
+
+        <p class="viewer-error" *ngIf="viewerError">{{ viewerError }}</p>
+
+        <img *ngIf="!isViewerLoading && !viewerError && isImage(activeDoc) && activeRawUrl"
+             [src]="activeRawUrl" [alt]="activeDoc.fileName" class="viewer-image">
+
+        <iframe *ngIf="!isViewerLoading && !viewerError && isPdf(activeDoc) && activeUrl"
+                [src]="activeUrl" [title]="activeDoc.fileName" class="viewer-pdf"></iframe>
+
+        <!-- Steps through images and PDFs only; other types are download-only. -->
+        <button type="button" class="viewer-nav prev" *ngIf="hasMultiplePreviewable" (click)="step(1)">
+          <span class="material-icons-round">chevron_right</span>
+        </button>
+        <button type="button" class="viewer-nav next" *ngIf="hasMultiplePreviewable" (click)="step(-1)">
+          <span class="material-icons-round">chevron_left</span>
+        </button>
+      </div>
+
+      <div class="viewer-footer" *ngIf="activeDoc.note">
+        <span class="material-icons-round">sticky_note_2</span>
+        {{ activeDoc.note }}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,283 @@
+<div class="detail-page">
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جاري تحميل البيانات...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <span class="material-icons-round">error_outline</span>
+    <p>{{ errorMessage }}</p>
+    <a routerLink="/captains" class="btn btn-outline">العودة للقائمة</a>
+  </div>
+
+  <ng-container *ngIf="captain && !isLoading">
+    <!-- Back + Header -->
+    <div class="detail-header">
+      <a routerLink="/captains" class="back-link">
+        <span class="material-icons-round">arrow_forward</span>
+        العودة للكباتن
+      </a>
+
+      <div class="header-content">
+        <div class="header-right">
+          <div class="captain-avatar-lg">{{ captain.fullNameAr.charAt(0) }}</div>
+          <div class="header-info">
+            <h1>{{ captain.fullNameAr }}</h1>
+            <div class="header-meta">
+              <span class="code">{{ captain.kamalCode }}</span>
+              <span class="type-badge" [class]="getTypeClass(captain.captainType)">
+                {{ getTypeLabel(captain.captainType) }}
+              </span>
+              <span class="status-badge" [class]="getStatusClass(captain.status)">
+                {{ getStatusLabel(captain.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <a class="btn btn-primary" [routerLink]="['/captains', captain.id, 'edit']">
+          <span class="material-icons-round">edit</span>
+          تعديل البيانات
+        </a>
+      </div>
+    </div>
+
+    <!-- Document Alert Banner -->
+    <div class="doc-alert-banner" *ngIf="captain.worstDocumentStatus !== 'VALID'"
+         [class]="'banner-' + captain.worstDocumentStatus.toLowerCase()">
+      <span class="material-icons-round">notification_important</span>
+      <div class="banner-text">
+        <strong>{{ documentBannerTitle() }}</strong>
+        <span>{{ documentBannerDetail() }}</span>
+      </div>
+    </div>
+
+    <!-- Info Cards Grid -->
+    <div class="info-grid">
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">person</span>
+          المعلومات الأساسية
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">الاسم بالعربي</span>
+            <span class="info-value">{{ captain.fullNameAr }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.fullNameEn">
+            <span class="info-label">الاسم بالإنجليزي</span>
+            <span class="info-value">{{ captain.fullNameEn }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">الجنسية</span>
+            <span class="info-value">{{ captain.nationality || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">تاريخ الميلاد</span>
+            <span class="info-value">{{ captain.dateOfBirth || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">تاريخ الانضمام</span>
+            <span class="info-value">{{ captain.joinDate || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">contact_phone</span>
+          بيانات التواصل
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">رقم الهاتف</span>
+            <span class="info-value">{{ captain.phone || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">البريد الإلكتروني</span>
+            <span class="info-value">{{ captain.email || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Driven by documentStatuses, so a document added to the tracked set appears here
+           without this template having to name it. -->
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">badge</span>
+          الوثائق الرسمية
+        </h3>
+        <div class="info-rows doc-rows">
+          <div class="doc-row" *ngFor="let doc of captain.documentStatuses">
+            <div class="doc-head">
+              <span class="info-label">{{ doc.labelAr }}</span>
+              <span class="status-badge" [class]="docStatusClass(doc)">{{ doc.statusLabelAr }}</span>
+            </div>
+            <div class="doc-meta">
+              <span class="doc-number" *ngIf="doc.number" dir="ltr">{{ doc.number }}</span>
+              <span class="doc-expiry">{{ doc.expiry || 'لا يوجد تاريخ مسجل' }}</span>
+              <span class="doc-days" *ngIf="doc.daysLeft !== null">{{ daysLeftLabel(doc) }}</span>
+            </div>
+          </div>
+
+          <p class="no-data" *ngIf="captain.documentStatuses.length === 0">
+            لا تُتابع وثائق الكابتن غير النشط
+          </p>
+        </div>
+
+        <div class="info-rows" *ngIf="captain.insuranceCompany">
+          <div class="info-row">
+            <span class="info-label">شركة التأمين الطبي</span>
+            <span class="info-value">{{ captain.insuranceCompany }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier IDs Section -->
+    <div class="section">
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="material-icons-round">link</span>
+          معرفات الموردين
+        </h2>
+        <button class="btn btn-outline btn-sm" (click)="openLinkModal()">
+          <span class="material-icons-round">add_link</span>
+          ربط معرف
+        </button>
+      </div>
+
+      <p class="form-error" *ngIf="idError">{{ idError }}</p>
+
+      <div class="empty-section" *ngIf="captain.supplierIds.length === 0">
+        <span class="material-icons-round">link_off</span>
+        <p>لا يوجد معرفات مربوطة</p>
+        <button class="btn btn-outline btn-sm" (click)="openLinkModal()">
+          <span class="material-icons-round">add_link</span>
+          ربط معرف
+        </button>
+      </div>
+
+      <div class="ids-grid" *ngIf="captain.supplierIds.length > 0">
+        <div class="id-card" *ngFor="let sid of captain.supplierIds">
+          <div class="id-card-header">
+            <span class="id-value">{{ sid.externalId }}</span>
+            <span class="supplier-tag">{{ sid.supplierName }}</span>
+          </div>
+          <div class="id-card-meta">
+            <span>من: {{ sid.validFrom }}</span>
+            <span *ngIf="sid.validTo">إلى: {{ sid.validTo }}</span>
+            <span class="active-tag" *ngIf="!sid.validTo">نشط</span>
+          </div>
+          <!-- Only the open assignment can be ended; closed ones are history. -->
+          <button class="unlink-btn" *ngIf="!sid.validTo" (click)="unlinkSlot(sid)">
+            <span class="material-icons-round">link_off</span>
+            فك الربط
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Section -->
+    <div class="section">
+      <h2 class="section-title">
+        <span class="material-icons-round">folder</span>
+        المستندات
+        <span class="count-chip" *ngIf="captain.documents.length > 0">{{ captain.documents.length }}</span>
+      </h2>
+
+      <div class="empty-section" *ngIf="captain.documents.length === 0">
+        <span class="material-icons-round">folder_off</span>
+        <p>لا يوجد مستندات مرفوعة</p>
+        <a class="btn btn-outline btn-sm" [routerLink]="['/captains', captain.id, 'edit']">
+          <span class="material-icons-round">upload_file</span>
+          رفع مستند
+        </a>
+      </div>
+
+      <app-document-gallery *ngIf="captain.documents.length > 0"
+                            [documents]="captain.documents"></app-document-gallery>
+    </div>
+
+    <!-- Notes -->
+    <div class="section" *ngIf="captain.notes">
+      <h2 class="section-title">
+        <span class="material-icons-round">notes</span>
+        ملاحظات
+      </h2>
+      <div class="notes-box">{{ captain.notes }}</div>
+    </div>
+
+    <!-- Link Supplier ID Modal -->
+    <div class="modal-overlay" *ngIf="showLinkModal" (click)="closeLinkModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <span class="material-icons-round">add_link</span>
+            ربط معرف بـ {{ captain.fullNameAr }}
+          </h2>
+          <button class="modal-close" (click)="closeLinkModal()">
+            <span class="material-icons-round">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">المورد</label>
+            <select class="form-input" [(ngModel)]="linkSupplierId" (change)="onLinkSupplierChange()">
+              <option value="">كل الموردين</option>
+              <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} ({{ s.code }})</option>
+            </select>
+          </div>
+
+          <div class="form-group slot-picker">
+            <label class="form-label">المعرف المتاح *</label>
+            <input class="form-input" [ngModel]="slotQuery"
+                   (ngModelChange)="onSlotQueryChange($event)"
+                   placeholder="ابحث برقم المعرف..." dir="ltr">
+
+            <div class="picker-results" *ngIf="slotResults.length > 0">
+              <button class="picker-item" *ngFor="let s of slotResults" (click)="selectSlot(s)">
+                <span class="picker-code">{{ s.externalId }}</span>
+                <span class="picker-supplier"
+                      [style.background]="s.supplierColor + '20'"
+                      [style.color]="s.supplierColor">{{ s.supplierName }}</span>
+              </button>
+            </div>
+
+            <p class="field-hint" *ngIf="isSearchingSlots">جاري البحث...</p>
+            <p class="field-hint" *ngIf="!isSearchingSlots && slotResults.length === 0 && !selectedSlot">
+              لا يوجد معرفات متاحة — أضف معرفاً جديداً من صفحة سجل المعرفات
+            </p>
+            <p class="field-hint selected-hint" *ngIf="selectedSlot">
+              <span class="material-icons-round">check_circle</span>
+              تم اختيار {{ selectedSlot.externalId }} ({{ selectedSlot.supplierName }})
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">تاريخ بدء التخصيص</label>
+            <input class="form-input" type="date" [(ngModel)]="linkValidFrom">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">اسم الكابتن لدى المورد</label>
+            <input class="form-input" [(ngModel)]="linkSideName" placeholder="اختياري">
+          </div>
+
+          <p class="form-error" *ngIf="linkError">{{ linkError }}</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline" (click)="closeLinkModal()">إلغاء</button>
+          <button class="btn btn-primary" (click)="linkSlot()" [disabled]="isLinking || !selectedSlot">
+            <span class="spinner spinner-sm" *ngIf="isLinking"></span>
+            ربط المعرف
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

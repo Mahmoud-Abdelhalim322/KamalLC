@@ -1,0 +1,361 @@
+<div class="form-page">
+  <div class="form-header">
+    <a [routerLink]="backRoute" class="back-btn">
+      <span class="material-icons-round">arrow_forward</span>
+    </a>
+    <div>
+      <h1>{{ pageTitle }}</h1>
+      <span class="code-preview" *ngIf="nextCode">{{ nextCode }}</span>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <span>جاري التحميل...</span>
+  </div>
+
+  <form *ngIf="!isLoading" (ngSubmit)="save()" class="staff-form">
+
+    <!-- البيانات الشخصية -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">person</span>
+        البيانات الشخصية
+      </h2>
+      <div class="form-grid">
+        <div class="form-group required">
+          <label>الاسم بالعربي</label>
+          <input type="text" [(ngModel)]="form.fullNameAr" name="fullNameAr" required>
+        </div>
+        <div class="form-group">
+          <label>الاسم بالإنجليزي</label>
+          <input type="text" [(ngModel)]="form.fullNameEn" name="fullNameEn">
+        </div>
+        <div class="form-group">
+          <label>الجنس</label>
+          <select [(ngModel)]="form.gender" name="gender">
+            <option [ngValue]="null">—</option>
+            <option value="ذكر">ذكر</option>
+            <option value="أنثى">أنثى</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الجنسية</label>
+          <input type="text" [(ngModel)]="form.nationality" name="nationality">
+        </div>
+        <div class="form-group">
+          <label>تاريخ الميلاد</label>
+          <input type="date" [(ngModel)]="form.dateOfBirth" name="dateOfBirth">
+        </div>
+        <div class="form-group">
+          <label>فصيلة الدم</label>
+          <select [(ngModel)]="form.bloodType" name="bloodType">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let bt of ['A+','A-','B+','B-','O+','O-','AB+','AB-']" [value]="bt">{{ bt }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الهاتف</label>
+          <input type="text" [(ngModel)]="form.phone" name="phone" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label>البريد الإلكتروني</label>
+          <input type="email" [(ngModel)]="form.email" name="email" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label>مقر الإقامة</label>
+          <input type="text" [(ngModel)]="form.placeOfResidence" name="placeOfResidence">
+        </div>
+        <div class="form-group">
+          <label>العنوان</label>
+          <input type="text" [(ngModel)]="form.homeAddress" name="homeAddress">
+        </div>
+        <div class="form-group">
+          <label>المسمى الوظيفي</label>
+          <input type="text" [(ngModel)]="form.jobTitle" name="jobTitle">
+        </div>
+      </div>
+    </div>
+
+    <!-- الجواز -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">card_travel</span>
+        بيانات الجواز
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم الجواز</label>
+          <input type="text" [(ngModel)]="form.passportNumber" name="passportNumber">
+        </div>
+        <div class="form-group">
+          <label>تاريخ إصدار الجواز</label>
+          <input type="date" [(ngModel)]="form.passportIssueDate" name="passportIssueDate">
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء الجواز</label>
+          <input type="date" [(ngModel)]="form.passportExpiry" name="passportExpiry">
+        </div>
+        <div class="form-group">
+          <label>حالة الجواز</label>
+          <input type="text" [(ngModel)]="form.passportStatus" name="passportStatus">
+        </div>
+      </div>
+    </div>
+
+    <!-- الإقامة -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">badge</span>
+        بيانات الإقامة
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم الإقامة</label>
+          <input type="text" [(ngModel)]="form.iqamaNumber" name="iqamaNumber">
+        </div>
+        <div class="form-group">
+          <label>المهنة في الإقامة</label>
+          <input type="text" [(ngModel)]="form.iqamaOccupation" name="iqamaOccupation">
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء الإقامة</label>
+          <input type="date" [(ngModel)]="form.iqamaExpiry" name="iqamaExpiry">
+        </div>
+        <div class="form-group">
+          <label>تاريخ التجديد</label>
+          <input type="date" [(ngModel)]="form.iqamaExpiryRenewed" name="iqamaExpiryRenewed">
+        </div>
+        <div class="form-group">
+          <label>حالة الإقامة</label>
+          <input type="text" [(ngModel)]="form.iqamaStatus" name="iqamaStatus">
+        </div>
+      </div>
+    </div>
+
+    <!-- عقد قوى -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">description</span>
+        بيانات عقد قوى
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم عقد قوى</label>
+          <input type="text" [(ngModel)]="form.qiwaContractNumber" name="qiwaContractNumber">
+        </div>
+        <div class="form-group">
+          <label>رقم المنشأة</label>
+          <input type="text" [(ngModel)]="form.establishmentNumber" name="establishmentNumber">
+        </div>
+        <div class="form-group">
+          <label>بداية العقد</label>
+          <input type="date" [(ngModel)]="form.qiwaContractStart" name="qiwaContractStart">
+        </div>
+        <div class="form-group">
+          <label>نهاية العقد</label>
+          <input type="date" [(ngModel)]="form.qiwaContractEnd" name="qiwaContractEnd">
+        </div>
+        <div class="form-group">
+          <label>حالة العقد</label>
+          <input type="text" [(ngModel)]="form.qiwaContractStatus" name="qiwaContractStatus">
+        </div>
+        <div class="form-group">
+          <label>تصريح العمل - انتهاء</label>
+          <input type="date" [(ngModel)]="form.workPermitExpiry" name="workPermitExpiry">
+        </div>
+        <div class="form-group">
+          <label>حالة تصريح العمل</label>
+          <input type="text" [(ngModel)]="form.workPermitStatus" name="workPermitStatus">
+        </div>
+        <div class="form-group">
+          <label>الشركة المنتسب لها</label>
+          <input type="text" [(ngModel)]="form.affiliatedCompany" name="affiliatedCompany">
+        </div>
+        <div class="form-group">
+          <label>رقم السجل التجاري</label>
+          <input type="text" [(ngModel)]="form.crNumber" name="crNumber">
+        </div>
+      </div>
+    </div>
+
+    <!-- التأمين -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">health_and_safety</span>
+        بيانات التأمين
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم التأمين</label>
+          <input type="text" [(ngModel)]="form.insuranceNumber" name="insuranceNumber">
+        </div>
+        <div class="form-group">
+          <label>فئة التأمين</label>
+          <input type="text" [(ngModel)]="form.insuranceCategory" name="insuranceCategory">
+        </div>
+        <div class="form-group">
+          <label>تاريخ إصدار التأمين</label>
+          <input type="date" [(ngModel)]="form.insuranceIssueDate" name="insuranceIssueDate">
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء التأمين</label>
+          <input type="date" [(ngModel)]="form.insuranceExpiry" name="insuranceExpiry">
+        </div>
+        <div class="form-group">
+          <label>شركة التأمين</label>
+          <input type="text" [(ngModel)]="form.insuranceCompany" name="insuranceCompany">
+        </div>
+        <div class="form-group">
+          <label>حالة التأمين</label>
+          <input type="text" [(ngModel)]="form.insuranceStatus" name="insuranceStatus">
+        </div>
+      </div>
+    </div>
+
+    <!-- الرخصة والبنك -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">account_balance</span>
+        بيانات الرخصة والبنك
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>يملك رخصة قيادة</label>
+          <select [(ngModel)]="form.hasLicence" name="hasLicence">
+            <option [ngValue]="true">نعم</option>
+            <option [ngValue]="false">لا</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="form.hasLicence">
+          <label>تاريخ انتهاء الرخصة</label>
+          <input type="date" [(ngModel)]="form.licenceExpiry" name="licenceExpiry">
+        </div>
+        <div class="form-group" *ngIf="form.hasLicence">
+          <label>حالة الرخصة</label>
+          <input type="text" [(ngModel)]="form.licenceStatus" name="licenceStatus">
+        </div>
+        <div class="form-group">
+          <label>اسم البنك</label>
+          <input type="text" [(ngModel)]="form.bankName" name="bankName">
+        </div>
+        <div class="form-group">
+          <label>رقم الحساب البنكي</label>
+          <input type="text" [(ngModel)]="form.bankAccountNumber" name="bankAccountNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label>فترة التجربة (أيام)</label>
+          <input type="number" [(ngModel)]="form.trialPeriodDays" name="trialPeriodDays">
+        </div>
+      </div>
+    </div>
+
+    <!-- الراتب -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">payments</span>
+        بيانات الراتب
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>الراتب الأساسي</label>
+          <input type="number" [(ngModel)]="form.basicSalary" name="basicSalary" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>بدل السكن</label>
+          <input type="number" [(ngModel)]="form.housingAllowance" name="housingAllowance" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>بدلات أخرى</label>
+          <input type="number" [(ngModel)]="form.otherAllowances" name="otherAllowances" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- حالة التوظيف -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <span class="material-icons-round">work</span>
+        حالة التوظيف
+      </h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>الحالة</label>
+          <select [(ngModel)]="form.status" name="status">
+            <option value="ACTIVE">نشط</option>
+            <option value="INACTIVE">غير نشط</option>
+            <option value="TERMINATED">منتهي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>تاريخ الالتحاق</label>
+          <input type="date" [(ngModel)]="form.joinDate" name="joinDate">
+        </div>
+        <div class="form-group">
+          <label>تاريخ المغادرة</label>
+          <input type="date" [(ngModel)]="form.leaveDate" name="leaveDate">
+        </div>
+      </div>
+      <div class="form-group full-width">
+        <label>ملاحظات</label>
+        <textarea [(ngModel)]="form.notes" name="notes" rows="3"></textarea>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <a [routerLink]="backRoute" class="btn btn-secondary">إلغاء</a>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        <span class="material-icons-round" *ngIf="!isSaving">save</span>
+        <div class="spinner-small" *ngIf="isSaving"></div>
+        {{ isEdit ? 'حفظ التعديلات' : 'إضافة' }}
+      </button>
+    </div>
+
+  </form>
+
+  <!-- المستندات (في حالة التعديل فقط) -->
+  <div class="form-section" *ngIf="isEdit && !isLoading" style="margin-top: 2rem;">
+    <h2 class="section-title">
+      <span class="material-icons-round">folder_shared</span>
+      مستندات الموظف
+    </h2>
+
+    <div class="upload-row" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem;">
+      <div class="form-group" style="flex: 1; min-width: 180px;">
+        <label>نوع المستند</label>
+        <select [(ngModel)]="selectedDocType" name="selectedDocType">
+          <option *ngFor="let t of documentTypes" [value]="t">{{ getDocTypeLabel(t) }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="flex: 2; min-width: 240px;">
+        <label>الملف (صورة أو PDF)</label>
+        <input id="staffDocumentFile" type="file"
+               accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+               (change)="onFileSelected($event)">
+      </div>
+
+      <div class="form-group" style="flex: 2; min-width: 200px;">
+        <label>ملاحظة</label>
+        <input type="text" [(ngModel)]="documentNote" name="documentNote" placeholder="اختياري">
+      </div>
+
+      <button type="button" class="btn btn-primary" (click)="uploadDocument()" [disabled]="isUploading || !selectedFile">
+        <span class="material-icons-round" *ngIf="!isUploading">upload_file</span>
+        <div class="spinner-small" *ngIf="isUploading"></div>
+        {{ isUploading ? 'جاري الرفع...' : 'رفع' }}
+      </button>
+    </div>
+
+    <p class="form-error" *ngIf="documentError" style="color: var(--danger, #e53935); font-size: 0.875rem; margin-bottom: 1rem;">{{ documentError }}</p>
+
+    <div class="empty-docs" *ngIf="documents.length === 0" style="text-align: center; color: var(--text-muted, #888); padding: 1rem;">
+      <p>لا توجد مستندات مرفوعة بعد</p>
+    </div>
+
+    <app-document-gallery *ngIf="documents.length > 0"
+                          [documents]="documents" [allowDelete]="true" apiPrefix="staff"
+                          (deleted)="onDocumentDeleted($event)"></app-document-gallery>
+  </div>
+</div>

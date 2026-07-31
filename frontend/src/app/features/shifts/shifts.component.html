@@ -1,0 +1,259 @@
+<div class="shifts-page">
+
+  <div class="page-header flex-between">
+    <div>
+      <h1 class="page-title">الشيفتات</h1>
+      <p class="page-subtitle">كل شفت مستورد من المورد، وحساب مستحقات الكابتن عنه</p>
+    </div>
+    <div class="flex-center gap-sm">
+      <button class="btn btn-outline" (click)="export()"
+              [disabled]="isExporting || isLoading || shifts.length === 0">
+        <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+        تصدير Excel
+      </button>
+      <button class="btn btn-outline" (click)="recalculate()" [disabled]="isRecalculating">
+        <span class="material-icons-round" [class.spinning]="isRecalculating">refresh</span>
+        إعادة حساب الفترة
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>{{ errorMessage }}
+  </div>
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>{{ successMessage }}
+    <button class="alert-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="toolbar">
+    <div class="date-field">
+      <label>من</label>
+      <input type="date" class="form-input" [(ngModel)]="from" (change)="load()">
+    </div>
+    <div class="date-field">
+      <label>إلى</label>
+      <input type="date" class="form-input" [(ngModel)]="to" (change)="load()">
+    </div>
+
+    <div class="date-field">
+      <label>المنطقة</label>
+      <select class="form-input" [(ngModel)]="zoneName" (change)="load()">
+        <option value="">كل المناطق</option>
+        <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
+      </select>
+    </div>
+
+    <div class="search-box">
+      <span class="material-icons-round">search</span>
+      <input type="text" placeholder="ابحث برقم الشفت أو معرف المورد أو الاسم"
+             [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keyup.enter)="load()">
+    </div>
+  </div>
+
+  <div class="filter-tabs">
+    <button *ngFor="let tab of tabs" class="filter-tab"
+            [class.active]="activeTab === tab.key" (click)="setTab(tab.key)">
+      <span class="material-icons-round">{{ tab.icon }}</span>
+      {{ tab.label }}
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جارٍ التحميل…</p>
+  </div>
+
+  <div class="empty-state card" *ngIf="!isLoading && shifts.length === 0">
+    <span class="material-icons-round">event_busy</span>
+    <h3>لا توجد شيفتات في هذه الفترة</h3>
+    <p>ارفع ملف الشيفتات من صفحة استيراد البيانات لتظهر هنا.</p>
+  </div>
+
+  <div class="table-wrap card" *ngIf="!isLoading && shifts.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>الكابتن</th>
+          <th>معرف المورد</th>
+          <th>المنطقة</th>
+          <th>الحالة</th>
+          <th>الساعات</th>
+          <th>الطلبات</th>
+          <th>الانشغال</th>
+          <th>اليومية</th>
+          <th>خصم تأخير</th>
+          <th>حافز</th>
+          <th>بنزين</th>
+          <th>سيارة</th>
+          <th>صافي الشفت</th>
+          <th>إيراد المورد</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let shift of shifts" class="clickable-row" [ngClass]="rowClass(shift)"
+            [class.selected]="selected?.id === shift.id" (click)="select(shift)">
+          <td class="nowrap">{{ shift.shiftDate }}</td>
+          <td>
+            <div class="name-cell" *ngIf="shift.captainName">
+              <span class="code-cell">{{ shift.captainCode }}</span>
+              {{ shift.captainName }}
+            </div>
+            <span class="unlinked" *ngIf="!shift.captainName">
+              <span class="material-icons-round">link_off</span> غير مربوط
+            </span>
+          </td>
+          <td class="mono">{{ shift.ninjaCaptainId }}</td>
+          <td class="nowrap">{{ shift.zoneName || '—' }}</td>
+          <td>
+            <span class="badge badge-danger" *ngIf="shift.excluded">مستبعد</span>
+            <span class="badge badge-warning" *ngIf="!shift.excluded && !shift.attended">غياب</span>
+            <span class="badge badge-success" *ngIf="!shift.excluded && shift.attended">حضور</span>
+          </td>
+          <td>{{ num(shift.workingHours) }}</td>
+          <td>{{ shift.totalDelivered ?? '—' }}</td>
+          <td>{{ percent(shift.busyUtilization) }}</td>
+          <td>{{ money(shift.dailyWage) }}</td>
+          <td [class.negative]="shift.lateDeduction > 0">
+            {{ shift.lateDeduction > 0 ? '−' + money(shift.lateDeduction) : '—' }}
+          </td>
+          <td [class.positive]="shift.dailyIncentive > 0">
+            {{ shift.dailyIncentive > 0 ? '+' + money(shift.dailyIncentive) : '—' }}
+          </td>
+          <td [class.positive]="shift.fuelAllowance > 0">
+            {{ shift.fuelAllowance > 0 ? '+' + money(shift.fuelAllowance) : '—' }}
+          </td>
+          <td [class.positive]="shift.carAllowance > 0">
+            {{ shift.carAllowance > 0 ? '+' + money(shift.carAllowance) : '—' }}
+          </td>
+          <td class="strong">{{ money(shift.netShiftPay) }}</td>
+          <td class="muted">{{ money(shift.supplierRevenue + shift.supplierExtraRevenue) }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">إجمالي الصفحة ({{ shifts.length }} شفت)</td>
+          <td>{{ num(pageTotals.hours) }}</td>
+          <td>{{ pageTotals.orders }}</td>
+          <td></td>
+          <td></td>
+          <td class="negative">−{{ money(pageTotals.deductions) }}</td>
+          <td class="positive">+{{ money(pageTotals.incentives) }}</td>
+          <td></td>
+          <td></td>
+          <td class="strong">{{ money(pageTotals.pay) }}</td>
+          <td class="muted">{{ money(pageTotals.revenue) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="!isLoading && totalPages > 1">
+    <button class="btn btn-sm btn-outline" [disabled]="page === 0" (click)="goToPage(page - 1)">
+      <span class="material-icons-round">chevron_right</span> السابق
+    </button>
+    <span class="page-info">صفحة {{ page + 1 }} من {{ totalPages }} — {{ totalElements }} شفت</span>
+    <button class="btn btn-sm btn-outline" [disabled]="page + 1 >= totalPages" (click)="goToPage(page + 1)">
+      التالي <span class="material-icons-round">chevron_left</span>
+    </button>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="panel-backdrop" *ngIf="selected" (click)="closePanel()"></div>
+  <aside class="detail-panel" *ngIf="selected">
+    <header class="panel-header">
+      <div>
+        <h2>شفت {{ selected.externalShiftId }}</h2>
+        <p>{{ selected.shiftDate }} — {{ selected.zoneName || selected.shiftName }}</p>
+      </div>
+      <button class="icon-btn" (click)="closePanel()">
+        <span class="material-icons-round">close</span>
+      </button>
+    </header>
+
+    <section class="panel-section">
+      <h3>الكابتن</h3>
+      <div class="kv"><span>الاسم</span><b>{{ selected.captainName || 'غير مربوط' }}</b></div>
+      <div class="kv"><span>كود كمال</span><b>{{ selected.captainCode || '—' }}</b></div>
+      <div class="kv"><span>معرف المورد</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
+      <div class="kv"><span>الاسم لدى المورد</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
+    </section>
+
+    <section class="panel-section">
+      <h3>حساب المستحق</h3>
+      <p class="calc-note" *ngIf="selected.calcNote">{{ selected.calcNote }}</p>
+      <div class="kv"><span>اليومية</span><b>{{ money(selected.dailyWage) }}</b></div>
+      <div class="kv negative"><span>خصم التأخير</span><b>−{{ money(selected.lateDeduction) }}</b></div>
+      <div class="kv positive">
+        <span>حافز {{ selected.extraOrders || 0 }} طلب إضافي</span>
+        <b>+{{ money(selected.dailyIncentive) }}</b>
+      </div>
+      <div class="kv positive"><span>بدل البنزين</span><b>+{{ money(selected.fuelAllowance) }}</b></div>
+      <div class="kv positive"><span>بدل السيارة</span><b>+{{ money(selected.carAllowance) }}</b></div>
+      <div class="kv total"><span>صافي الشفت</span><b>{{ money(selected.netShiftPay) }} ريال</b></div>
+    </section>
+
+    <section class="panel-section">
+      <h3>أرقام المورد</h3>
+      <div class="kv"><span>ساعات العمل</span><b>{{ num(selected.workingHours) }}</b></div>
+      <div class="kv"><span>الطلبات</span><b>{{ selected.totalDelivered ?? '—' }}</b></div>
+      <div class="kv"><span>حالة الحضور</span><b>{{ selected.attendanceFlag || '—' }}</b></div>
+      <div class="kv"><span>بداية الشفت</span><b>{{ time(selected.scheduledStart) }}</b></div>
+      <div class="kv"><span>تسجيل الدخول</span><b>{{ time(selected.actualCheckin) }}</b></div>
+      <div class="kv"><span>دقائق التأخير</span><b>{{ num(selected.delayMinutes) }}</b></div>
+      <div class="kv"><span>نسبة الانشغال</span><b>{{ percent(selected.busyUtilization) }}</b></div>
+      <div class="kv"><span>التسليم في الوقت</span><b>{{ percent(selected.deliveryOntime) }}</b></div>
+      <div class="kv"><span>معدل الطلبات بالساعة</span><b>{{ num(selected.hourlyUtr) }}</b></div>
+      <div class="kv"><span>وقت الانشغال</span><b>{{ num(selected.busyTime) }}</b></div>
+      <div class="kv"><span>وقت الفراغ</span><b>{{ num(selected.freeTime) }}</b></div>
+      <div class="kv"><span>خارج النطاق</span><b>{{ num(selected.awayFromZone) }}</b></div>
+    </section>
+
+    <section class="panel-section">
+      <h3>الربحية</h3>
+      <div class="kv">
+        <span>حقّق شروط المورد</span>
+        <b>{{ selected.qualifiesFullRate ? 'نعم' : 'لا' }}</b>
+      </div>
+      <div class="kv"><span>إيراد الشفت</span><b>{{ money(selected.supplierRevenue) }}</b></div>
+      <div class="kv"><span>إيراد الطلبات الإضافية</span><b>{{ money(selected.supplierExtraRevenue) }}</b></div>
+      <div class="kv total"><span>الهامش</span><b>{{ money(selected.shiftMargin) }} ريال</b></div>
+    </section>
+
+    <section class="panel-section">
+      <h3>الاستبعاد</h3>
+      <div class="excluded-note" *ngIf="selected.excluded">
+        <span class="material-icons-round">block</span>
+        <div>
+          <b>هذا الشفت مستبعد من الحساب</b>
+          <p>{{ selected.exclusionReason }}</p>
+        </div>
+      </div>
+
+      <button class="btn btn-outline btn-sm" *ngIf="selected.excluded" (click)="include()">
+        إرجاع الشفت للحساب
+      </button>
+
+      <ng-container *ngIf="!selected.excluded">
+        <button class="btn btn-outline btn-sm" *ngIf="!showExcludeForm" (click)="showExcludeForm = true">
+          استبعاد هذا الشفت
+        </button>
+        <div class="exclude-form" *ngIf="showExcludeForm">
+          <label class="form-label">سبب الاستبعاد (مطلوب)</label>
+          <input type="text" class="form-input" [(ngModel)]="excludeReason"
+                 placeholder="مثال: خطأ في بيانات المورد">
+          <div class="form-actions">
+            <button class="btn btn-danger btn-sm" [disabled]="!excludeReason.trim()" (click)="exclude()">
+              تأكيد الاستبعاد
+            </button>
+            <button class="btn btn-outline btn-sm" (click)="showExcludeForm = false">إلغاء</button>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+  </aside>
+</div>

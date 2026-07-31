@@ -1,0 +1,357 @@
+<div class="dashboard-page animate-fade-in">
+
+  <!-- Executive Hero Header -->
+  <div class="executive-header">
+    <div class="header-titles">
+      <div class="badge-tag">
+        <span class="pulse-dot"></span>
+        مركز القيادة والعمليات التنفيذي
+      </div>
+      <h1 class="page-title">لوحة التحكم والأداء الإستراتيجي</h1>
+      <p class="page-subtitle" *ngIf="data">
+        نظرة عامة شمولية من {{ data.currentPeriodFrom }} إلى {{ data.currentPeriodTo }}
+      </p>
+    </div>
+
+    <!-- Date Range & Refresh Controls -->
+    <div class="header-controls">
+      <div class="date-range-toolbar">
+        <div class="preset-pills">
+          <button type="button" class="preset-btn" [class.active]="activePreset === 'JULY_2026'"
+            (click)="applyPreset('JULY_2026')">
+            يوليو 2026
+          </button>
+          <button type="button" class="preset-btn" [class.active]="activePreset === 'THIS_MONTH'"
+            (click)="applyPreset('THIS_MONTH')">
+            الشهر الحالي
+          </button>
+          <button type="button" class="preset-btn" [class.active]="activePreset === 'LAST_MONTH'"
+            (click)="applyPreset('LAST_MONTH')">
+            الشهر السابق
+          </button>
+          <button type="button" class="preset-btn" [class.active]="activePreset === 'LAST_30'"
+            (click)="applyPreset('LAST_30')">
+            آخر 30 يوم
+          </button>
+        </div>
+
+        <div class="custom-date-inputs">
+          <div class="date-input-group">
+            <span class="date-label">من:</span>
+            <input type="date" [(ngModel)]="fromDate" (change)="onDateChange()" class="date-field" />
+          </div>
+          <div class="date-input-group">
+            <span class="date-label">إلى:</span>
+            <input type="date" [(ngModel)]="toDate" (change)="onDateChange()" class="date-field" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-refresh" (click)="loadDashboard()" [class.spinning]="isLoading" title="تحديث البيانات">
+        <span class="material-icons-round">refresh</span>
+        <span>تحديث لحظي</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جاري تجميع المؤشرات والتحليلات المالية...</p>
+  </div>
+
+  <div class="dashboard-content" *ngIf="!isLoading && data">
+
+    <!-- Financials & Margin Overview Bar -->
+    <div class="financial-overview-grid">
+      <div class="financial-card net-payroll">
+        <div class="fin-icon"><span class="material-icons-round">payments</span></div>
+        <div class="fin-info">
+          <span class="fin-label">إجمالي الرواتب الصافية (المتوقعة)</span>
+          <span class="fin-value">{{ (data.totalNetPayroll || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
+          <span class="fin-sub">من إجمالي {{ (data.totalGrossPayroll || 0) | currency:'SAR':'symbol':'1.0-0' }} مستحقات
+            قائمة</span>
+        </div>
+      </div>
+
+      <div class="financial-card revenue">
+        <div class="fin-icon"><span class="material-icons-round">point_of_sale</span></div>
+        <div class="fin-info">
+          <span class="fin-label">إجمالي إيراد الموردين</span>
+          <span class="fin-value">{{ (data.totalSupplierRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
+          <span class="fin-sub">عن {{ data.ordersThisMonth | number }} طلب منفذ</span>
+        </div>
+      </div>
+
+      <div class="financial-card margin">
+        <div class="fin-icon"><span class="material-icons-round">trending_up</span></div>
+        <div class="fin-info">
+          <span class="fin-label">هامش الأرباح التشغيلية (Estimated Margin)</span>
+          <span class="fin-value" [class.negative]="(data.estimatedMargin || 0) < 0">
+            {{ (data.estimatedMargin || 0) | currency:'SAR':'symbol':'1.0-0' }}
+          </span>
+          <span class="fin-sub">فرق إيرادات الموردين عن الرواتب الصافية</span>
+        </div>
+      </div>
+
+      <div class="financial-card productivity">
+        <div class="fin-icon"><span class="material-icons-round">speed</span></div>
+        <div class="fin-info">
+          <span class="fin-label">إنتاجية الشفت الواحد</span>
+          <span class="fin-value">{{ data.avgOrdersPerShift || 0 }} <small>طلب/شفت</small></span>
+          <span class="fin-sub">إجمالي {{ data.shiftsThisMonth | number }} شفت عمل</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Critical Action Center (High Risk & Alerts) -->
+    <div class="action-center-container"
+      *ngIf="expiredDocuments > 0 || hasUnmatched || (data.lateReturns && data.lateReturns > 0)">
+      <div class="action-center-header">
+        <span class="material-icons-round alert-icon-main">error</span>
+        <h2>مركز الإجراءات العاجلة والمخاطر التشغيلية</h2>
+      </div>
+
+      <div class="alerts-grid">
+        <!-- Expired Docs -->
+        <a class="alert-action-card critical" *ngIf="expiredDocuments > 0" routerLink="/captains"
+          [queryParams]="{ alert: 'EXPIRED' }">
+          <div class="alert-card-icon"><span class="material-icons-round">event_busy</span></div>
+          <div class="alert-card-body">
+            <span class="alert-title">{{ expiredDocuments }} وثيقة منتهية الصلاحية</span>
+            <span class="alert-desc">تحتاج لتجديد فوري لتجنب العقوبات والمخاطر القانونية</span>
+          </div>
+          <span class="btn-action">مراجعة الآن &larr;</span>
+        </a>
+
+        <!-- Unmatched IDs -->
+        <a class="alert-action-card warning" *ngIf="hasUnmatched" routerLink="/suppliers">
+          <div class="alert-card-icon"><span class="material-icons-round">link_off</span></div>
+          <div class="alert-card-body">
+            <span class="alert-title">{{ data.unmatchedNinjaIds }} معرف + {{ data.unmatchedShifts }} شفت غير
+              مربوط</span>
+            <span class="alert-desc">شفتات عمل تحتاج لربطها بالكباتن المناسبين</span>
+          </div>
+          <span class="btn-action">ربط الهويات &larr;</span>
+        </a>
+
+        <!-- Late Returns -->
+        <a class="alert-action-card warning" *ngIf="data.lateReturns && data.lateReturns > 0" routerLink="/fleet">
+          <div class="alert-card-icon"><span class="material-icons-round">no_crash</span></div>
+          <div class="alert-card-body">
+            <span class="alert-title">{{ data.lateReturns }} سيارة متأخرة عن الإرجاع</span>
+            <span class="alert-desc">كباتن يتجاوزون فترة التخصيص المحددة للسيارات</span>
+          </div>
+          <span class="btn-action">متابعة الأسطول &larr;</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Analytics & Leaderboard Grid -->
+    <div class="analytics-main-grid">
+
+      <!-- Leaderboard Widget (Top / Bottom Captains) -->
+      <div class="dashboard-panel leaderboard-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <span class="material-icons-round panel-icon">workspace_premium</span>
+            <h3>تنافسية الأداء والكباتن</h3>
+          </div>
+          <div class="panel-controls">
+            <!-- Timeframe selector -->
+            <div class="pill-group">
+              <button class="pill-btn" [class.active]="leaderboardTimeframe === 'MONTH'"
+                (click)="setTimeframe('MONTH')">كامل الفترة</button>
+              <button class="pill-btn" [class.active]="leaderboardTimeframe === 'WEEK'"
+                (click)="setTimeframe('WEEK')">الأسبوع الحالي</button>
+            </div>
+            <!-- Rank selector -->
+            <div class="pill-group">
+              <button class="pill-btn rank-top" [class.active]="leaderboardTab === 'TOP'" (click)="setTab('TOP')">الأعلى
+                5 ✨</button>
+              <button class="pill-btn rank-bottom" [class.active]="leaderboardTab === 'BOTTOM'"
+                (click)="setTab('BOTTOM')">الأقل 5 ⚠️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="leaderboard-list">
+          <div class="leaderboard-item" *ngFor="let item of currentLeaderboard; let idx = index"
+            [class.top-performer]="leaderboardTab === 'TOP'" [class.bottom-performer]="leaderboardTab === 'BOTTOM'">
+            <div class="rank-badge" [class.gold]="idx===0 && leaderboardTab==='TOP'"
+              [class.silver]="idx===1 && leaderboardTab==='TOP'" [class.bronze]="idx===2 && leaderboardTab==='TOP'">
+              #{{ idx + 1 }}
+            </div>
+            <div class="captain-info">
+              <div class="captain-name">
+                {{ item.captainName }}
+                <span class="kamal-code">({{ item.kamalCode }})</span>
+              </div>
+              <div class="captain-meta">
+                <span>{{ item.captainType === 'EMPLOYEE' ? 'موظف' : 'أجير' }}</span> &bull;
+                <span>{{ item.attendedShifts }} شفت حضور</span>
+              </div>
+            </div>
+            <div class="captain-metrics">
+              <div class="metric-box">
+                <span class="metric-val">{{ item.totalOrders | number }}</span>
+                <span class="metric-lbl">طلب</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-val highlight">{{ item.netPay | currency:'SAR':'symbol':'1.0-0' }}</span>
+                <span class="metric-lbl">صافي المستحق</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="currentLeaderboard.length === 0">
+            <span class="material-icons-round">info</span>
+            <p>لا توجد بيانات شفتات مسجلة لهذه الفترة حتى الآن.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Panel: Targets & Fleet Donut -->
+      <div class="dashboard-panel charts-panel">
+
+        <!-- Target Distribution Card -->
+        <div class="sub-chart-card">
+          <div class="chart-card-header">
+            <h4><span class="material-icons-round">flag</span> إنجاز أهداف الكباتن (Target)</h4>
+            <span class="chart-tag">{{ data.targetAchievementRate || 0 }}% محققون</span>
+          </div>
+
+          <div class="target-bars">
+            <div class="target-bar-group">
+              <div class="bar-label">
+                <span>محققو الهدف (&ge; {{ data.ordersThisMonth > 0 ? 'التارقت' : 'المطلوب' }})</span>
+                <strong>{{ data.captainsAtTarget }} كابتن</strong>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill green"
+                  [style.width.%]="data.totalActiveCaptains > 0 ? (data.captainsAtTarget / data.totalActiveCaptains * 100) : 0">
+                </div>
+              </div>
+            </div>
+
+            <div class="target-bar-group">
+              <div class="bar-label">
+                <span>قريبون من Target (&lt; 60 طلب)</span>
+                <strong>{{ data.captainsNearTarget }} كابتن</strong>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill orange"
+                  [style.width.%]="data.totalActiveCaptains > 0 ? (data.captainsNearTarget / data.totalActiveCaptains * 100) : 0">
+                </div>
+              </div>
+            </div>
+
+            <div class="target-bar-group">
+              <div class="bar-label">
+                <span>تحت التارقت</span>
+                <strong>{{ data.captainsBelowTarget || 0 }} كابتن</strong>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill red"
+                  [style.width.%]="data.totalActiveCaptains > 0 ? ((data.captainsBelowTarget || 0) / data.totalActiveCaptains * 100) : 0">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fleet Utilization Donut SVG Chart -->
+        <div class="sub-chart-card">
+          <div class="chart-card-header">
+            <h4><span class="material-icons-round">directions_car</span> توزيع الأسطول والسيارات</h4>
+            <span class="chart-tag">إجمالي {{ data.totalVehicles }} سيارة</span>
+          </div>
+
+          <div class="donut-chart-container">
+            <div class="svg-donut">
+              <svg viewBox="0 0 36 36" class="donut">
+                <path class="donut-ring"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                <!-- Assigned Segment -->
+                <path class="donut-segment assigned" [attr.stroke-dasharray]="assignedDash" stroke-dashoffset="25"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <div class="donut-center">
+                <span class="donut-val">{{ assignedPct }}%</span>
+                <span class="donut-lbl">مستغلة</span>
+              </div>
+            </div>
+
+            <div class="donut-legend">
+              <div class="legend-item">
+                <span class="legend-dot assigned"></span>
+                <span>مخصصة: <strong>{{ data.assignedVehicles }}</strong></span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot available"></span>
+                <span>متاحة: <strong>{{ data.availableVehicles }}</strong></span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot maintenance"></span>
+                <span>في الصيانة: <strong>{{ data.maintenanceVehicles }}</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Core Operational Stats Grid -->
+    <div class="cards-section-header">
+      <h3>مؤشرات التشغيل والأصول</h3>
+    </div>
+
+    <div class="cards-grid">
+      <a class="dashboard-card card-link" *ngFor="let card of cards; let i = index" [class.card-static]="!card.link"
+        [routerLink]="card.link || null" [queryParams]="card.linkParams || null">
+        <div class="card-icon" [style.background]="card.bgColor">
+          <span class="material-icons-round" [style.color]="card.color">{{ card.icon }}</span>
+        </div>
+        <div class="card-info">
+          <span class="card-value" [style.color]="card.color">{{ card.value }}</span>
+          <span class="card-label">{{ card.label }}</span>
+          <span class="card-subtext" *ngIf="card.subtext">{{ card.subtext }}</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Operational Quick Actions Toolbar -->
+    <div class="quick-actions-toolbar">
+      <div class="actions-header">
+        <span class="material-icons-round">bolt</span>
+        <span>إجراءات سريعة واختصارات التشغيل</span>
+      </div>
+      <div class="actions-buttons">
+        <a routerLink="/imports" class="action-btn btn-primary">
+          <span class="material-icons-round">cloud_upload</span>
+          <span>استيراد كشف الشفتات</span>
+        </a>
+        <a routerLink="/captains" class="action-btn">
+          <span class="material-icons-round">person_add</span>
+          <span>إدارة الكباتن</span>
+        </a>
+        <a routerLink="/payroll" class="action-btn">
+          <span class="material-icons-round">request_quote</span>
+          <span>مسير الرواتب</span>
+        </a>
+        <a routerLink="/fleet" class="action-btn">
+          <span class="material-icons-round">commute</span>
+          <span>إدارة الأسطول</span>
+        </a>
+        <a routerLink="/custody" class="action-btn">
+          <span class="material-icons-round">inventory_2</span>
+          <span>تسليم/استلام عهدة</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>

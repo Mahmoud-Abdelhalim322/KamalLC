@@ -1,0 +1,146 @@
+﻿.page-container { max-width: 1200px; }
+
+.page-header { margin-bottom: 22px; }
+
+.page-title {
+  font-size: 1.6rem; font-weight: 800;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+
+.page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+
+.muted { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* ---------- Alerts ---------- */
+.alert {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 16px;
+  font-size: 0.88rem; font-weight: 600;
+
+  .material-icons-round { font-size: 20px; }
+  .alert-close {
+    margin-inline-start: auto; background: none; border: none;
+    font-size: 1.3rem; line-height: 1; cursor: pointer; color: inherit; opacity: 0.7;
+  }
+}
+.alert-danger { background: #FEE2E2; color: #991B1B; }
+.alert-success { background: #DCFCE7; color: #166534; }
+
+/* ---------- States ---------- */
+.loading-state, .empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 60px 20px; text-align: center; color: var(--text-secondary);
+
+  .material-icons-round { font-size: 48px; color: var(--text-light); }
+  p { font-size: 0.88rem; }
+}
+
+.loading-inline {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 0; font-size: 0.83rem; color: var(--text-secondary);
+}
+
+/* Explains the effective-dating rule before the user edits anything. */
+.info-banner {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #EFF6FF; color: #1E40AF;
+  border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px;
+
+  .material-icons-round { font-size: 20px; flex-shrink: 0; }
+  p { font-size: 0.83rem; line-height: 1.8; }
+}
+
+/* ---------- Settings groups ---------- */
+.settings-group {
+  padding: 0; margin-bottom: 18px; overflow: hidden;
+}
+
+.group-header {
+  display: flex; align-items: center; gap: 9px;
+  padding: 15px 20px; background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+
+  .material-icons-round { font-size: 20px; color: var(--primary); }
+  h2 { font-size: 0.98rem; font-weight: 700; color: var(--text-primary); }
+}
+
+.setting-row {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+  &:last-child { border-bottom: none; }
+}
+
+.setting-main {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) auto auto;
+  gap: 14px; align-items: center;
+}
+
+.setting-label {
+  display: flex; flex-direction: column; gap: 3px;
+
+  b { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
+  code {
+    font-size: 0.7rem; color: var(--text-light);
+    font-family: 'Courier New', monospace; direction: ltr; text-align: right;
+  }
+}
+
+.setting-value {
+  display: flex; align-items: baseline; gap: 6px;
+
+  .value { font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+  .unit { font-size: 0.78rem; color: var(--text-secondary); }
+}
+
+.setting-meta { font-size: 0.76rem; color: var(--text-light); white-space: nowrap; }
+
+.setting-actions { display: flex; gap: 6px; }
+
+/* ---------- Inline edit ---------- */
+.setting-edit {
+  background: var(--bg-input); border-radius: var(--radius-md); padding: 16px;
+}
+
+.edit-title {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+  b { font-size: 0.9rem; color: var(--text-primary); }
+}
+
+.edit-fields {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-bottom: 10px;
+}
+
+.edit-hint {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 0.76rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 12px;
+  .material-icons-round { font-size: 15px; }
+}
+
+.form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- History ---------- */
+.setting-history {
+  margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);
+
+  .data-table {
+    width: 100%; border-collapse: collapse;
+
+    th, td { padding: 8px 12px; text-align: right; font-size: 0.79rem; white-space: nowrap; }
+    th {
+      background: var(--bg-input); font-weight: 700; color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    td { border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .setting-main {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .setting-actions { justify-content: flex-start; }
+}

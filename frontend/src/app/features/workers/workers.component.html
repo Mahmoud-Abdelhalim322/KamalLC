@@ -1,0 +1,108 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-info">
+      <h1>العاملين</h1>
+      <span class="badge-count" *ngIf="totalElements">{{ totalElements }}</span>
+    </div>
+    <a routerLink="/workers/new" class="btn btn-primary">
+      <span class="material-icons-round">person_add</span>
+      إضافة عامل
+    </a>
+  </div>
+
+  <!-- Search & Toolbar -->
+  <div class="toolbar">
+    <div class="search-bar">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" placeholder="بحث بالاسم أو الكود أو رقم الهوية..."
+             [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+    </div>
+
+    <!-- Alert Filters -->
+    <div class="filter-tabs">
+      <button class="filter-tab" [class.active]="!alertFilter" (click)="setAlertFilter('')">
+        الكل
+      </button>
+      <button class="filter-tab" [class.active]="alertFilter === 'ANY'" (click)="setAlertFilter('ANY')">
+        <span class="material-icons-round tab-icon" style="color: #F59E0B;">notification_important</span>
+        تنبيهات الوثائق
+      </button>
+      <button class="filter-tab" [class.active]="alertFilter === 'EXPIRED'" (click)="setAlertFilter('EXPIRED')">
+        منتهية
+      </button>
+      <button class="filter-tab" [class.active]="alertFilter === 'EXPIRING'" (click)="setAlertFilter('EXPIRING')">
+        وشيكة
+      </button>
+      <button class="filter-tab" [class.active]="alertFilter === 'MISSING'" (click)="setAlertFilter('MISSING')">
+        غير مسجلة
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <span>جاري التحميل...</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" *ngIf="!isLoading">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>الكود</th>
+          <th>الاسم بالعربي</th>
+          <th>الوظيفة</th>
+          <th>الجنسية</th>
+          <th>الهاتف</th>
+          <th>إنذار الوثائق</th>
+          <th>تاريخ الالتحاق</th>
+          <th>الحالة</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of staff" class="table-row">
+          <td class="code-cell">{{ s.staffCode }}</td>
+          <td class="name-cell">{{ s.fullNameAr }}</td>
+          <td>{{ s.jobTitle || '—' }}</td>
+          <td>{{ s.nationality || '—' }}</td>
+          <td dir="ltr">{{ s.phone || '—' }}</td>
+          <td>
+            <span class="badge" [ngClass]="documentAlertClass(s)">
+              {{ documentAlertLabel(s) }}
+            </span>
+          </td>
+          <td>{{ s.joinDate || '—' }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(s.status)">
+              {{ getStatusLabel(s.status) }}
+            </span>
+          </td>
+          <td>
+            <a [routerLink]="['/workers', s.id]" class="btn-link">
+              <span class="material-icons-round">visibility</span>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="staff.length === 0">
+      <span class="material-icons-round">engineering</span>
+      <p>لا يوجد عاملين بعد</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button (click)="prevPage()" [disabled]="currentPage === 0">
+      <span class="material-icons-round">chevron_right</span>
+    </button>
+    <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+      <span class="material-icons-round">chevron_left</span>
+    </button>
+  </div>
+</div>

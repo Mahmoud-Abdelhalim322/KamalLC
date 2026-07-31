@@ -1,0 +1,305 @@
+<div class="registry-page">
+  <div class="page-header">
+    <div class="header-row">
+      <div>
+        <h1 class="page-title">سجل المعرفات</h1>
+        <p class="page-subtitle">إدارة معرفات الموردين وربطها بالكباتن — {{ totalElements }} معرف</p>
+      </div>
+      <button class="btn btn-primary" (click)="openAddSlot()" [disabled]="suppliers.length === 0">
+        <span class="material-icons-round">add</span>
+        معرف جديد
+      </button>
+    </div>
+  </div>
+
+  <!-- Supplier Tabs -->
+  <div class="supplier-bar">
+    <div class="supplier-tabs">
+      <button class="supplier-tab" [class.active]="!activeSupplier" (click)="showAll()">
+        الكل
+      </button>
+      <button class="supplier-tab" *ngFor="let s of suppliers"
+              [class.active]="activeSupplier?.id === s.id"
+              (click)="selectSupplier(s)">
+        <span class="supplier-dot" [style.background]="s.color"></span>
+        {{ s.name }}
+        <span class="slot-count">{{ s.slotCount }}</span>
+      </button>
+    </div>
+
+    <button class="add-supplier-btn" (click)="openAddSupplier()">
+      <span class="material-icons-round">add_business</span>
+      مورد جديد
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جاري تحميل المعرفات...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && slots.length === 0">
+    <span class="material-icons-round">badge</span>
+    <h3>لا يوجد معرفات</h3>
+    <p>أضف معرفاً يدوياً أو قم باستيراد ملف Excel</p>
+    <div class="empty-actions">
+      <button class="btn btn-primary" (click)="openAddSlot()" [disabled]="suppliers.length === 0">
+        <span class="material-icons-round">add</span>
+        معرف جديد
+      </button>
+      <a routerLink="/imports" class="btn btn-outline">
+        <span class="material-icons-round">upload_file</span>
+        استيراد ملف
+      </a>
+    </div>
+  </div>
+
+  <!-- Slots Table -->
+  <div class="table-wrap" *ngIf="!isLoading && slots.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>المعرف</th>
+          <th>المورد</th>
+          <th>الكابتن المربوط</th>
+          <th>كود الكابتن</th>
+          <th>مخصص منذ</th>
+          <th>الحالة</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let slot of slots" class="clickable-row" (click)="openHistory(slot)">
+          <td class="id-cell">
+            <span class="id-value">{{ slot.externalId }}</span>
+          </td>
+          <td>
+            <span class="supplier-chip" [style.background]="slot.supplierColor + '20'" [style.color]="slot.supplierColor">
+              {{ slot.supplierName }}
+            </span>
+          </td>
+          <td class="captain-cell">
+            <ng-container *ngIf="slot.currentCaptainName">
+              <a [routerLink]="['/captains', slot.currentCaptainId]" class="captain-link" (click)="$event.stopPropagation()">
+                {{ slot.currentCaptainName }}
+              </a>
+            </ng-container>
+            <span class="unassigned" *ngIf="!slot.currentCaptainName">غير مخصص</span>
+          </td>
+          <td>
+            <span class="code" *ngIf="slot.currentCaptainCode">{{ slot.currentCaptainCode }}</span>
+            <span class="no-data" *ngIf="!slot.currentCaptainCode">—</span>
+          </td>
+          <td>{{ slot.assignedSince || '—' }}</td>
+          <td>
+            <span class="status-badge" [class]="slot.currentCaptainName ? 'status-assigned' : 'status-unassigned'">
+              {{ slot.currentCaptainName ? 'مخصص' : 'متاح' }}
+            </span>
+          </td>
+          <td>
+            <button class="history-btn" title="عرض التاريخ">
+              <span class="material-icons-round">history</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 0">
+      <span class="material-icons-round">chevron_right</span>
+    </button>
+    <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+      <span class="material-icons-round">chevron_left</span>
+    </button>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal-overlay" *ngIf="selectedSlot" (click)="closeHistory()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">history</span>
+          تاريخ المعرف {{ selectedSlot.externalId }}
+        </h2>
+        <button class="modal-close" (click)="closeHistory()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="loading-container" *ngIf="isLoadingHistory">
+          <div class="spinner"></div>
+        </div>
+
+        <div class="empty-history" *ngIf="!isLoadingHistory && historyItems.length === 0">
+          <span class="material-icons-round">schedule</span>
+          <p>لا يوجد سجل تخصيصات</p>
+        </div>
+
+        <div class="timeline" *ngIf="!isLoadingHistory && historyItems.length > 0">
+          <div class="timeline-item" *ngFor="let item of historyItems; let first = first">
+            <div class="timeline-dot" [class.active]="!item.validTo"></div>
+            <div class="timeline-card">
+              <div class="timeline-captain">
+                <a [routerLink]="['/captains', item.captainId]" class="captain-link" (click)="closeHistory()">
+                  {{ item.captainName }}
+                </a>
+                <span class="code">{{ item.captainCode }}</span>
+              </div>
+              <div class="timeline-dates">
+                <span>من: {{ item.validFrom }}</span>
+                <span *ngIf="item.validTo">إلى: {{ item.validTo }}</span>
+                <span class="active-badge" *ngIf="!item.validTo">نشط حالياً</span>
+              </div>
+              <div class="timeline-reason" *ngIf="item.reason">{{ item.reason }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Supplier Modal -->
+  <div class="modal-overlay" *ngIf="showAddSupplier" (click)="closeAddSupplier()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">add_business</span>
+          إضافة مورد جديد
+        </h2>
+        <button class="modal-close" (click)="closeAddSupplier()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم المورد *</label>
+          <input class="form-input" [(ngModel)]="newSupplierName" placeholder="مثال: جاهز">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">كود المورد *</label>
+          <input class="form-input" [(ngModel)]="newSupplierCode"
+                 placeholder="JAHEZ" dir="ltr" style="text-transform: uppercase;">
+          <p class="field-hint">كود إنجليزي فريد يُستخدم داخلياً لتمييز المورد</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">لون المورد</label>
+          <div class="color-row">
+            <input type="color" class="color-input" [(ngModel)]="newSupplierColor">
+            <span class="color-preview" [style.background]="newSupplierColor"></span>
+            <span class="color-value" dir="ltr">{{ newSupplierColor }}</span>
+          </div>
+        </div>
+
+        <p class="form-error" *ngIf="supplierError">{{ supplierError }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeAddSupplier()">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveSupplier()" [disabled]="isSavingSupplier">
+          <span class="spinner spinner-sm" *ngIf="isSavingSupplier"></span>
+          حفظ المورد
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Supplier ID Modal -->
+  <div class="modal-overlay" *ngIf="showAddSlot" (click)="closeAddSlot()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">badge</span>
+          إضافة معرف جديد
+        </h2>
+        <button class="modal-close" (click)="closeAddSlot()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">نوع المورد *</label>
+          <select class="form-input" [(ngModel)]="newSlotSupplierId">
+            <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} ({{ s.code }})</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">رقم المعرف *</label>
+          <input class="form-input" [(ngModel)]="newSlotExternalId"
+                 placeholder="المعرف لدى المورد" dir="ltr">
+        </div>
+
+        <div class="link-section">
+          <div class="link-header">
+            <span class="material-icons-round">link</span>
+            ربط بكابتن
+            <span class="optional-tag">اختياري</span>
+          </div>
+
+          <div class="form-group captain-picker">
+            <label class="form-label">ابحث بالاسم أو كود كمال</label>
+            <div class="picker-input">
+              <input class="form-input" [ngModel]="captainQuery"
+                     (ngModelChange)="onCaptainQueryChange($event)"
+                     placeholder="اكتب للبحث...">
+              <button class="clear-btn" *ngIf="captainQuery" (click)="clearCaptain()" title="مسح">
+                <span class="material-icons-round">close</span>
+              </button>
+            </div>
+
+            <div class="picker-results" *ngIf="captainResults.length > 0">
+              <button class="picker-item" *ngFor="let c of captainResults" (click)="selectCaptain(c)">
+                <span class="picker-name">{{ c.fullNameAr }}</span>
+                <span class="picker-code">{{ c.kamalCode }}</span>
+              </button>
+            </div>
+
+            <p class="field-hint" *ngIf="isSearchingCaptains">جاري البحث...</p>
+            <p class="field-hint selected-hint" *ngIf="selectedCaptain">
+              <span class="material-icons-round">check_circle</span>
+              سيتم ربط المعرف بـ {{ selectedCaptain.fullNameAr }}
+            </p>
+          </div>
+
+          <ng-container *ngIf="selectedCaptain">
+            <div class="form-group">
+              <label class="form-label">تاريخ بدء التخصيص</label>
+              <input class="form-input" type="date" [(ngModel)]="newSlotValidFrom">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">اسم الكابتن لدى المورد</label>
+              <input class="form-input" [(ngModel)]="newSlotSideName" placeholder="اختياري">
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <input class="form-input" [(ngModel)]="newSlotNotes" placeholder="اختياري">
+        </div>
+
+        <p class="form-error" *ngIf="slotError">{{ slotError }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeAddSlot()">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveSlot()" [disabled]="isSavingSlot">
+          <span class="spinner spinner-sm" *ngIf="isSavingSlot"></span>
+          حفظ المعرف
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

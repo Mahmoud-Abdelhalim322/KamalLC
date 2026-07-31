@@ -1,0 +1,148 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="logo-ksclc.png" alt="KSCLC Logo" class="sidebar-logo-img">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ng-container *ngFor="let item of navItems">
+        <ng-container *ngIf="isVisible(item)">
+          <!-- Simple nav item (no children) -->
+          <a *ngIf="!item.children && item.route"
+             [routerLink]="item.route"
+             routerLinkActive="active"
+             class="nav-item"
+             [title]="item.label">
+            <span class="material-icons-round nav-icon">{{ item.icon }}</span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+          </a>
+
+          <!-- Nav group with children -->
+          <div *ngIf="item.children" class="nav-group" [class.expanded]="item.expanded">
+            <button class="nav-item nav-group-toggle" (click)="toggleGroup(item)" [title]="item.label">
+              <span class="material-icons-round nav-icon">{{ item.icon }}</span>
+              <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+              <span class="material-icons-round nav-chevron" *ngIf="!sidebarCollapsed">
+                {{ item.expanded ? 'expand_less' : 'expand_more' }}
+              </span>
+            </button>
+            <div class="nav-group-children" *ngIf="item.expanded && !sidebarCollapsed">
+              <a *ngFor="let child of item.children"
+                 [routerLink]="child.route"
+                 routerLinkActive="active"
+                 class="nav-item nav-child"
+                 [title]="child.label">
+                <span class="material-icons-round nav-icon">{{ child.icon }}</span>
+                <span class="nav-label">{{ child.label }}</span>
+              </a>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()" title="تسجيل الخروج">
+        <span class="material-icons-round nav-icon">logout</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-right">
+        <button class="toggle-btn" (click)="toggleSidebar()">
+          <span class="material-icons-round">{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</span>
+        </button>
+      </div>
+
+      <span class="header-company-name">شركة كمال بن خلف السلمي للخدمات اللوجستية</span>
+
+      <div class="header-left">
+        <!-- Notifications Bell -->
+        <div class="notifications-wrapper">
+          <button class="notif-btn" (click)="toggleNotifications()" title="الإشعارات">
+            <span class="material-icons-round">notifications</span>
+            <span class="notif-badge" *ngIf="notificationCount > 0">{{ notificationCount > 99 ? '99+' : notificationCount }}</span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div class="notif-dropdown" *ngIf="showNotifications">
+            <div class="notif-header">
+              <h3>
+                <span class="material-icons-round">notifications_active</span>
+                الإشعارات والتنبيهات
+              </h3>
+              <div class="notif-header-actions">
+                <button class="mark-all-read-btn" *ngIf="notificationCount > 0" (click)="markAllAsRead($event)" title="تحديد الكل كمقروء">
+                  <span class="material-icons-round">done_all</span>
+                  تحديد الكل كمقروء
+                </button>
+                <span class="notif-count-chip" *ngIf="notificationCount > 0">{{ notificationCount }} جديد</span>
+              </div>
+            </div>
+
+            <div class="notif-body" (scroll)="onNotifScroll($event)">
+              <div class="notif-empty" *ngIf="notifications.length === 0 && !isLoadingMore">
+                <span class="material-icons-round">check_circle_outline</span>
+                <p>لا توجد تنبيهات جديدة، جميع الوثائق سارية!</p>
+              </div>
+
+              <div class="notif-item" *ngFor="let item of notifications"
+                   [class]="'severity-' + item.severity.toLowerCase()"
+                   [class.is-read]="item.isRead"
+                   (click)="openNotification(item)">
+                <div class="notif-item-icon">
+                  <span class="material-icons-round read-icon" *ngIf="item.isRead">check_circle</span>
+                  <ng-container *ngIf="!item.isRead">
+                    <span class="material-icons-round" *ngIf="item.severity === 'HIGH'">error_outline</span>
+                    <span class="material-icons-round" *ngIf="item.severity === 'MEDIUM'">warning_amber</span>
+                    <span class="material-icons-round" *ngIf="item.severity === 'LOW'">help_outline</span>
+                  </ng-container>
+                </div>
+                <div class="notif-item-content">
+                  <div class="notif-item-top">
+                    <span class="member-name">{{ item.memberName }}</span>
+                    <span class="member-type-tag">{{ item.memberTypeLabel }}</span>
+                  </div>
+                  <p class="notif-msg">{{ item.message }}</p>
+                  <div class="notif-item-meta">
+                    <span class="notif-doc-name">{{ item.documentLabelAr }}</span>
+                    <span class="notif-status-chip" [class]="'status-' + item.status.toLowerCase()">{{ item.statusLabelAr }}</span>
+                    <span class="read-tag" *ngIf="item.isRead">مقروء</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="notif-loading-indicator" *ngIf="isLoadingMore">
+                <span class="material-icons-round spinning">sync</span>
+                <span>جاري تحميل المزيد من الإشعارات...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-info">
+          <div class="user-avatar">
+            <span class="material-icons-round">admin_panel_settings</span>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ username }}</span>
+            <span class="user-role" *ngIf="userRole">{{ userRole }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,111 @@
+<div class="page-container">
+  <h1 class="page-title"><span class="material-icons-round">account_balance_wallet</span> سجل العهد</h1>
+
+  <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
+
+  <div class="toolbar">
+    <div class="search-group">
+      <input type="text" class="search-input" placeholder="بحث بالاسم أو الكود..."
+             [(ngModel)]="searchQuery" (input)="applyFilter()">
+    </div>
+    <div class="stat-pills">
+      <div class="pill">
+        <span class="material-icons-round">people</span>
+        <span>{{ summaries.length }} كابتن</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-bar" *ngIf="isLoading"></div>
+
+  <div class="custody-grid">
+    <div *ngFor="let s of filteredSummaries" class="custody-card" [class.expanded]="expandedCaptainId === s.captainId">
+      <div class="card-header" (click)="toggleCaptain(s.captainId)">
+        <div class="captain-info">
+          <div class="captain-avatar">{{ s.captainName.charAt(0) }}</div>
+          <div>
+            <span class="captain-name">{{ s.captainName }}</span>
+            <span class="captain-code">{{ s.captainCode }}</span>
+          </div>
+        </div>
+        <div class="asset-counters">
+          <div class="counter" *ngIf="s.vehicleCount > 0">
+            <span class="material-icons-round">directions_car</span> {{ s.vehicleCount }}
+          </div>
+          <div class="counter" *ngIf="s.simCount > 0">
+            <span class="material-icons-round">sim_card</span> {{ s.simCount }}
+          </div>
+          <div class="counter" *ngIf="s.phoneCount > 0">
+            <span class="material-icons-round">phone_iphone</span> {{ s.phoneCount }}
+          </div>
+          <div class="counter" *ngIf="s.otherCount > 0">
+            <span class="material-icons-round">category</span> {{ s.otherCount }}
+          </div>
+          <div class="total-badge">{{ s.activeCount }} عنصر</div>
+          <span class="material-icons-round expand-icon">{{ expandedCaptainId === s.captainId ? 'expand_less' : 'expand_more' }}</span>
+        </div>
+      </div>
+
+      <div class="card-detail" *ngIf="expandedCaptainId === s.captainId">
+        <table class="detail-table">
+          <thead>
+            <tr><th>النوع</th><th>الوصف</th><th>تاريخ الإسناد</th><th>بواسطة</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of s.activeItems">
+              <td>
+                <span class="material-icons-round type-icon">{{ assetTypeIcon(item.assetType) }}</span>
+                {{ item.assetTypeLabelAr }}
+              </td>
+              <td class="asset-label">{{ item.assetLabel }}</td>
+              <td>{{ item.assignedAt | date:'yyyy-MM-dd' }}</td>
+              <td>{{ item.assignedBy || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn btn-secondary btn-sm history-btn" (click)="openHistory(s); $event.stopPropagation()">
+          <span class="material-icons-round">history</span> عرض كل التاريخ
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredSummaries.length === 0 && !isLoading">
+      <span class="material-icons-round">inventory</span>
+      <p>لا توجد عهد نشطة</p>
+    </div>
+  </div>
+
+  <!-- ══════════════ HISTORY DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showHistoryDialog" (click)="showHistoryDialog = false">
+    <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
+      <h2>تاريخ عهد — {{ historyCaptainName }}</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>النوع</th><th>الوصف</th><th>تاريخ الإسناد</th><th>تاريخ الاسترجاع</th><th>الحالة</th><th>بواسطة</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of historyRecords" [class.returned-row]="r.status === 'RETURNED'">
+            <td>{{ r.assetTypeLabelAr }}</td>
+            <td>{{ r.assetLabel }}</td>
+            <td>{{ r.assignedAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ r.returnedAt ? (r.returnedAt | date:'yyyy-MM-dd') : '—' }}</td>
+            <td>
+              <span class="status-badge" [class.active-badge]="r.status === 'ACTIVE'" [class.returned-badge]="r.status === 'RETURNED'">
+                {{ r.status === 'ACTIVE' ? 'نشط' : 'مُرجع' }}
+              </span>
+            </td>
+            <td>{{ r.assignedBy || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination" *ngIf="historyTotalPages > 1">
+        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">السابق</button>
+        <span>{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
+        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">التالي</button>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="showHistoryDialog = false">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>

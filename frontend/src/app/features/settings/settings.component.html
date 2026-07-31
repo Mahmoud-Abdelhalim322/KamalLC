@@ -1,0 +1,144 @@
+﻿<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">الإعدادات</h1>
+    <p class="page-subtitle">قواعد احتساب الرواتب والبدلات</p>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>{{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = ''">×</button>
+  </div>
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>{{ successMessage }}
+    <button class="alert-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <!-- ============================================================ RULES -->
+  <div class="info-banner">
+      <span class="material-icons-round">history_toggle_off</span>
+      <p>
+        كل إعداد مؤرَّخ: عند التعديل يُقفل السعر القديم ويبدأ الجديد من التاريخ الذي تحدده،
+        فلا تتغيّر الشيفتات التي تم تسعيرها سابقًا ولا المسيرات المعتمدة.
+      </p>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoadingSettings">
+      <div class="spinner"></div>
+      <p>جارٍ تحميل الإعدادات…</p>
+    </div>
+
+    <div class="empty-state card" *ngIf="!isLoadingSettings && groupKeys.length === 0">
+      <span class="material-icons-round">tune</span>
+      <p>لا توجد إعدادات مسجّلة</p>
+    </div>
+
+    <div class="settings-group card" *ngFor="let group of groupKeys">
+      <div class="group-header">
+        <span class="material-icons-round">{{ groupIcon(group) }}</span>
+        <h2>{{ groupLabel(group) }}</h2>
+      </div>
+
+      <div class="setting-row" *ngFor="let setting of settings[group]">
+
+        <!-- Display -->
+        <div class="setting-main" *ngIf="!isEditing(setting)">
+          <div class="setting-label">
+            <b>{{ setting.labelAr || setting.settingKey }}</b>
+            <code>{{ setting.settingKey }}</code>
+          </div>
+
+          <div class="setting-value">
+            <span class="value">{{ displayValue(setting) }}</span>
+            <span class="unit" *ngIf="unitOf(setting)">{{ unitOf(setting) }}</span>
+            <span class="badge badge-info" *ngIf="isScheduled(setting)">مجدول</span>
+          </div>
+
+          <div class="setting-meta">ساري من {{ setting.effectiveFrom }}</div>
+
+          <div class="setting-actions">
+            <button class="btn btn-outline btn-sm" (click)="startEdit(setting)">
+              <span class="material-icons-round">edit</span> تعديل
+            </button>
+            <button class="btn btn-outline btn-sm" (click)="toggleHistory(setting)">
+              <span class="material-icons-round">history</span>
+              {{ historyKey === setting.settingKey ? 'إخفاء' : 'السجل' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Edit -->
+        <div class="setting-edit" *ngIf="isEditing(setting) && edit">
+          <div class="edit-title">
+            <b>{{ setting.labelAr || setting.settingKey }}</b>
+            <span class="muted">القيمة الحالية: {{ displayValue(setting) }} {{ unitOf(setting) }}</span>
+          </div>
+
+          <div class="edit-fields">
+            <div class="form-group">
+              <label class="form-label">القيمة الجديدة</label>
+              <select class="form-input" *ngIf="isFlag(setting)" [(ngModel)]="edit.value">
+                <option value="true">مفعّل</option>
+                <option value="false">غير مفعّل</option>
+              </select>
+              <input type="text" class="form-input" *ngIf="!isFlag(setting)"
+                     [(ngModel)]="edit.value" (keyup.enter)="save()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">يبدأ العمل بها من</label>
+              <input type="date" class="form-input" [(ngModel)]="edit.effectiveFrom">
+            </div>
+          </div>
+
+          <p class="edit-hint">
+            <span class="material-icons-round">info</span>
+            سيُعاد تسعير الشيفتات من هذا التاريخ فصاعدًا عند إعادة الحساب من شاشة الشيفتات.
+          </p>
+
+          <div class="form-actions">
+            <button class="btn btn-primary btn-sm" (click)="save()"
+                    [disabled]="isSaving || !edit.value.trim()">
+              <span class="spinner-sm" *ngIf="isSaving"></span>
+              {{ isSaving ? 'جارٍ الحفظ…' : 'حفظ' }}
+            </button>
+            <button class="btn btn-outline btn-sm" (click)="cancelEdit()" [disabled]="isSaving">
+              تراجع
+            </button>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="setting-history" *ngIf="historyKey === setting.settingKey">
+          <div class="loading-inline" *ngIf="isLoadingHistory">
+            <div class="spinner-sm"></div> جارٍ تحميل السجل…
+          </div>
+
+          <table class="data-table" *ngIf="!isLoadingHistory && history.length">
+            <thead>
+              <tr>
+                <th>القيمة</th>
+                <th>من</th>
+                <th>إلى</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of history">
+                <td><b>{{ displayValue(setting, row.value) }}</b> {{ unitOf(setting) }}</td>
+                <td>{{ row.effectiveFrom }}</td>
+                <td>{{ formatDate(row.effectiveTo) }}</td>
+                <td>
+                  <span class="badge badge-info" *ngIf="isScheduled(row)">مجدول</span>
+                  <span class="badge badge-success"
+                        *ngIf="isCurrent(row) && !isScheduled(row)">ساري</span>
+                  <span class="badge" *ngIf="!isCurrent(row)">منتهٍ</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="muted" *ngIf="!isLoadingHistory && !history.length">لا يوجد سجل لهذا الإعداد</p>
+        </div>
+      </div>
+    </div>
+</div>

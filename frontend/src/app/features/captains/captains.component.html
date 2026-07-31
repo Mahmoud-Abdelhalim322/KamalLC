@@ -1,0 +1,121 @@
+<div class="captains-page">
+  <div class="page-header">
+    <h1 class="page-title">الكباتن</h1>
+    <p class="page-subtitle">إدارة بيانات الكباتن والسائقين — {{ totalElements }} كابتن</p>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="material-icons-round">search</span>
+      <input type="text" placeholder="بحث بالاسم أو الكود أو معرف المورد..." [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab" [class.active]="activeFilter === ''" (click)="setFilter('')">الكل</button>
+      <button class="filter-tab" [class.active]="activeFilter === 'EMPLOYEE'" (click)="setFilter('EMPLOYEE')">
+        <span class="dot employee"></span> كفالة
+      </button>
+      <button class="filter-tab" [class.active]="activeFilter === 'FREELANCE'" (click)="setFilter('FREELANCE')">
+        <span class="dot freelance"></span> فريلانس
+      </button>
+      <button class="filter-tab" [class.active]="!!alertFilter" (click)="toggleAlertFilter()">
+        <span class="material-icons-round tab-icon">notification_important</span> لديه إنذار
+      </button>
+    </div>
+
+    <a routerLink="/captains/new" class="btn btn-primary">
+      <span class="material-icons-round">person_add</span>
+      إضافة كابتن
+    </a>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جاري تحميل البيانات...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && captains.length === 0">
+    <span class="material-icons-round">people_outline</span>
+    <h3>لا يوجد كباتن</h3>
+    <p>أضف كابتن يدوياً أو قم باستيراد ملف Excel</p>
+    <div class="empty-actions">
+      <a routerLink="/captains/new" class="btn btn-primary">
+        <span class="material-icons-round">person_add</span>
+        إضافة كابتن
+      </a>
+      <a routerLink="/imports" class="btn btn-outline">
+        <span class="material-icons-round">upload_file</span>
+        استيراد ملف
+      </a>
+    </div>
+  </div>
+
+  <!-- Captains Table -->
+  <div class="table-wrap" *ngIf="!isLoading && captains.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>كود كمال</th>
+          <th>الاسم</th>
+          <th>النوع</th>
+          <th>معرف المورد</th>
+          <th>الهاتف</th>
+          <th>الجنسية</th>
+          <th>حالة الوثائق</th>
+          <th>الحالة</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let captain of captains" [routerLink]="['/captains', captain.id]" class="clickable-row">
+          <td class="code-cell">{{ captain.kamalCode }}</td>
+          <td class="name-cell">
+            <div class="captain-avatar">{{ captain.fullNameAr.charAt(0) }}</div>
+            {{ captain.fullNameAr }}
+          </td>
+          <td>
+            <span class="type-badge" [class]="getTypeClass(captain.captainType)">
+              {{ getTypeLabel(captain.captainType) }}
+            </span>
+          </td>
+          <td>
+            <span class="ninja-id" *ngIf="captain.currentNinjaId">{{ captain.currentNinjaId }}</span>
+            <span class="no-data" *ngIf="!captain.currentNinjaId">—</span>
+          </td>
+          <td>{{ captain.phone || '—' }}</td>
+          <td>{{ captain.nationality || '—' }}</td>
+          <td>
+            <span class="status-badge" [class]="documentAlertClass(captain)">
+              {{ documentAlertLabel(captain) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class]="getStatusClass(captain.status)">
+              {{ getStatusLabel(captain.status) }}
+            </span>
+          </td>
+          <td>
+            <a class="row-action" [routerLink]="['/captains', captain.id, 'edit']" title="تعديل"
+              (click)="$event.stopPropagation()">
+              <span class="material-icons-round">edit</span>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 0">
+      <span class="material-icons-round">chevron_right</span>
+    </button>
+    <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+      <span class="material-icons-round">chevron_left</span>
+    </button>
+  </div>
+</div>

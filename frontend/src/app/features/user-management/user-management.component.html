@@ -1,0 +1,180 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>إدارة المستخدمين</h1>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
+      <span class="material-icons-round">people</span> حسابات المستخدمين
+    </button>
+    <button class="tab" [class.active]="activeTab === 'roles'" (click)="activeTab = 'roles'">
+      <span class="material-icons-round">admin_panel_settings</span> الوظائف والصلاحيات
+    </button>
+  </div>
+
+  <!-- Users Tab -->
+  <div *ngIf="activeTab === 'users'" class="tab-content">
+    <div class="section-header">
+      <h2>حسابات المستخدمين</h2>
+      <button class="btn btn-primary" (click)="openUserModal()">
+        <span class="material-icons-round">person_add</span> إنشاء حساب
+      </button>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <span>جاري التحميل...</span>
+    </div>
+
+    <div class="table-container" *ngIf="!isLoading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>اسم المستخدم</th>
+            <th>الاسم المعروض</th>
+            <th>الدور</th>
+            <th>الوظيفة</th>
+            <th>الموظف المرتبط</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of users" class="table-row">
+            <td class="code-cell">{{ u.username }}</td>
+            <td>{{ u.displayName || '—' }}</td>
+            <td>
+              <span class="role-badge" [class.super-admin]="u.role === 'SUPER_ADMIN'">
+                {{ u.role === 'SUPER_ADMIN' ? 'مدير النظام' : 'مدير' }}
+              </span>
+            </td>
+            <td>{{ u.jobTitleLabel || '—' }}</td>
+            <td>{{ u.staffName ? u.staffCode + ' - ' + u.staffName : '—' }}</td>
+            <td>
+              <span class="status-badge" [class.status-active]="u.active" [class.status-inactive]="!u.active">
+                {{ u.active ? 'نشط' : 'معطل' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns" *ngIf="u.role !== 'SUPER_ADMIN'">
+                <button class="icon-btn" (click)="toggleUserActive(u)" [title]="u.active ? 'تعطيل' : 'تفعيل'">
+                  <span class="material-icons-round">{{ u.active ? 'block' : 'check_circle' }}</span>
+                </button>
+                <button class="icon-btn danger" (click)="deleteUser(u)" title="حذف">
+                  <span class="material-icons-round">delete</span>
+                </button>
+              </div>
+              <span *ngIf="u.role === 'SUPER_ADMIN'" class="no-action">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Roles Tab -->
+  <div *ngIf="activeTab === 'roles'" class="tab-content">
+    <div class="section-header">
+      <h2>الوظائف والصلاحيات</h2>
+      <button class="btn btn-primary" (click)="openRoleModal()">
+        <span class="material-icons-round">add</span> إضافة وظيفة
+      </button>
+    </div>
+
+    <div class="roles-grid">
+      <div *ngFor="let role of jobTitles" class="role-card">
+        <div class="role-header">
+          <h3>{{ role.labelAr }}</h3>
+          <span class="role-name-badge">{{ role.name }}</span>
+        </div>
+        <div class="role-permissions">
+          <span *ngFor="let p of role.permissions" class="perm-chip">
+            {{ getPermLabel(p) }}
+          </span>
+          <span *ngIf="role.permissions.length === 0" class="no-perms">لا توجد صلاحيات</span>
+        </div>
+        <div class="role-actions">
+          <button class="icon-btn" (click)="openRoleModal(role)" title="تعديل">
+            <span class="material-icons-round">edit</span>
+          </button>
+          <button class="icon-btn danger" (click)="deleteRole(role)" title="حذف"
+                  *ngIf="!role.systemDefined">
+            <span class="material-icons-round">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div class="modal-backdrop" *ngIf="showUserModal" (click)="showUserModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">إنشاء حساب مستخدم</h2>
+      <div class="form-group">
+        <label>اسم المستخدم</label>
+        <input type="text" [(ngModel)]="newUser.username" placeholder="admin2" dir="ltr">
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" [(ngModel)]="newUser.password" dir="ltr">
+      </div>
+      <div class="form-group">
+        <label>الاسم المعروض</label>
+        <input type="text" [(ngModel)]="newUser.displayName">
+      </div>
+      <div class="form-group">
+        <label>الوظيفة</label>
+        <select [(ngModel)]="newUser.jobTitleId">
+          <option [ngValue]="null">— بدون وظيفة —</option>
+          <option *ngFor="let jt of jobTitles" [ngValue]="jt.id">{{ jt.labelAr }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ربط بموظف (اختياري)</label>
+        <select [(ngModel)]="newUser.staffId">
+          <option [ngValue]="null">— بدون ربط —</option>
+          <option *ngFor="let s of managerStaff" [ngValue]="s.id">{{ s.staffCode }} - {{ s.fullNameAr }}</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showUserModal = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="createUser()">إنشاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Role Modal -->
+  <div class="modal-backdrop" *ngIf="showRoleModal" (click)="showRoleModal = false">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">{{ editingRoleId ? 'تعديل وظيفة' : 'إضافة وظيفة جديدة' }}</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>الاسم الإنجليزي (مفتاح)</label>
+          <input type="text" [(ngModel)]="newRole.name" placeholder="OPERATIONS_MANAGER" dir="ltr"
+                 [disabled]="!!editingRoleId">
+        </div>
+        <div class="form-group">
+          <label>الاسم بالعربي</label>
+          <input type="text" [(ngModel)]="newRole.labelAr" placeholder="مدير العمليات">
+        </div>
+      </div>
+
+      <h3 class="perms-title">الصلاحيات</h3>
+      <div class="perms-grid">
+        <label *ngFor="let p of allPermissions" class="perm-checkbox"
+               [class.checked]="hasPermission(p.name)">
+          <input type="checkbox" [checked]="hasPermission(p.name)"
+                 (change)="togglePermission(p.name)">
+          <span class="perm-label">{{ p.labelAr }}</span>
+          <span class="perm-key">{{ p.name }}</span>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showRoleModal = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveRole()">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>

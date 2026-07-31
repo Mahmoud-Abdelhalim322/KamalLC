@@ -1,0 +1,231 @@
+<div class="page-container">
+  <h1 class="page-title"><span class="material-icons-round">inventory_2</span> مخزن الأغراض</h1>
+
+  <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
+  <div class="alert alert-success" *ngIf="successMsg" (click)="dismissMsg()">{{ successMsg }}</div>
+
+  <div class="inventory-layout">
+    <!-- Category Sidebar -->
+    <aside class="category-sidebar">
+      <div class="sidebar-header">
+        <h3>الفئات</h3>
+        <button class="icon-btn" title="إضافة فئة" (click)="openAddCategory()">
+          <span class="material-icons-round">add_circle</span>
+        </button>
+      </div>
+      <div class="category-list">
+        <div *ngFor="let cat of categories" class="category-card"
+             [class.active]="selectedCategory?.id === cat.id" (click)="selectCategory(cat)">
+          <div class="cat-info">
+            <span class="cat-icon material-icons-round">
+              {{ cat.name === 'SIM_CARD' ? 'sim_card' : cat.name === 'PHONE' ? 'phone_iphone' : 'category' }}
+            </span>
+            <div>
+              <span class="cat-name">{{ cat.labelAr }}</span>
+              <span class="cat-count">{{ cat.itemCount }} عنصر</span>
+            </div>
+          </div>
+          <button class="icon-btn danger small" *ngIf="!cat.systemDefined" (click)="deleteCategory(cat); $event.stopPropagation()">
+            <span class="material-icons-round">delete</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Items Area -->
+    <main class="items-area" *ngIf="selectedCategory">
+      <div class="toolbar">
+        <div class="search-group">
+          <input type="text" class="search-input" placeholder="بحث..."
+                 [(ngModel)]="itemSearch" (keyup.enter)="searchItems()">
+          <select class="filter-select" [(ngModel)]="itemStatusFilter" (change)="searchItems()">
+            <option value="">كل الحالات</option>
+            <option value="AVAILABLE">متاح</option>
+            <option value="ASSIGNED">مُسند</option>
+            <option value="INACTIVE">غير فعال</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" (click)="openAddItem()">
+          <span class="material-icons-round">add</span> إضافة عنصر
+        </button>
+      </div>
+
+      <div class="loading-bar" *ngIf="isLoading"></div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>الكود</th>
+              <th *ngFor="let ft of getFieldTemplates()">{{ ft.labelAr }}</th>
+              <th>الحالة</th>
+              <th>الكابتن</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of items">
+              <td class="serial-cell">{{ item.serialCode }}</td>
+              <td *ngFor="let ft of getFieldTemplates()">{{ item.fields[ft.fieldKey] || '—' }}</td>
+              <td><span class="status-badge" [attr.data-status]="item.status">{{ statusLabel(item.status) }}</span></td>
+              <td>
+                <span *ngIf="item.currentCaptainName">{{ item.currentCaptainName }} ({{ item.currentCaptainCode }})</span>
+                <span class="text-muted" *ngIf="!item.currentCaptainName">—</span>
+              </td>
+              <td class="actions-cell">
+                <button class="icon-btn" title="تاريخ عهد" (click)="openItemHistory(item)">
+                  <span class="material-icons-round">history</span>
+                </button>
+                <button class="icon-btn" title="إسناد" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE'">
+                  <span class="material-icons-round">person_add</span>
+                </button>
+                <button class="icon-btn" title="استرجاع" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED'">
+                  <span class="material-icons-round">assignment_return</span>
+                </button>
+                <button class="icon-btn" title="تعديل" (click)="openEditItem(item)">
+                  <span class="material-icons-round">edit</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="items.length === 0 && !isLoading">
+              <td [attr.colspan]="getFieldTemplates().length + 4" class="empty-row">لا توجد عناصر</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" *ngIf="itemTotalPages > 1">
+        <button (click)="prevPage()" [disabled]="itemPage === 0">السابق</button>
+        <span>{{ itemPage + 1 }} / {{ itemTotalPages }}</span>
+        <button (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">التالي</button>
+      </div>
+    </main>
+
+    <main class="items-area empty-state" *ngIf="!selectedCategory">
+      <span class="material-icons-round">inventory_2</span>
+      <p>اختر فئة من القائمة</p>
+    </main>
+  </div>
+
+  <!-- ══════════════ CATEGORY DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showCategoryDialog" (click)="showCategoryDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>إضافة فئة جديدة</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>اسم الفئة *</label>
+          <input type="text" [(ngModel)]="catForm.labelAr" placeholder="مثال: راوتر">
+        </div>
+        <div class="form-group full-width">
+          <label>حقول الفئة</label>
+          <div class="field-templates">
+            <div *ngFor="let ft of catForm.fieldTemplates; let i = index" class="field-row">
+              <input type="text" [(ngModel)]="ft.labelAr" placeholder="اسم الحقل">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="ft.required"> مطلوب
+              </label>
+              <button class="icon-btn danger small" (click)="removeFieldTemplate(i)">
+                <span class="material-icons-round">close</span>
+              </button>
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="addFieldTemplate()">
+              <span class="material-icons-round">add</span> إضافة حقل
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="saveCategory()">حفظ</button>
+        <button class="btn btn-secondary" (click)="showCategoryDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ITEM DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showItemDialog" (click)="showItemDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>{{ editingItemId ? 'تعديل عنصر' : 'إضافة عنصر جديد' }}</h2>
+      <div class="form-grid">
+        <div class="form-group" *ngFor="let ft of getFieldTemplates()">
+          <label>{{ ft.labelAr }} {{ ft.required ? '*' : '' }}</label>
+          <input type="text" [(ngModel)]="itemFields[ft.fieldKey]">
+        </div>
+        <div class="form-group full-width">
+          <label>ملاحظات</label>
+          <textarea [(ngModel)]="itemNotes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="saveItem()">حفظ</button>
+        <button class="btn btn-secondary" (click)="showItemDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ASSIGN DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showAssignDialog" (click)="showAssignDialog = false">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <h2>إسناد عنصر</h2>
+      <p class="dialog-subtitle">{{ assignItemLabel }}</p>
+      <div class="form-group full-width">
+        <label>الكابتن *</label>
+        <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value)">
+        <div class="dropdown-results" *ngIf="captainResults.length">
+          <div *ngFor="let c of captainResults" class="dropdown-item" (click)="selectCaptain(c)">
+            {{ c.fullNameAr }} ({{ c.kamalCode }})
+          </div>
+        </div>
+        <span class="selected-hint" *ngIf="assignCaptainId">✓ تم الاختيار</span>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" (click)="submitAssign()">إسناد</button>
+        <button class="btn btn-secondary" (click)="showAssignDialog = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ITEM CUSTODY HISTORY DIALOG ══════════════ -->
+  <div class="dialog-overlay" *ngIf="showHistoryDialog" (click)="showHistoryDialog = false">
+    <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
+      <h2>تاريخ عهد — {{ historyItemLabel }}</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الكابتن / العضو</th>
+            <th>تاريخ الإسناد</th>
+            <th>تاريخ الاسترجاع</th>
+            <th>الحالة</th>
+            <th>بواسطة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of historyRecords" [class.returned-row]="r.status === 'RETURNED'">
+            <td>
+              <strong>{{ r.captainName }}</strong>
+              <span class="text-muted" style="margin-inline-start: 6px; font-size: 0.82rem;">({{ r.captainCode }})</span>
+            </td>
+            <td>{{ r.assignedAt | date:'yyyy-MM-dd' }}</td>
+            <td>{{ r.returnedAt ? (r.returnedAt | date:'yyyy-MM-dd') : '—' }}</td>
+            <td>
+              <span class="status-badge" [class.active-badge]="r.status === 'ACTIVE'" [class.returned-badge]="r.status === 'RETURNED'">
+                {{ r.status === 'ACTIVE' ? 'نشط' : 'مُرجع' }}
+              </span>
+            </td>
+            <td>{{ r.assignedBy || '—' }}</td>
+          </tr>
+          <tr *ngIf="historyRecords.length === 0">
+            <td colspan="5" class="empty-row">لا يوجد سجل عهد لهذا العنصر</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination" *ngIf="historyTotalPages > 1">
+        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">السابق</button>
+        <span>{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
+        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">التالي</button>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="showHistoryDialog = false">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,136 @@
+.form-page { max-width: 1100px; }
+
+/* Header */
+.form-header { margin-bottom: 24px; }
+
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 16px; transition: color var(--transition-fast);
+  .material-icons-round { font-size: 18px; }
+  &:hover { color: var(--primary); }
+}
+
+.page-title { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+.page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+
+.code {
+  font-family: 'Courier New', monospace; font-weight: 700;
+  color: var(--primary); font-size: 0.9rem;
+}
+
+/* Loading */
+.loading-container {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 60px 0; color: var(--text-secondary);
+}
+
+/* Alerts */
+.alert {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; border-radius: var(--radius-md);
+  font-size: 0.88rem; font-weight: 600; margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
+  .material-icons-round { font-size: 20px; }
+}
+
+.alert-error { background: #FEE2E2; color: #991B1B; }
+.alert-success { background: #DCFCE7; color: #166534; }
+
+/* Cards */
+.form-card {
+  background: var(--bg-card); border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light); padding: 24px;
+  box-shadow: var(--shadow-sm); margin-bottom: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.card-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1rem; font-weight: 700; color: var(--text-primary);
+  padding-bottom: 14px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  .material-icons-round { color: var(--primary); font-size: 20px; }
+}
+
+.count-chip {
+  margin-inline-start: auto;
+  background: var(--primary-50); color: var(--primary);
+  padding: 2px 12px; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 700;
+}
+
+/* Fields */
+.fields-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 20px;
+}
+
+.form-group { margin-bottom: 18px; }
+
+select.form-input { cursor: pointer; appearance: none; background-image: none; }
+
+textarea.form-input { resize: vertical; line-height: 1.6; }
+
+.readonly-input {
+  background: var(--primary-50); color: var(--primary);
+  font-family: 'Courier New', monospace; font-weight: 700;
+  cursor: not-allowed;
+}
+
+.field-hint {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.75rem; color: var(--text-light); margin-top: 5px;
+  .material-icons-round { font-size: 14px; }
+}
+
+.checkbox-group { display: flex; align-items: flex-end; }
+
+.checkbox-label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--bg-input);
+  border-radius: var(--radius-md); cursor: pointer;
+  font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+  width: 100%; transition: background var(--transition-fast);
+
+  &:hover { background: var(--primary-50); }
+  input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+}
+
+/* Actions */
+.form-actions {
+  display: flex; justify-content: flex-start; gap: 12px;
+  margin-bottom: 28px;
+}
+
+/* Document upload */
+.upload-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(220px, 2fr) minmax(150px, 1.5fr) auto;
+  gap: 14px; align-items: end; margin-bottom: 18px;
+}
+
+.upload-btn { height: 46px; white-space: nowrap; }
+
+.file-input {
+  padding: 10px 14px; font-size: 0.85rem; cursor: pointer;
+  &::file-selector-button {
+    margin-inline-end: 12px; padding: 6px 14px;
+    border: none; border-radius: var(--radius-sm);
+    background: var(--primary-50); color: var(--primary);
+    font-family: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  }
+}
+
+.empty-docs {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 36px 0; color: var(--text-light);
+  .material-icons-round { font-size: 40px; opacity: 0.5; }
+  p { font-size: 0.88rem; }
+}
+
+/* The document cards themselves live in app-document-gallery */
+
+@media (max-width: 768px) {
+  .upload-row { grid-template-columns: 1fr; }
+  .upload-btn { width: 100%; }
+}

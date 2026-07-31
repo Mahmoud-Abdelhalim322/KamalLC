@@ -1,0 +1,505 @@
+<div class="payroll-page">
+
+  <div class="page-header flex-between">
+    <div>
+      <h1 class="page-title">المرتبات</h1>
+      <p class="page-subtitle">توليد مسير الشهر من الشيفتات المسجلة، ثم اعتماده وقفله</p>
+    </div>
+    <button class="btn btn-primary" (click)="showGenerateForm = !showGenerateForm">
+      <span class="material-icons-round">add</span> مسير جديد
+    </button>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>{{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = ''">×</button>
+  </div>
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>{{ successMessage }}
+    <button class="alert-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <!-- Generate -->
+  <div class="card generate-form" *ngIf="showGenerateForm">
+    <h3>توليد مسير رواتب</h3>
+    <p class="hint">
+      يجمع المسير كل شفتات الفترة لكل كابتن ويطبّق قواعد الرواتب السارية في نهاية الفترة.
+      إعادة التوليد على مسودة تستبدل أسطرها.
+    </p>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">من تاريخ</label>
+        <input type="date" class="form-input" [(ngModel)]="periodFrom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">إلى تاريخ</label>
+        <input type="date" class="form-input" [(ngModel)]="periodTo">
+      </div>
+      <div class="form-group grow">
+        <label class="form-label">اسم المسير (اختياري)</label>
+        <input type="text" class="form-input" [(ngModel)]="title" placeholder="مسير رواتب يوليو 2026">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" (click)="generate()" [disabled]="isGenerating">
+        {{ isGenerating ? 'جارٍ التوليد…' : 'توليد' }}
+      </button>
+      <button class="btn btn-outline" (click)="showGenerateForm = false">إلغاء</button>
+    </div>
+  </div>
+
+  <div class="payroll-layout">
+
+    <!-- Runs list -->
+    <aside class="runs-list">
+      <h3 class="side-title">المسيرات</h3>
+      <div class="loading-inline" *ngIf="isLoadingRuns">
+        <div class="spinner spinner-sm"></div>
+      </div>
+      <p class="side-empty" *ngIf="!isLoadingRuns && runs.length === 0">لا توجد مسيرات بعد</p>
+
+      <button *ngFor="let run of runs" class="run-item" [class.active]="selectedRun?.id === run.id"
+        (click)="selectRun(run)">
+        <div class="run-item-head">
+          <b>{{ run.title || run.periodFrom }}</b>
+          <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
+        </div>
+        <span class="run-item-period">{{ run.periodFrom }} → {{ run.periodTo }}</span>
+        <span class="run-item-meta">{{ run.captainCount }} كابتن — صافي {{ money(run.totalNet) }} ريال</span>
+      </button>
+    </aside>
+
+    <!-- Selected run -->
+    <section class="run-detail" *ngIf="selectedRun as run">
+
+      <div class="run-header card">
+        <div class="run-header-top">
+          <div>
+            <h2>{{ run.title || 'مسير رواتب' }}</h2>
+            <p>
+              {{ run.periodFrom }} → {{ run.periodTo }}
+              <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
+            </p>
+            <p class="run-trail" *ngIf="run.approvedBy">
+              اعتمده {{ run.approvedBy }} — {{ run.approvedAt | date:'yyyy-MM-dd HH:mm' }}
+            </p>
+          </div>
+
+          <div class="run-actions">
+            <button class="btn btn-outline btn-sm" (click)="export()">
+              <span class="material-icons-round">download</span> تصدير Excel
+            </button>
+
+            <ng-container *ngIf="!run.locked">
+              <button class="btn btn-outline btn-sm" (click)="regenerate()" [disabled]="isBusy || isGenerating"
+                title="يعيد بناء أسطر المسير من الشيفتات المسجلة حاليًا">
+                <span class="material-icons-round">refresh</span>
+                {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد' }}
+              </button>
+              <button class="btn btn-primary btn-sm" *ngIf="!confirmingApproval" (click)="confirmingApproval = true"
+                [disabled]="isBusy || lines.length === 0">
+                <span class="material-icons-round">lock</span> اعتماد وقفل
+              </button>
+              <button class="btn btn-danger btn-sm" *ngIf="!confirmingDelete" (click)="confirmingDelete = true"
+                [disabled]="isBusy">
+                حذف
+              </button>
+            </ng-container>
+
+            <ng-container *ngIf="run.status === 'APPROVED'">
+              <button class="btn btn-primary btn-sm" (click)="markPaid()" [disabled]="isBusy">
+                <span class="material-icons-round">payments</span> تسجيل كمدفوع
+              </button>
+            </ng-container>
+
+            <button class="btn btn-outline btn-sm" *ngIf="run.locked && !showReopenForm"
+              (click)="showReopenForm = true">
+              <span class="material-icons-round">lock_open</span> إعادة فتح
+            </button>
+          </div>
+        </div>
+
+        <!-- Approval confirmation -->
+        <div class="confirm-box" *ngIf="confirmingApproval">
+          <span class="material-icons-round">warning</span>
+          <div>
+            <b>تأكيد الاعتماد</b>
+            <p>
+              بعد الاعتماد تُقفل أرقام هذا المسير نهائيًا: لن يغيّرها تعديل الإعدادات ولا إعادة
+              استيراد شيفتات الفترة. هل تريد المتابعة؟
+            </p>
+            <div class="form-actions">
+              <button class="btn btn-primary btn-sm" (click)="approve()">نعم، اعتمد واقفل</button>
+              <button class="btn btn-outline btn-sm" (click)="confirmingApproval = false">تراجع</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete confirmation -->
+        <div class="confirm-box confirm-box-danger" *ngIf="confirmingDelete">
+          <span class="material-icons-round">delete_forever</span>
+          <div>
+            <b>تأكيد الحذف</b>
+            <p>
+              سيُحذف المسير بكل أسطره وبنوده المضافة نهائيًا، ولا يمكن التراجع عن ذلك.
+              يمكنك توليده من جديد لاحقًا من بيانات الشيفتات.
+            </p>
+            <div class="form-actions">
+              <button class="btn btn-danger btn-sm" (click)="deleteRun()" [disabled]="isBusy">
+                نعم، احذف المسير
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="confirmingDelete = false">تراجع</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reopen -->
+        <div class="confirm-box" *ngIf="showReopenForm">
+          <span class="material-icons-round">lock_open</span>
+          <div>
+            <b>إعادة فتح المسير</b>
+            <p>سيُسجَّل السبب في ملاحظات المسير مع اسمك وتاريخ الفتح.</p>
+            <input type="text" class="form-input" [(ngModel)]="reopenReason" placeholder="سبب إعادة الفتح">
+            <div class="form-actions">
+              <button class="btn btn-primary btn-sm" [disabled]="!reopenReason.trim()" (click)="reopen()">
+                إعادة الفتح
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="showReopenForm = false">إلغاء</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="run-notes" *ngIf="run.notes">
+          <span class="material-icons-round">history</span>
+          <pre>{{ run.notes }}</pre>
+        </div>
+
+        <div class="tabs-bar">
+          <button class="tab-btn" [class.active]="activeTab === 'CAPTAIN'" (click)="switchTab('CAPTAIN')">الكباتن</button>
+          <button class="tab-btn" [class.active]="activeTab === 'WORKER'" (click)="switchTab('WORKER')">العاملين</button>
+          <button class="tab-btn" [class.active]="activeTab === 'MANAGER'" (click)="switchTab('MANAGER')">الإداريين</button>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-grid" *ngIf="activeTab === 'CAPTAIN'">
+          <div class="summary-tile">
+            <span>عدد الكباتن</span><b>{{ run.captainCount }}</b>
+          </div>
+          <div class="summary-tile">
+            <span>إجمالي المرتب</span><b>{{ money(run.totalGross) }}</b>
+          </div>
+          <div class="summary-tile accent">
+            <span>صافي المرتبات</span><b>{{ money(run.totalNet) }}</b>
+          </div>
+          <div class="summary-tile">
+            <span>إيراد المورد</span><b>{{ money(run.totalSupplierRevenue) }}</b>
+          </div>
+          <div class="summary-tile" [class.good]="run.totalMargin > 0" [class.bad]="run.totalMargin < 0">
+            <span>الهامش</span><b>{{ money(run.totalMargin) }}</b>
+          </div>
+        </div>
+
+        <div class="summary-grid" *ngIf="activeTab !== 'CAPTAIN'">
+          <div class="summary-tile">
+            <span>عدد الموظفين</span><b>{{ run.staffCount }}</b>
+          </div>
+          <div class="summary-tile">
+            <span>إجمالي المرتب</span><b>{{ money(run.totalStaffGross) }}</b>
+          </div>
+          <div class="summary-tile accent">
+            <span>صافي المرتبات</span><b>{{ money(run.totalStaffNet) }}</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lines -->
+      <div class="loading-state" *ngIf="isLoadingLines">
+        <div class="spinner"></div>
+        <p>جارٍ التحميل…</p>
+      </div>
+
+      <div class="empty-state card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length === 0">
+        <span class="material-icons-round">receipt_long</span>
+        <h3>لا توجد أسطر في هذا المسير</h3>
+        <p>
+          المسير يُبنى من الشيفتات الموجودة وقت توليده. إن كنت استوردت ملف المورد بعد إنشائه،
+          اضغط «إعادة توليد» أعلاه ليُبنى من جديد. وإن كانت النتيجة فارغة بعدها،
+          فلا توجد شيفتات مسجلة لهذه الفترة.
+        </p>
+        <button class="btn btn-primary btn-sm" *ngIf="!run.locked" (click)="regenerate()" [disabled]="isGenerating">
+          <span class="material-icons-round">refresh</span>
+          {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد المسير' }}
+        </button>
+      </div>
+
+      <div class="empty-state card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length === 0">
+        <span class="material-icons-round">receipt_long</span>
+        <h3>لا توجد أسطر للموظفين في هذا المسير</h3>
+        <p>
+          يتم جلب الموظفين النشطين أثناء توليد المسير.
+        </p>
+        <button class="btn btn-primary btn-sm" *ngIf="!run.locked" (click)="regenerate()" [disabled]="isGenerating">
+          <span class="material-icons-round">refresh</span>
+          {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد المسير' }}
+        </button>
+      </div>
+
+      <div class="table-wrap card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>الكود</th>
+              <th>الكابتن</th>
+              <th>النوع</th>
+              <th>الشفتات</th>
+              <th>الغياب</th>
+              <th>الطلبات</th>
+              <th>الساعات</th>
+              <th>الانشغال</th>
+              <th>مجموع الدخل</th>
+              <th>خصم تأخير</th>
+              <th>حوافز يومية</th>
+              <th>بدل بنزين</th>
+              <th>بدل سيارة</th>
+              <th>تحقيق الهدف</th>
+              <th>بعد الهدف</th>
+              <th>مجموع الراتب</th>
+              <th>بنود يدوية</th>
+              <th>صافي الراتب</th>
+              <th>الهامش</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let line of lines">
+              <tr>
+                <td class="code-cell">{{ line.captainCode }}</td>
+                <td class="name">{{ line.captainName }}</td>
+                <td>
+                  <span class="badge" [class.badge-employee]="line.captainType === 'EMPLOYEE'"
+                    [class.badge-freelance]="line.captainType === 'FREELANCE'">
+                    {{ typeLabel(line.captainType) }}
+                  </span>
+                </td>
+                <td class="strong">{{ line.attendedShifts }}</td>
+                <td [class.negative]="line.absentShifts > 0">{{ line.absentShifts }}</td>
+                <td class="strong">{{ line.totalOrders }}</td>
+                <td>{{ line.totalHours | number:'1.1-1' }}</td>
+                <td>{{ percent(line.avgBusyUtilization) }}</td>
+                <td>{{ money(line.basePay) }}</td>
+                <td [class.negative]="line.lateDeductions > 0">
+                  {{ line.lateDeductions > 0 ? '−' + money(line.lateDeductions) : '—' }}
+                </td>
+                <td [class.positive]="line.dailyIncentives > 0">{{ money(line.dailyIncentives) }}</td>
+                <td [class.positive]="line.fuelAllowances > 0">{{ money(line.fuelAllowances) }}</td>
+                <td [class.positive]="line.carAllowances > 0">{{ money(line.carAllowances) }}</td>
+                <td [class.positive]="line.targetBonus > 0">{{ money(line.targetBonus) }}</td>
+                <td [class.positive]="line.extraOrderPay > 0">{{ money(line.extraOrderPay) }}</td>
+                <td class="strong">{{ money(line.gross) }}</td>
+                <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
+                  {{ line.adjustmentsTotal !== 0 ? money(line.adjustmentsTotal) : '—' }}
+                </td>
+                <td class="net">{{ money(line.net) }}</td>
+                <td [class.positive]="line.margin > 0" [class.negative]="line.margin < 0">
+                  {{ money(line.margin) }}
+                </td>
+                <td>
+                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openAdjustment(line)">
+                    <span class="material-icons-round">add_circle_outline</span>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Manual adjustment rows -->
+              <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
+                <td></td>
+                <td colspan="15" class="adjustment-label">
+                  <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
+                    [class.down]="adj.kind === 'DEDUCTION'">
+                    {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
+                  </span>
+                  {{ adj.labelAr }}
+                  <em *ngIf="adj.reason">— {{ adj.reason }}</em>
+                  <small *ngIf="adj.createdBy">({{ adj.createdBy }})</small>
+                </td>
+                <td [class.positive]="adj.kind === 'BONUS'" [class.negative]="adj.kind === 'DEDUCTION'">
+                  {{ money(adj.signedAmount) }}
+                </td>
+                <td colspan="2"></td>
+                <td>
+                  <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeAdjustment(adj.id)"
+                    title="حذف البند">
+                    <span class="material-icons-round">delete_outline</span>
+                  </button>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">المجموع</td>
+              <td>{{ totals.shifts }}</td>
+              <td></td>
+              <td>{{ totals.orders }}</td>
+              <td></td>
+              <td></td>
+              <td>{{ money(totals.basePay) }}</td>
+              <td class="negative">−{{ money(totals.deductions) }}</td>
+              <td>{{ money(totals.incentives) }}</td>
+              <td>{{ money(totals.fuel) }}</td>
+              <td>{{ money(totals.car) }}</td>
+              <td>{{ money(totals.targetBonus) }}</td>
+              <td>{{ money(totals.extraOrderPay) }}</td>
+              <td>{{ money(totals.gross) }}</td>
+              <td>{{ money(totals.adjustments) }}</td>
+              <td class="net">{{ money(totals.net) }}</td>
+              <td>{{ money(totals.margin) }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="table-wrap card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>الكود</th>
+              <th>الاسم</th>
+              <th>الوظيفة</th>
+              <th>الراتب الأساسي</th>
+              <th>بدل سكن</th>
+              <th>بدلات أخرى</th>
+              <th>الإجمالي</th>
+              <th>بنود يدوية</th>
+              <th>صافي الراتب</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let line of staffLines">
+              <tr>
+                <td class="code-cell">{{ line.staffCode }}</td>
+                <td class="name">{{ line.staffName }}</td>
+                <td>{{ line.jobTitle || '—' }}</td>
+                <td>{{ money(line.basicSalary) }}</td>
+                <td>{{ money(line.housingAllowance) }}</td>
+                <td>{{ money(line.otherAllowances) }}</td>
+                <td class="strong">{{ money(line.gross) }}</td>
+                <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
+                  {{ line.adjustmentsTotal !== 0 ? money(line.adjustmentsTotal) : '—' }}
+                </td>
+                <td class="net">{{ money(line.net) }}</td>
+                <td>
+                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openStaffAdjustment(line)">
+                    <span class="material-icons-round">add_circle_outline</span>
+                  </button>
+                </td>
+              </tr>
+              <!-- Manual adjustment rows -->
+              <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
+                <td></td>
+                <td colspan="6" class="adjustment-label">
+                  <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'" [class.down]="adj.kind === 'DEDUCTION'">
+                    {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
+                  </span>
+                  {{ adj.labelAr }}
+                  <em *ngIf="adj.reason">— {{ adj.reason }}</em>
+                  <small *ngIf="adj.createdBy">({{ adj.createdBy }})</small>
+                </td>
+                <td [class.positive]="adj.kind === 'BONUS'" [class.negative]="adj.kind === 'DEDUCTION'">
+                  {{ money(adj.signedAmount) }}
+                </td>
+                <td></td>
+                <td>
+                  <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeStaffAdjustment(adj.id)" title="حذف البند">
+                    <span class="material-icons-round">delete_outline</span>
+                  </button>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="empty-state card no-selection" *ngIf="!selectedRun && !isLoadingRuns">
+      <span class="material-icons-round">payments</span>
+      <h3>لم يتم اختيار مسير</h3>
+      <p>أنشئ مسيرًا جديدًا للشهر الحالي لتبدأ محاسبة الكباتن.</p>
+    </div>
+  </div>
+
+  <!-- Adjustment modal -->
+  <div class="modal-backdrop" *ngIf="adjustmentForCaptain" (click)="cancelAdjustment()"></div>
+  <div class="modal" *ngIf="adjustmentForCaptain as line">
+    <h3>بند يدوي — {{ line.captainName }}</h3>
+    <p class="hint">البنود اليدوية تُطبَّق على فترة المسير وتظهر في عمودها الخاص عند التصدير.</p>
+
+    <div class="form-group">
+      <label class="form-label">النوع</label>
+      <select class="form-input" [(ngModel)]="adjustmentType">
+        <optgroup label="إضافات">
+          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{ opt.label
+            }}</option>
+        </optgroup>
+        <optgroup label="خصومات">
+          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{
+            opt.label }}</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">المبلغ (ريال)</label>
+      <input type="number" class="form-input" [(ngModel)]="adjustmentAmount" min="0" step="1"
+        placeholder="أدخل مبلغًا موجبًا — النوع يحدد الإضافة أو الخصم">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">السبب (اختياري)</label>
+      <input type="text" class="form-input" [(ngModel)]="adjustmentReason">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" [disabled]="!adjustmentAmount || adjustmentAmount <= 0 || isBusy"
+        (click)="saveAdjustment()">حفظ</button>
+      <button class="btn btn-outline" (click)="cancelAdjustment()">إلغاء</button>
+    </div>
+  </div>
+
+  <!-- Staff Adjustment modal -->
+  <div class="modal-backdrop" *ngIf="staffAdjustmentFor" (click)="cancelStaffAdjustment()"></div>
+  <div class="modal" *ngIf="staffAdjustmentFor as line">
+    <h3>بند يدوي — {{ line.staffName }}</h3>
+
+    <div class="form-group">
+      <label class="form-label">النوع</label>
+      <select class="form-input" [(ngModel)]="staffAdjustmentType">
+        <optgroup label="إضافات">
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{ opt.label }}</option>
+        </optgroup>
+        <optgroup label="خصومات">
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{ opt.label }}</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">المبلغ (ريال)</label>
+      <input type="number" class="form-input" [(ngModel)]="staffAdjustmentAmount" min="0" step="1"
+        placeholder="أدخل مبلغًا موجبًا">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">السبب (اختياري)</label>
+      <input type="text" class="form-input" [(ngModel)]="staffAdjustmentReason">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" [disabled]="!staffAdjustmentAmount || staffAdjustmentAmount <= 0 || isBusy"
+        (click)="saveStaffAdjustment()">حفظ</button>
+      <button class="btn btn-outline" (click)="cancelStaffAdjustment()">إلغاء</button>
+    </div>
+  </div>
+</div>
