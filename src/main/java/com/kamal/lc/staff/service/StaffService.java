@@ -24,6 +24,7 @@ public class StaffService {
     private final StaffCodeGenerator codeGenerator;
     private final StaffDocumentService documentService;
     private final com.kamal.lc.staff.expiry.StaffDocumentAlertEvaluator documentAlerts;
+    private final com.kamal.lc.payroll.repository.StaffPayrollLineRepository staffPayrollLineRepo;
 
     @Transactional
     public StaffDetailResponse create(StaffRequest request) {
@@ -41,7 +42,9 @@ public class StaffService {
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود"));
         staff.setStaffType(normalizeType(request.getStaffType()));
         applyRequest(staff, request);
-        return toDetailResponse(staffRepo.save(staff));
+        Staff saved = staffRepo.save(staff);
+        staffPayrollLineRepo.updateJobTitleForDraftRuns(id, saved.getJobTitle());
+        return toDetailResponse(saved);
     }
 
     public String previewNextCode(String staffType) {

@@ -110,4 +110,32 @@ export class PayrollService {
     }
     return this.http.get(`${this.base}/${runId}/export`, { params, responseType: 'blob' });
   }
+
+  exportPdf(runId: string, staffType?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (staffType) {
+      params = params.set('staffType', staffType);
+    }
+    return this.http.get(`${this.base}/${runId}/export-pdf`, { params, responseType: 'blob' });
+  }
+
+  exportPayslip(runId: string, captainId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${runId}/payslip/${captainId}`, { responseType: 'blob' });
+  }
+
+  exportBulkPayslips(runId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${runId}/bulk-payslips`, { responseType: 'blob' });
+  }
+
+  exportStaffPayslip(runId: string, staffId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${runId}/staff-payslip/${staffId}`, { responseType: 'blob' });
+  }
+
+  exportBulkStaffPayslips(runId: string, staffType?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (staffType) {
+      params = params.set('staffType', staffType);
+    }
+    return this.http.get(`${this.base}/${runId}/bulk-staff-payslips`, { params, responseType: 'blob' });
+  }
 }

@@ -6,12 +6,22 @@
       <p class="page-subtitle">كل شفت مستورد من المورد، وحساب مستحقات الكابتن عنه</p>
     </div>
     <div class="flex-center gap-sm">
+      <input type="file" #deductionFileInput style="display: none;" accept=".xlsx, .xls" (change)="onSupplierDeductionFileSelected($event)">
+      <button class="btn btn-outline" (click)="deductionFileInput.click()" [disabled]="isImportingDeductions" *ngIf="canManage">
+        <span class="material-icons-round" [class.spinning]="isImportingDeductions">upload_file</span>
+        استيراد خصومات المورد
+      </button>
       <button class="btn btn-outline" (click)="export()"
               [disabled]="isExporting || isLoading || shifts.length === 0">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
         تصدير Excel
       </button>
-      <button class="btn btn-outline" (click)="recalculate()" [disabled]="isRecalculating">
+      <button class="btn btn-outline" (click)="exportPdf()"
+              [disabled]="isExportingPdf || isLoading || shifts.length === 0">
+        <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span>
+        تصدير PDF
+      </button>
+      <button class="btn btn-outline" (click)="recalculate()" [disabled]="isRecalculating" *ngIf="canManage">
         <span class="material-icons-round" [class.spinning]="isRecalculating">refresh</span>
         إعادة حساب الفترة
       </button>
@@ -91,6 +101,7 @@
           <th>سيارة</th>
           <th>صافي الشفت</th>
           <th>إيراد المورد</th>
+          <th>خصم المورد</th>
         </tr>
       </thead>
       <tbody>
@@ -131,6 +142,9 @@
           </td>
           <td class="strong">{{ money(shift.netShiftPay) }}</td>
           <td class="muted">{{ money(shift.supplierRevenue + shift.supplierExtraRevenue) }}</td>
+          <td [class.negative]="shift.supplierDeduction > 0">
+            {{ shift.supplierDeduction > 0 ? '−' + money(shift.supplierDeduction) : '—' }}
+          </td>
         </tr>
       </tbody>
       <tfoot>
@@ -146,6 +160,9 @@
           <td></td>
           <td class="strong">{{ money(pageTotals.pay) }}</td>
           <td class="muted">{{ money(pageTotals.revenue) }}</td>
+          <td [class.negative]="pageTotals.supplierDeductions > 0">
+            {{ pageTotals.supplierDeductions > 0 ? '−' + money(pageTotals.supplierDeductions) : '—' }}
+          </td>
         </tr>
       </tfoot>
     </table>
@@ -166,94 +183,149 @@
   <div class="panel-backdrop" *ngIf="selected" (click)="closePanel()"></div>
   <aside class="detail-panel" *ngIf="selected">
     <header class="panel-header">
-      <div>
-        <h2>شفت {{ selected.externalShiftId }}</h2>
-        <p>{{ selected.shiftDate }} — {{ selected.zoneName || selected.shiftName }}</p>
+      <div class="header-info">
+        <div class="header-top">
+          <h2>شفت {{ selected.externalShiftId || selected.id }}</h2>
+          <span class="badge badge-danger" *ngIf="selected.excluded">مستبعد</span>
+          <span class="badge badge-warning" *ngIf="!selected.excluded && !selected.attended">غياب</span>
+          <span class="badge badge-success" *ngIf="!selected.excluded && selected.attended">حضور</span>
+        </div>
+        <p class="header-sub">{{ selected.shiftDate }} — {{ selected.zoneName || selected.shiftName || 'غير محدد' }}</p>
       </div>
-      <button class="icon-btn" (click)="closePanel()">
+      <button class="icon-btn" (click)="closePanel()" title="إغلاق">
         <span class="material-icons-round">close</span>
       </button>
     </header>
 
-    <section class="panel-section">
-      <h3>الكابتن</h3>
-      <div class="kv"><span>الاسم</span><b>{{ selected.captainName || 'غير مربوط' }}</b></div>
-      <div class="kv"><span>كود كمال</span><b>{{ selected.captainCode || '—' }}</b></div>
-      <div class="kv"><span>معرف المورد</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
-      <div class="kv"><span>الاسم لدى المورد</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
-    </section>
-
-    <section class="panel-section">
-      <h3>حساب المستحق</h3>
-      <p class="calc-note" *ngIf="selected.calcNote">{{ selected.calcNote }}</p>
-      <div class="kv"><span>اليومية</span><b>{{ money(selected.dailyWage) }}</b></div>
-      <div class="kv negative"><span>خصم التأخير</span><b>−{{ money(selected.lateDeduction) }}</b></div>
-      <div class="kv positive">
-        <span>حافز {{ selected.extraOrders || 0 }} طلب إضافي</span>
-        <b>+{{ money(selected.dailyIncentive) }}</b>
-      </div>
-      <div class="kv positive"><span>بدل البنزين</span><b>+{{ money(selected.fuelAllowance) }}</b></div>
-      <div class="kv positive"><span>بدل السيارة</span><b>+{{ money(selected.carAllowance) }}</b></div>
-      <div class="kv total"><span>صافي الشفت</span><b>{{ money(selected.netShiftPay) }} ريال</b></div>
-    </section>
-
-    <section class="panel-section">
-      <h3>أرقام المورد</h3>
-      <div class="kv"><span>ساعات العمل</span><b>{{ num(selected.workingHours) }}</b></div>
-      <div class="kv"><span>الطلبات</span><b>{{ selected.totalDelivered ?? '—' }}</b></div>
-      <div class="kv"><span>حالة الحضور</span><b>{{ selected.attendanceFlag || '—' }}</b></div>
-      <div class="kv"><span>بداية الشفت</span><b>{{ time(selected.scheduledStart) }}</b></div>
-      <div class="kv"><span>تسجيل الدخول</span><b>{{ time(selected.actualCheckin) }}</b></div>
-      <div class="kv"><span>دقائق التأخير</span><b>{{ num(selected.delayMinutes) }}</b></div>
-      <div class="kv"><span>نسبة الانشغال</span><b>{{ percent(selected.busyUtilization) }}</b></div>
-      <div class="kv"><span>التسليم في الوقت</span><b>{{ percent(selected.deliveryOntime) }}</b></div>
-      <div class="kv"><span>معدل الطلبات بالساعة</span><b>{{ num(selected.hourlyUtr) }}</b></div>
-      <div class="kv"><span>وقت الانشغال</span><b>{{ num(selected.busyTime) }}</b></div>
-      <div class="kv"><span>وقت الفراغ</span><b>{{ num(selected.freeTime) }}</b></div>
-      <div class="kv"><span>خارج النطاق</span><b>{{ num(selected.awayFromZone) }}</b></div>
-    </section>
-
-    <section class="panel-section">
-      <h3>الربحية</h3>
-      <div class="kv">
-        <span>حقّق شروط المورد</span>
-        <b>{{ selected.qualifiesFullRate ? 'نعم' : 'لا' }}</b>
-      </div>
-      <div class="kv"><span>إيراد الشفت</span><b>{{ money(selected.supplierRevenue) }}</b></div>
-      <div class="kv"><span>إيراد الطلبات الإضافية</span><b>{{ money(selected.supplierExtraRevenue) }}</b></div>
-      <div class="kv total"><span>الهامش</span><b>{{ money(selected.shiftMargin) }} ريال</b></div>
-    </section>
-
-    <section class="panel-section">
-      <h3>الاستبعاد</h3>
-      <div class="excluded-note" *ngIf="selected.excluded">
-        <span class="material-icons-round">block</span>
-        <div>
-          <b>هذا الشفت مستبعد من الحساب</b>
-          <p>{{ selected.exclusionReason }}</p>
+    <div class="panel-body">
+      <!-- Section 1: Captain -->
+      <section class="panel-section">
+        <div class="section-title">
+          <span class="material-icons-round">person</span>
+          <h3>بيانات الكابتن</h3>
         </div>
-      </div>
+        <div class="kv-grid">
+          <div class="kv"><span>الاسم</span><b class="val-name">{{ selected.captainName || 'غير مربوط' }}</b></div>
+          <div class="kv"><span>كود كمال</span><b class="code-cell">{{ selected.captainCode || '—' }}</b></div>
+          <div class="kv"><span>معرف المورد</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
+          <div class="kv"><span>الاسم لدى المورد</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
+        </div>
+      </section>
 
-      <button class="btn btn-outline btn-sm" *ngIf="selected.excluded" (click)="include()">
-        إرجاع الشفت للحساب
-      </button>
-
-      <ng-container *ngIf="!selected.excluded">
-        <button class="btn btn-outline btn-sm" *ngIf="!showExcludeForm" (click)="showExcludeForm = true">
-          استبعاد هذا الشفت
-        </button>
-        <div class="exclude-form" *ngIf="showExcludeForm">
-          <label class="form-label">سبب الاستبعاد (مطلوب)</label>
-          <input type="text" class="form-input" [(ngModel)]="excludeReason"
-                 placeholder="مثال: خطأ في بيانات المورد">
-          <div class="form-actions">
-            <button class="btn btn-danger btn-sm" [disabled]="!excludeReason.trim()" (click)="exclude()">
-              تأكيد الاستبعاد
-            </button>
-            <button class="btn btn-outline btn-sm" (click)="showExcludeForm = false">إلغاء</button>
+      <!-- Section 2: Calculation -->
+      <section class="panel-section">
+        <div class="section-title">
+          <span class="material-icons-round">payments</span>
+          <h3>حساب المستحق</h3>
+        </div>
+        <div class="calc-note" *ngIf="selected.calcNote">
+          <span class="material-icons-round">info</span>
+          <span>{{ selected.calcNote }}</span>
+        </div>
+        <div class="kv-grid">
+          <div class="kv"><span>اليومية</span><b>{{ money(selected.dailyWage) }}</b></div>
+          <div class="kv negative" *ngIf="selected.lateDeduction > 0">
+            <span>خصم التأخير</span><b>−{{ money(selected.lateDeduction) }}</b>
+          </div>
+          <div class="kv negative" *ngIf="selected.supplierDeduction > 0">
+            <span>خصم المورد</span><b>−{{ money(selected.supplierDeduction) }}</b>
+          </div>
+          <div class="kv positive" *ngIf="selected.dailyIncentive > 0">
+            <span>حافز {{ selected.extraOrders || 0 }} طلب إضافي</span><b>+{{ money(selected.dailyIncentive) }}</b>
+          </div>
+          <div class="kv positive" *ngIf="selected.fuelAllowance > 0">
+            <span>بدل البنزين</span><b>+{{ money(selected.fuelAllowance) }}</b>
+          </div>
+          <div class="kv positive" *ngIf="selected.carAllowance > 0">
+            <span>بدل السيارة</span><b>+{{ money(selected.carAllowance) }}</b>
           </div>
         </div>
-      </ng-container>
-    </section>
+        <div class="total-card">
+          <span class="total-label">صافي الشفت المستحق</span>
+          <span class="total-value">{{ money(selected.netShiftPay) }} <small>ريال</small></span>
+        </div>
+      </section>
+
+      <!-- Section 3: Supplier Numbers -->
+      <section class="panel-section">
+        <div class="section-title">
+          <span class="material-icons-round">analytics</span>
+          <h3>أرقام ومؤشرات المورد</h3>
+        </div>
+        <div class="kv-grid columns-2">
+          <div class="kv"><span>ساعات العمل</span><b>{{ num(selected.workingHours) }}</b></div>
+          <div class="kv"><span>الطلبات</span><b>{{ selected.totalDelivered ?? '—' }}</b></div>
+          <div class="kv"><span>حالة الحضور</span><b>{{ selected.attendanceFlag || '—' }}</b></div>
+          <div class="kv"><span>بداية الشفت</span><b>{{ time(selected.scheduledStart) }}</b></div>
+          <div class="kv"><span>تسجيل الدخول</span><b>{{ time(selected.actualCheckin) }}</b></div>
+          <div class="kv"><span>دقائق التأخير</span><b>{{ num(selected.delayMinutes) }} دقيقة</b></div>
+          <div class="kv"><span>نسبة الانشغال</span><b>{{ percent(selected.busyUtilization) }}</b></div>
+          <div class="kv"><span>التسليم في الوقت</span><b>{{ percent(selected.deliveryOntime) }}</b></div>
+          <div class="kv"><span>معدل الطلبات/ساعة</span><b>{{ num(selected.hourlyUtr) }}</b></div>
+          <div class="kv"><span>وقت الانشغال</span><b>{{ num(selected.busyTime) }}</b></div>
+          <div class="kv"><span>وقت الفراغ</span><b>{{ num(selected.freeTime) }}</b></div>
+          <div class="kv"><span>خارج النطاق</span><b>{{ num(selected.awayFromZone) }}</b></div>
+        </div>
+      </section>
+
+      <!-- Section 4: Profitability -->
+      <section class="panel-section">
+        <div class="section-title">
+          <span class="material-icons-round">trending_up</span>
+          <h3>الربحية والهامش</h3>
+        </div>
+        <div class="kv-grid">
+          <div class="kv">
+            <span>حقّق شروط المورد</span>
+            <span class="badge" [class.badge-success]="selected.qualifiesFullRate" [class.badge-danger]="!selected.qualifiesFullRate">
+              {{ selected.qualifiesFullRate ? 'نعم' : 'لا' }}
+            </span>
+          </div>
+          <div class="kv"><span>إيراد الشفت</span><b>{{ money(selected.supplierRevenue) }} ريال</b></div>
+          <div class="kv"><span>إيراد الطلبات الإضافية</span><b>{{ money(selected.supplierExtraRevenue) }} ريال</b></div>
+        </div>
+        <div class="total-card margin-card">
+          <span class="total-label">هامش الشفت</span>
+          <span class="total-value">{{ money(selected.shiftMargin) }} <small>ريال</small></span>
+        </div>
+      </section>
+
+      <!-- Section 5: Exclusion -->
+      <section class="panel-section" *ngIf="canManage">
+        <div class="section-title">
+          <span class="material-icons-round">block</span>
+          <h3>إدارة الاستبعاد</h3>
+        </div>
+        <div class="excluded-note" *ngIf="selected.excluded">
+          <span class="material-icons-round">block</span>
+          <div>
+            <b>هذا الشفت مستبعد من الحساب</b>
+            <p>{{ selected.exclusionReason || 'بدون سبب محدد' }}</p>
+          </div>
+        </div>
+
+        <button class="btn btn-outline btn-sm w-full" *ngIf="selected.excluded" (click)="include()">
+          <span class="material-icons-round">undo</span> إرجاع الشفت للحساب
+        </button>
+
+        <ng-container *ngIf="!selected.excluded">
+          <button class="btn btn-outline btn-sm btn-danger-outline w-full" *ngIf="!showExcludeForm" (click)="showExcludeForm = true">
+            <span class="material-icons-round">block</span> استبعاد هذا الشفت
+          </button>
+          <div class="exclude-form" *ngIf="showExcludeForm">
+            <label class="form-label">سبب الاستبعاد (مطلوب)</label>
+            <input type="text" class="form-input" [(ngModel)]="excludeReason"
+                   placeholder="مثال: خطأ في بيانات المورد">
+            <div class="form-actions">
+              <button class="btn btn-danger btn-sm" [disabled]="!excludeReason.trim()" (click)="exclude()">
+                تأكيد الاستبعاد
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="showExcludeForm = false">إلغاء</button>
+            </div>
+          </div>
+        </ng-container>
+      </section>
+    </div>
   </aside>
 </div>
+

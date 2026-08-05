@@ -10,5 +10,8 @@ public enum ImportBatchType {
     CAPTAINS,
 
     /** The supplier's shift export — the daily file that feeds reports and payroll. */
-    SHIFTS
+    SHIFTS,
+
+    /** Supplier deductions file — daily or periodic penalty and deduction records from supplier. */
+    SUPPLIER_DEDUCTIONS
 }

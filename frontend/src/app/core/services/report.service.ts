@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, CaptainReportResponse, TeamReportResponse } from '../models/api.models';
+import { ApiResponse, CaptainReportResponse, OrdersDashboardResponse, TeamReportResponse } from '../models/api.models';
 import { unwrap } from './api.util';
 
 @Injectable({ providedIn: 'root' })
@@ -32,7 +32,24 @@ export class ReportService {
     });
   }
 
+  /** Daily delivery grid per captain for the orders dashboard. */
+  ordersDashboard(from: string, to: string, captainType: string = 'ALL'): Observable<OrdersDashboardResponse> {
+    const params = this.period(from, to).set('captainType', captainType);
+    return this.http
+      .get<ApiResponse<OrdersDashboardResponse>>(`${this.base}/orders-dashboard`, { params })
+      .pipe(map(unwrap));
+  }
+
+  /** Export orders dashboard as Excel workbook. */
+  exportOrdersDashboard(from: string, to: string, captainType: string = 'ALL'): Observable<Blob> {
+    const params = this.period(from, to).set('captainType', captainType);
+    return this.http.get(`${this.base}/orders-dashboard/export`, {
+      params, responseType: 'blob'
+    });
+  }
+
   private period(from: string, to: string): HttpParams {
     return new HttpParams().set('from', from).set('to', to);
   }
 }
+

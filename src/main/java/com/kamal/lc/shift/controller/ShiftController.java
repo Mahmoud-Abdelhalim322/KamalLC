@@ -3,6 +3,7 @@ package com.kamal.lc.shift.controller;
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
 import com.kamal.lc.imports.service.ShiftImportService;
+import com.kamal.lc.imports.service.SupplierDeductionImportService;
 import com.kamal.lc.shift.dto.ShiftFilter;
 import com.kamal.lc.shift.dto.ShiftResponse;
 import com.kamal.lc.shift.service.ShiftExportService;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +34,8 @@ public class ShiftController {
     private final ShiftService shiftService;
     private final ShiftImportService importService;
     private final ShiftExportService exportService;
+    private final SupplierDeductionImportService supplierDeductionImportService;
+    private final com.kamal.lc.common.export.PdfExportService pdfExportService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ShiftResponse>>> search(
@@ -61,6 +65,22 @@ public class ShiftController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename*=UTF-8''" + fileName)
                 .body(exportService.build(shifts, filter));
+    }
+
+    /** The filtered list as a PDF document. */
+    @GetMapping("/export-pdf")
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute ShiftFilter filter) {
+        List<ShiftResponse> shifts = shiftService.searchAll(filter,
+                Sort.by(Sort.Direction.ASC, "shiftDate"));
+
+        String fileName = URLEncoder.encode(
+                "تقرير-الشيفتات-" + (filter.getFrom() != null ? filter.getFrom() : "الكل") + ".pdf",
+                StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdfExportService.buildShiftsPdf(shifts, filter));
     }
 
     @GetMapping("/{id}")
@@ -100,6 +120,16 @@ public class ShiftController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "تمت إعادة حساب " + result.recalculated() + " شفت (" + result.relinked() + " تم ربطها بكابتن)",
                 result));
+    }
+
+    /** Import supplier (Ninja) deductions from an Excel file. */
+    @PostMapping("/import-supplier-deductions")
+    public ResponseEntity<ApiResponse<SupplierDeductionImportService.ImportResult>> importSupplierDeductions(
+            @RequestParam("file") MultipartFile file) throws java.io.IOException {
+        SupplierDeductionImportService.ImportResult result =
+                supplierDeductionImportService.importDeductions(file.getInputStream());
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم استيراد " + result.getMatched() + " خصم (" + result.getUnmatched() + " غير مطابق)", result));
     }
 
     private static PageResponse<ShiftResponse> toPageResponse(Page<ShiftResponse> page) {

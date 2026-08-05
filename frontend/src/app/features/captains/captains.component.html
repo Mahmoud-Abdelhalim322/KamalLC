@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <a routerLink="/captains/new" class="btn btn-primary">
+    <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
       <span class="material-icons-round">person_add</span>
       إضافة كابتن
     </a>
@@ -42,7 +42,7 @@
     <h3>لا يوجد كباتن</h3>
     <p>أضف كابتن يدوياً أو قم باستيراد ملف Excel</p>
     <div class="empty-actions">
-      <a routerLink="/captains/new" class="btn btn-primary">
+      <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
         <span class="material-icons-round">person_add</span>
         إضافة كابتن
       </a>

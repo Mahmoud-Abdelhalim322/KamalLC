@@ -61,6 +61,13 @@ class ExcelTemplateServiceTest {
                 .satisfies(row -> assertThat(row.getCaptainName()).isEqualTo("محمد أحمد"));
     }
 
+    @Test
+    @DisplayName("the deduction template builds without errors")
+    void deductionTemplateBuilds() {
+        byte[] content = templateService.buildDeductions();
+        assertThat(content).isNotEmpty();
+    }
+
     private MockMultipartFile shiftTemplate() {
         return new MockMultipartFile("file", "supplier-shifts-import-template.xlsx", XLSX,
                 templateService.buildShifts());

@@ -6,6 +6,8 @@ import { ShiftFilter, ShiftResponse } from '../../core/models/api.models';
 import { ShiftService } from '../../core/services/shift.service';
 import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched';
 
 @Component({
@@ -18,6 +20,11 @@ type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched';
 export class ShiftsComponent implements OnInit, OnDestroy {
 
   private shiftService = inject(ShiftService);
+  public authService = inject(AuthService);
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('SHIFTS_MANAGE');
+  }
 
   readonly tabs: { key: ShiftTab; label: string; icon: string }[] = [
     { key: 'all', label: 'الكل', icon: 'list' },
@@ -213,6 +220,48 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     });
   }
 
+  isExportingPdf = false;
+
+  exportPdf(): void {
+    this.isExportingPdf = true;
+    this.clearMessages();
+
+    this.shiftService.exportPdf(this.buildFilter()).subscribe({
+      next: (blob) => {
+        this.isExportingPdf = false;
+        downloadBlob(blob, `تقرير-الشيفتات-${this.from || 'الكل'}.pdf`);
+      },
+      error: () => {
+        this.isExportingPdf = false;
+        this.errorMessage = 'فشل تحميل ملف PDF للشيفتات';
+      }
+    });
+  }
+
+  isImportingDeductions = false;
+
+  onSupplierDeductionFileSelected(event: any): void {
+    const file: File = event.target.files?.[0];
+    if (!file) return;
+
+    this.isImportingDeductions = true;
+    this.clearMessages();
+
+    this.shiftService.importSupplierDeductions(file).subscribe({
+      next: (res) => {
+        this.isImportingDeductions = false;
+        this.successMessage = `تم استيراد ${res.matched} خصم مورد (${res.unmatched} غير مطابق)`;
+        this.load(false);
+      },
+      error: (err) => {
+        this.isImportingDeductions = false;
+        this.errorMessage = errorMessage(err, 'فشل في استيراد خصومات المورد');
+      }
+    });
+
+    event.target.value = '';
+  }
+
   clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
@@ -226,10 +275,11 @@ export class ShiftsComponent implements OnInit, OnDestroy {
       orders: acc.orders + (s.totalDelivered ?? 0),
       hours: acc.hours + (s.workingHours ?? 0),
       deductions: acc.deductions + s.lateDeduction,
+      supplierDeductions: acc.supplierDeductions + (s.supplierDeduction ?? 0),
       incentives: acc.incentives + s.dailyIncentive,
       pay: acc.pay + s.netShiftPay,
       revenue: acc.revenue + s.supplierRevenue + s.supplierExtraRevenue,
-    }), { orders: 0, hours: 0, deductions: 0, incentives: 0, pay: 0, revenue: 0 });
+    }), { orders: 0, hours: 0, deductions: 0, supplierDeductions: 0, incentives: 0, pay: 0, revenue: 0 });
   }
 
   rowClass(shift: ShiftResponse): string {

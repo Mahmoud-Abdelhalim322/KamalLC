@@ -25,6 +25,18 @@ public class VehicleResponse {
     private String rentalStartDate;
     private String rentalEndDate;
 
+    // Extended document fields
+    private String registrationNumber;
+    private String vin;
+    private String registrationExpiryDate;
+    private String operatingCardNumber;
+    private String insuranceCompany;
+    private String inspectionExpiryDate;
+
+    // Document Alert Status
+    private String documentAlertStatus; // VALID | EXPIRING | EXPIRED
+    private java.util.List<String> documentAlerts;
+
     // Current assignment info (denormalised for list view)
     private String currentCaptainName;
     private String currentCaptainCode;

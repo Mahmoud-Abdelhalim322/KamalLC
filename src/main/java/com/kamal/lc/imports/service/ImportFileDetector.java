@@ -3,6 +3,8 @@ package com.kamal.lc.imports.service;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.imports.entity.ImportBatchType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
@@ -14,12 +16,11 @@ import java.util.Optional;
 
 /**
  * Works out which importer an uploaded file belongs to, by scoring its header row
- * against both parsers' column maps.
+ * against parsers' column maps and specific domain indicators.
  *
- * <p>It exists for one reason: the two files share nothing but a file extension, and
- * a supplier shift report dropped on the captains uploader used to fail with
- * "لم يتم العثور على صف العناوين" — technically true, and useless to the person
- * holding the file. Detection turns that into a message naming the right screen.
+ * <p>It exists for one reason: the files share nothing but a file extension, and
+ * dropping one on the wrong uploader used to fail with confusing error messages.
+ * Detection turns that into a message naming the right screen.
  *
  * <p>Advisory only. A file it cannot classify is passed through to the parser, which
  * is still the authority on whether the file can actually be read.
@@ -42,6 +43,10 @@ public class ImportFileDetector {
             Sheet sheet = workbook.getSheetAt(0);
             if (sheet == null) return Optional.empty();
 
+            if (isSupplierDeductions(sheet)) {
+                return Optional.of(ImportBatchType.SUPPLIER_DEDUCTIONS);
+            }
+
             int captains = ExcelCellSupport.detectHeaders(sheet, ExcelParserService.columnMap()).size();
             int shifts = ExcelCellSupport.detectHeaders(sheet, NinjaShiftParser.columnMap()).size();
 
@@ -55,8 +60,51 @@ public class ImportFileDetector {
         }
     }
 
+    private boolean isSupplierDeductions(Sheet sheet) {
+        for (int i = 0; i <= Math.min(sheet.getLastRowNum(), 10); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            boolean hasAmount = false;
+            boolean hasDate = false;
+            boolean hasCaptainInfo = false;
+
+            for (Cell cell : row) {
+                String val = ExcelCellSupport.getCellString(row, cell.getColumnIndex());
+                if (val == null || val.isBlank()) continue;
+
+                String normalized = ExcelCellSupport.normalizeHeader(val);
+
+                if (!normalized.startsWith("سبب") && !normalized.contains("سبب الخصم")) {
+                    if (normalized.contains("خصم") || normalized.contains("سعر") || normalized.contains("مبلغ") ||
+                            normalized.contains("قيمة") || normalized.contains("deduction") || normalized.contains("amount") ||
+                            normalized.contains("penalty") || normalized.contains("غرامة")) {
+                        hasAmount = true;
+                    }
+                }
+
+                if (normalized.contains("تاريخ") || normalized.contains("date") || normalized.contains("يوم")) {
+                    hasDate = true;
+                }
+
+                if (normalized.contains("ninja") || normalized.contains("kslsc") || normalized.contains("ksc") ||
+                        normalized.contains("هاتف") || normalized.contains("phone") || normalized.contains("إقامة") ||
+                        normalized.contains("اقامة") || normalized.contains("هوية") || normalized.contains("iqama") ||
+                        normalized.contains("جوال") || normalized.contains("اسم") || normalized.contains("كابتن") ||
+                        normalized.contains("name")) {
+                    hasCaptainInfo = true;
+                }
+            }
+
+            if (hasAmount && (hasDate || hasCaptainInfo)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Rejects a file that plainly belongs to the other importer, naming the screen the
+     * Rejects a file that plainly belongs to the wrong importer, naming the screen the
      * user should have used. Silent when the file is the expected kind or unclassifiable.
      */
     public void requireNot(MultipartFile file, ImportBatchType wrongKind) {
@@ -68,10 +116,11 @@ public class ImportFileDetector {
     }
 
     private String messageFor(ImportBatchType detected) {
-        return detected == ImportBatchType.SHIFTS
-                ? "هذا الملف تقرير شيفتات من المورد وليس ملف بيانات كباتن — "
-                        + "استورده من تبويب «استيراد تقارير الموردين»"
-                : "هذا الملف يحتوي بيانات كباتن ومعرفات وليس تقرير شيفتات — "
-                        + "استورده من تبويب «استيراد بيانات الكباتن والموردين»";
+        return switch (detected) {
+            case SHIFTS -> "هذا الملف تقرير شيفتات من المورد — استورده من تبويب «استيراد تقارير الموردين»";
+            case CAPTAINS -> "هذا الملف يحتوي بيانات كباتن ومعرفات — استورده من تبويب «استيراد بيانات الكباتن والموردين»";
+            case SUPPLIER_DEDUCTIONS -> "هذا الملف يحتوي خصومات المورد — استورده من تبويب «استيراد خصومات المورد»";
+        };
     }
 }
+

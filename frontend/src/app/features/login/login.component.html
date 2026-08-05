@@ -1,19 +1,44 @@
 <div class="login-page">
-  <!-- Background decoration -->
+  <!-- Background Logistics Floating Elements -->
   <div class="login-bg">
     <div class="bg-circle bg-circle-1"></div>
     <div class="bg-circle bg-circle-2"></div>
     <div class="bg-circle bg-circle-3"></div>
+
+    <!-- Logistics Floating Icons -->
+    <div class="floating-icon icon-truck">
+      <span class="material-icons-round">local_shipping</span>
+    </div>
+    <div class="floating-icon icon-package">
+      <span class="material-icons-round">inventory_2</span>
+    </div>
+    <div class="floating-icon icon-route">
+      <span class="material-icons-round">alt_route</span>
+    </div>
+    <div class="floating-icon icon-speed">
+      <span class="material-icons-round">speed</span>
+    </div>
   </div>
 
   <div class="login-container animate-fade-in">
+    <!-- Logistics Top Tag -->
+    <div class="logistics-top-tag">
+
+      <span>الخدمات اللوجستية المتكاملة</span>
+    </div>
+
     <!-- Logo & Title -->
     <div class="login-header">
-      <div class="logo-icon">
-        <span class="material-icons-round">local_shipping</span>
-      </div>
-      <h1 class="login-title">كمال فود</h1>
-      <p class="login-subtitle">نظام إدارة الكباتن</p>
+      <img src="logo-ksclc.png" alt="شركة كمال بن خلف السلمي للخدمات اللوجستية" class="login-logo-img">
+      <h1 class="login-title">شركة كمال السلمي</h1>
+      <p class="login-subtitle">نظام الإدارة والخدمات اللوجستية</p>
+    </div>
+
+    <!-- Logistics Feature Badges -->
+    <div class="logistics-features">
+      <span class="feat-chip"><span class="material-icons-round">local_shipping</span> توصيل سريع</span>
+      <span class="feat-chip"><span class="material-icons-round">inventory_2</span> إدارة </span>
+      <span class="feat-chip"><span class="material-icons-round">verified</span> أمان واحترافية</span>
     </div>
 
     <!-- Login Form -->
@@ -23,15 +48,8 @@
           <span class="material-icons-round label-icon">person</span>
           اسم المستخدم
         </label>
-        <input
-          id="username"
-          class="form-input"
-          type="text"
-          [(ngModel)]="username"
-          name="username"
-          placeholder="أدخل اسم المستخدم"
-          autocomplete="username"
-          [class.error]="errorMessage">
+        <input id="username" class="form-input" type="text" [(ngModel)]="username" name="username"
+          placeholder="أدخل اسم المستخدم" autocomplete="username" [class.error]="errorMessage">
       </div>
 
       <div class="form-group">
@@ -39,15 +57,8 @@
           <span class="material-icons-round label-icon">lock</span>
           كلمة المرور
         </label>
-        <input
-          id="password"
-          class="form-input"
-          type="password"
-          [(ngModel)]="password"
-          name="password"
-          placeholder="أدخل كلمة المرور"
-          autocomplete="current-password"
-          [class.error]="errorMessage">
+        <input id="password" class="form-input" type="password" [(ngModel)]="password" name="password"
+          placeholder="أدخل كلمة المرور" autocomplete="current-password" [class.error]="errorMessage">
       </div>
 
       <!-- Error message -->
@@ -57,10 +68,7 @@
       </div>
 
       <!-- Submit button -->
-      <button
-        type="submit"
-        class="btn btn-primary btn-login"
-        [disabled]="isLoading">
+      <button type="submit" class="btn btn-login" [disabled]="isLoading">
         <span class="spinner spinner-sm" *ngIf="isLoading"></span>
         <span *ngIf="!isLoading">تسجيل الدخول</span>
         <span class="material-icons-round" *ngIf="!isLoading">login</span>
@@ -68,7 +76,7 @@
     </form>
 
     <div class="login-footer">
-      <p>© {{ currentYear }} كمال فود — جميع الحقوق محفوظة</p>
+      <p>© {{ currentYear }} شركة كمال بن خلف السلمي للخدمات اللوجستية — جميع الحقوق محفوظة</p>
     </div>
   </div>
 </div>

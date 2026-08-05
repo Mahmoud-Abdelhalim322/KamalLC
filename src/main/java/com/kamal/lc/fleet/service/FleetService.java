@@ -66,6 +66,12 @@ public class FleetService {
                 .rentalAgentName(req.getRentalAgentName())
                 .rentalStartDate(req.getRentalStartDate())
                 .rentalEndDate(req.getRentalEndDate())
+                .registrationNumber(req.getRegistrationNumber())
+                .vin(req.getVin())
+                .registrationExpiryDate(req.getRegistrationExpiryDate())
+                .operatingCardNumber(req.getOperatingCardNumber())
+                .insuranceCompany(req.getInsuranceCompany())
+                .inspectionExpiryDate(req.getInspectionExpiryDate())
                 .notes(req.getNotes())
                 .build();
         return toResponse(vehicleRepo.save(v));
@@ -88,6 +94,12 @@ public class FleetService {
         v.setRentalAgentName(req.getRentalAgentName());
         v.setRentalStartDate(req.getRentalStartDate());
         v.setRentalEndDate(req.getRentalEndDate());
+        v.setRegistrationNumber(req.getRegistrationNumber());
+        v.setVin(req.getVin());
+        v.setRegistrationExpiryDate(req.getRegistrationExpiryDate());
+        v.setOperatingCardNumber(req.getOperatingCardNumber());
+        v.setInsuranceCompany(req.getInsuranceCompany());
+        v.setInspectionExpiryDate(req.getInspectionExpiryDate());
         v.setNotes(req.getNotes());
         return toResponse(vehicleRepo.save(v));
     }
@@ -510,7 +522,15 @@ public class FleetService {
                 .rentalAgentName(v.getRentalAgentName())
                 .rentalStartDate(v.getRentalStartDate() != null ? v.getRentalStartDate().toString() : null)
                 .rentalEndDate(v.getRentalEndDate() != null ? v.getRentalEndDate().toString() : null)
+                .registrationNumber(v.getRegistrationNumber())
+                .vin(v.getVin())
+                .registrationExpiryDate(v.getRegistrationExpiryDate() != null ? v.getRegistrationExpiryDate().toString() : null)
+                .operatingCardNumber(v.getOperatingCardNumber())
+                .insuranceCompany(v.getInsuranceCompany())
+                .inspectionExpiryDate(v.getInspectionExpiryDate() != null ? v.getInspectionExpiryDate().toString() : null)
                 .notes(v.getNotes());
+
+        evaluateDocumentAlerts(v, builder);
 
         activeAssignment.ifPresent(a -> {
             builder.currentCaptainName(a.getCaptain().getFullNameAr());
@@ -520,6 +540,66 @@ public class FleetService {
         });
 
         return builder.build();
+    }
+
+    private void evaluateDocumentAlerts(Vehicle v, VehicleResponse.VehicleResponseBuilder builder) {
+        LocalDate today = LocalDate.now();
+        int regAlertDays = getSettingInt("VEHICLE_REGISTRATION_EXPIRY_ALERT_DAYS", 30);
+        int inspAlertDays = getSettingInt("VEHICLE_INSPECTION_EXPIRY_ALERT_DAYS", 30);
+        int rentAlertDays = getSettingInt("VEHICLE_RENTAL_EXPIRY_ALERT_DAYS", 7);
+
+        List<String> alerts = new ArrayList<>();
+        boolean hasExpired = false;
+        boolean hasExpiring = false;
+
+        // 1. Registration expiry
+        if (v.getRegistrationExpiryDate() != null) {
+            if (v.getRegistrationExpiryDate().isBefore(today)) {
+                alerts.add("استمارة السيارة منتهية (" + v.getRegistrationExpiryDate() + ")");
+                hasExpired = true;
+            } else if (!v.getRegistrationExpiryDate().isAfter(today.plusDays(regAlertDays))) {
+                alerts.add("استمارة السيارة تنتهي قريباً (" + v.getRegistrationExpiryDate() + ")");
+                hasExpiring = true;
+            }
+        }
+
+        // 2. Inspection expiry
+        LocalDate inspDate = v.getInspectionExpiryDate() != null ? v.getInspectionExpiryDate() : v.getInspectionDate();
+        if (inspDate != null) {
+            if (inspDate.isBefore(today)) {
+                alerts.add("فحص السيارة منتهي (" + inspDate + ")");
+                hasExpired = true;
+            } else if (!inspDate.isAfter(today.plusDays(inspAlertDays))) {
+                alerts.add("فحص السيارة ينتهي قريباً (" + inspDate + ")");
+                hasExpiring = true;
+            }
+        }
+
+        // 3. Rental expiry
+        if ("RENTED".equalsIgnoreCase(v.getOwnershipType()) && v.getRentalEndDate() != null) {
+            if (v.getRentalEndDate().isBefore(today)) {
+                alerts.add("عقد التأجير منتهي (" + v.getRentalEndDate() + ")");
+                hasExpired = true;
+            } else if (!v.getRentalEndDate().isAfter(today.plusDays(rentAlertDays))) {
+                alerts.add("عقد التأجير ينتهي قريباً (" + v.getRentalEndDate() + ")");
+                hasExpiring = true;
+            }
+        }
+
+        String status = hasExpired ? "EXPIRED" : (hasExpiring ? "EXPIRING" : "VALID");
+        builder.documentAlertStatus(status);
+        builder.documentAlerts(alerts);
+    }
+
+    private int getSettingInt(String key, int defaultValue) {
+        return settingRepo.findCurrent(key)
+                .map(s -> {
+                    try {
+                        return Integer.parseInt(s.getValue().trim());
+                    } catch (Exception e) {
+                        return defaultValue;
+                    }
+                }).orElse(defaultValue);
     }
 
     private VehicleAssignmentResponse toAssignmentResponse(VehicleAssignment a) {

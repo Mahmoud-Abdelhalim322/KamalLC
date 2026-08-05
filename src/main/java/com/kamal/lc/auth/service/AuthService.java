@@ -18,8 +18,11 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
 /**
- * Authentication service — validates credentials and generates JWT token.
+ * Authentication service — validates credentials, refreshes tokens, and generates JWT token.
  */
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
 
     @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
@@ -60,6 +64,39 @@ public class AuthService {
                 .token(token)
                 .role(role)
                 .username(request.getUsername())
+                .displayName(displayName)
+                .expiresIn(expirationMs)
+                .permissions(permissions)
+                .build();
+    }
+
+    public LoginResponse getCurrentUser(String username) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        String token = jwtTokenProvider.generateToken(authentication);
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a -> a.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("ROLE_MANAGER")
+                .replace("ROLE_", "");
+
+        Set<String> permissions = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a -> !a.startsWith("ROLE_"))
+                .collect(Collectors.toSet());
+
+        String displayName = userRepository.findByUsername(username)
+                .map(AppUser::getDisplayName)
+                .orElse(null);
+
+        return LoginResponse.builder()
+                .token(token)
+                .role(role)
+                .username(username)
                 .displayName(displayName)
                 .expiresIn(expirationMs)
                 .permissions(permissions)

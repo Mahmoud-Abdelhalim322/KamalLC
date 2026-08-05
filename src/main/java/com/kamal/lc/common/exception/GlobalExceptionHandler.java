@@ -52,6 +52,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("FILE_TOO_LARGE", "حجم الملف يتجاوز الحد المسموح (10 ميجابايت)"));
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("FORBIDDEN", "عفواً، ليس لديك صلاحية للوصول لهذا العنصر"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);

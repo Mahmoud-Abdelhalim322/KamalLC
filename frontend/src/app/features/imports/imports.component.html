@@ -5,14 +5,18 @@
       <p class="page-subtitle">
         {{ activeTab === 'captains'
             ? 'رفع ملف بيانات الكباتن ومعرفات الموردين'
-            : 'رفع تقرير شيفتات المورد الذي تُبنى عليه التقارير والرواتب' }}
+            : activeTab === 'reports'
+              ? 'رفع تقرير شيفتات المورد الذي تُبنى عليه التقارير والرواتب'
+              : 'رفع ملف خصومات وغرامات المورد لتطبيقها على الشيفتات والرواتب' }}
       </p>
     </div>
     <button class="btn btn-outline" (click)="downloadTemplate()">
       <span class="material-icons-round">download</span>
       {{ activeTab === 'captains'
           ? 'تحميل نموذج Excel'
-          : 'تحميل نموذج تقرير المورد' }}
+          : activeTab === 'reports'
+            ? 'تحميل نموذج تقرير المورد'
+            : 'تحميل نموذج خصومات المورد' }}
     </button>
   </div>
 
@@ -27,6 +31,11 @@
             (click)="setTab('reports')">
       <span class="material-icons-round">assessment</span>
       استيراد تقارير الموردين
+    </button>
+    <button class="filter-tab" [class.active]="activeTab === 'deductions'"
+            (click)="setTab('deductions')">
+      <span class="material-icons-round">money_off</span>
+      استيراد خصومات المورد
     </button>
   </div>
 
@@ -53,7 +62,7 @@
 
   <!-- ======================================================== UPLOAD ZONE -->
   <div class="upload-section"
-       *ngIf="!captainPreview && !shiftPreview && !captainResult && !shiftResult">
+       *ngIf="!captainPreview && !shiftPreview && !deductionPreview && !captainResult && !shiftResult && !deductionResult">
     <div class="upload-zone"
          [class.dragging]="isDragging"
          [class.uploading]="isUploading"
@@ -70,7 +79,9 @@
         <h3>
           {{ activeTab === 'captains'
               ? 'اسحب ملف بيانات الكباتن هنا'
-              : 'اسحب ملف تقرير شيفتات المورد هنا' }}
+              : activeTab === 'reports'
+                ? 'اسحب ملف تقرير شيفتات المورد هنا'
+                : 'اسحب ملف خصومات وغرامات المورد هنا' }}
         </h3>
         <p>أو اضغط لاختيار ملف</p>
         <span class="upload-hint">يدعم ملفات .xlsx و .xls</span>
@@ -96,12 +107,15 @@
         ارفع ملف التقرير كما يُصدّره المورد دون تعديل. ترتيب الأعمدة غير مهم،
         والتواريخ تُقرأ بتوقيت الرياض. رفع نفس الملف مرة أخرى يُحدّث الشيفتات ولا يكررها.
       </p>
+      <p class="columns-hint" *ngIf="activeTab === 'deductions'">
+        ارفع ملف خصومات المورد لتطبيق الخصومات على الشيفتات السارية. يدعم الملف 3 نطاقات مطابقة تلقائية: ID المورد Ninja، كود KSLSC الداخلي، أو رقم الهاتف/الهوية.
+      </p>
 
       <div class="columns-group">
         <span class="group-label required">مطلوبة</span>
         <div class="chips">
           <span class="chip chip-required"
-                *ngFor="let col of activeTab === 'captains' ? captainRequiredColumns : reportRequiredColumns">
+                *ngFor="let col of activeTab === 'captains' ? captainRequiredColumns : activeTab === 'reports' ? reportRequiredColumns : deductionRequiredColumns">
             {{ col }}
           </span>
         </div>
@@ -111,7 +125,7 @@
         <span class="group-label">اختيارية</span>
         <div class="chips">
           <span class="chip"
-                *ngFor="let col of activeTab === 'captains' ? captainOptionalColumns : reportOptionalColumns">
+                *ngFor="let col of activeTab === 'captains' ? captainOptionalColumns : activeTab === 'reports' ? reportOptionalColumns : deductionOptionalColumns">
             {{ col }}
           </span>
         </div>
@@ -372,10 +386,129 @@
     </div>
   </div>
 
+  <!-- ================================================== DEDUCTIONS: PREVIEW -->
+  <div class="preview-section" *ngIf="deductionPreview">
+    <div class="preview-header">
+      <div class="preview-file">
+        <span class="material-icons-round">description</span>
+        <div>
+          <h3>{{ deductionPreview.fileName }}</h3>
+          <span>{{ deductionPreview.totalRows }} صف</span>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-primary" (click)="confirmImport()"
+                [disabled]="isCommitting || deductionPreview.matchedRows === 0">
+          <span class="material-icons-round" *ngIf="!isCommitting">check</span>
+          <div class="spinner-sm" *ngIf="isCommitting"></div>
+          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد استيراد الخصومات' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-stats">
+      <div class="stat-card new">
+        <span class="material-icons-round">check_circle</span>
+        <div>
+          <span class="stat-value">{{ deductionPreview.matchedRows }}</span>
+          <span class="stat-label">شيفت مطابق</span>
+        </div>
+      </div>
+      <div class="stat-card existing" [class.error-card]="deductionPreview.unmatchedRows > 0">
+        <span class="material-icons-round">remove_circle_outline</span>
+        <div>
+          <span class="stat-value">{{ deductionPreview.unmatchedRows }}</span>
+          <span class="stat-label">غير مطابق</span>
+        </div>
+      </div>
+      <div class="stat-card total">
+        <span class="material-icons-round">payments</span>
+        <div>
+          <span class="stat-value">{{ deductionPreview.totalDeductionAmount | number:'1.2-2' }} ر.س</span>
+          <span class="stat-label">إجمالي الخصومات</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deduction rows preview table -->
+    <div class="preview-table-wrap" *ngIf="deductionPreview.rows.length" style="margin-top: 1rem; overflow-x: auto;">
+      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">معاينة تفاصيل الخصومات والمطابقة</h4>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الصف</th>
+            <th>تاريخ الشيفت</th>
+            <th>المعرف / الكابتن</th>
+            <th>مبلغ الخصم</th>
+            <th>سبب الخصم</th>
+            <th>نطاق المطابقة</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of deductionPreview.rows">
+            <td>{{ row.rowNumber }}</td>
+            <td>{{ row.shiftDate }}</td>
+            <td>
+              <div>
+                <strong>{{ row.captainName || '—' }}</strong>
+                <div class="muted" style="font-size: 0.8rem;" *ngIf="row.ninjaId || row.kslscId">
+                  {{ row.ninjaId ? 'Ninja: ' + row.ninjaId : '' }} {{ row.kslscId ? 'KSC: ' + row.kslscId : '' }}
+                </div>
+              </div>
+            </td>
+            <td style="font-weight: 700; color: #e53935;">{{ row.amount | number:'1.2-2' }} ر.س</td>
+            <td>{{ row.reason || '—' }}</td>
+            <td>
+              <span class="chip" [class.chip-required]="row.matched">
+                {{ getScopeLabel(row.matchingScope) }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-committed]="row.matched" [class.status-failed]="!row.matched">
+                {{ row.statusMessage }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================================================== DEDUCTIONS: RESULT -->
+  <div class="result-card" *ngIf="deductionResult">
+    <div class="result-header">
+      <span class="material-icons-round result-icon success">task_alt</span>
+      <h2>تم استيراد وتطبيق الخصومات بنجاح</h2>
+    </div>
+    <p class="result-file">{{ deductionResult.fileName }}</p>
+    <div class="result-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{ deductionResult.matchedRows }}</span>
+        <span class="stat-label">شيفت تم تطبيق الخصم عليه</span>
+      </div>
+      <div class="stat-item" *ngIf="deductionResult.unmatchedRows > 0">
+        <span class="stat-value warning">{{ deductionResult.unmatchedRows }}</span>
+        <span class="stat-label">صف غير مطابق</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ deductionResult.totalDeductionAmount | number:'1.2-2' }} ر.س</span>
+        <span class="stat-label">إجمالي الخصومات المطبقة</span>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" (click)="goToShifts()">
+        <span class="material-icons-round">list</span> عرض الشيفتات والخصومات
+      </button>
+      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+    </div>
+  </div>
+
   <!-- ============================================================= HISTORY -->
   <div class="history-section">
     <h2 class="section-title">
-      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : 'سجل استيراد تقارير الموردين' }}
+      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : activeTab === 'reports' ? 'سجل استيراد تقارير الموردين' : 'سجل استيراد خصومات المورد' }}
     </h2>
 
     <div class="loading-container" *ngIf="isLoadingHistory">

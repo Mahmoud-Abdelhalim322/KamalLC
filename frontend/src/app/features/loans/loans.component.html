@@ -1,0 +1,131 @@
+<div class="loans-page">
+
+  <div class="page-header flex-between">
+    <div>
+      <h1 class="page-title">إدارة السُلف</h1>
+      <p class="page-subtitle">عرض وإدارة سلف جميع الأعضاء (كباتن، عاملين، إداريين)</p>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMsg">
+    <span class="material-icons-round">error_outline</span>{{ errorMsg }}
+    <button class="alert-close" (click)="errorMsg = ''">×</button>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span class="material-icons-round card-icon">people</span>
+      <div class="card-body">
+        <span class="card-value">{{ filteredMembers.length }}</span>
+        <span class="card-label">إجمالي الأعضاء</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <span class="material-icons-round card-icon accent">account_balance_wallet</span>
+      <div class="card-body">
+        <span class="card-value">{{ membersWithLoans }}</span>
+        <span class="card-label">أعضاء لديهم سلف</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <span class="material-icons-round card-icon warn">receipt_long</span>
+      <div class="card-body">
+        <span class="card-value">{{ totals.activeLoanCount }}</span>
+        <span class="card-label">سلف نشطة</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <span class="material-icons-round card-icon danger">trending_down</span>
+      <div class="card-body">
+        <span class="card-value">{{ money(totals.totalRemaining) }}</span>
+        <span class="card-label">إجمالي المتبقي</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label class="filter-label">النوع:</label>
+      <div class="btn-group">
+        <button class="btn btn-tab" [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">الكل</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'CAPTAIN'" (click)="typeFilter = 'CAPTAIN'; applyFilters()">كابتن</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'WORKER'" (click)="typeFilter = 'WORKER'; applyFilters()">عامل</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'MANAGER'" (click)="typeFilter = 'MANAGER'; applyFilters()">إداري</button>
+      </div>
+    </div>
+    <div class="filter-group search-group">
+      <span class="material-icons-round search-icon">search</span>
+      <input type="text" class="form-input search-input" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
+             placeholder="بحث بالاسم أو الكود...">
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-section" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جارٍ تحميل البيانات...</p>
+  </div>
+
+  <!-- Table -->
+  <div class="card table-card" *ngIf="!isLoading">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الاسم</th>
+            <th>النوع</th>
+            <th>الهاتف</th>
+            <th class="num">عدد السلف النشطة</th>
+            <th class="num">إجمالي المبلغ الأصلي</th>
+            <th class="num">إجمالي المتبقي</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of filteredMembers" class="clickable-row" (click)="openMember(member)"
+              [class.has-loans]="member.activeLoanCount > 0">
+            <td class="code-cell">{{ member.memberCode }}</td>
+            <td>
+              <span class="member-name">{{ member.memberName }}</span>
+              <span class="member-name-en" *ngIf="member.memberNameEn">{{ member.memberNameEn }}</span>
+            </td>
+            <td><span class="type-badge" [attr.data-type]="member.memberType">{{ member.memberTypeLabel }}</span></td>
+            <td class="phone-cell">{{ member.phone || '—' }}</td>
+            <td class="num">
+              <span class="loan-count" *ngIf="member.activeLoanCount > 0">{{ member.activeLoanCount }}</span>
+              <span class="no-loans" *ngIf="member.activeLoanCount === 0">—</span>
+            </td>
+            <td class="num">{{ member.totalOriginal > 0 ? money(member.totalOriginal) : '—' }}</td>
+            <td class="num">
+              <span [class.remaining-active]="member.totalRemaining > 0">
+                {{ member.totalRemaining > 0 ? money(member.totalRemaining) : '—' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-icon btn-sm" title="عرض التفاصيل">
+                <span class="material-icons-round">chevron_left</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="filteredMembers.length > 0">
+          <tr class="totals-row">
+            <td colspan="4">المجموع</td>
+            <td class="num">{{ totals.activeLoanCount }}</td>
+            <td class="num">{{ money(totals.totalOriginal) }}</td>
+            <td class="num">{{ money(totals.totalRemaining) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="empty-state" *ngIf="filteredMembers.length === 0">
+      <span class="material-icons-round">info</span>
+      لا توجد نتائج مطابقة للبحث
+    </p>
+  </div>
+
+</div>

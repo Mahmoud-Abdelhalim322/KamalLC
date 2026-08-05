@@ -30,14 +30,16 @@
               </span>
             </button>
             <div class="nav-group-children" *ngIf="item.expanded && !sidebarCollapsed">
-              <a *ngFor="let child of item.children"
-                 [routerLink]="child.route"
-                 routerLinkActive="active"
-                 class="nav-item nav-child"
-                 [title]="child.label">
-                <span class="material-icons-round nav-icon">{{ child.icon }}</span>
-                <span class="nav-label">{{ child.label }}</span>
-              </a>
+              <ng-container *ngFor="let child of item.children">
+                <a *ngIf="isVisible(child)"
+                   [routerLink]="child.route"
+                   routerLinkActive="active"
+                   class="nav-item nav-child"
+                   [title]="child.label">
+                  <span class="material-icons-round nav-icon">{{ child.icon }}</span>
+                  <span class="nav-label">{{ child.label }}</span>
+                </a>
+              </ng-container>
             </div>
           </div>
         </ng-container>

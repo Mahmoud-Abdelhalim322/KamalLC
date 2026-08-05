@@ -1,0 +1,142 @@
+<div class="orders-page animate-fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <span class="material-icons-outlined header-icon"></span>
+      <div>
+        <h1>لوحة تحكم تحقيق الطلبات</h1>
+        <p class="subtitle">Daily Delivery Per Captain Report — أداء الكباتن اليومي والتنسيق الشرطي</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || !data">
+        <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+        تصدير Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>{{ errorMessage }}
+  </div>
+
+  <!-- Filters & Toolbar -->
+  <div class="card toolbar-card">
+    <div class="toolbar">
+      <div class="date-filters">
+        <div class="date-field">
+          <label>من</label>
+          <input type="date" class="form-input" [(ngModel)]="from" (change)="onPeriodChange()">
+        </div>
+        <div class="date-field">
+          <label>إلى</label>
+          <input type="date" class="form-input" [(ngModel)]="to" (change)="onPeriodChange()">
+        </div>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab" [class.active]="captainType === 'ALL'" (click)="setCaptainType('ALL')">
+          <span class="material-icons-round">groups</span> الكل
+        </button>
+        <button class="filter-tab" [class.active]="captainType === 'EMPLOYEE'" (click)="setCaptainType('EMPLOYEE')">
+          <span class="material-icons-round">badge</span> كفالة
+        </button>
+        <button class="filter-tab" [class.active]="captainType === 'FREELANCE'" (click)="setCaptainType('FREELANCE')">
+          <span class="material-icons-round">directions_bike</span> فري لانس
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend bar -->
+  <div class="card legend-card">
+    <span class="legend-title"><span class="material-icons-round">palette</span> قواعد التنسيق الشرطي:</span>
+    <div class="legend-items">
+      <div class="legend-item"><span class="swatch cell-grey"></span> <span>1 إلى 4</span></div>
+      <div class="legend-item"><span class="swatch cell-red"></span> <span>5 إلى 8</span></div>
+      <div class="legend-item"><span class="swatch cell-orange"></span> <span>9 إلى 12</span></div>
+      <div class="legend-item"><span class="swatch cell-yellow-green"></span> <span>13 إلى 18</span></div>
+      <div class="legend-item"><span class="swatch cell-green"></span> <span>19 أو أكثر</span></div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-state card" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جارٍ تحميل بيانات تحقيق الطلبات…</p>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state card" *ngIf="!isLoading && data && data.captainRows.length === 0">
+    <span class="material-icons-round">inventory_2</span>
+    <h3>لا توجد بيانات شيفتات في هذه الفترة</h3>
+    <p>قم باستيراد ملف الشيفتات من صفحة الاستيراد ليتم احتساب تحقيق الطلبات.</p>
+  </div>
+
+  <!-- Data Grid -->
+  <div class="table-container card" *ngIf="!isLoading && data && data.captainRows.length > 0">
+    <div class="table-scroll-wrapper">
+      <table class="grid-table">
+        <thead>
+          <!-- Row 1: Day of week -->
+          <tr class="header-days">
+            <th class="sticky-col col-name" rowspan="2">اسم الكابتن</th>
+            <th class="sticky-col col-code" rowspan="2">الكود</th>
+            <th class="sticky-col col-rate" rowspan="2">النسبة%</th>
+            <th class="sticky-col col-target" rowspan="2">الهدف</th>
+            <th class="sticky-col col-actual" rowspan="2">الفعلي</th>
+            <th *ngFor="let dateStr of data.dates" class="day-dow">
+              {{ getDayNameAr(dateStr) }}
+            </th>
+          </tr>
+          <!-- Row 2: Day numbers -->
+          <tr class="header-nums">
+            <th *ngFor="let dateStr of data.dates" class="day-num">
+              {{ getDayNumber(dateStr) }}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let row of data.captainRows" class="captain-row">
+            <td class="sticky-col col-name name-text" [title]="row.captainName">{{ row.captainName }}</td>
+            <td class="sticky-col col-code code-text">{{ row.captainCode }}</td>
+            <td class="sticky-col col-rate rate-text" [class.achieved]="row.achievementRate >= 1">
+              {{ percent(row.achievementRate) }}
+            </td>
+            <td class="sticky-col col-target num-text">{{ row.target }}</td>
+            <td class="sticky-col col-actual num-text strong">{{ row.actual }}</td>
+
+            <td *ngFor="let dateStr of data.dates" class="day-cell" [ngClass]="getColorClass(row.dailyOrders[dateStr])">
+              {{ row.dailyOrders[dateStr] || '' }}
+            </td>
+          </tr>
+        </tbody>
+
+        <tfoot>
+          <!-- Totals row -->
+          <tr class="totals-row">
+            <td class="sticky-col col-name strong" colspan="2">المجموع</td>
+            <td class="sticky-col col-rate rate-text">{{ percent(data.dailySummary.totalRate) }}</td>
+            <td class="sticky-col col-target num-text">{{ data.dailySummary.totalTarget }}</td>
+            <td class="sticky-col col-actual num-text strong">{{ data.dailySummary.totalActual }}</td>
+
+            <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
+              {{ data.dailySummary.dailyTotals[dateStr] || 0 }}
+            </td>
+          </tr>
+
+          <!-- Summary row for Captain Count -->
+          <tr class="count-row">
+            <td class="sticky-col col-name" colspan="4">عدد الكباتن</td>
+            <td class="sticky-col col-actual num-text strong">{{ data.dailySummary.totalCaptains }}</td>
+            <td [attr.colspan]="data.dates.length" class="empty-footer-cell"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>

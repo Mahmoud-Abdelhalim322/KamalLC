@@ -9,7 +9,7 @@
     <aside class="category-sidebar">
       <div class="sidebar-header">
         <h3>الفئات</h3>
-        <button class="icon-btn" title="إضافة فئة" (click)="openAddCategory()">
+        <button class="icon-btn" title="إضافة فئة" (click)="openAddCategory()" *ngIf="canManage">
           <span class="material-icons-round">add_circle</span>
         </button>
       </div>
@@ -25,7 +25,7 @@
               <span class="cat-count">{{ cat.itemCount }} عنصر</span>
             </div>
           </div>
-          <button class="icon-btn danger small" *ngIf="!cat.systemDefined" (click)="deleteCategory(cat); $event.stopPropagation()">
+          <button class="icon-btn danger small" *ngIf="!cat.systemDefined && canManage" (click)="deleteCategory(cat); $event.stopPropagation()">
             <span class="material-icons-round">delete</span>
           </button>
         </div>
@@ -45,7 +45,7 @@
             <option value="INACTIVE">غير فعال</option>
           </select>
         </div>
-        <button class="btn btn-primary" (click)="openAddItem()">
+        <button class="btn btn-primary" (click)="openAddItem()" *ngIf="canManage">
           <span class="material-icons-round">add</span> إضافة عنصر
         </button>
       </div>
@@ -76,13 +76,13 @@
                 <button class="icon-btn" title="تاريخ عهد" (click)="openItemHistory(item)">
                   <span class="material-icons-round">history</span>
                 </button>
-                <button class="icon-btn" title="إسناد" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE'">
+                <button class="icon-btn" title="إسناد" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE' && canManage">
                   <span class="material-icons-round">person_add</span>
                 </button>
-                <button class="icon-btn" title="استرجاع" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED'">
+                <button class="icon-btn" title="استرجاع" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED' && canManage">
                   <span class="material-icons-round">assignment_return</span>
                 </button>
-                <button class="icon-btn" title="تعديل" (click)="openEditItem(item)">
+                <button class="icon-btn" title="تعديل" (click)="openEditItem(item)" *ngIf="canManage">
                   <span class="material-icons-round">edit</span>
                 </button>
               </td>
@@ -148,7 +148,18 @@
       <div class="form-grid">
         <div class="form-group" *ngFor="let ft of getFieldTemplates()">
           <label>{{ ft.labelAr }} {{ ft.required ? '*' : '' }}</label>
-          <input type="text" [(ngModel)]="itemFields[ft.fieldKey]">
+
+          <!-- Dropdown for SIM card provider -->
+          <ng-container *ngIf="selectedCategory?.name === 'SIM_CARD' && ft.fieldKey === 'sim_type'; else standardInput">
+            <select [(ngModel)]="itemFields[ft.fieldKey]" class="filter-select" style="width: 100%;">
+              <option value="">اختر مشغل الشريحة...</option>
+              <option *ngFor="let provider of saudiSimProviders" [value]="provider">{{ provider }}</option>
+            </select>
+          </ng-container>
+
+          <ng-template #standardInput>
+            <input type="text" [(ngModel)]="itemFields[ft.fieldKey]">
+          </ng-template>
         </div>
         <div class="form-group full-width">
           <label>ملاحظات</label>

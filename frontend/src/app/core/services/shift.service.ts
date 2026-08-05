@@ -32,6 +32,13 @@ export class ShiftService {
     });
   }
 
+  /** The whole filtered list as a PDF document. */
+  exportPdf(filter: ShiftFilter): Observable<Blob> {
+    return this.http.get(`${this.base}/export-pdf`, {
+      params: toHttpParams(filter), responseType: 'blob'
+    });
+  }
+
   /** Distinct zones across imported shifts — populates the zone filter. */
   getZones(): Observable<string[]> {
     return this.http
@@ -54,6 +61,15 @@ export class ShiftService {
     const params = new HttpParams().set('from', from).set('to', to);
     return this.http
       .post<ApiResponse<RecalculationResult>>(`${this.base}/recalculate`, null, { params })
+      .pipe(map(unwrap));
+  }
+
+  /** Import supplier (Ninja) deductions from an Excel file. */
+  importSupplierDeductions(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<ApiResponse<any>>(`${this.base}/import-supplier-deductions`, formData)
       .pipe(map(unwrap));
   }
 }

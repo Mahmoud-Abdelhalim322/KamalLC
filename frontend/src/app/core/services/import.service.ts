@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
-  ApiResponse, ImportBatchResponse, ImportBatchType, ImportPreviewResponse,
+  ApiResponse, DeductionImportPreviewResponse, ImportBatchResponse, ImportBatchType, ImportPreviewResponse,
   PageResponse, ShiftImportPreviewResponse
 } from '../models/api.models';
 import { unwrap } from './api.util';
@@ -52,6 +52,25 @@ export class ImportService {
 
   downloadShiftTemplate(): Observable<Blob> {
     return this.http.get(`${this.base}/shifts/template`, { responseType: 'blob' });
+  }
+
+  // ---------------------------------------------------- supplier deductions
+
+  previewDeductions(file: File): Observable<DeductionImportPreviewResponse> {
+    return this.http
+      .post<ApiResponse<DeductionImportPreviewResponse>>(`${this.base}/deductions/preview`, this.body(file))
+      .pipe(map(unwrap));
+  }
+
+  commitDeductions(batchId: string, file: File): Observable<DeductionImportPreviewResponse> {
+    return this.http
+      .post<ApiResponse<DeductionImportPreviewResponse>>(
+        `${this.base}/deductions/${batchId}/commit`, this.body(file))
+      .pipe(map(unwrap));
+  }
+
+  downloadDeductionTemplate(): Observable<Blob> {
+    return this.http.get(`${this.base}/deductions/template`, { responseType: 'blob' });
   }
 
   // --------------------------------------------------------------- history

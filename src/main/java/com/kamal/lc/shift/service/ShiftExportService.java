@@ -57,12 +57,13 @@ public class ShiftExportService {
             "بدل سيارة",
             "صافي الشفت",
             "إيراد المورد",
+            "خصم المورد\nSUPPLIER DEDUCTION",
             "الهامش",
             "سبب الاستبعاد");
 
     /** Widths in characters, per column above. */
     private static final int[] WIDTHS = {
-            12, 12, 22, 12, 20, 12, 16, 14, 10, 10, 11, 11, 12, 13, 8, 11, 11, 11, 11, 11, 12, 12, 11, 24};
+            12, 12, 22, 12, 20, 12, 16, 14, 10, 10, 11, 11, 12, 13, 8, 11, 11, 11, 11, 11, 12, 12, 11, 11, 24};
 
     public byte[] build(List<ShiftResponse> shifts, ShiftFilter filter) {
         try (Workbook workbook = new XSSFWorkbook();
@@ -120,6 +121,7 @@ public class ShiftExportService {
                 number(row, c++, shift.getCarAllowance(), moneyStyle);
                 number(row, c++, shift.getNetShiftPay(), moneyStyle);
                 number(row, c++, supplierRevenue(shift), moneyStyle);
+                number(row, c++, shift.getSupplierDeduction(), moneyStyle);
                 number(row, c++, shift.getShiftMargin(), moneyStyle);
                 text(row, c, shift.getExclusionReason());
             }
@@ -157,7 +159,8 @@ public class ShiftExportService {
                 new Total(19, ShiftResponse::getCarAllowance),
                 new Total(20, ShiftResponse::getNetShiftPay),
                 new Total(21, ShiftExportService::supplierRevenue),
-                new Total(22, ShiftResponse::getShiftMargin));
+                new Total(22, ShiftResponse::getSupplierDeduction),
+                new Total(23, ShiftResponse::getShiftMargin));
 
         for (Total total : totals) {
             BigDecimal sum = shifts.stream().map(total.field())

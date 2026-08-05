@@ -1,6 +1,7 @@
 package com.kamal.lc.payroll.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kamal.lc.loan.service.LoanService;
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
 import com.kamal.lc.common.exception.BusinessException;
@@ -57,6 +58,7 @@ public class PayrollService {
     private final StaffPayrollLineRepository staffLineRepo;
     private final CaptainAdjustmentRepository adjustmentRepo;
     private final StaffAdjustmentRepository staffAdjustmentRepo;
+    private final com.kamal.lc.supplier.repository.SupplierAdjustmentRepository supplierAdjustmentRepo;
     private final CaptainRepository captainRepo;
     private final StaffRepository staffRepo;
     private final ShiftRepository shiftRepo;
@@ -64,6 +66,7 @@ public class PayrollService {
     private final SettingsResolver settingsResolver;
     private final PayrollCalculator calculator;
     private final ObjectMapper objectMapper;
+    private final LoanService loanService;
 
     // ---- Runs ----
 
@@ -86,8 +89,11 @@ public class PayrollService {
                         .collect(Collectors.groupingBy(a -> a.getCaptain().getId()));
 
         return lineRepo.findByPayrollRunIdOrderByCaptainCodeAsc(runId).stream()
-                .map(line -> toLineResponse(line, adjustmentsByCaptain
-                        .getOrDefault(line.getCaptain().getId(), List.of())))
+                .map(line -> {
+                    BigDecimal activeLoan = loanService.getActiveLoanBalance(line.getCaptain().getId(), "CAPTAIN");
+                    return toLineResponse(line, adjustmentsByCaptain
+                            .getOrDefault(line.getCaptain().getId(), List.of()), activeLoan);
+                })
                 .toList();
     }
 
@@ -119,6 +125,8 @@ public class PayrollService {
                     .generatedBy(currentUser())
                     .build();
         } else {
+            // Reverse any loan deductions from the previous generation
+            loanService.reversePayrollDeductions(run);
             lineRepo.deleteByPayrollRunId(run.getId());
             lineRepo.flush();
             run.setGeneratedAt(OffsetDateTime.now());
@@ -145,6 +153,7 @@ public class PayrollService {
                     (int) totals.getAttendedShifts(),
                     (int) totals.getTotalOrders(),
                     totals.getLateDeductions(),
+                    totals.getSupplierDeductions(),
                     totals.getDailyIncentives(),
                     totals.getFuelAllowances(),
                     totals.getCarAllowances(),
@@ -158,6 +167,7 @@ public class PayrollService {
                     .captain(captain)
                     .captainCode(captain.getKamalCode())
                     .captainName(captain.getFullNameAr())
+                    .captainNameEn(captain.getFullNameEn())
                     .captainType(captain.getCaptainType())
                     .supplierExternalIds(supplierIdsFor(captain.getId()))
                     .attendedShifts((int) totals.getAttendedShifts())
@@ -169,6 +179,7 @@ public class PayrollService {
                     .avgDeliveryOntime(totals.getAvgDeliveryOntime())
                     .basePay(result.basePay())
                     .lateDeductions(result.lateDeductions())
+                    .supplierDeductions(result.supplierDeductions())
                     .dailyIncentives(result.dailyIncentives())
                     .fuelAllowances(result.fuelAllowances())
                     .carAllowances(result.carAllowances())
@@ -186,6 +197,9 @@ public class PayrollService {
 
         // Generate staff payroll lines (workers + managers)
         generateStaffLines(run);
+
+        // Auto-create loan deductions for all active loans
+        loanService.processPayrollDeductions(run);
 
         log.info("Generated payroll {} → {} with {} captain lines", periodFrom, periodTo, lines.size());
 
@@ -288,6 +302,7 @@ public class PayrollService {
         if (run.isLocked()) {
             throw new BusinessException("RUN_LOCKED", "لا يمكن حذف مسير معتمد");
         }
+        loanService.reversePayrollDeductions(run);
         runRepo.delete(run);
     }
 
@@ -306,7 +321,7 @@ public class PayrollService {
         Captain captain = captainRepo.findById(request.getCaptainId())
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "الكابتن غير موجود"));
 
-        adjustmentRepo.save(CaptainAdjustment.builder()
+        CaptainAdjustment adjustment = adjustmentRepo.save(CaptainAdjustment.builder()
                 .captain(captain)
                 .periodFrom(run.getPeriodFrom())
                 .periodTo(run.getPeriodTo())
@@ -321,6 +336,10 @@ public class PayrollService {
                 .createdBy(currentUser())
                 .build());
 
+        if ("LOAN".equals(type)) {
+            loanService.processManualLoanDeduction(captain.getId(), "CAPTAIN", request.getAmount(), run, adjustment.getId(), null, request.getReason());
+        }
+
         return refreshLine(run, captain.getId());
     }
 
@@ -331,6 +350,10 @@ public class PayrollService {
         CaptainAdjustment adjustment = adjustmentRepo.findById(adjustmentId)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "البند غير موجود"));
         UUID captainId = adjustment.getCaptain().getId();
+
+        if ("LOAN".equals(adjustment.getAdjustmentType())) {
+            loanService.reverseManualLoanDeduction(adjustment.getId(), null);
+        }
 
         adjustmentRepo.delete(adjustment);
         adjustmentRepo.flush();
@@ -358,7 +381,8 @@ public class PayrollService {
         line.setNet(line.getGross().add(total));
         line.setMargin(line.getSupplierRevenueTotal().subtract(line.getNet()));
 
-        return toLineResponse(lineRepo.save(line), adjustments);
+        BigDecimal activeLoan = loanService.getActiveLoanBalance(captainId, "CAPTAIN");
+        return toLineResponse(lineRepo.save(line), adjustments, activeLoan);
     }
 
     // ---- helpers ----
@@ -422,6 +446,15 @@ public class PayrollService {
         List<PayrollLine> lines = lineRepo.findByPayrollRunIdOrderByCaptainCodeAsc(run.getId());
         List<StaffPayrollLine> staffLines = staffLineRepo.findByPayrollRunIdOrderByStaffCodeAsc(run.getId());
 
+        BigDecimal shiftRevenue = sum(lines, PayrollLine::getSupplierRevenueTotal);
+        BigDecimal netSupplierAdjustments = supplierAdjustmentRepo.findByAdjustmentDateBetweenOrderByAdjustmentDateDesc(
+                        run.getPeriodFrom(), run.getPeriodTo()).stream()
+                .map(a -> "ADDITION".equalsIgnoreCase(a.getType()) ? a.getAmount() : a.getAmount().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalSupplierRev = shiftRevenue.add(netSupplierAdjustments);
+        BigDecimal totalCaptainNet = sum(lines, PayrollLine::getNet);
+
         return PayrollRunResponse.builder()
                 .id(run.getId())
                 .periodFrom(run.getPeriodFrom().toString())
@@ -436,9 +469,9 @@ public class PayrollService {
                 .locked(run.isLocked())
                 .captainCount(lines.size())
                 .totalGross(sum(lines, PayrollLine::getGross))
-                .totalNet(sum(lines, PayrollLine::getNet))
-                .totalSupplierRevenue(sum(lines, PayrollLine::getSupplierRevenueTotal))
-                .totalMargin(sum(lines, PayrollLine::getMargin))
+                .totalNet(totalCaptainNet)
+                .totalSupplierRevenue(totalSupplierRev)
+                .totalMargin(totalSupplierRev.subtract(totalCaptainNet))
                 .staffCount(staffLines.size())
                 .totalStaffGross(sumStaff(staffLines, StaffPayrollLine::getGross))
                 .totalStaffNet(sumStaff(staffLines, StaffPayrollLine::getNet))
@@ -457,12 +490,13 @@ public class PayrollService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    static PayrollLineResponse toLineResponse(PayrollLine line, List<CaptainAdjustment> adjustments) {
+    static PayrollLineResponse toLineResponse(PayrollLine line, List<CaptainAdjustment> adjustments, BigDecimal activeLoanBalance) {
         return PayrollLineResponse.builder()
                 .id(line.getId())
                 .captainId(line.getCaptain().getId())
                 .captainCode(line.getCaptainCode())
                 .captainName(line.getCaptainName())
+                .captainNameEn(line.getCaptainNameEn())
                 .captainType(line.getCaptainType())
                 .supplierExternalIds(line.getSupplierExternalIds())
                 .attendedShifts(line.getAttendedShifts())
@@ -474,6 +508,7 @@ public class PayrollService {
                 .avgDeliveryOntime(line.getAvgDeliveryOntime())
                 .basePay(line.getBasePay())
                 .lateDeductions(line.getLateDeductions())
+                .supplierDeductions(line.getSupplierDeductions())
                 .dailyIncentives(line.getDailyIncentives())
                 .fuelAllowances(line.getFuelAllowances())
                 .carAllowances(line.getCarAllowances())
@@ -484,6 +519,7 @@ public class PayrollService {
                 .net(line.getNet())
                 .supplierRevenueTotal(line.getSupplierRevenueTotal())
                 .margin(line.getMargin())
+                .activeLoanBalance(activeLoanBalance)
                 .notes(line.getNotes())
                 .adjustments(adjustments.stream().map(PayrollService::toAdjustmentResponse).toList())
                 .build();
@@ -526,24 +562,31 @@ public class PayrollService {
                 staffAdjustmentRepo.findInPeriod(run.getPeriodFrom(), run.getPeriodTo()).stream()
                         .collect(Collectors.groupingBy(a -> a.getStaff().getId()));
 
-        return lines.stream().map(line -> toStaffLineResponse(line,
-                adjustmentsByStaff.getOrDefault(line.getStaff().getId(), List.of()))).toList();
+        return lines.stream().map(line -> {
+            BigDecimal activeLoan = loanService.getActiveLoanBalance(line.getStaff().getId(), line.getStaffType());
+            return toStaffLineResponse(line, adjustmentsByStaff.getOrDefault(line.getStaff().getId(), List.of()), activeLoan);
+        }).toList();
     }
 
-    private StaffPayrollLineResponse toStaffLineResponse(StaffPayrollLine line, List<StaffAdjustment> adjustments) {
+    private StaffPayrollLineResponse toStaffLineResponse(StaffPayrollLine line, List<StaffAdjustment> adjustments, BigDecimal activeLoanBalance) {
+        String jobTitle = (line.getJobTitle() != null && !line.getJobTitle().isBlank())
+                ? line.getJobTitle()
+                : (line.getStaff() != null ? line.getStaff().getJobTitle() : null);
+
         return StaffPayrollLineResponse.builder()
                 .id(line.getId())
                 .staffId(line.getStaff().getId())
                 .staffCode(line.getStaffCode())
                 .staffName(line.getStaffName())
                 .staffType(line.getStaffType())
-                .jobTitle(line.getJobTitle())
+                .jobTitle(jobTitle)
                 .basicSalary(line.getBasicSalary())
                 .housingAllowance(line.getHousingAllowance())
                 .otherAllowances(line.getOtherAllowances())
                 .adjustmentsTotal(line.getAdjustmentsTotal())
                 .gross(line.getGross())
                 .net(line.getNet())
+                .activeLoanBalance(activeLoanBalance)
                 .notes(line.getNotes())
                 .adjustments(adjustments.stream().map(PayrollService::toStaffAdjustmentResponse).toList())
                 .build();
@@ -579,7 +622,7 @@ public class PayrollService {
         Staff staff = staffRepo.findById(request.getStaffId())
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود"));
 
-        staffAdjustmentRepo.save(StaffAdjustment.builder()
+        StaffAdjustment adjustment = staffAdjustmentRepo.save(StaffAdjustment.builder()
                 .staff(staff)
                 .periodFrom(run.getPeriodFrom())
                 .periodTo(run.getPeriodTo())
@@ -594,6 +637,10 @@ public class PayrollService {
                 .createdBy(currentUser())
                 .build());
 
+        if ("LOAN".equals(type)) {
+            loanService.processManualLoanDeduction(staff.getId(), staff.getStaffType(), request.getAmount(), run, null, adjustment.getId(), request.getReason());
+        }
+
         return refreshStaffLine(run, staff.getId());
     }
 
@@ -604,6 +651,10 @@ public class PayrollService {
         StaffAdjustment adjustment = staffAdjustmentRepo.findById(adjustmentId)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "البند غير موجود"));
         UUID staffId = adjustment.getStaff().getId();
+
+        if ("LOAN".equals(adjustment.getAdjustmentType())) {
+            loanService.reverseManualLoanDeduction(null, adjustment.getId());
+        }
 
         staffAdjustmentRepo.delete(adjustment);
         staffAdjustmentRepo.flush();
@@ -626,6 +677,7 @@ public class PayrollService {
         line.setAdjustmentsTotal(total);
         line.setNet(line.getGross().add(total));
 
-        return toStaffLineResponse(staffLineRepo.save(line), adjustments);
+        BigDecimal activeLoan = loanService.getActiveLoanBalance(staffId, line.getStaffType());
+        return toStaffLineResponse(staffLineRepo.save(line), adjustments, activeLoan);
     }
 }

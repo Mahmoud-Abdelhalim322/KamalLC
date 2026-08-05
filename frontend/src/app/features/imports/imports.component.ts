@@ -2,17 +2,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
+  DeductionImportPreviewResponse,
   ImportBatchResponse, ImportBatchType, ImportPreviewResponse, ShiftImportPreviewResponse
 } from '../../core/models/api.models';
 import { ImportService } from '../../core/services/import.service';
 import { downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
 
 /**
- * The two files this page accepts have nothing in common but their extension:
- * one is Kamal's own captain roster, the other is the supplier's shift export.
- * They are separate tabs because mixing them is the mistake users actually make.
+ * Three import domains: captain roster, supplier shift export, and supplier deductions.
  */
-type ImportTab = 'captains' | 'reports';
+type ImportTab = 'captains' | 'reports' | 'deductions';
 
 @Component({
   selector: 'app-imports',
@@ -48,6 +47,12 @@ export class ImportsComponent implements OnInit {
     'Busy Utilization %', 'Delivery Ontime %', 'Hourly UTR'
   ];
 
+  /** Supplier deductions import column layout. */
+  readonly deductionRequiredColumns = ['ID - NINJA أو ID-KSLSC', 'تاريخ الشيفت', 'سعر الخصم'];
+  readonly deductionOptionalColumns = [
+    'اسم الكابتن', 'سبب الخصم / البيان', 'الهاتف/الهوية'
+  ];
+
   // ------------------------------------------------------------ upload state
 
   selectedFile: File | null = null;
@@ -60,6 +65,9 @@ export class ImportsComponent implements OnInit {
 
   shiftPreview: ShiftImportPreviewResponse | null = null;
   shiftResult: ShiftImportPreviewResponse | null = null;
+
+  deductionPreview: DeductionImportPreviewResponse | null = null;
+  deductionResult: DeductionImportPreviewResponse | null = null;
 
   /**
    * The file the server identified as belonging to the other tab. Held so the user
@@ -131,8 +139,10 @@ export class ImportsComponent implements OnInit {
     this.selectedFile = file;
     this.captainPreview = null;
     this.shiftPreview = null;
+    this.deductionPreview = null;
     this.captainResult = null;
     this.shiftResult = null;
+    this.deductionResult = null;
     this.uploadPreview();
   }
 
@@ -154,11 +164,19 @@ export class ImportsComponent implements OnInit {
         },
         error: (err) => this.failPreview(err, file)
       });
-    } else {
+    } else if (this.activeTab === 'reports') {
       this.importService.previewShifts(file).subscribe({
         next: (preview) => {
           this.isUploading = false;
           this.shiftPreview = preview;
+        },
+        error: (err) => this.failPreview(err, file)
+      });
+    } else {
+      this.importService.previewDeductions(file).subscribe({
+        next: (preview) => {
+          this.isUploading = false;
+          this.deductionPreview = preview;
         },
         error: (err) => this.failPreview(err, file)
       });
@@ -179,7 +197,9 @@ export class ImportsComponent implements OnInit {
     const file = this.selectedFile;
     const batchId = this.activeTab === 'captains'
       ? this.captainPreview?.batchId
-      : this.shiftPreview?.batchId;
+      : this.activeTab === 'reports'
+        ? this.shiftPreview?.batchId
+        : this.deductionPreview?.batchId;
     if (!file || !batchId) return;
 
     this.isCommitting = true;
@@ -194,12 +214,21 @@ export class ImportsComponent implements OnInit {
         },
         error: (err) => this.failCommit(err)
       });
-    } else {
+    } else if (this.activeTab === 'reports') {
       this.importService.commitShifts(batchId, file).subscribe({
         next: (result) => {
           this.finishCommit();
           this.shiftResult = result;
           this.successMessage = `تم استيراد ${result.committedRows} شفت بنجاح`;
+        },
+        error: (err) => this.failCommit(err)
+      });
+    } else {
+      this.importService.commitDeductions(batchId, file).subscribe({
+        next: (result) => {
+          this.finishCommit();
+          this.deductionResult = result;
+          this.successMessage = `تم تطبيق خصومات المورد على ${result.matchedRows} شيفت بنجاح`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -210,6 +239,7 @@ export class ImportsComponent implements OnInit {
     this.isCommitting = false;
     this.captainPreview = null;
     this.shiftPreview = null;
+    this.deductionPreview = null;
     this.selectedFile = null;
     this.loadHistory();
   }
@@ -223,8 +253,10 @@ export class ImportsComponent implements OnInit {
     this.selectedFile = null;
     this.captainPreview = null;
     this.shiftPreview = null;
+    this.deductionPreview = null;
     this.captainResult = null;
     this.shiftResult = null;
+    this.deductionResult = null;
     this.clearMessages();
   }
 
@@ -245,7 +277,9 @@ export class ImportsComponent implements OnInit {
   }
 
   get batchType(): ImportBatchType {
-    return this.activeTab === 'captains' ? 'CAPTAINS' : 'SHIFTS';
+    if (this.activeTab === 'captains') return 'CAPTAINS';
+    if (this.activeTab === 'reports') return 'SHIFTS';
+    return 'SUPPLIER_DEDUCTIONS';
   }
 
   // --------------------------------------------------------------- template
@@ -255,18 +289,32 @@ export class ImportsComponent implements OnInit {
    * the API unauthenticated. Fetch as a blob and save it client-side instead.
    */
   downloadTemplate(): void {
-    const captains = this.activeTab === 'captains';
-    const request = captains
+    const request = this.activeTab === 'captains'
       ? this.importService.downloadTemplate()
-      : this.importService.downloadShiftTemplate();
-    const fileName = captains
+      : this.activeTab === 'reports'
+        ? this.importService.downloadShiftTemplate()
+        : this.importService.downloadDeductionTemplate();
+
+    const fileName = this.activeTab === 'captains'
       ? 'نموذج-استيراد-الكباتن.xlsx'
-      : 'نموذج-استيراد-تقارير-الموردين.xlsx';
+      : this.activeTab === 'reports'
+        ? 'نموذج-استيراد-تقارير-الموردين.xlsx'
+        : 'نموذج-استيراد-خصومات-المورد.xlsx';
 
     request.subscribe({
       next: (blob) => downloadBlob(blob, fileName),
       error: () => { this.errorMessage = 'فشل تحميل ملف القالب'; }
     });
+  }
+
+  getScopeLabel(scope: string): string {
+    const map: Record<string, string> = {
+      'NINJA_ID': 'ID نينجا',
+      'KSLSC_ID': 'كود KSLSC',
+      'PHONE_OR_NATIONAL_ID': 'الهاتف/الهوية',
+      'UNMATCHED': 'غير مطابق'
+    };
+    return map[scope] || scope;
   }
 
   // ----------------------------------------------------------- issue splits

@@ -34,13 +34,14 @@
           <option value="">كل الملكيات</option>
           <option value="OWNED">مملوكة</option>
           <option value="RENTED">مؤجرة</option>
+          <option value="OTHER">أخرى (خاصة)</option>
         </select>
         <select class="filter-select" *ngIf="vehicleOwnershipFilter === 'RENTED' || vehicleOwnershipFilter === ''" [(ngModel)]="vehicleAgentFilter" (change)="searchVehicles()">
           <option value="">كل الوكلاء</option>
           <option *ngFor="let a of rentalAgents" [value]="a">{{ a }}</option>
         </select>
       </div>
-      <button class="btn btn-primary" (click)="openAddVehicle()">
+      <button class="btn btn-primary" (click)="openAddVehicle()" *ngIf="canManage">
         <span class="material-icons-round">add</span> إضافة سيارة
       </button>
     </div>
@@ -54,25 +55,47 @@
             <th>رقم اللوحة</th>
             <th>الماركة / الموديل</th>
             <th>الملكية</th>
-            <th>العداد</th>
-            <th>الفحص</th>
-            <th>الحالة</th>
+            <th>رقم الاستمارة والهيكل</th>
+            <th>انتهاء الاستمارة والفحص</th>
+            <th>حالة الوثائق</th>
+            <th>الحالة التشغيلية</th>
             <th>الكابتن الحالي</th>
             <th>إجراءات</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let v of vehicles" [class.rented-row]="v.ownershipType === 'RENTED'">
-            <td class="plate-cell">{{ v.plateNumber }}</td>
+            <td class="plate-cell">
+              {{ v.plateNumber }}
+              <div *ngIf="v.operatingCardNumber" class="text-muted" style="font-size:11px;">بطاقة تشغيل: {{ v.operatingCardNumber }}</div>
+            </td>
             <td>{{ v.brand }} {{ v.model }} <span class="year-tag" *ngIf="v.year">{{ v.year }}</span></td>
             <td>
-              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'">
+              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'" [class.badge-other]="v.ownershipType === 'OTHER'">
                 {{ ownershipLabel(v.ownershipType) }}
               </span>
               <span class="agent-name" *ngIf="v.rentalAgentName">{{ v.rentalAgentName }}</span>
             </td>
-            <td>{{ v.odometer ? v.odometer + ' كم' : '—' }}</td>
-            <td>{{ v.inspectionDate || '—' }}</td>
+            <td style="font-size: 12px;">
+              <div *ngIf="v.registrationNumber">استمارة: <strong>{{ v.registrationNumber }}</strong></div>
+              <div *ngIf="v.vin" class="text-muted">شاسي: {{ v.vin }}</div>
+              <div *ngIf="!v.registrationNumber && !v.vin">—</div>
+            </td>
+            <td style="font-size: 12px;">
+              <div>استمارة: {{ v.registrationExpiryDate || '—' }}</div>
+              <div>فحص: {{ v.inspectionExpiryDate || v.inspectionDate || '—' }}</div>
+            </td>
+            <td>
+              <span class="badge"
+                    [class.badge-completed]="v.documentAlertStatus === 'VALID' || !v.documentAlertStatus"
+                    [class.badge-rented]="v.documentAlertStatus === 'EXPIRING'"
+                    [class.badge-cancelled]="v.documentAlertStatus === 'EXPIRED'">
+                {{ v.documentAlertStatus === 'EXPIRED' ? 'منتهية 🔴' : (v.documentAlertStatus === 'EXPIRING' ? 'تنتهي قريباً 🟡' : 'سارية 🟢') }}
+              </span>
+              <div *ngFor="let alertMsg of v.documentAlerts" class="text-muted" style="font-size: 10px; color: #dc3545;">
+                {{ alertMsg }}
+              </div>
+            </td>
             <td>
               <span class="status-badge" [attr.data-status]="v.status">{{ statusLabel(v.status) }}</span>
             </td>
@@ -81,13 +104,13 @@
               <span class="text-muted" *ngIf="!v.currentCaptainName">—</span>
             </td>
             <td class="actions-cell">
-              <button class="icon-btn" title="تسليم" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE'">
+              <button class="icon-btn" title="تسليم" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE' && canManage">
                 <span class="material-icons-round">person_add</span>
               </button>
-              <button class="icon-btn" title="تعديل" (click)="openEditVehicle(v)">
+              <button class="icon-btn" title="تعديل" (click)="openEditVehicle(v)" *ngIf="canManage">
                 <span class="material-icons-round">edit</span>
               </button>
-              <button class="icon-btn" title="صيانة" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED'">
+              <button class="icon-btn" title="صيانة" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED' && canManage">
                 <span class="material-icons-round">build</span>
               </button>
               <button class="icon-btn" title="تاريخ التسليم" (click)="openHistory(v)">
@@ -96,13 +119,13 @@
               <button class="icon-btn" title="تاريخ الصيانة" (click)="openMaintenanceHistory(v)">
                 <span class="material-icons-round">plumbing</span>
               </button>
-              <button class="icon-btn danger" title="حذف" (click)="deleteVehicle(v)">
+              <button class="icon-btn danger" title="حذف" (click)="deleteVehicle(v)" *ngIf="canManage">
                 <span class="material-icons-round">delete</span>
               </button>
             </td>
           </tr>
           <tr *ngIf="vehicles.length === 0 && !isLoading">
-            <td colspan="8" class="empty-row">لا توجد سيارات</td>
+            <td colspan="9" class="empty-row">لا توجد سيارات</td>
           </tr>
         </tbody>
       </table>
@@ -154,7 +177,7 @@
               <span class="status-badge" [attr.data-status]="a.status">{{ statusLabel(a.status) }}</span>
             </td>
             <td class="actions-cell">
-              <button class="btn btn-sm btn-success" *ngIf="a.status === 'ACTIVE' || a.status === 'LATE'"
+              <button class="btn btn-sm btn-success" *ngIf="(a.status === 'ACTIVE' || a.status === 'LATE') && canManage"
                       (click)="returnAssignment(a)">
                 <span class="material-icons-round">assignment_return</span> استلام
               </button>
@@ -222,16 +245,16 @@
               </span>
             </td>
             <td class="actions-cell">
-              <button class="icon-btn" title="تعديل" *ngIf="m.status === 'IN_PROGRESS'" (click)="editMaintenance(m)">
+              <button class="icon-btn" title="تعديل" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="editMaintenance(m)">
                 <span class="material-icons-round">edit</span>
               </button>
               <button class="icon-btn" title="معاينة التفاصيل" (click)="viewMaintenanceDetails(m)">
                 <span class="material-icons-round">visibility</span>
               </button>
-              <button class="btn btn-sm btn-success" *ngIf="m.status === 'IN_PROGRESS'" (click)="openCloseMaintenanceDialog(m)" style="margin-right: 4px;">
+              <button class="btn btn-sm btn-success" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="openCloseMaintenanceDialog(m)" style="margin-right: 4px;">
                 <span class="material-icons-round">check_circle</span> تقفيل
               </button>
-              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS'" title="إلغاء" (click)="cancelMaintenance(m)">
+              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS' && canManage" title="إلغاء" (click)="cancelMaintenance(m)">
                 <span class="material-icons-round">cancel</span>
               </button>
             </td>
@@ -262,8 +285,9 @@
         <div class="form-group">
           <label>الملكية</label>
           <select [(ngModel)]="vForm.ownershipType">
-            <option value="OWNED">مملوكة</option>
+            <option value="OWNED">مملوكة (شركة)</option>
             <option value="RENTED">مؤجرة</option>
+            <option value="OTHER">أخرى (خاصة)</option>
           </select>
         </div>
         <div class="form-group">
@@ -286,9 +310,34 @@
           <label>العداد (كم)</label>
           <input type="number" [(ngModel)]="vForm.odometer" placeholder="50000">
         </div>
+
+        <!-- Documents & Expiries Section -->
+        <div class="form-group full-width rental-section">
+          <label class="section-label">وثائق السيارة وتواريخ الانتهاء</label>
+        </div>
         <div class="form-group">
-          <label>تاريخ الفحص</label>
-          <input type="date" [(ngModel)]="vForm.inspectionDate">
+          <label>رقم الاستمارة</label>
+          <input type="text" [(ngModel)]="vForm.registrationNumber" placeholder="1029384756">
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء الاستمارة</label>
+          <input type="date" [(ngModel)]="vForm.registrationExpiryDate">
+        </div>
+        <div class="form-group">
+          <label>رقم الهيكل (VIN)</label>
+          <input type="text" [(ngModel)]="vForm.vin" placeholder="WVWZZZ3CZWE...">
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء الفحص الدوري</label>
+          <input type="date" [(ngModel)]="vForm.inspectionExpiryDate">
+        </div>
+        <div class="form-group">
+          <label>رقم بطاقة التشغيل / التأمين</label>
+          <input type="text" [(ngModel)]="vForm.operatingCardNumber" placeholder="987654321">
+        </div>
+        <div class="form-group">
+          <label>تأمين السيارة (شركة/وثيقة)</label>
+          <input type="text" [(ngModel)]="vForm.insuranceCompany" placeholder="شركة التعاونية / ملاذ">
         </div>
 
         <!-- Rental fields -->

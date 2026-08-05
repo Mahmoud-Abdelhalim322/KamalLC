@@ -26,6 +26,12 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
     List<Shift> findByCaptainIdAndShiftDateBetweenOrderByShiftDateAsc(
             UUID captainId, LocalDate from, LocalDate to);
 
+    /** Used by supplier deduction import to match by Ninja captain ID + date. */
+    List<Shift> findByNinjaCaptainIdAndShiftDate(String ninjaCaptainId, LocalDate shiftDate);
+
+    /** Match by captain entity ID + shift date. */
+    List<Shift> findByCaptainIdAndShiftDate(UUID captainId, LocalDate shiftDate);
+
     List<Shift> findByShiftDateBetween(LocalDate from, LocalDate to);
 
     @Query("SELECT s FROM Shift s WHERE s.captain IS NULL ORDER BY s.shiftDate DESC")
@@ -55,6 +61,7 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
                    AVG(s.hourlyUtr)                                     AS avgHourlyUtr,
                    AVG(s.deliveryOntime)                                AS avgDeliveryOntime,
                    COALESCE(SUM(s.lateDeduction), 0)                    AS lateDeductions,
+                   COALESCE(SUM(s.supplierDeduction), 0)                 AS supplierDeductions,
                    COALESCE(SUM(s.dailyIncentive), 0)                   AS dailyIncentives,
                    COALESCE(SUM(s.fuelAllowance), 0)                    AS fuelAllowances,
                    COALESCE(SUM(s.carAllowance), 0)                     AS carAllowances,
@@ -78,6 +85,7 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
                    AVG(s.hourlyUtr)                                     AS avgHourlyUtr,
                    AVG(s.deliveryOntime)                                AS avgDeliveryOntime,
                    COALESCE(SUM(s.lateDeduction), 0)                    AS lateDeductions,
+                   COALESCE(SUM(s.supplierDeduction), 0)                 AS supplierDeductions,
                    COALESCE(SUM(s.dailyIncentive), 0)                   AS dailyIncentives,
                    COALESCE(SUM(s.fuelAllowance), 0)                    AS fuelAllowances,
                    COALESCE(SUM(s.carAllowance), 0)                     AS carAllowances,
@@ -101,6 +109,19 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
     @Query("SELECT s FROM Shift s WHERE s.captain IS NULL AND s.ninjaCaptainId = :externalId")
     List<Shift> findUnmatchedByExternalId(@Param("externalId") String externalId);
 
+    /** Shifts with a non-zero supplier deduction for a captain in a period — used by the payslip PDF. */
+    @Query("""
+            SELECT s FROM Shift s
+            WHERE s.captain.id = :captainId
+              AND s.shiftDate BETWEEN :from AND :to
+              AND s.supplierDeduction IS NOT NULL
+              AND s.supplierDeduction <> 0
+            ORDER BY s.shiftDate ASC
+            """)
+    List<Shift> findSupplierDeductionsByCaptain(@Param("captainId") UUID captainId,
+                                                 @Param("from") LocalDate from,
+                                                 @Param("to") LocalDate to);
+
     /** Projection for {@link #aggregateByCaptain}. */
     interface CaptainPeriodTotals {
         UUID getCaptainId();
@@ -112,6 +133,7 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
         java.math.BigDecimal getAvgHourlyUtr();
         java.math.BigDecimal getAvgDeliveryOntime();
         java.math.BigDecimal getLateDeductions();
+        java.math.BigDecimal getSupplierDeductions();
         java.math.BigDecimal getDailyIncentives();
         java.math.BigDecimal getFuelAllowances();
         java.math.BigDecimal getCarAllowances();

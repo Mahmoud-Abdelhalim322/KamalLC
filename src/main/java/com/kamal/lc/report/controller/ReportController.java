@@ -2,8 +2,10 @@ package com.kamal.lc.report.controller;
 
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.report.dto.CaptainReportResponse;
+import com.kamal.lc.report.dto.OrdersDashboardResponse;
 import com.kamal.lc.report.dto.TeamReportResponse;
 import com.kamal.lc.report.service.CaptainReportExportService;
+import com.kamal.lc.report.service.OrdersDashboardExportService;
 import com.kamal.lc.report.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,6 +26,7 @@ public class ReportController {
 
     private final ReportService reportService;
     private final CaptainReportExportService captainExportService;
+    private final OrdersDashboardExportService ordersDashboardExportService;
 
     @GetMapping("/captain/{captainId}")
     public ResponseEntity<ApiResponse<CaptainReportResponse>> captain(
@@ -63,4 +66,34 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(ApiResponse.ok(reportService.teamReport(from, to)));
     }
+
+    /** Daily delivery per captain — the grid behind the orders dashboard. */
+    @GetMapping("/orders-dashboard")
+    public ResponseEntity<ApiResponse<OrdersDashboardResponse>> ordersDashboard(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false, defaultValue = "ALL") String captainType) {
+        return ResponseEntity.ok(ApiResponse.ok(reportService.ordersDashboard(from, to, captainType)));
+    }
+
+    /** The orders dashboard as an Excel workbook. */
+    @GetMapping("/orders-dashboard/export")
+    public ResponseEntity<byte[]> exportOrdersDashboard(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false, defaultValue = "ALL") String captainType) {
+
+        OrdersDashboardResponse report = reportService.ordersDashboard(from, to, captainType);
+
+        String fileName = URLEncoder.encode(
+                "تحقيق-الطلبات-" + from + ".xlsx", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename*=UTF-8''" + fileName)
+                .body(ordersDashboardExportService.build(report));
+    }
 }
+

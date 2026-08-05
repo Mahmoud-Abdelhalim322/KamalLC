@@ -5,7 +5,7 @@
       <h1 class="page-title">المرتبات</h1>
       <p class="page-subtitle">توليد مسير الشهر من الشيفتات المسجلة، ثم اعتماده وقفله</p>
     </div>
-    <button class="btn btn-primary" (click)="showGenerateForm = !showGenerateForm">
+    <button class="btn btn-primary" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
       <span class="material-icons-round">add</span> مسير جديد
     </button>
   </div>
@@ -20,7 +20,7 @@
   </div>
 
   <!-- Generate -->
-  <div class="card generate-form" *ngIf="showGenerateForm">
+  <div class="card generate-form" *ngIf="showGenerateForm && canManage">
     <h3>توليد مسير رواتب</h3>
     <p class="hint">
       يجمع المسير كل شفتات الفترة لكل كابتن ويطبّق قواعد الرواتب السارية في نهاية الفترة.
@@ -87,7 +87,19 @@
 
           <div class="run-actions">
             <button class="btn btn-outline btn-sm" (click)="export()">
-              <span class="material-icons-round">download</span> تصدير Excel
+              <span class="material-icons-round">download</span> Excel
+            </button>
+
+            <button class="btn btn-outline btn-sm" (click)="exportPdf()" [disabled]="isExportingPdf">
+              <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span> PDF
+            </button>
+
+            <button class="btn btn-outline btn-sm" (click)="exportBulkPayslips()" [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'CAPTAIN'">
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات الفردية
+            </button>
+
+            <button class="btn btn-outline btn-sm" (click)="exportBulkStaffPayslips(activeTab)" [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'WORKER' || activeTab === 'MANAGER'">
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات الفردية
             </button>
 
             <ng-container *ngIf="!run.locked">
@@ -258,12 +270,14 @@
               <th>الانشغال</th>
               <th>مجموع الدخل</th>
               <th>خصم تأخير</th>
+              <th>خصم المورد</th>
               <th>حوافز يومية</th>
               <th>بدل بنزين</th>
               <th>بدل سيارة</th>
               <th>تحقيق الهدف</th>
               <th>بعد الهدف</th>
               <th>مجموع الراتب</th>
+              <th>السلف</th>
               <th>بنود يدوية</th>
               <th>صافي الراتب</th>
               <th>الهامش</th>
@@ -290,12 +304,18 @@
                 <td [class.negative]="line.lateDeductions > 0">
                   {{ line.lateDeductions > 0 ? '−' + money(line.lateDeductions) : '—' }}
                 </td>
+                <td [class.negative]="line.supplierDeductions > 0">
+                  {{ line.supplierDeductions > 0 ? '−' + money(line.supplierDeductions) : '—' }}
+                </td>
                 <td [class.positive]="line.dailyIncentives > 0">{{ money(line.dailyIncentives) }}</td>
                 <td [class.positive]="line.fuelAllowances > 0">{{ money(line.fuelAllowances) }}</td>
                 <td [class.positive]="line.carAllowances > 0">{{ money(line.carAllowances) }}</td>
                 <td [class.positive]="line.targetBonus > 0">{{ money(line.targetBonus) }}</td>
                 <td [class.positive]="line.extraOrderPay > 0">{{ money(line.extraOrderPay) }}</td>
                 <td class="strong">{{ money(line.gross) }}</td>
+                <td [class.negative]="(line.activeLoanBalance || 0) > 0" title="المتبقي من السلف النشطة">
+                  {{ (line.activeLoanBalance || 0) > 0 ? money(line.activeLoanBalance) : '—' }}
+                </td>
                 <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
                   {{ line.adjustmentsTotal !== 0 ? money(line.adjustmentsTotal) : '—' }}
                 </td>
@@ -304,6 +324,9 @@
                   {{ money(line.margin) }}
                 </td>
                 <td>
+                  <button class="icon-btn" title="طباعة المسير الفردي" (click)="exportPayslip(line.captainId, line.captainCode)">
+                    <span class="material-icons-round">print</span>
+                  </button>
                   <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openAdjustment(line)">
                     <span class="material-icons-round">add_circle_outline</span>
                   </button>
@@ -313,7 +336,7 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="15" class="adjustment-label">
+                <td colspan="17" class="adjustment-label">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
                     [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
@@ -345,12 +368,16 @@
               <td></td>
               <td>{{ money(totals.basePay) }}</td>
               <td class="negative">−{{ money(totals.deductions) }}</td>
+              <td [class.negative]="totals.supplierDeductions > 0">
+                {{ totals.supplierDeductions > 0 ? '−' + money(totals.supplierDeductions) : '—' }}
+              </td>
               <td>{{ money(totals.incentives) }}</td>
               <td>{{ money(totals.fuel) }}</td>
               <td>{{ money(totals.car) }}</td>
               <td>{{ money(totals.targetBonus) }}</td>
               <td>{{ money(totals.extraOrderPay) }}</td>
               <td>{{ money(totals.gross) }}</td>
+              <td class="negative">{{ totals.activeLoans > 0 ? money(totals.activeLoans) : '—' }}</td>
               <td>{{ money(totals.adjustments) }}</td>
               <td class="net">{{ money(totals.net) }}</td>
               <td>{{ money(totals.margin) }}</td>
@@ -371,6 +398,7 @@
               <th>بدل سكن</th>
               <th>بدلات أخرى</th>
               <th>الإجمالي</th>
+              <th>السلف</th>
               <th>بنود يدوية</th>
               <th>صافي الراتب</th>
               <th></th>
@@ -386,11 +414,17 @@
                 <td>{{ money(line.housingAllowance) }}</td>
                 <td>{{ money(line.otherAllowances) }}</td>
                 <td class="strong">{{ money(line.gross) }}</td>
+                <td [class.negative]="(line.activeLoanBalance || 0) > 0" title="المتبقي من السلف النشطة">
+                  {{ (line.activeLoanBalance || 0) > 0 ? money(line.activeLoanBalance) : '—' }}
+                </td>
                 <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
                   {{ line.adjustmentsTotal !== 0 ? money(line.adjustmentsTotal) : '—' }}
                 </td>
                 <td class="net">{{ money(line.net) }}</td>
                 <td>
+                  <button class="icon-btn" title="طباعة المسير الفردي" (click)="exportStaffPayslip(line.staffId, line.staffCode)">
+                    <span class="material-icons-round">print</span>
+                  </button>
                   <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openStaffAdjustment(line)">
                     <span class="material-icons-round">add_circle_outline</span>
                   </button>
@@ -399,7 +433,7 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="6" class="adjustment-label">
+                <td colspan="7" class="adjustment-label">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'" [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
                   </span>
@@ -436,6 +470,11 @@
     <h3>بند يدوي — {{ line.captainName }}</h3>
     <p class="hint">البنود اليدوية تُطبَّق على فترة المسير وتظهر في عمودها الخاص عند التصدير.</p>
 
+    <div class="active-loan-banner" *ngIf="line.activeLoanBalance != null">
+      <span class="material-icons-round">account_balance_wallet</span>
+      <span>المتبقي من السلف النشطة: <b>{{ money(line.activeLoanBalance) }} ريال</b></span>
+    </div>
+
     <div class="form-group">
       <label class="form-label">النوع</label>
       <select class="form-input" [(ngModel)]="adjustmentType">
@@ -448,6 +487,10 @@
             opt.label }}</option>
         </optgroup>
       </select>
+      <p class="hint loan-notice" *ngIf="adjustmentType === 'LOAN'">
+        <span class="material-icons-round">sync</span>
+        خصم السلفة اليدوي سيتم تسجيله وتخفيضه تلقائياً من رصيد السلفة الفعلية للميمبر.
+      </p>
     </div>
 
     <div class="form-group">
@@ -473,6 +516,11 @@
   <div class="modal" *ngIf="staffAdjustmentFor as line">
     <h3>بند يدوي — {{ line.staffName }}</h3>
 
+    <div class="active-loan-banner" *ngIf="line.activeLoanBalance != null">
+      <span class="material-icons-round">account_balance_wallet</span>
+      <span>المتبقي من السلف النشطة: <b>{{ money(line.activeLoanBalance) }} ريال</b></span>
+    </div>
+
     <div class="form-group">
       <label class="form-label">النوع</label>
       <select class="form-input" [(ngModel)]="staffAdjustmentType">
@@ -483,6 +531,10 @@
           <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{ opt.label }}</option>
         </optgroup>
       </select>
+      <p class="hint loan-notice" *ngIf="staffAdjustmentType === 'LOAN'">
+        <span class="material-icons-round">sync</span>
+        خصم السلفة اليدوي سيتم تسجيله وتخفيضه تلقائياً من رصيد السلفة الفعلية للموظف.
+      </p>
     </div>
 
     <div class="form-group">

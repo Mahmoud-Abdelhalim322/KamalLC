@@ -1,0 +1,381 @@
+<div class="supplier-revenue-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">إيراد الموردين والتسويات المالية</h1>
+    <p class="page-subtitle">تتبع إيرادات الموردين والطلبات وإدارة حركات الخصم والإضافة والبنود المالية</p>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error_outline</span>
+    <span>{{ errorMessage }}</span>
+    <button class="alert-close" (click)="clearMessages()">&times;</button>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>
+    <span>{{ successMessage }}</span>
+    <button class="alert-close" (click)="clearMessages()">&times;</button>
+  </div>
+
+  <!-- Toolbar & Filters -->
+  <div class="toolbar">
+    <div class="date-field">
+      <label>من</label>
+      <input type="date" class="form-input" [(ngModel)]="fromDate" (change)="onDateChange()" />
+    </div>
+
+    <div class="date-field">
+      <label>إلى</label>
+      <input type="date" class="form-input" [(ngModel)]="toDate" (change)="onDateChange()" />
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab" [class.active]="activePreset === 'current-month'" (click)="setPreset('current-month')">
+        الشهر الحالي
+      </button>
+      <button class="filter-tab" [class.active]="activePreset === 'last-month'" (click)="setPreset('last-month')">
+        الشهر السابق
+      </button>
+      <button class="filter-tab" [class.active]="activePreset === 'last-30'" (click)="setPreset('last-30')">
+        آخر 30 يوم
+      </button>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
+        <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+        <span>تصدير Excel</span>
+      </button>
+      <button class="btn btn-primary" (click)="openAddAdjustmentModal()">
+        <span class="material-icons-round">add_circle</span>
+        <span>إضافة خصم / إضافة بند</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>جارٍ تحميل إيرادات الموردين والتسويات…</p>
+  </div>
+
+  <!-- Content -->
+  <ng-container *ngIf="!isLoading && summary">
+
+    <!-- KPI Grid Row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <span class="kpi-label">إجمالي الإيرادات الأساسية</span>
+        <b class="kpi-value">{{ summary.grossRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+      </div>
+
+      <div class="kpi">
+        <span class="kpi-label">إجمالي الطلبات المنفذة</span>
+        <b class="kpi-value">{{ summary.totalOrders | number }} <small>طلب</small></b>
+      </div>
+
+      <div class="kpi" [class.good]="summary.netAdjustments > 0" [class.bad]="summary.netAdjustments < 0">
+        <span class="kpi-label">صافي التسويات (إضافة/خصم)</span>
+        <b class="kpi-value">
+          {{ summary.netAdjustments > 0 ? '+' : '' }}{{ summary.netAdjustments | number:'1.2-2' }} <small>ر.س</small>
+        </b>
+      </div>
+
+      <div class="kpi accent">
+        <span class="kpi-label">صافي الإيراد المستحق</span>
+        <b class="kpi-value">{{ summary.netRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+      </div>
+    </div>
+
+    <!-- Summary Table -->
+    <div class="table-wrap card">
+      <div class="card-title-bar">
+        <h2 class="card-title-text">
+          <span class="material-icons-round">table_chart</span>
+          ملخص إيرادات الموردين ({{ summary.totalSuppliers }})
+        </h2>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>المورد</th>
+            <th>الكود</th>
+            <th>الشيفتات</th>
+            <th>الطلبات</th>
+            <th>ساعات العمل</th>
+            <th>الإيراد الأساسي</th>
+            <th>الإيراد الإضافي</th>
+            <th>الإضافات (+)</th>
+            <th>الخصومات (-)</th>
+            <th>صافي الإيراد</th>
+            <th class="text-center">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of summary.rows">
+            <td>
+              <div class="supplier-cell">
+                <span class="supplier-badge" [style.background-color]="row.color || '#1B5E20'"></span>
+                <span class="name">{{ row.supplierName }}</span>
+              </div>
+            </td>
+            <td><span class="code-cell">{{ row.supplierCode }}</span></td>
+            <td class="strong">{{ row.totalShifts }}</td>
+            <td class="strong">{{ row.totalDelivered | number }}</td>
+            <td>{{ row.workingHours | number:'1.2-2' }} س</td>
+            <td>{{ row.baseRevenue | number:'1.2-2' }} ر.س</td>
+            <td>{{ row.extraRevenue | number:'1.2-2' }} ر.س</td>
+            <td><span class="positive">+{{ row.additionsTotal | number:'1.2-2' }}</span></td>
+            <td><span class="negative">-{{ row.deductionsTotal | number:'1.2-2' }}</span></td>
+            <td class="net">{{ row.netRevenue | number:'1.2-2' }} ر.س</td>
+            <td class="text-center">
+              <div class="action-buttons">
+                <button class="btn btn-outline btn-sm" title="عرض كشف الحساب التفصيلي" (click)="openStatement(row)" [disabled]="!row.supplierId">
+                  <span class="material-icons-round">receipt_long</span> كشف حساب
+                </button>
+                <button class="btn btn-outline btn-sm btn-warn" title="إضافة خصم أو إضافة" (click)="openAddAdjustmentModal(row)" [disabled]="!row.supplierId">
+                  <span class="material-icons-round">add_moderator</span> تسوية
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="summary.rows.length === 0">
+            <td colspan="11" class="empty-state">لا توجد بيانات إيرادات للموردين في الفترة المحددة</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </ng-container>
+
+  <!-- Add/Deduct Adjustment Modal -->
+  <div class="panel-backdrop" *ngIf="showAdjustmentModal" (click)="closeAdjustmentModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span class="material-icons-round">add_moderator</span>
+          إضافة خصم أو إضافة بند للمورد
+        </h3>
+        <button class="icon-btn" (click)="closeAdjustmentModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="saveAdjustment()">
+
+          <div class="form-group">
+            <label class="form-label">اختر المورد <span class="required">*</span></label>
+            <select [(ngModel)]="adjSupplierId" name="adjSupplierId" class="form-input" required>
+              <option value="" disabled>-- اختر المورد --</option>
+              <option *ngFor="let s of summary?.rows" [value]="s.supplierId" [disabled]="!s.supplierId">
+                {{ s.supplierName }} ({{ s.supplierCode }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">نوع الحركة <span class="required">*</span></label>
+            <div class="type-selector">
+              <label class="radio-chip deduction" [class.selected]="adjType === 'DEDUCTION'">
+                <input type="radio" [(ngModel)]="adjType" name="adjType" value="DEDUCTION" />
+                <span class="material-icons-round">remove_circle</span>
+                <span>خصم من المورد (-)</span>
+              </label>
+
+              <label class="radio-chip addition" [class.selected]="adjType === 'ADDITION'">
+                <input type="radio" [(ngModel)]="adjType" name="adjType" value="ADDITION" />
+                <span class="material-icons-round">add_circle</span>
+                <span>إضافة للمورد (+)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">بند التسوية <span class="required">*</span></label>
+            <select [(ngModel)]="adjCategory" name="adjCategory" class="form-input" required>
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+              <option value="أخرى">بند آخر (مخصص)...</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="adjCategory === 'أخرى'">
+            <label class="form-label">اكتب اسم البند المخصص <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="customCategory" name="customCategory" class="form-input" placeholder="مثال: خصم فروقات جودة..." required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label">المبلغ (ريال) <span class="required">*</span></label>
+              <input type="number" step="0.01" min="0.01" [(ngModel)]="adjAmount" name="adjAmount" class="form-input" placeholder="0.00" required />
+            </div>
+
+            <div class="form-group col">
+              <label class="form-label">تاريخ الحركة <span class="required">*</span></label>
+              <input type="date" [(ngModel)]="adjDate" name="adjDate" class="form-input" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">السبب / الملاحظات (تفاصيل الخطأ أو التسوية)</label>
+            <textarea [(ngModel)]="adjNotes" name="adjNotes" class="form-input" rows="3" placeholder="اكتب تفاصيل سبب الخصم أو الإضافة..."></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" (click)="closeAdjustmentModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSavingAdjustment">
+              <span class="material-icons-round">save</span>
+              <span>{{ isSavingAdjustment ? 'جاري الحفظ...' : 'حفظ الحركة' }}</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supplier Detailed Statement Modal -->
+  <div class="panel-backdrop" *ngIf="showStatementModal" (click)="closeStatementModal()">
+    <div class="modal-card statement-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="statement-header-info">
+          <span class="supplier-badge large" [style.background-color]="selectedSupplier?.color || '#1B5E20'"></span>
+          <div>
+            <h3 class="modal-title">كشف حساب المورد التفصيلي: {{ selectedSupplier?.supplierName }}</h3>
+            <span class="statement-subtitle">الفترة من {{ fromDate }} إلى {{ toDate }}</span>
+          </div>
+        </div>
+        <button class="icon-btn" (click)="closeStatementModal()">&times;</button>
+      </div>
+
+      <div class="modal-body statement-body">
+        <div class="loading-state" *ngIf="isLoadingStatement">
+          <div class="spinner"></div>
+          <p>جارٍ تحميل كشف الحساب التفصيلي…</p>
+        </div>
+
+        <ng-container *ngIf="!isLoadingStatement && statement">
+
+          <!-- Mini KPIs -->
+          <div class="kpi-row mini-kpis">
+            <div class="kpi">
+              <span class="kpi-label">إجمالي الطلبات</span>
+              <b class="kpi-value">{{ statement.totalOrders | number }} <small>طلب</small></b>
+            </div>
+            <div class="kpi">
+              <span class="kpi-label">الإيراد الأساسي</span>
+              <b class="kpi-value">{{ statement.baseRevenue + statement.extraRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+            </div>
+            <div class="kpi good">
+              <span class="kpi-label">إجمالي الإضافات</span>
+              <b class="kpi-value">+{{ statement.additionsTotal | number:'1.2-2' }} <small>ر.س</small></b>
+            </div>
+            <div class="kpi bad">
+              <span class="kpi-label">إجمالي الخصومات</span>
+              <b class="kpi-value">-{{ statement.deductionsTotal | number:'1.2-2' }} <small>ر.س</small></b>
+            </div>
+            <div class="kpi accent">
+              <span class="kpi-label">الصافي النهائي</span>
+              <b class="kpi-value">{{ statement.netRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+            </div>
+          </div>
+
+          <!-- Adjustments Section -->
+          <div class="statement-section">
+            <div class="section-header">
+              <h4>
+                <span class="material-icons-round">tune</span>
+                سجل الخصومات والتسويات الماليّة المطبقة ({{ statement.adjustments.length }})
+              </h4>
+              <button class="btn btn-primary btn-sm" (click)="openAddAdjustmentModal(selectedSupplier!)">
+                <span class="material-icons-round">add</span> إضافة تسوية
+              </button>
+            </div>
+
+            <div class="table-wrap card">
+              <table class="data-table compact">
+                <thead>
+                  <tr>
+                    <th>التاريخ</th>
+                    <th>نوع الحركة</th>
+                    <th>بند التسوية</th>
+                    <th>المبلغ</th>
+                    <th>الملاحظات / السبب</th>
+                    <th>بواسطة</th>
+                    <th class="text-center">إجراء</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let adj of statement.adjustments">
+                    <td>{{ adj.adjustmentDate }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="adj.type === 'ADDITION'" [class.badge-danger]="adj.type === 'DEDUCTION'">
+                        {{ adj.type === 'ADDITION' ? 'إضافة (+)' : 'خصم (-)' }}
+                      </span>
+                    </td>
+                    <td class="strong">{{ adj.category }}</td>
+                    <td>
+                      <span [class.positive]="adj.type === 'ADDITION'" [class.negative]="adj.type === 'DEDUCTION'">
+                        {{ adj.type === 'ADDITION' ? '+' : '-' }}{{ adj.amount | number:'1.2-2' }} ر.س
+                      </span>
+                    </td>
+                    <td class="muted">{{ adj.notes || '-' }}</td>
+                    <td>{{ adj.createdBy }}</td>
+                    <td class="text-center">
+                      <button class="btn-icon danger-icon" title="حذف التسوية" (click)="deleteAdjustment(adj)">
+                        <span class="material-icons-round">delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="statement.adjustments.length === 0">
+                    <td colspan="7" class="empty-state">لا توجد تسويات مالية أو خصومات مسجلة لهذا المورد في هذه الفترة</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Shift Details Section -->
+          <div class="statement-section margin-top">
+            <div class="section-header">
+              <h4>
+                <span class="material-icons-round">event_note</span>
+                سجل الشيفتات والطلبات المنجزة ({{ statement.shifts.length }})
+              </h4>
+            </div>
+
+            <div class="table-wrap card max-height-table">
+              <table class="data-table compact">
+                <thead>
+                  <tr>
+                    <th>تاريخ الشيفت</th>
+                    <th>معرف الشيفت</th>
+                    <th>الكابتن</th>
+                    <th>المنطقة</th>
+                    <th>الطلبات</th>
+                    <th>ساعات العمل</th>
+                    <th>إيراد الشيفت</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of statement.shifts" [class.row-excluded]="s.excluded">
+                    <td>{{ s.shiftDate }}</td>
+                    <td><span class="code-cell">{{ s.externalShiftId }}</span></td>
+                    <td class="name">{{ s.captainName }}</td>
+                    <td>{{ s.zoneName || '-' }}</td>
+                    <td class="strong">{{ s.totalDelivered }}</td>
+                    <td>{{ s.workingHours | number:'1.2-2' }} س</td>
+                    <td class="net">{{ s.supplierRevenue + s.supplierExtraRevenue | number:'1.2-2' }} ر.س</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+</div>

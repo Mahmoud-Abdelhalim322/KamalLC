@@ -41,6 +41,9 @@ public class PayrollLine {
     @Column(name = "captain_name", nullable = false, length = 255)
     private String captainName;
 
+    @Column(name = "captain_name_en", length = 255)
+    private String captainNameEn;
+
     @Column(name = "captain_type", nullable = false, length = 20)
     private String captainType;
 
@@ -83,6 +86,10 @@ public class PayrollLine {
     @Column(name = "late_deductions", nullable = false, precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal lateDeductions = BigDecimal.ZERO;
+
+    @Column(name = "supplier_deductions", nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal supplierDeductions = BigDecimal.ZERO;
 
     @Column(name = "daily_incentives", nullable = false, precision = 12, scale = 2)
     @Builder.Default

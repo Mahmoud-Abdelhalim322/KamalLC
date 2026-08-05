@@ -16,6 +16,10 @@ public interface CaptainRepository extends JpaRepository<Captain, UUID> {
 
     Optional<Captain> findByKamalCode(String kamalCode);
 
+    Optional<Captain> findByIqamaNumber(String iqamaNumber);
+
+    Optional<Captain> findByPhone(String phone);
+
     boolean existsByKamalCode(String kamalCode);
 
     /**

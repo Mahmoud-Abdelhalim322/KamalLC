@@ -15,10 +15,23 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private userSubject = new BehaviorSubject<LoginResponse | null>(this.getUser());
+  user$ = this.userSubject.asObservable();
+
   constructor(
     private http: HttpClient,
     private router: Router
   ) {}
+
+  refreshUserProfile(): Observable<ApiResponse<LoginResponse>> {
+    return this.http.get<ApiResponse<LoginResponse>>('/api/auth/me').pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.setSession(response.data);
+        }
+      })
+    );
+  }
 
   login(request: LoginRequest): Observable<ApiResponse<LoginResponse>> {
     return this.http.post<ApiResponse<LoginResponse>>('/api/auth/login', request).pipe(
@@ -34,6 +47,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.isAuthenticatedSubject.next(false);
+    this.userSubject.next(null);
     this.router.navigate(['/login']);
   }
 
@@ -58,7 +72,17 @@ export class AuthService {
     const user = this.getUser();
     if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
-    return user.permissions?.includes(permission) ?? false;
+    if (!user.permissions) return false;
+
+    if (user.permissions.includes(permission)) return true;
+
+    // MANAGE permissions imply VIEW permissions
+    if (permission.endsWith('_VIEW')) {
+      const managePermission = permission.replace('_VIEW', '_MANAGE');
+      if (user.permissions.includes(managePermission)) return true;
+    }
+
+    return false;
   }
 
   hasAnyPermission(...permissions: string[]): boolean {
@@ -74,6 +98,7 @@ export class AuthService {
     localStorage.setItem(TOKEN_KEY, loginResponse.token);
     localStorage.setItem(USER_KEY, JSON.stringify(loginResponse));
     this.isAuthenticatedSubject.next(true);
+    this.userSubject.next(loginResponse);
   }
 
   private hasToken(): boolean {

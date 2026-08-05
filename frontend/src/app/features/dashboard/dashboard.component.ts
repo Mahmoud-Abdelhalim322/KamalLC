@@ -31,9 +31,9 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
 
   // Date Range Controls
-  fromDate: string = '2026-07-01';
-  toDate: string = '2026-07-31';
-  activePreset: 'JULY_2026' | 'THIS_MONTH' | 'LAST_MONTH' | 'LAST_30' | 'CUSTOM' = 'JULY_2026';
+  fromDate: string = '';
+  toDate: string = '';
+  activePreset: 'THIS_MONTH' | 'LAST_MONTH' | 'LAST_30' | 'CUSTOM' = 'THIS_MONTH';
 
   // Leaderboard toggles
   leaderboardTimeframe: 'MONTH' | 'WEEK' = 'MONTH';
@@ -52,6 +52,18 @@ export class DashboardComponent implements OnInit {
   constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
+    // Initialize with current month as default
+    const today = new Date();
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    this.fromDate = formatDate(firstDay);
+    this.toDate = formatDate(lastDay);
     this.loadDashboard();
   }
 
@@ -83,7 +95,7 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  public applyPreset(preset: 'JULY_2026' | 'THIS_MONTH' | 'LAST_MONTH' | 'LAST_30'): void {
+  public applyPreset(preset: 'THIS_MONTH' | 'LAST_MONTH' | 'LAST_30'): void {
     this.activePreset = preset;
     const today = new Date();
     const formatDate = (d: Date) => {
@@ -93,10 +105,7 @@ export class DashboardComponent implements OnInit {
       return `${year}-${month}-${day}`;
     };
 
-    if (preset === 'JULY_2026') {
-      this.fromDate = '2026-07-01';
-      this.toDate = '2026-07-31';
-    } else if (preset === 'THIS_MONTH') {
+    if (preset === 'THIS_MONTH') {
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       this.fromDate = formatDate(firstDay);

@@ -28,6 +28,7 @@ public class PayrollController {
 
     private final PayrollService payrollService;
     private final PayrollExportService exportService;
+    private final com.kamal.lc.common.export.PdfExportService pdfExportService;
 
     @GetMapping("/runs")
     public ResponseEntity<ApiResponse<PageResponse<PayrollRunResponse>>> list(
@@ -138,6 +139,106 @@ public class PayrollController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename*=UTF-8''" + fileName)
                 .body(workbook);
+    }
+
+    @GetMapping("/runs/{runId}/export-pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @PathVariable UUID runId,
+            @RequestParam(required = false) String staffType) {
+        PayrollRunResponse run = payrollService.get(runId);
+        byte[] pdf;
+        String rawFileName;
+
+        if (staffType != null && !staffType.isBlank() && !"CAPTAIN".equalsIgnoreCase(staffType)) {
+            List<StaffPayrollLineResponse> staffLines = payrollService.getStaffLines(runId, staffType);
+            pdf = pdfExportService.buildStaffPayrollPdf(run, staffLines, staffType);
+
+            String prefix = "WORKER".equalsIgnoreCase(staffType) ? "مسير-رواتب-العاملين-"
+                    : "MANAGER".equalsIgnoreCase(staffType) ? "مسير-رواتب-الإداريين-" : "مسير-رواتب-الموظفين-";
+            rawFileName = prefix + run.getPeriodFrom() + ".pdf";
+        } else {
+            pdf = pdfExportService.buildPayrollPdf(run, payrollService.getLines(runId));
+            rawFileName = "مسير-رواتب-" + run.getPeriodFrom() + ".pdf";
+        }
+
+        String fileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdf);
+    }
+
+    @GetMapping("/runs/{runId}/payslip/{captainId}")
+    public ResponseEntity<byte[]> captainPayslip(
+            @PathVariable UUID runId,
+            @PathVariable UUID captainId) {
+        PayrollRunResponse run = payrollService.get(runId);
+        PayrollLineResponse line = payrollService.getLines(runId).stream()
+                .filter(l -> captainId.equals(l.getCaptainId()))
+                .findFirst()
+                .orElseThrow(() -> new com.kamal.lc.common.exception.BusinessException("NOT_FOUND", "الكابتن غير موجود في المسير"));
+
+        byte[] pdf = pdfExportService.buildPayslipPdf(run, line);
+        String fileName = URLEncoder.encode("مسير-فردي-" + line.getCaptainCode() + ".pdf", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdf);
+    }
+
+    @GetMapping("/runs/{runId}/bulk-payslips")
+    public ResponseEntity<byte[]> bulkPayslips(@PathVariable UUID runId) {
+        PayrollRunResponse run = payrollService.get(runId);
+        List<PayrollLineResponse> lines = payrollService.getLines(runId);
+
+        byte[] pdf = pdfExportService.buildBulkPayslipsPdf(run, lines);
+        String fileName = URLEncoder.encode("مسيرات-فردية-مجمعة-" + run.getPeriodFrom() + ".pdf", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdf);
+    }
+
+    @GetMapping("/runs/{runId}/staff-payslip/{staffId}")
+    public ResponseEntity<byte[]> staffPayslip(
+            @PathVariable UUID runId,
+            @PathVariable UUID staffId) {
+        PayrollRunResponse run = payrollService.get(runId);
+        StaffPayrollLineResponse line = payrollService.getStaffLines(runId, null).stream()
+                .filter(l -> staffId.equals(l.getStaffId()))
+                .findFirst()
+                .orElseThrow(() -> new com.kamal.lc.common.exception.BusinessException(
+                        "NOT_FOUND", "الموظف غير موجود في المسير"));
+
+        byte[] pdf = pdfExportService.buildStaffPayslipPdf(run, line);
+        String fileName = URLEncoder.encode("مسير-فردي-" + line.getStaffCode() + ".pdf", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdf);
+    }
+
+    @GetMapping("/runs/{runId}/bulk-staff-payslips")
+    public ResponseEntity<byte[]> bulkStaffPayslips(
+            @PathVariable UUID runId,
+            @RequestParam(required = false) String staffType) {
+        PayrollRunResponse run = payrollService.get(runId);
+        List<StaffPayrollLineResponse> staffLines = payrollService.getStaffLines(runId, staffType);
+
+        byte[] pdf = pdfExportService.buildBulkStaffPayslipsPdf(run, staffLines);
+
+        String prefix = "WORKER".equalsIgnoreCase(staffType) ? "مسيرات-فردية-العاملين-"
+                : "MANAGER".equalsIgnoreCase(staffType) ? "مسيرات-فردية-الإداريين-" : "مسيرات-فردية-الموظفين-";
+        String fileName = URLEncoder.encode(prefix + run.getPeriodFrom() + ".pdf", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .body(pdf);
     }
 
     @PostMapping("/runs/{runId}/staff-adjustments")

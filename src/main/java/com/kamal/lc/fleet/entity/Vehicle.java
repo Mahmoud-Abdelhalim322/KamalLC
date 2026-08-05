@@ -59,6 +59,24 @@ public class Vehicle {
     @Column(name = "rental_end_date")
     private LocalDate rentalEndDate;
 
+    @Column(name = "registration_number", length = 100)
+    private String registrationNumber;
+
+    @Column(length = 100)
+    private String vin;
+
+    @Column(name = "registration_expiry_date")
+    private LocalDate registrationExpiryDate;
+
+    @Column(name = "operating_card_number", length = 100)
+    private String operatingCardNumber;
+
+    @Column(name = "insurance_company", length = 100)
+    private String insuranceCompany;
+
+    @Column(name = "inspection_expiry_date")
+    private LocalDate inspectionExpiryDate;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

@@ -7,6 +7,7 @@ import com.kamal.lc.payroll.entity.CaptainAdjustment;
 import com.kamal.lc.payroll.repository.CaptainAdjustmentRepository;
 import com.kamal.lc.payroll.service.PayrollCalculator;
 import com.kamal.lc.report.dto.CaptainReportResponse;
+import com.kamal.lc.report.dto.OrdersDashboardResponse;
 import com.kamal.lc.report.dto.TeamReportResponse;
 import com.kamal.lc.settings.service.EffectiveSettings;
 import com.kamal.lc.settings.service.SettingsResolver;
@@ -40,6 +41,7 @@ public class ReportService {
     private final ShiftRepository shiftRepo;
     private final CaptainRepository captainRepo;
     private final CaptainAdjustmentRepository adjustmentRepo;
+    private final com.kamal.lc.supplier.repository.SupplierAdjustmentRepository supplierAdjustmentRepo;
     private final SupplierIdAssignmentRepository assignmentRepo;
     private final SettingsResolver settingsResolver;
     private final PayrollCalculator calculator;
@@ -59,6 +61,7 @@ public class ReportService {
         BigDecimal totalHours = sum(counted, Shift::getWorkingHours);
 
         BigDecimal lateDeductions = sum(counted, Shift::getLateDeduction);
+        BigDecimal supplierDeductions = sum(counted, Shift::getSupplierDeduction);
         BigDecimal dailyIncentives = sum(counted, Shift::getDailyIncentive);
         BigDecimal fuelAllowances = sum(counted, Shift::getFuelAllowance);
         BigDecimal carAllowances = sum(counted, Shift::getCarAllowance);
@@ -71,7 +74,7 @@ public class ReportService {
 
         PayrollCalculator.Result pay = calculator.compute(new PayrollCalculator.Input(
                 captain.getCaptainType(), captain.isUsesOwnVehicle(),
-                attended, totalOrders, lateDeductions, dailyIncentives, fuelAllowances,
+                attended, totalOrders, lateDeductions, supplierDeductions, dailyIncentives, fuelAllowances,
                 carAllowances, adjustments
         ), settings);
 
@@ -150,7 +153,7 @@ public class ReportService {
 
             PayrollCalculator.Result pay = calculator.compute(new PayrollCalculator.Input(
                     captain.getCaptainType(), captain.isUsesOwnVehicle(), attended, orders,
-                    totals.getLateDeductions(), totals.getDailyIncentives(), totals.getFuelAllowances(),
+                    totals.getLateDeductions(), totals.getSupplierDeductions(), totals.getDailyIncentives(), totals.getFuelAllowances(),
                     totals.getCarAllowances(),
                     adjustmentsByCaptain.getOrDefault(captain.getId(), BigDecimal.ZERO)
             ), settings);
@@ -188,13 +191,121 @@ public class ReportService {
                 .periodFrom(from.toString())
                 .periodTo(to.toString())
                 .rows(rows)
-                .totals(totals(rows))
+                .totals(totals(rows, from, to))
+                .build();
+    }
+
+    /**
+     * Daily Delivery Per Captain — the grid behind the orders dashboard.
+     *
+     * <p>One row per captain, one column per calendar day in the period. Each cell is
+     * the number of orders delivered on that day (sum of {@code totalDelivered} across
+     * the captain's non-excluded shifts on that date).
+     *
+     * @param captainType {@code "EMPLOYEE"}, {@code "FREELANCE"}, or {@code null}/blank for all
+     */
+    public OrdersDashboardResponse ordersDashboard(LocalDate from, LocalDate to, String captainType) {
+        int target = settingsResolver.resolve(to).getMonthlyOrderTarget();
+
+        // All non-excluded shifts in the period, with their captain eagerly available.
+        List<Shift> shifts = shiftRepo.findByShiftDateBetween(from, to).stream()
+                .filter(s -> !s.isExcluded() && s.getCaptain() != null)
+                .toList();
+
+        // Build a lookup of captains; optionally filter by type.
+        Map<UUID, Captain> captains = captainRepo.findAll().stream()
+                .filter(c -> captainType == null || captainType.isBlank()
+                        || "ALL".equalsIgnoreCase(captainType)
+                        || captainType.equalsIgnoreCase(c.getCaptainType()))
+                .collect(Collectors.toMap(Captain::getId, c -> c));
+
+        // The ordered list of dates that will become the column headers.
+        List<String> dates = from.datesUntil(to.plusDays(1))
+                .map(LocalDate::toString)
+                .toList();
+
+        // Group: captainId → date → sum(totalDelivered)
+        Map<UUID, Map<String, Integer>> grid = new LinkedHashMap<>();
+        for (Shift shift : shifts) {
+            UUID cid = shift.getCaptain().getId();
+            if (!captains.containsKey(cid)) continue;
+            grid.computeIfAbsent(cid, k -> new LinkedHashMap<>())
+                    .merge(shift.getShiftDate().toString(), nz(shift.getTotalDelivered()), Integer::sum);
+        }
+
+        // Build rows
+        List<OrdersDashboardResponse.CaptainRow> rows = new ArrayList<>();
+        for (Map.Entry<UUID, Map<String, Integer>> entry : grid.entrySet()) {
+            Captain captain = captains.get(entry.getKey());
+            if (captain == null) continue;
+
+            Map<String, Integer> daily = entry.getValue();
+            int actual = daily.values().stream().mapToInt(Integer::intValue).sum();
+            BigDecimal rate = target > 0
+                    ? BigDecimal.valueOf(actual).divide(BigDecimal.valueOf(target), 4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            rows.add(OrdersDashboardResponse.CaptainRow.builder()
+                    .captainId(captain.getId())
+                    .captainCode(captain.getKamalCode())
+                    .captainName(captain.getFullNameAr())
+                    .captainType(captain.getCaptainType())
+                    .target(target)
+                    .actual(actual)
+                    .achievementRate(rate)
+                    .dailyOrders(daily)
+                    .build());
+        }
+
+        // Sort by captainCode (KSC0001, KSC0002, …)
+        rows.sort(Comparator.comparing(OrdersDashboardResponse.CaptainRow::getCaptainCode));
+
+        // Daily totals across all captains
+        Map<String, Integer> dailyTotals = new LinkedHashMap<>();
+        for (String date : dates) {
+            int dayTotal = rows.stream()
+                    .mapToInt(r -> r.getDailyOrders().getOrDefault(date, 0))
+                    .sum();
+            dailyTotals.put(date, dayTotal);
+        }
+
+        int totalActual = rows.stream().mapToInt(OrdersDashboardResponse.CaptainRow::getActual).sum();
+        int totalTarget = rows.size() * target;
+        BigDecimal totalRate = totalTarget > 0
+                ? BigDecimal.valueOf(totalActual).divide(BigDecimal.valueOf(totalTarget), 4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        return OrdersDashboardResponse.builder()
+                .periodFrom(from.toString())
+                .periodTo(to.toString())
+                .dates(dates)
+                .target(target)
+                .captainRows(rows)
+                .dailySummary(OrdersDashboardResponse.DailySummary.builder()
+                        .totalCaptains(rows.size())
+                        .totalTarget(totalTarget)
+                        .totalActual(totalActual)
+                        .totalRate(totalRate)
+                        .dailyTotals(dailyTotals)
+                        .build())
                 .build();
     }
 
     // ---- helpers ----
 
-    private TeamReportResponse.Totals totals(List<TeamReportResponse.Row> rows) {
+    private TeamReportResponse.Totals totals(List<TeamReportResponse.Row> rows, LocalDate from, LocalDate to) {
+        BigDecimal shiftRevenue = rows.stream().map(TeamReportResponse.Row::getSupplierRevenueTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal netSupplierAdjustments = supplierAdjustmentRepo.findByAdjustmentDateBetweenOrderByAdjustmentDateDesc(from, to)
+                .stream()
+                .map(a -> "ADDITION".equalsIgnoreCase(a.getType()) ? a.getAmount() : a.getAmount().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalSupplierRevenue = shiftRevenue.add(netSupplierAdjustments);
+        BigDecimal netPay = rows.stream().map(TeamReportResponse.Row::getNet)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return TeamReportResponse.Totals.builder()
                 .captains(rows.size())
                 .attendedShifts(rows.stream().mapToInt(TeamReportResponse.Row::getAttendedShifts).sum())
@@ -204,12 +315,9 @@ public class ReportService {
                         .reduce(BigDecimal.ZERO, BigDecimal::add))
                 .gross(rows.stream().map(TeamReportResponse.Row::getGross)
                         .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .net(rows.stream().map(TeamReportResponse.Row::getNet)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .supplierRevenueTotal(rows.stream().map(TeamReportResponse.Row::getSupplierRevenueTotal)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .margin(rows.stream().map(TeamReportResponse.Row::getMargin)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .net(netPay)
+                .supplierRevenueTotal(totalSupplierRevenue)
+                .margin(totalSupplierRevenue.subtract(netPay))
                 .captainsAtTarget((int) rows.stream().filter(TeamReportResponse.Row::isTargetAchieved).count())
                 .captainsNearTarget((int) rows.stream()
                         .filter(row -> !row.isTargetAchieved() && row.getOrdersToTarget() <= NEAR_TARGET_WINDOW)

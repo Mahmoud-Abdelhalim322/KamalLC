@@ -7,6 +7,8 @@ import {
   CreateUserRequest, JobTitleRequest, StaffResponse, PageResponse
 } from '../../core/models/api.models';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   selector: 'app-user-management',
   standalone: true,
@@ -33,7 +35,10 @@ export class UserManagementComponent implements OnInit {
   newRole: JobTitleRequest = { name: '', labelAr: '', permissions: [] };
   editingRoleId: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadAll();
@@ -41,6 +46,7 @@ export class UserManagementComponent implements OnInit {
 
   loadAll(): void {
     this.isLoading = true;
+    this.authService.refreshUserProfile().subscribe();
     this.http.get<ApiResponse<PermissionInfo[]>>('/api/admin/permissions').subscribe(res => {
       if (res.success && res.data) this.allPermissions = res.data;
     });

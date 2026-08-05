@@ -26,6 +26,7 @@ public class StaffPayrollLineResponse {
     private BigDecimal adjustmentsTotal;
     private BigDecimal gross;
     private BigDecimal net;
+    private BigDecimal activeLoanBalance;
 
     private String notes;
     private java.util.List<StaffAdjustmentResponse> adjustments;

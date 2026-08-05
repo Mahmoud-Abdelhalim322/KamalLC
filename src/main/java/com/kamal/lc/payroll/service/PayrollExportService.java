@@ -35,8 +35,8 @@ public class PayrollExportService {
     private static final List<String> HEADERS = List.of(
             "ID-KSLSC",
             "ID - NINJA",
-            "اسم الكابتن",
-            "النوع",
+            "اسم الكابتن\nCAPTAIN NAME",
+            "النوع\nTYPE",
             "عدد الشفتات\nTOTAL SHIFT",
             "أيام الغياب\nABSENT",
             "عدد الطلبات\nTotal Delivered",
@@ -44,6 +44,7 @@ public class PayrollExportService {
             "نسبة الانشغال\nBusy Utilization %",
             "مجموع الدخل\nC.DUTY",
             "خصم تأخير\nDeduction for late",
+            "خصم المورد\nSUPPLIER DEDUCTION",
             "حوافز يومية\nDAILY INCENTIVE",
             "بدل بنزين\nFUEL ALLOWANCE",
             "بدل سيارة\nCAR ALLOWANCE",
@@ -122,6 +123,7 @@ public class PayrollExportService {
                 number(row, c++, line.getAvgBusyUtilization(), percentStyle);
                 number(row, c++, line.getBasePay(), moneyStyle);
                 number(row, c++, line.getLateDeductions(), moneyStyle);
+                number(row, c++, line.getSupplierDeductions(), moneyStyle);
                 number(row, c++, line.getDailyIncentives(), moneyStyle);
                 number(row, c++, line.getFuelAllowances(), moneyStyle);
                 number(row, c++, line.getCarAllowances(), moneyStyle);
@@ -166,15 +168,16 @@ public class PayrollExportService {
                 new Total(7, PayrollLineResponse::getTotalHours),
                 new Total(9, PayrollLineResponse::getBasePay),
                 new Total(10, PayrollLineResponse::getLateDeductions),
-                new Total(11, PayrollLineResponse::getDailyIncentives),
-                new Total(12, PayrollLineResponse::getFuelAllowances),
-                new Total(13, PayrollLineResponse::getCarAllowances),
-                new Total(14, PayrollLineResponse::getTargetBonus),
-                new Total(15, PayrollLineResponse::getExtraOrderPay),
-                new Total(16, PayrollLineResponse::getGross),
-                new Total(22, PayrollLineResponse::getNet),
-                new Total(23, PayrollLineResponse::getSupplierRevenueTotal),
-                new Total(24, PayrollLineResponse::getMargin));
+                new Total(11, PayrollLineResponse::getSupplierDeductions),
+                new Total(12, PayrollLineResponse::getDailyIncentives),
+                new Total(13, PayrollLineResponse::getFuelAllowances),
+                new Total(14, PayrollLineResponse::getCarAllowances),
+                new Total(15, PayrollLineResponse::getTargetBonus),
+                new Total(16, PayrollLineResponse::getExtraOrderPay),
+                new Total(17, PayrollLineResponse::getGross),
+                new Total(23, PayrollLineResponse::getNet),
+                new Total(24, PayrollLineResponse::getSupplierRevenueTotal),
+                new Total(25, PayrollLineResponse::getMargin));
 
         for (Total total : totals) {
             BigDecimal sum = lines.stream().map(total.field())

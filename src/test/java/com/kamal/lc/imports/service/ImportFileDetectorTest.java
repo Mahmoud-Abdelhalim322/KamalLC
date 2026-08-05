@@ -78,6 +78,27 @@ class ImportFileDetectorTest {
     }
 
     @Test
+    @DisplayName("recognises supplier deduction template")
+    void detectsDeductionTemplate() {
+        MockMultipartFile template = new MockMultipartFile(
+                "file", "supplier-deductions-template.xlsx", XLSX,
+                new ExcelTemplateService().buildDeductions());
+
+        assertThat(detector.detect(template)).contains(ImportBatchType.SUPPLIER_DEDUCTIONS);
+    }
+
+    @Test
+    @DisplayName("a supplier deduction file passes requireNot on supplier deduction import screen")
+    void allowsDeductionTemplateOnSupplierDeductionsImport() {
+        MockMultipartFile template = new MockMultipartFile(
+                "file", "supplier-deductions-template.xlsx", XLSX,
+                new ExcelTemplateService().buildDeductions());
+
+        assertThatCode(() -> detector.requireNot(template, ImportBatchType.CAPTAINS))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("an unreadable file is left for the parser to report on")
     void unreadableFileIsNotClassified() {
         MockMultipartFile garbage = new MockMultipartFile(

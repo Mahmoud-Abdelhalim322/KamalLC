@@ -160,6 +160,14 @@ public class Shift {
     @Column(name = "shift_margin", precision = 12, scale = 2)
     private BigDecimal shiftMargin;
 
+    /** Per-shift penalty from the supplier (Ninja), imported via a separate daily sheet. */
+    @Column(name = "supplier_deduction", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal supplierDeduction = BigDecimal.ZERO;
+
+    @Column(name = "supplier_deduction_reason", length = 500)
+    private String supplierDeductionReason;
+
     @Column(name = "calc_note", length = 500)
     private String calcNote;
 

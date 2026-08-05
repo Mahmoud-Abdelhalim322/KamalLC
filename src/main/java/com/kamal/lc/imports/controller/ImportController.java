@@ -20,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+import com.kamal.lc.imports.dto.DeductionImportPreviewResponse;
+import com.kamal.lc.imports.service.SupplierDeductionImportService;
+
 @RestController
 @RequestMapping("/api/imports")
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class ImportController {
 
     private final ImportService importService;
     private final ShiftImportService shiftImportService;
+    private final SupplierDeductionImportService supplierDeductionImportService;
     private final ExcelTemplateService templateService;
 
     /** Blank sheet with the expected columns, so files are shaped right before upload. */
@@ -39,6 +43,12 @@ public class ImportController {
     @GetMapping("/shifts/template")
     public ResponseEntity<byte[]> shiftTemplate() {
         return xlsx(templateService.buildShifts(), "supplier-shifts-import-template.xlsx");
+    }
+
+    /** Blank template for supplier deductions import. */
+    @GetMapping("/deductions/template")
+    public ResponseEntity<byte[]> deductionTemplate() {
+        return xlsx(templateService.buildDeductions(), "supplier-deductions-template.xlsx");
     }
 
     private ResponseEntity<byte[]> xlsx(byte[] workbook, String fileName) {
@@ -79,6 +89,23 @@ public class ImportController {
         ShiftImportPreviewResponse result = shiftImportService.commit(file, batchId);
         return ResponseEntity.ok(ApiResponse.ok(
                 "تم استيراد " + result.getCommittedRows() + " شفت بنجاح", result));
+    }
+
+    /** Supplier deductions file — penalty and deduction records from supplier. */
+    @PostMapping("/deductions/preview")
+    public ResponseEntity<ApiResponse<DeductionImportPreviewResponse>> previewDeductions(
+            @RequestParam("file") MultipartFile file) {
+        DeductionImportPreviewResponse result = supplierDeductionImportService.previewDeductions(file);
+        return ResponseEntity.ok(ApiResponse.ok("تم تحليل ملف خصومات المورد بنجاح", result));
+    }
+
+    @PostMapping("/deductions/{batchId}/commit")
+    public ResponseEntity<ApiResponse<DeductionImportPreviewResponse>> commitDeductions(
+            @PathVariable UUID batchId,
+            @RequestParam("file") MultipartFile file) {
+        DeductionImportPreviewResponse result = supplierDeductionImportService.commitDeductions(batchId, file);
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم تطبيق خصومات المورد على " + result.getMatchedRows() + " شيفت بنجاح", result));
     }
 
     @GetMapping

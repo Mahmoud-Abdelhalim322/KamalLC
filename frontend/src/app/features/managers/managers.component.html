@@ -5,7 +5,7 @@
       <h1>الإداريين</h1>
       <span class="badge-count" *ngIf="totalElements">{{ totalElements }}</span>
     </div>
-    <a routerLink="/managers/new" class="btn btn-primary">
+    <a routerLink="/managers/new" class="btn btn-primary" *ngIf="canManage">
       <span class="material-icons-round">person_add</span>
       إضافة إداري
     </a>

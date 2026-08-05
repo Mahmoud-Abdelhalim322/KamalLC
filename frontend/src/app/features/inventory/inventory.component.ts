@@ -10,6 +10,8 @@ import {
 } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   selector: 'app-inventory',
   standalone: true,
@@ -18,6 +20,16 @@ import { errorMessage } from '../../core/services/api.util';
   styleUrls: ['./inventory.component.scss']
 })
 export class InventoryComponent implements OnInit {
+  readonly saudiSimProviders = [
+    'زين (Zain)',
+    'STC (الاتصالات السعودية)',
+    'موبايلي (Mobily)',
+    'سلام (Salam)',
+    'فيرجن موفابل (Virgin Mobile)',
+    'ليبارا (Lebara)',
+    'أخرى'
+  ];
+
   categories: AssetCategoryResponse[] = [];
   selectedCategory: AssetCategoryResponse | null = null;
   items: AssetItemResponse[] = [];
@@ -60,8 +72,13 @@ export class InventoryComponent implements OnInit {
   constructor(
     private inventoryService: InventoryService,
     private captainService: CaptainService,
-    private custodyService: CustodyService
+    private custodyService: CustodyService,
+    public authService: AuthService
   ) {}
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('INVENTORY_MANAGE');
+  }
 
   ngOnInit(): void { this.loadCategories(); }
 

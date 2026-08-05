@@ -19,6 +19,8 @@ public enum Permission {
     INVENTORY_VIEW("عرض المخزن"),
     INVENTORY_MANAGE("إدارة المخزن"),
     CUSTODY_VIEW("عرض سجل العهد"),
+    LOANS_VIEW("عرض السُلف"),
+    LOANS_MANAGE("إدارة السُلف"),
     SETTINGS_MANAGE("إدارة الإعدادات"),
     USERS_MANAGE("إدارة حسابات المستخدمين"),
     IMPORTS_MANAGE("استيراد البيانات");

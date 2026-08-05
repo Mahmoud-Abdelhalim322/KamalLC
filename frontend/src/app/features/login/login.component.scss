@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0F2419 0%, #1B5E20 50%, #2E7D32 100%);
+  background: radial-gradient(circle at top right, #F5B000 0%, #D97706 35%, #3D2406 70%, #1C1917 100%);
   position: relative;
   overflow: hidden;
 }
@@ -18,8 +18,8 @@
 .bg-circle {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.08;
-  background: white;
+  opacity: 0.15;
+  background: #F5B000;
 }
 
 .bg-circle-1 {
@@ -52,58 +52,148 @@
   66% { transform: translate(-20px, 20px) scale(0.95); }
 }
 
+/* Floating logistics background icons */
+.floating-icon {
+  position: absolute;
+  color: rgba(245, 176, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+
+  .material-icons-round {
+    font-size: 76px;
+  }
+
+  &.icon-truck {
+    top: 12%;
+    left: 8%;
+    animation: floatIcon 12s ease-in-out infinite;
+  }
+
+  &.icon-package {
+    bottom: 15%;
+    right: 8%;
+    animation: floatIcon 14s ease-in-out infinite reverse;
+  }
+
+  &.icon-route {
+    top: 20%;
+    right: 12%;
+    animation: floatIcon 16s ease-in-out infinite 2s;
+  }
+
+  &.icon-speed {
+    bottom: 12%;
+    left: 14%;
+    animation: floatIcon 10s ease-in-out infinite 1s;
+  }
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-22px) rotate(6deg); }
+}
+
 /* Login card */
 .login-container {
-  width: 420px;
-  max-width: 90vw;
-  background: rgba(255, 255, 255, 0.97);
+  width: 440px;
+  max-width: 92vw;
+  background: rgba(255, 255, 255, 0.98);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  padding: 48px 40px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 176, 0, 0.4);
+  padding: 38px 34px 28px;
   backdrop-filter: blur(20px);
   position: relative;
   z-index: 1;
+  border-top: 5px solid #F5B000;
+  text-align: center;
+}
+
+.logistics-top-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 176, 0, 0.15);
+  color: #B45309;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(245, 176, 0, 0.4);
+
+  .material-icons-round {
+    font-size: 16px;
+    color: #D97706;
+  }
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: 18px;
 }
 
-.logo-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 25px rgba(27, 94, 32, 0.35);
-
-  .material-icons-round {
-    font-size: 36px;
-    color: white;
-  }
+.login-logo-img {
+  max-width: 145px;
+  max-height: 90px;
+  width: auto;
+  height: auto;
+  margin: 0 auto 12px;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
 }
 
 .login-title {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #1C1917;
   margin-bottom: 4px;
 }
 
 .login-subtitle {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-size: 0.88rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+/* Feature Chips */
+.logistics-features {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.feat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #1C1917;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 4px 10px;
+  border-radius: 12px;
+
+  .material-icons-round {
+    font-size: 14px;
+    color: #F5B000;
+  }
 }
 
 /* Form */
 .login-form {
+  text-align: right;
+
   .form-group {
-    margin-bottom: 22px;
+    margin-bottom: 18px;
   }
 
   .form-label {
@@ -111,25 +201,29 @@
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
+    font-weight: 700;
+    color: #1C1917;
+    font-size: 0.86rem;
 
     .label-icon {
       font-size: 18px;
-      color: var(--text-light);
+      color: #F5B000;
     }
   }
 
   .form-input {
-    padding: 14px 18px;
-    font-size: 1rem;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.95rem;
     border-radius: var(--radius-md);
-    background: var(--bg-input);
-    border: 2px solid transparent;
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
     transition: all var(--transition-fast);
 
     &:focus {
-      border-color: var(--primary);
+      border-color: #F5B000;
       background: white;
-      box-shadow: 0 0 0 4px rgba(27, 94, 32, 0.1);
+      box-shadow: 0 0 0 4px rgba(245, 176, 0, 0.2);
     }
 
     &.error {
@@ -149,14 +243,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: #FEE2E2;
   border: 1px solid #FCA5A5;
   border-radius: var(--radius-md);
   color: #991B1B;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 
   .material-icons-round {
     font-size: 20px;
@@ -166,26 +260,42 @@
 
 .btn-login {
   width: 100%;
-  padding: 14px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 800;
   border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
+  background: linear-gradient(135deg, #F5B000 0%, #D97706 100%);
+  color: #000000;
+  border: none;
+  box-shadow: 0 6px 20px rgba(245, 176, 0, 0.4);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 176, 0, 0.55);
+  }
 
   .material-icons-round {
     font-size: 20px;
-    transform: scaleX(-1); // RTL flip for login arrow
+    color: #000000;
+    transform: scaleX(-1);
   }
 }
 
 .login-footer {
   text-align: center;
-  margin-top: 32px;
-  padding-top: 20px;
+  margin-top: 26px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-light);
 
   p {
-    font-size: 0.8rem;
-    color: var(--text-light);
+    font-size: 0.78rem;
+    color: #64748B;
+    font-weight: 500;
   }
 }

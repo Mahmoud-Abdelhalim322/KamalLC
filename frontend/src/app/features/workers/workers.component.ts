@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, DocumentAlertFilter, DocumentStatus, PageResponse, StaffResponse } from '../../core/models/api.models';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   selector: 'app-workers',
   standalone: true,
@@ -23,7 +25,15 @@ export class WorkersComponent implements OnInit {
   totalElements = 0;
   totalPages = 0;
 
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    public authService: AuthService
+  ) {}
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('MEMBERS_MANAGE');
+  }
 
   ngOnInit(): void {
     const alert = this.route.snapshot.queryParamMap.get('alert');

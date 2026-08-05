@@ -1,0 +1,175 @@
+.loan-detail-page { max-width: 1200px; }
+
+.page-header {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+  .header-info { flex: 1; }
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    .material-icons-round { font-size: 18px; }
+  }
+}
+.page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+.page-subtitle {
+  display: flex; align-items: center; gap: 10px; font-size: 0.88rem;
+  .code { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-weight: 600; }
+}
+
+.type-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;
+  &[data-type="CAPTAIN"] { background: #DBEAFE; color: #1E40AF; }
+  &[data-type="WORKER"]  { background: #FEF3C7; color: #92400E; }
+  &[data-type="MANAGER"] { background: #EDE9FE; color: #5B21B6; }
+}
+
+/* ---------- Alerts ---------- */
+.alert {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 16px;
+  font-size: 0.88rem; font-weight: 600;
+  .material-icons-round { font-size: 20px; }
+  .alert-close {
+    margin-inline-start: auto; background: none; border: none;
+    font-size: 1.3rem; cursor: pointer; color: inherit; opacity: 0.7;
+  }
+}
+.alert-danger { background: #FEE2E2; color: #991B1B; }
+.alert-success { background: #DCFCE7; color: #166534; }
+
+/* ---------- Summary ---------- */
+.summary-row {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.summary-item {
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 14px 20px;
+  display: flex; flex-direction: column; min-width: 160px;
+  .summary-label { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px; }
+  .summary-value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+  &.danger .summary-value { color: #DC2626; }
+}
+
+/* ---------- New Loan Form ---------- */
+.new-loan-form {
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px;
+  h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+}
+.form-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.form-row .form-group { margin-bottom: 12px; min-width: 160px; &.grow { flex: 1; } }
+.form-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+/* ---------- Section Title ---------- */
+.section-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 24px 0 14px;
+  .material-icons-round { font-size: 22px; color: var(--primary); }
+  &.muted .material-icons-round { color: var(--text-light); }
+}
+
+/* ---------- Loan Card ---------- */
+.loan-card {
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
+  border-right: 4px solid var(--primary);
+  &.closed { opacity: 0.65; border-right-color: var(--text-light); }
+}
+
+.loan-header {
+  display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;
+}
+
+.loan-amounts {
+  display: flex; gap: 24px; flex-wrap: wrap; flex: 1;
+}
+
+.amount-item {
+  display: flex; flex-direction: column;
+  .amount-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2px; }
+  .amount-value {
+    font-size: 1.2rem; font-weight: 700; color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    &.editable { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    &.success { color: #16A34A; }
+  }
+  &.danger .amount-value { color: #DC2626; }
+}
+
+.edit-icon { font-size: 14px !important; color: var(--text-light); }
+
+.inline-edit {
+  display: inline-flex; align-items: center; gap: 6px;
+  .form-input-sm { width: 100px; padding: 4px 8px; font-size: 0.85rem; }
+}
+
+.loan-meta {
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+  min-width: 100px;
+}
+
+.loan-status {
+  display: inline-block; padding: 3px 12px; border-radius: 12px;
+  font-size: 0.75rem; font-weight: 700;
+  &.status-active { background: #FEF3C7; color: #92400E; }
+  &.status-paid { background: #DCFCE7; color: #166534; }
+  &.status-cancelled { background: #F3F4F6; color: #6B7280; }
+}
+
+.loan-date { font-size: 0.78rem; color: var(--text-light); }
+.loan-notes { font-size: 0.8rem; color: var(--text-secondary); }
+
+.loan-actions {
+  display: flex; gap: 8px; align-items: center;
+}
+
+.btn-danger-outline {
+  border: 1px solid #FCA5A5; color: #DC2626; background: none;
+  padding: 5px 12px; border-radius: var(--radius-md); font-size: 0.8rem;
+  cursor: pointer; font-weight: 600;
+  &:hover { background: #FEE2E2; }
+}
+
+/* ---------- Payment Form ---------- */
+.payment-form {
+  border-top: 1px solid var(--border-light); margin-top: 16px; padding-top: 16px;
+  h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; }
+}
+
+/* ---------- Payments Table ---------- */
+.payments-list {
+  border-top: 1px solid var(--border-light); margin-top: 16px; padding-top: 16px;
+}
+.payments-title {
+  font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px;
+}
+
+.payments-table {
+  width: 100%; border-collapse: collapse;
+  th, td { padding: 8px 12px; text-align: right; font-size: 0.82rem; }
+  th {
+    font-weight: 600; color: var(--text-light); font-size: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  td { border-bottom: 1px solid var(--border-light); }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .notes-cell { max-width: 300px; color: var(--text-secondary); }
+}
+
+.source-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 0.72rem; font-weight: 600;
+  background: #E0E7FF; color: #3730A3;
+  &.payroll { background: #FEF3C7; color: #92400E; }
+}
+
+/* ---------- Loading & Empty ---------- */
+.loading-section {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px;
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 48px; color: var(--text-light);
+  .material-icons-round { font-size: 48px; }
+  p { font-size: 0.95rem; }
+}

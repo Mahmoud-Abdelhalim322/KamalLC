@@ -14,6 +14,7 @@ public class PayrollLineResponse {
     private UUID captainId;
     private String captainCode;
     private String captainName;
+    private String captainNameEn;
     private String captainType;
     private String supplierExternalIds;
 
@@ -27,6 +28,7 @@ public class PayrollLineResponse {
 
     private BigDecimal basePay;
     private BigDecimal lateDeductions;
+    private BigDecimal supplierDeductions;
     private BigDecimal dailyIncentives;
     private BigDecimal fuelAllowances;
     private BigDecimal carAllowances;
@@ -38,6 +40,7 @@ public class PayrollLineResponse {
 
     private BigDecimal supplierRevenueTotal;
     private BigDecimal margin;
+    private BigDecimal activeLoanBalance;
 
     private String notes;
     private List<AdjustmentResponse> adjustments;

@@ -228,4 +228,39 @@
 
   h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
   .hint { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.7; }
+
+  .active-loan-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(220, 53, 69, 0.08);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--danger);
+
+    .material-icons-round {
+      font-size: 20px;
+    }
+
+    b {
+      font-weight: 800;
+    }
+  }
+
+  .loan-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 0 !important;
+    color: #2563eb !important;
+    font-size: 0.78rem !important;
+
+    .material-icons-round {
+      font-size: 16px;
+    }
+  }
 }

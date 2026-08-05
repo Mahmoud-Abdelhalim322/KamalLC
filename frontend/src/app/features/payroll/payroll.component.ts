@@ -10,6 +10,8 @@ import {
 import { PayrollService } from '../../core/services/payroll.service';
 import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 interface AdjustmentOption {
   type: AdjustmentType;
   label: string;
@@ -32,6 +34,11 @@ interface StaffAdjustmentOption {
 export class PayrollComponent implements OnInit {
 
   private payrollService = inject(PayrollService);
+  public authService = inject(AuthService);
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('PAYROLL_MANAGE');
+  }
 
   /** Mirrors the named types in CaptainAdjustment — each maps to a payroll-sheet column. */
   readonly adjustmentOptions: AdjustmentOption[] = [
@@ -324,6 +331,81 @@ export class PayrollComponent implements OnInit {
     });
   }
 
+  isExportingPdf = false;
+
+  exportPdf(): void {
+    if (!this.selectedRun) return;
+    const run = this.selectedRun;
+    const tab = this.activeTab;
+
+    let filePrefix = 'مسير-رواتب-';
+    if (tab === 'WORKER') filePrefix = 'مسير-رواتب-العاملين-';
+    else if (tab === 'MANAGER') filePrefix = 'مسير-رواتب-الإداريين-';
+
+    this.isExportingPdf = true;
+    this.payrollService.exportPdf(run.id, tab).subscribe({
+      next: (blob) => {
+        this.isExportingPdf = false;
+        downloadBlob(blob, `${filePrefix}${run.periodFrom}.pdf`);
+      },
+      error: () => {
+        this.isExportingPdf = false;
+        this.errorMessage = 'فشل تحميل ملف PDF للمسير';
+      }
+    });
+  }
+
+  exportPayslip(captainId: string, captainCode: string): void {
+    if (!this.selectedRun) return;
+    this.payrollService.exportPayslip(this.selectedRun.id, captainId).subscribe({
+      next: (blob) => downloadBlob(blob, `مسير-فردي-${captainCode}.pdf`),
+      error: () => { this.errorMessage = 'فشل تحميل المسير الفردي'; }
+    });
+  }
+
+  exportStaffPayslip(staffId: string, staffCode: string): void {
+    if (!this.selectedRun) return;
+    this.payrollService.exportStaffPayslip(this.selectedRun.id, staffId).subscribe({
+      next: (blob) => downloadBlob(blob, `مسير-فردي-${staffCode}.pdf`),
+      error: () => { this.errorMessage = 'فشل تحميل المسير الفردي للموظف'; }
+    });
+  }
+
+  isExportingBulkPayslips = false;
+
+  exportBulkPayslips(): void {
+    if (!this.selectedRun) return;
+    this.isExportingBulkPayslips = true;
+    this.payrollService.exportBulkPayslips(this.selectedRun.id).subscribe({
+      next: (blob) => {
+        this.isExportingBulkPayslips = false;
+        downloadBlob(blob, `مسيرات-فردية-مجمعة-${this.selectedRun?.periodFrom}.pdf`);
+      },
+      error: () => {
+        this.isExportingBulkPayslips = false;
+        this.errorMessage = 'فشل تحميل المسيرات الفردية المجمعة';
+      }
+    });
+  }
+
+  exportBulkStaffPayslips(staffType?: string): void {
+    if (!this.selectedRun) return;
+    this.isExportingBulkPayslips = true;
+    this.payrollService.exportBulkStaffPayslips(this.selectedRun.id, staffType).subscribe({
+      next: (blob) => {
+        this.isExportingBulkPayslips = false;
+        const prefix = staffType === 'WORKER' ? 'مسيرات-فردية-العاملين-'
+                     : staffType === 'MANAGER' ? 'مسيرات-فردية-الإداريين-'
+                     : 'مسيرات-فردية-الموظفين-';
+        downloadBlob(blob, `${prefix}${this.selectedRun?.periodFrom}.pdf`);
+      },
+      error: () => {
+        this.isExportingBulkPayslips = false;
+        this.errorMessage = 'فشل تحميل المسيرات الفردية المجمعة للموظفين';
+      }
+    });
+  }
+
   // ---------------------------------------------------------------- adjustments
 
   openAdjustment(line: PayrollLineResponse): void {
@@ -481,19 +563,21 @@ export class PayrollComponent implements OnInit {
       orders: acc.orders + l.totalOrders,
       basePay: acc.basePay + l.basePay,
       deductions: acc.deductions + l.lateDeductions,
+      supplierDeductions: acc.supplierDeductions + (l.supplierDeductions || 0),
       incentives: acc.incentives + l.dailyIncentives,
       fuel: acc.fuel + l.fuelAllowances,
       car: acc.car + l.carAllowances,
       targetBonus: acc.targetBonus + l.targetBonus,
       extraOrderPay: acc.extraOrderPay + l.extraOrderPay,
       gross: acc.gross + l.gross,
+      activeLoans: acc.activeLoans + (l.activeLoanBalance || 0),
       adjustments: acc.adjustments + l.adjustmentsTotal,
       net: acc.net + l.net,
       revenue: acc.revenue + l.supplierRevenueTotal,
       margin: acc.margin + l.margin,
     }), {
-      shifts: 0, orders: 0, basePay: 0, deductions: 0, incentives: 0, fuel: 0, car: 0,
-      targetBonus: 0, extraOrderPay: 0, gross: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
+      shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, fuel: 0, car: 0,
+      targetBonus: 0, extraOrderPay: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
     });
   }
 

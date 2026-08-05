@@ -20,7 +20,7 @@ class PayrollCalculatorTest {
 
     private PayrollCalculator.Input input(String type, boolean ownVehicle, int shifts, int orders) {
         return new PayrollCalculator.Input(type, ownVehicle, shifts, orders,
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     @Nested
@@ -118,13 +118,14 @@ class PayrollCalculatorTest {
             PayrollCalculator.Result result = calculator.compute(new PayrollCalculator.Input(
                     "EMPLOYEE", false, 27, 421,
                     new BigDecimal("120"),   // late deductions
+                    new BigDecimal("50"),    // supplier deductions
                     new BigDecimal("240"),   // daily incentives
                     new BigDecimal("350"),   // fuel allowances
                     new BigDecimal("310"),   // car allowances
                     BigDecimal.ZERO), settings);
 
-            // 1539 − 120 + 240 + 350 + 310 + 1000 + 213
-            assertThat(result.gross()).isEqualByComparingTo("3532");
+            // 1539 − 120 − 50 + 240 + 350 + 310 + 1000 + 213
+            assertThat(result.gross()).isEqualByComparingTo("3482");
         }
 
         @Test
@@ -132,7 +133,7 @@ class PayrollCalculatorTest {
         void carAllowanceIsItsOwnComponent() {
             PayrollCalculator.Result result = calculator.compute(new PayrollCalculator.Input(
                     "FREELANCE", true, 26, 300,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
                     new BigDecimal("350"),   // fuel allowances
                     new BigDecimal("310"),   // car allowances
                     BigDecimal.ZERO), settings);
@@ -147,7 +148,7 @@ class PayrollCalculatorTest {
         @DisplayName("the daily incentive stacks on the target bonus rather than replacing it")
         void dailyIncentivesStackWithTheTargetBonus() {
             PayrollCalculator.Result withIncentives = calculator.compute(new PayrollCalculator.Input(
-                    "EMPLOYEE", false, 27, 421, BigDecimal.ZERO, new BigDecimal("240"),
+                    "EMPLOYEE", false, 27, 421, BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("240"),
                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO), settings);
             PayrollCalculator.Result without = calculator.compute(
                     input("EMPLOYEE", false, 27, 421), settings);
@@ -161,7 +162,7 @@ class PayrollCalculatorTest {
         void netAppliesAdjustments() {
             PayrollCalculator.Result result = calculator.compute(new PayrollCalculator.Input(
                     "EMPLOYEE", false, 27, 421,
-                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
                     new BigDecimal("118")), settings); // +200 housing +135 reward −217 loan
 
             assertThat(result.net()).isEqualByComparingTo(result.gross().add(new BigDecimal("118")));

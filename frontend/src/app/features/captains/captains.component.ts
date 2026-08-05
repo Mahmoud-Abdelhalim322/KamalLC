@@ -7,6 +7,8 @@ import {
   ApiResponse, CaptainResponse, DocumentAlertFilter, DocumentStatus, PageResponse
 } from '../../core/models/api.models';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   selector: 'app-captains',
   standalone: true,
@@ -29,7 +31,15 @@ export class CaptainsComponent implements OnInit {
   totalElements = 0;
   totalPages = 0;
 
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    public authService: AuthService
+  ) {}
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('MEMBERS_MANAGE');
+  }
 
   ngOnInit(): void {
     // The dashboard tiles link here with ?alert=..., so the filter has to survive the jump.

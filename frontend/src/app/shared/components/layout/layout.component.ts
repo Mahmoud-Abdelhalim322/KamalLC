@@ -12,6 +12,7 @@ interface NavItem {
   children?: NavItem[];
   expanded?: boolean;
   superAdminOnly?: boolean;
+  permission?: string;
 }
 
 @Component({
@@ -35,24 +36,27 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   navItems: NavItem[] = [
     { icon: 'dashboard', label: 'لوحة التحكم', route: '/dashboard' },
+    { icon: 'shopping_bag', label: 'الطلبات', route: '/orders' },
     {
-      icon: 'groups', label: 'الأعضاء', expanded: false,
+      icon: 'groups', label: 'الأعضاء', expanded: false, permission: 'MEMBERS_VIEW',
       children: [
-        { icon: 'local_shipping', label: 'الكباتن', route: '/captains' },
-        { icon: 'engineering', label: 'العاملين', route: '/workers' },
-        { icon: 'admin_panel_settings', label: 'الإداريين', route: '/managers' },
+        { icon: 'local_shipping', label: 'الكباتن', route: '/captains', permission: 'MEMBERS_VIEW' },
+        { icon: 'engineering', label: 'العاملين', route: '/workers', permission: 'MEMBERS_VIEW' },
+        { icon: 'admin_panel_settings', label: 'الإداريين', route: '/managers', permission: 'MEMBERS_VIEW' },
       ]
     },
-    { icon: 'badge', label: 'سجل المعرفات', route: '/ninja-ids' },
-    { icon: 'upload_file', label: 'استيراد البيانات', route: '/imports' },
-    { icon: 'event_note', label: 'الشيفتات', route: '/shifts' },
-    { icon: 'payments', label: 'مسير الرواتب', route: '/payroll' },
-    { icon: 'assessment', label: 'التقارير', route: '/reports' },
-    { icon: 'directions_car', label: 'أسطول السيارات', route: '/fleet' },
-    { icon: 'inventory_2', label: 'المخزن', route: '/inventory' },
-    { icon: 'account_balance_wallet', label: 'سجل العهد', route: '/custody' },
+    { icon: 'badge', label: 'سجل المعرفات', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
+    { icon: 'upload_file', label: 'استيراد البيانات', route: '/imports', permission: 'IMPORTS_MANAGE' },
+    { icon: 'event_note', label: 'الشيفتات', route: '/shifts', permission: 'SHIFTS_VIEW' },
+    { icon: 'payments', label: 'مسير الرواتب', route: '/payroll', permission: 'PAYROLL_VIEW' },
+    { icon: 'account_balance_wallet', label: 'السُلف', route: '/loans', permission: 'LOANS_VIEW' },
+    { icon: 'account_balance', label: 'إيراد الموردين', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
+    { icon: 'assessment', label: 'التقارير', route: '/reports', permission: 'REPORTS_VIEW' },
+    { icon: 'directions_car', label: 'أسطول السيارات', route: '/fleet', permission: 'FLEET_VIEW' },
+    { icon: 'inventory_2', label: 'المخزن', route: '/inventory', permission: 'INVENTORY_VIEW' },
+    { icon: 'account_balance_wallet', label: 'سجل العهد', route: '/custody', permission: 'CUSTODY_VIEW' },
     { icon: 'manage_accounts', label: 'إدارة المستخدمين', route: '/user-management', superAdminOnly: true },
-    { icon: 'settings', label: 'الإعدادات', route: '/settings' },
+    { icon: 'settings', label: 'الإعدادات', route: '/settings', permission: 'SETTINGS_MANAGE' },
   ];
 
   constructor(
@@ -65,8 +69,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadReadIds();
     this.loadNotifications(true);
-    // Refresh notifications count periodically
-    this.pollTimer = setInterval(() => this.loadNotifications(true), 30000);
+    this.authService.refreshUserProfile().subscribe();
+    // Refresh notifications count & permissions periodically
+    this.pollTimer = setInterval(() => {
+      this.loadNotifications(true);
+      this.authService.refreshUserProfile().subscribe();
+    }, 30000);
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    if (this.authService.isLoggedIn()) {
+      this.authService.refreshUserProfile().subscribe();
+    }
   }
 
   ngOnDestroy(): void {
@@ -199,7 +214,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   isVisible(item: NavItem): boolean {
-    if (item.superAdminOnly) return this.authService.isSuperAdmin();
+    if (item.superAdminOnly) {
+      return this.authService.isSuperAdmin();
+    }
+    if (item.children && item.children.length > 0) {
+      return item.children.some(child => this.isVisible(child));
+    }
+    if (item.permission) {
+      return this.authService.hasPermission(item.permission);
+    }
     return true;
   }
 

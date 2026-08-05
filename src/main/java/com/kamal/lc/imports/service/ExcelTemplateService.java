@@ -98,6 +98,49 @@ public class ExcelTemplateService {
         }
     }
 
+    public static final List<String> DEDUCTION_TEMPLATE_HEADERS = List.of(
+            "ID - NINJA", "ID-KSLSC", "تاريخ الشيفت", "سعر الخصم", "اسم الكابتن", "سبب الخصم");
+
+    private static final List<Object> DEDUCTION_SAMPLE_ROW = List.of(
+            "95516", "KSC0001", "2026-07-24", 50.00, "محمد أحمد", "خصم تأخير عن الشيفت");
+
+    public byte[] buildDeductions() {
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("خصومات المورد");
+            sheet.setRightToLeft(true);
+
+            CellStyle headerStyle = headerStyle(workbook);
+            CellStyle textStyle = textStyle(workbook);
+            CellStyle dateStyle = dataFormatStyle(workbook, "yyyy-mm-dd");
+            CellStyle currencyStyle = dataFormatStyle(workbook, "#,##0.00");
+
+            writeHeaderRow(sheet, DEDUCTION_TEMPLATE_HEADERS, headerStyle);
+
+            Row sampleRow = sheet.createRow(1);
+            for (int i = 0; i < DEDUCTION_SAMPLE_ROW.size(); i++) {
+                Cell cell = sampleRow.createCell(i);
+                Object val = DEDUCTION_SAMPLE_ROW.get(i);
+                if (val instanceof Number num) {
+                    cell.setCellValue(num.doubleValue());
+                    cell.setCellStyle(currencyStyle);
+                } else {
+                    cell.setCellValue(String.valueOf(val));
+                    cell.setCellStyle(textStyle);
+                }
+            }
+
+            sheet.createFreezePane(0, 1);
+            workbook.write(out);
+            return out.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Failed to build the deduction import template: {}", e.getMessage(), e);
+            throw new BusinessException("TEMPLATE_ERROR", "فشل في إنشاء ملف قالب خصومات المورد");
+        }
+    }
+
     public byte[] buildShifts() {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {

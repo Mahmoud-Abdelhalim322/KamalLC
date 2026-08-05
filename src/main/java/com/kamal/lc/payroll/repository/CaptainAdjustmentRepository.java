@@ -24,4 +24,7 @@ public interface CaptainAdjustmentRepository extends JpaRepository<CaptainAdjust
     List<CaptainAdjustment> findForCaptainInPeriod(@Param("captainId") UUID captainId,
                                                    @Param("from") LocalDate from,
                                                    @Param("to") LocalDate to);
+
+    /** Deletes system-generated adjustments for a payroll run (e.g., automatic LOAN deductions). */
+    void deleteByPayrollRunIdAndCreatedBy(UUID payrollRunId, String createdBy);
 }

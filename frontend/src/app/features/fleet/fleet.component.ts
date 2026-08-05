@@ -9,6 +9,8 @@ import {
 } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
 
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   selector: 'app-fleet',
   standalone: true,
@@ -77,7 +79,15 @@ export class FleetComponent implements OnInit {
   error = '';
   successMsg = '';
 
-  constructor(private fleetService: FleetService, private captainService: CaptainService) {}
+  constructor(
+    private fleetService: FleetService,
+    private captainService: CaptainService,
+    public authService: AuthService
+  ) {}
+
+  get canManage(): boolean {
+    return this.authService.hasPermission('FLEET_MANAGE');
+  }
 
   ngOnInit(): void {
     this.loadVehicles();
@@ -123,7 +133,14 @@ export class FleetComponent implements OnInit {
       brand: v.brand || '', model: v.model || '', year: v.year, color: v.color || '',
       odometer: v.odometer, inspectionDate: v.inspectionDate || '',
       rentalAgentName: v.rentalAgentName || '', rentalStartDate: v.rentalStartDate || '',
-      rentalEndDate: v.rentalEndDate || '', notes: v.notes || '', status: v.status
+      rentalEndDate: v.rentalEndDate || '',
+      registrationNumber: v.registrationNumber || '',
+      vin: v.vin || '',
+      registrationExpiryDate: v.registrationExpiryDate || '',
+      operatingCardNumber: v.operatingCardNumber || '',
+      insuranceCompany: v.insuranceCompany || '',
+      inspectionExpiryDate: v.inspectionExpiryDate || '',
+      notes: v.notes || '', status: v.status
     };
     this.showVehicleDialog = true;
   }
@@ -331,7 +348,9 @@ export class FleetComponent implements OnInit {
   }
 
   ownershipLabel(s: string): string {
-    return s === 'RENTED' ? 'مؤجرة' : 'مملوكة';
+    if (s === 'RENTED') return 'مؤجرة';
+    if (s === 'OTHER') return 'أخرى (خاصة)';
+    return 'مملوكة';
   }
 
   dismissMsg(): void { this.error = ''; this.successMsg = ''; }
@@ -341,6 +360,8 @@ export class FleetComponent implements OnInit {
       plateNumber: '', ownershipType: 'OWNED', brand: '', model: '',
       year: null as number | null, color: '', odometer: null as number | null,
       inspectionDate: '', rentalAgentName: '', rentalStartDate: '', rentalEndDate: '',
+      registrationNumber: '', vin: '', registrationExpiryDate: '',
+      operatingCardNumber: '', insuranceCompany: '', inspectionExpiryDate: '',
       notes: '', status: 'AVAILABLE'
     };
   }

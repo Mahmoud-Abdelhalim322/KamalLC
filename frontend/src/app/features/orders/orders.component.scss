@@ -1,0 +1,449 @@
+.orders-page {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* --- Page Header --- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .header-icon {
+      font-size: 2.2rem;
+      color: #0284c7;
+      background: rgba(2, 132, 199, 0.1);
+      padding: 0.6rem;
+      border-radius: 12px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0.25rem 0 0 0;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+
+  &.btn-outline {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+
+    &:hover:not(:disabled) {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- Card Containers --- */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Toolbar & Filters --- */
+.toolbar-card {
+  padding: 1rem 1.25rem;
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+
+  .date-filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .date-field {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+      }
+
+      .form-input {
+        padding: 0.45rem 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.2s;
+
+        &:focus {
+          border-color: #0284c7;
+          box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        }
+      }
+    }
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    padding: 0.25rem;
+    border-radius: 10px;
+
+    .filter-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      .material-icons-round {
+        font-size: 1.1rem;
+      }
+
+      &:hover {
+        color: #1e293b;
+      }
+
+      &.active {
+        background: #ffffff;
+        color: #0284c7;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+/* --- Legend Card --- */
+.legend-card {
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  .legend-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #334155;
+
+    .material-icons-round {
+      font-size: 1.2rem;
+      color: #0284c7;
+    }
+  }
+
+  .legend-items {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.813rem;
+      font-weight: 600;
+      color: #475569;
+
+      .swatch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 24px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+      }
+    }
+  }
+}
+
+/* --- Conditional Color Classes --- */
+.cell-grey {
+  background-color: #808080 !important;
+  color: #ffffff !important;
+}
+
+.cell-red {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}
+
+.cell-orange {
+  background-color: #f59e0b !important;
+  color: #000000 !important;
+}
+
+.cell-yellow-green {
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+}
+
+.cell-green {
+  background-color: #15803d !important;
+  color: #ffffff !important;
+}
+
+.cell-blank {
+  background-color: #ffffff;
+  color: transparent;
+}
+
+/* --- Data Table Container --- */
+.table-container {
+  padding: 0;
+  overflow: hidden;
+
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+  }
+}
+
+.grid-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.813rem;
+  direction: rtl;
+
+  th, td {
+    padding: 0.35rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    border-left: 1px solid #f1f5f9;
+    white-space: nowrap;
+  }
+
+  /* --- Headers --- */
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+
+    tr.header-days th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.75rem;
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    tr.header-nums th {
+      background: #e2e8f0;
+      color: #1e293b;
+      font-weight: 800;
+      font-size: 0.813rem;
+      border-bottom: 2px solid #cbd5e1;
+    }
+  }
+
+  /* --- Sticky Columns (RTL) --- */
+  .sticky-col {
+    position: sticky;
+    z-index: 5;
+    background: #ffffff;
+  }
+
+  /* Sticky Column Offsets for RTL */
+  .col-name { right: 0; min-width: 170px; max-width: 200px; text-align: right; }
+  .col-code { right: 170px; min-width: 85px; }
+  .col-rate { right: 255px; min-width: 70px; }
+  .col-target { right: 325px; min-width: 60px; }
+  .col-actual { right: 385px; min-width: 65px; border-left: 2px solid #cbd5e1 !important; }
+
+  thead th.sticky-col {
+    z-index: 15;
+    background: #f1f5f9;
+  }
+
+  /* --- Row Styles --- */
+  tbody tr.captain-row {
+    &:hover td {
+      background-color: rgba(241, 245, 249, 0.7);
+
+      &.day-cell {
+        filter: brightness(0.95);
+      }
+    }
+
+    .name-text {
+      font-weight: 600;
+      color: #0f172a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .code-text {
+      font-family: monospace;
+      font-size: 0.775rem;
+      color: #64748b;
+    }
+
+    .rate-text {
+      font-weight: 700;
+      color: #475569;
+
+      &.achieved {
+        color: #15803d;
+      }
+    }
+
+    .num-text {
+      font-weight: 600;
+      color: #334155;
+
+      &.strong {
+        font-weight: 800;
+        color: #0f172a;
+      }
+    }
+  }
+
+  .day-cell {
+    min-width: 34px;
+    font-weight: 800;
+    font-size: 0.813rem;
+  }
+
+  /* --- Footer Rows --- */
+  tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+
+    tr.totals-row {
+      td {
+        background: #f1f5f9;
+        font-weight: 800;
+        color: #0f172a;
+        border-top: 2px solid #94a3b8;
+        border-bottom: 1px solid #cbd5e1;
+
+        &.day-total {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+      }
+    }
+
+    tr.count-row {
+      td {
+        background: #f8fafc;
+        font-weight: 700;
+        color: #475569;
+      }
+      .empty-footer-cell {
+        background: #f8fafc;
+      }
+    }
+  }
+}
+
+/* --- States --- */
+.loading-state, .empty-state {
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .material-icons-round {
+    font-size: 3rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #64748b;
+  }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}

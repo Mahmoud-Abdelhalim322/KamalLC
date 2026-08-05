@@ -28,5 +28,13 @@ public class VehicleRequest {
     private LocalDate rentalStartDate;
     private LocalDate rentalEndDate;
 
+    // Extended vehicle document fields
+    private String registrationNumber;
+    private String vin;
+    private LocalDate registrationExpiryDate;
+    private String operatingCardNumber;
+    private String insuranceCompany;
+    private LocalDate inspectionExpiryDate;
+
     private String notes;
 }

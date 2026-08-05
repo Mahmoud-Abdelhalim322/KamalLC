@@ -176,6 +176,8 @@ public class ShiftService {
                 .supplierRevenue(nz(s.getSupplierRevenue()))
                 .supplierExtraRevenue(nz(s.getSupplierExtraRevenue()))
                 .shiftMargin(nz(s.getShiftMargin()))
+                .supplierDeduction(nz(s.getSupplierDeduction()))
+                .supplierDeductionReason(s.getSupplierDeductionReason())
                 .calcNote(s.getCalcNote())
                 .excluded(s.isExcluded())
                 .exclusionReason(s.getExclusionReason())

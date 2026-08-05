@@ -247,8 +247,33 @@ export interface ImportBatchResponse {
   periodTo: string | null;
 }
 
-/** Which importer produced a batch; the two histories never mix. */
-export type ImportBatchType = 'CAPTAINS' | 'SHIFTS';
+/** Which importer produced a batch; the history never mixes. */
+export type ImportBatchType = 'CAPTAINS' | 'SHIFTS' | 'SUPPLIER_DEDUCTIONS';
+
+export interface DeductionImportRowPreview {
+  rowNumber: number;
+  ninjaId: string;
+  kslscId: string;
+  captainName: string;
+  shiftDate: string;
+  amount: number;
+  reason: string;
+  matched: boolean;
+  matchingScope: 'NINJA_ID' | 'KSLSC_ID' | 'PHONE_OR_NATIONAL_ID' | 'UNMATCHED';
+  matchedShiftCount: number;
+  statusMessage: string;
+}
+
+export interface DeductionImportPreviewResponse {
+  batchId: string;
+  fileName: string;
+  totalRows: number;
+  matchedRows: number;
+  unmatchedRows: number;
+  totalDeductionAmount: number;
+  issues: ImportIssue[];
+  rows: DeductionImportRowPreview[];
+}
 
 // Supplier
 export interface SupplierResponse {
@@ -363,6 +388,7 @@ export interface ShiftResponse {
   supplierRevenue: number;
   supplierExtraRevenue: number;
   shiftMargin: number;
+  supplierDeduction: number;
 
   calcNote: string | null;
   excluded: boolean;
@@ -444,6 +470,7 @@ export interface PayrollLineResponse {
 
   basePay: number;
   lateDeductions: number;
+  supplierDeductions: number;
   dailyIncentives: number;
   fuelAllowances: number;
   carAllowances: number;
@@ -455,6 +482,7 @@ export interface PayrollLineResponse {
 
   supplierRevenueTotal: number;
   margin: number;
+  activeLoanBalance?: number;
 
   notes: string | null;
   adjustments: AdjustmentResponse[];
@@ -605,6 +633,34 @@ export interface TeamReportResponse {
   };
 }
 
+export interface OrdersCaptainRow {
+  captainId: string;
+  captainCode: string;
+  captainName: string;
+  captainType: string;
+  target: number;
+  actual: number;
+  achievementRate: number;
+  dailyOrders: Record<string, number>;
+}
+
+export interface OrdersDailySummary {
+  totalCaptains: number;
+  totalTarget: number;
+  totalActual: number;
+  totalRate: number;
+  dailyTotals: Record<string, number>;
+}
+
+export interface OrdersDashboardResponse {
+  periodFrom: string;
+  periodTo: string;
+  dates: string[];
+  target: number;
+  captainRows: OrdersCaptainRow[];
+  dailySummary: OrdersDailySummary;
+}
+
 // ---------------------------------------------------------------- Settings
 
 export interface SettingResponse {
@@ -639,6 +695,14 @@ export interface VehicleResponse {
   rentalAgentName: string | null;
   rentalStartDate: string | null;
   rentalEndDate: string | null;
+  registrationNumber: string | null;
+  vin: string | null;
+  registrationExpiryDate: string | null;
+  operatingCardNumber: string | null;
+  insuranceCompany: string | null;
+  inspectionExpiryDate: string | null;
+  documentAlertStatus?: 'VALID' | 'EXPIRING' | 'EXPIRED';
+  documentAlerts?: string[];
   currentCaptainName: string | null;
   currentCaptainCode: string | null;
   currentCaptainId: string | null;
@@ -659,6 +723,12 @@ export interface VehicleRequest {
   rentalAgentName: string | null;
   rentalStartDate: string | null;
   rentalEndDate: string | null;
+  registrationNumber: string | null;
+  vin: string | null;
+  registrationExpiryDate: string | null;
+  operatingCardNumber: string | null;
+  insuranceCompany: string | null;
+  inspectionExpiryDate: string | null;
   notes: string | null;
 }
 
@@ -993,6 +1063,7 @@ export interface StaffPayrollLineResponse {
   adjustmentsTotal: number;
   gross: number;
   net: number;
+  activeLoanBalance?: number;
   notes: string | null;
   adjustments: StaffAdjustmentResponse[];
 }
@@ -1074,3 +1145,143 @@ export interface PermissionInfo {
   labelAr: string;
 }
 
+// ---------------------------------------------------------------- Supplier Revenue & Adjustments
+
+export interface SupplierAdjustmentRequest {
+  supplierId: string;
+  type: 'ADDITION' | 'DEDUCTION';
+  category: string;
+  amount: number;
+  adjustmentDate?: string;
+  notes?: string;
+}
+
+export interface SupplierAdjustmentResponse {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  type: 'ADDITION' | 'DEDUCTION';
+  category: string;
+  amount: number;
+  adjustmentDate: string;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+}
+
+export interface SupplierRowSummary {
+  supplierId: string | null;
+  supplierCode: string;
+  supplierName: string;
+  color: string;
+  totalShifts: number;
+  totalDelivered: number;
+  workingHours: number;
+  baseRevenue: number;
+  extraRevenue: number;
+  additionsTotal: number;
+  deductionsTotal: number;
+  netRevenue: number;
+}
+
+export interface SupplierRevenueSummaryResponse {
+  periodFrom: string;
+  periodTo: string;
+  totalSuppliers: number;
+  totalShifts: number;
+  totalOrders: number;
+  grossRevenue: number;
+  netAdjustments: number;
+  netRevenue: number;
+  rows: SupplierRowSummary[];
+}
+
+export interface SupplierShiftDetail {
+  shiftId: string;
+  shiftDate: string;
+  externalShiftId: string;
+  ninjaCaptainId: string;
+  captainName: string;
+  zoneName: string | null;
+  totalDelivered: number;
+  workingHours: number;
+  supplierRevenue: number;
+  supplierExtraRevenue: number;
+  excluded: boolean;
+}
+
+export interface SupplierStatementResponse {
+  supplierId: string;
+  supplierName: string;
+  supplierCode: string;
+  color: string;
+  periodFrom: string;
+  periodTo: string;
+  totalShifts: number;
+  totalOrders: number;
+  workingHours: number;
+  baseRevenue: number;
+  extraRevenue: number;
+  additionsTotal: number;
+  deductionsTotal: number;
+  netRevenue: number;
+  shifts: SupplierShiftDetail[];
+  adjustments: SupplierAdjustmentResponse[];
+}
+
+// ---------------------------------------------------------------- Loans (سُلف)
+
+export interface MemberLoanSummaryResponse {
+  memberId: string;
+  memberCode: string;
+  memberName: string;
+  memberNameEn: string | null;
+  memberType: 'CAPTAIN' | 'WORKER' | 'MANAGER';
+  memberTypeLabel: string;
+  phone: string | null;
+  activeLoanCount: number;
+  totalRemaining: number;
+  totalOriginal: number;
+}
+
+export interface LoanResponse {
+  id: string;
+  memberId: string;
+  memberCode: string;
+  memberName: string;
+  memberType: string;
+  originalAmount: number;
+  remaining: number;
+  monthlyDeduction: number;
+  status: 'ACTIVE' | 'PAID_OFF' | 'CANCELLED';
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+  payments: LoanPaymentResponse[];
+}
+
+export interface LoanPaymentResponse {
+  id: string;
+  loanId: string;
+  amount: number;
+  source: 'PAYROLL_DEDUCTION' | 'MANUAL';
+  sourceLabel: string;
+  payrollRunId: string | null;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+}
+
+export interface LoanRequest {
+  captainId: string | null;
+  staffId: string | null;
+  memberType: string;
+  amount: number;
+  monthlyDeduction: number;
+  notes: string | null;
+}
+
+export interface LoanPaymentRequest {
+  amount: number;
+  notes: string | null;
+}

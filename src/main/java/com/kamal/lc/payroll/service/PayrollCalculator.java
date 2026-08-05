@@ -25,6 +25,7 @@ public class PayrollCalculator {
             int attendedShifts,
             int totalOrders,
             BigDecimal lateDeductions,
+            BigDecimal supplierDeductions,
             BigDecimal dailyIncentives,
             BigDecimal fuelAllowances,
             BigDecimal carAllowances,
@@ -33,6 +34,7 @@ public class PayrollCalculator {
     public record Result(
             BigDecimal basePay,
             BigDecimal lateDeductions,
+            BigDecimal supplierDeductions,
             BigDecimal dailyIncentives,
             BigDecimal fuelAllowances,
             BigDecimal carAllowances,
@@ -47,6 +49,7 @@ public class PayrollCalculator {
                 .multiply(BigDecimal.valueOf(input.attendedShifts())));
 
         BigDecimal lateDeductions = money(nz(input.lateDeductions()));
+        BigDecimal supplierDeductions = money(nz(input.supplierDeductions()));
         BigDecimal dailyIncentives = money(nz(input.dailyIncentives()));
         BigDecimal fuelAllowances = money(nz(input.fuelAllowances()));
         BigDecimal carAllowances = money(nz(input.carAllowances()));
@@ -65,6 +68,7 @@ public class PayrollCalculator {
 
         BigDecimal gross = money(basePay
                 .subtract(lateDeductions)
+                .subtract(supplierDeductions)
                 .add(dailyIncentives)
                 .add(fuelAllowances)
                 .add(carAllowances)
@@ -74,7 +78,7 @@ public class PayrollCalculator {
         BigDecimal adjustments = money(nz(input.adjustmentsTotal()));
         BigDecimal net = money(gross.add(adjustments));
 
-        return new Result(basePay, lateDeductions, dailyIncentives, fuelAllowances, carAllowances,
+        return new Result(basePay, lateDeductions, supplierDeductions, dailyIncentives, fuelAllowances, carAllowances,
                 targetBonus, extraOrderPay, gross, adjustments, net);
     }
 
