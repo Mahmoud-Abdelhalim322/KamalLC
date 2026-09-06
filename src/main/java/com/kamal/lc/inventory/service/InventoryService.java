@@ -12,6 +12,9 @@ import com.kamal.lc.inventory.entity.AssetItemField;
 import com.kamal.lc.inventory.repository.AssetCategoryRepository;
 import com.kamal.lc.inventory.repository.AssetItemRepository;
 import com.kamal.lc.custody.repository.CustodyRepository;
+import com.kamal.lc.common.security.TenantContext;
+import com.kamal.lc.tenant.entity.Tenant;
+import com.kamal.lc.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,12 +40,58 @@ public class InventoryService {
     private final CaptainRepository captainRepo;
     private final CustodyService custodyService;
     private final CustodyRepository custodyRepo;
+    private final TenantRepository tenantRepo;
 
     // ──────────────────────────── Categories ────────────────────────────
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AssetCategoryResponse> getAllCategories() {
-        return categoryRepo.findAll().stream().map(this::toCategoryResponse).toList();
+        List<AssetCategory> categories = categoryRepo.findAll();
+        if (categories.isEmpty()) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            if (tenantId != null) {
+                tenantRepo.findById(tenantId).ifPresent(this::initializeDefaultCategoriesForTenant);
+                categories = categoryRepo.findAll();
+            }
+        }
+        return categories.stream().map(this::toCategoryResponse).toList();
+    }
+
+    @Transactional
+    public List<AssetCategory> initializeDefaultCategoriesForTenant(Tenant tenant) {
+        if (tenant == null || tenant.getId() == null) return List.of();
+
+        List<AssetCategory> created = new ArrayList<>();
+
+        if (!categoryRepo.existsByNameAndTenantIdRaw("SIM_CARD", tenant.getId())) {
+            AssetCategory simCat = AssetCategory.builder()
+                    .name("SIM_CARD")
+                    .labelAr("شريحة")
+                    .systemDefined(true)
+                    .tenant(tenant)
+                    .build();
+            simCat.getFieldTemplates().add(AssetCategoryFieldTemplate.builder()
+                    .category(simCat).fieldKey("sim_type").labelAr("نوع الشريحة").fieldOrder(1).required(true).build());
+            simCat.getFieldTemplates().add(AssetCategoryFieldTemplate.builder()
+                    .category(simCat).fieldKey("phone_number").labelAr("الرقم").fieldOrder(2).required(true).build());
+            created.add(categoryRepo.save(simCat));
+        }
+
+        if (!categoryRepo.existsByNameAndTenantIdRaw("PHONE", tenant.getId())) {
+            AssetCategory phoneCat = AssetCategory.builder()
+                    .name("PHONE")
+                    .labelAr("هاتف")
+                    .systemDefined(true)
+                    .tenant(tenant)
+                    .build();
+            phoneCat.getFieldTemplates().add(AssetCategoryFieldTemplate.builder()
+                    .category(phoneCat).fieldKey("imei").labelAr("IMEI").fieldOrder(1).required(true).build());
+            phoneCat.getFieldTemplates().add(AssetCategoryFieldTemplate.builder()
+                    .category(phoneCat).fieldKey("phone_type").labelAr("نوع الجوال").fieldOrder(2).required(true).build());
+            created.add(categoryRepo.save(phoneCat));
+        }
+
+        return created;
     }
 
     public AssetCategoryResponse createCategory(AssetCategoryRequest req) {

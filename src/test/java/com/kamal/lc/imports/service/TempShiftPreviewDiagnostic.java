@@ -29,7 +29,7 @@ class TempShiftPreviewDiagnostic {
                 Files.readAllBytes(REAL_FILE));
 
         try {
-            ShiftImportPreviewResponse result = shiftImportService.preview(file);
+            ShiftImportPreviewResponse result = shiftImportService.preview(file, null);
             System.out.println(">>> PREVIEW OK rows=" + result.getTotalRows()
                     + " new=" + result.getNewShifts()
                     + " matched=" + result.getMatchedCaptains()
@@ -37,7 +37,7 @@ class TempShiftPreviewDiagnostic {
                     + " issues=" + result.getIssues().size());
 
             ShiftImportPreviewResponse committed =
-                    shiftImportService.commit(file, result.getBatchId());
+                    shiftImportService.commit(file, result.getBatchId(), null);
             System.out.println(">>> COMMIT OK imported=" + committed.getCommittedRows()
                     + " skipped=" + committed.getSkippedRows()
                     + " issues=" + committed.getIssues().size());

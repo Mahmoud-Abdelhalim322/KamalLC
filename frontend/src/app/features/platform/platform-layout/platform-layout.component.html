@@ -1,0 +1,76 @@
+<div class="platform-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="platform-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="sidebar-logo-img">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/platform/dashboard" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_DASHBOARD' | translate">
+        <span class="material-icons-round nav-icon">dashboard</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_DASHBOARD' | translate }}</span>
+      </a>
+      <a routerLink="/platform/tenants" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_TENANTS' | translate">
+        <span class="material-icons-round nav-icon">domain</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_TENANTS' | translate }}</span>
+      </a>
+      <a routerLink="/platform/plans" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_PLANS' | translate">
+        <span class="material-icons-round nav-icon">assignment</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_PLANS' | translate }}</span>
+      </a>
+      <a routerLink="/platform/subscriptions" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_SUBSCRIPTIONS' | translate">
+        <span class="material-icons-round nav-icon">credit_card</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_SUBSCRIPTIONS' | translate }}</span>
+      </a>
+      <a routerLink="/platform/invoices" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_INVOICES' | translate">
+        <span class="material-icons-round nav-icon">receipt_long</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_INVOICES' | translate }}</span>
+      </a>
+      <a routerLink="/platform/audit-log" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_AUDIT_LOG' | translate">
+        <span class="material-icons-round nav-icon">manage_history</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_AUDIT_LOG' | translate }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
+        <span class="material-icons-round nav-icon">logout</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.LOGOUT' | translate }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="platform-main-wrapper">
+    <header class="platform-header">
+      <div class="header-start">
+        <button class="toggle-btn" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
+          <span class="material-icons-round">{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</span>
+        </button>
+      </div>
+
+      <span class="header-company-name">{{ 'NAV.PLATFORM_TITLE' | translate }}</span>
+
+      <div class="header-end">
+        <!-- Language Switcher -->
+        <app-language-switcher mode="dropdown" variant="header"></app-language-switcher>
+
+        <div class="user-info">
+          <div class="user-avatar">
+            <span class="material-icons-round">admin_panel_settings</span>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ authService.getDisplayName() }}</span>
+            <span class="user-role">{{ 'HEADER.ROLE_PLATFORM_ADMIN' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="platform-main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

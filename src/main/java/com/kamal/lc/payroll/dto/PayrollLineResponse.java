@@ -34,6 +34,7 @@ public class PayrollLineResponse {
     private BigDecimal carAllowances;
     private BigDecimal targetBonus;
     private BigDecimal extraOrderPay;
+    private BigDecimal vacationCommission;
     private BigDecimal gross;
     private BigDecimal adjustmentsTotal;
     private BigDecimal net;
@@ -41,6 +42,9 @@ public class PayrollLineResponse {
     private BigDecimal supplierRevenueTotal;
     private BigDecimal margin;
     private BigDecimal activeLoanBalance;
+
+    /** True when the captain's status is no longer ACTIVE (e.g. left the company after working shifts in the period). */
+    private boolean inactiveCaptain;
 
     private String notes;
     private List<AdjustmentResponse> adjustments;

@@ -37,8 +37,23 @@ public class OrdersDashboardResponse {
         private int actual;
         /** actual / target, as a fraction (1.05 = 105%). */
         private BigDecimal achievementRate;
-        /** date → order count for that day; missing dates mean zero. */
-        private Map<String, Integer> dailyOrders;
+        /**
+         * date → list of order counts per shift on that day.
+         * Single-shift days have a list of size 1; multi-shift days have size > 1.
+         */
+        private Map<String, List<Integer>> dailyOrders;
+        /** date → list of working hours per shift on that day. */
+        private Map<String, List<BigDecimal>> dailyHours;
+        /** Number of distinct days the captain attended (had shifts). */
+        private int workDays;
+        /** Total working hours across all shifts in the period. */
+        private BigDecimal totalHours;
+        /** Average busy utilization across all shifts in the period. */
+        private BigDecimal avgBusyUtilization;
+        /** Total late deduction across all shifts in the period. */
+        private BigDecimal totalLateDeduction;
+        /** Total extra orders beyond 18 across all shifts in the period. */
+        private int totalExtraOrders;
     }
 
     @Data

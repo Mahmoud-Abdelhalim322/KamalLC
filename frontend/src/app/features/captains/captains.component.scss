@@ -125,7 +125,11 @@
 
 .empty-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
-/* Inline row action (edit) — kept out of the row's routerLink via stopPropagation */
+.actions-cell {
+  display: flex; align-items: center; gap: 4px; justify-content: flex-end;
+}
+
+/* Inline row action (edit/delete) — kept out of the row's routerLink via stopPropagation */
 .row-action {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border-radius: var(--radius-sm);
@@ -133,6 +137,10 @@
   .material-icons-round { font-size: 18px; }
 
   &:hover { background: var(--primary-50); color: var(--primary); }
+  &.delete-action {
+    border: none; background: transparent; cursor: pointer;
+    &:hover { background: #FEE2E2; color: #EF4444; }
+  }
 }
 
 .btn {
@@ -162,3 +170,37 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Bulk selection */
+.checkbox-cell {
+  width: 40px; text-align: center; padding: 0 8px !important;
+  input[type="checkbox"] {
+    width: 18px; height: 18px; cursor: pointer;
+    accent-color: var(--primary);
+  }
+}
+
+.selected-row { background: rgba(var(--primary-rgb, 59, 130, 246), 0.08) !important; }
+
+.bulk-actions {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; margin-bottom: 8px;
+  background: var(--bg-card); border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+}
+
+.selected-count {
+  font-size: 0.85rem; font-weight: 700; color: var(--primary);
+}
+
+.btn-danger {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border: none; border-radius: var(--radius-sm);
+  background: var(--danger, #ef4444); color: #fff;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  transition: background var(--transition-fast);
+  &:hover { background: #dc2626; }
+  .material-icons-round { font-size: 18px; }
+}
+
+.btn-sm { padding: 6px 12px; font-size: 0.82rem; }

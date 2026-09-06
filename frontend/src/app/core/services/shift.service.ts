@@ -72,4 +72,23 @@ export class ShiftService {
       .post<ApiResponse<any>>(`${this.base}/import-supplier-deductions`, formData)
       .pipe(map(unwrap));
   }
+
+  getVacationCommissions(params: { from?: string; to?: string; supplierId?: string; search?: string; page?: number; size?: number }): Observable<PageResponse<import('../models/api.models').VacationCommissionResponse>> {
+    let httpParams = new HttpParams();
+    if (params.from) httpParams = httpParams.set('from', params.from);
+    if (params.to) httpParams = httpParams.set('to', params.to);
+    if (params.supplierId) httpParams = httpParams.set('supplierId', params.supplierId);
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    httpParams = httpParams.set('page', params.page ?? 0).set('size', params.size ?? 50);
+
+    return this.http
+      .get<ApiResponse<PageResponse<import('../models/api.models').VacationCommissionResponse>>>('/api/vacation-commissions', { params: httpParams })
+      .pipe(map(unwrap));
+  }
+
+  deleteVacationCommission(id: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<void>>(`/api/vacation-commissions/${id}`)
+      .pipe(map(unwrap));
+  }
 }

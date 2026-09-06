@@ -7,8 +7,11 @@ import com.kamal.lc.auth.entity.Permission;
 import com.kamal.lc.auth.repository.JobTitleRepository;
 import com.kamal.lc.auth.repository.UserRepository;
 import com.kamal.lc.common.exception.BusinessException;
+import com.kamal.lc.common.security.TenantContext;
 import com.kamal.lc.staff.entity.Staff;
 import com.kamal.lc.staff.repository.StaffRepository;
+import com.kamal.lc.tenant.entity.Tenant;
+import com.kamal.lc.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,7 +21,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Manages system users and job titles. Only SUPER_ADMIN may call these.
+ * Manages system users and job titles. Only ADMIN (company admin) may call these.
+ * All operations are scoped to the current tenant.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,11 +33,13 @@ public class UserManagementService {
     private final JobTitleRepository jobTitleRepo;
     private final StaffRepository staffRepo;
     private final PasswordEncoder passwordEncoder;
+    private final TenantRepository tenantRepo;
 
     // ---- Permissions (static) ----
 
     public List<PermissionInfo> allPermissions() {
         return Arrays.stream(Permission.values())
+                .filter(p -> !p.isPlatformLevel()) // Don't expose platform permissions to tenant admins
                 .map(p -> PermissionInfo.builder()
                         .name(p.name())
                         .labelAr(p.getLabelAr())
@@ -61,10 +67,13 @@ public class UserManagementService {
 
         validatePermissions(request.getPermissions());
 
+        Tenant tenant = tenantRepo.getReferenceById(TenantContext.requireCurrentTenantId());
+
         JobTitle jt = JobTitle.builder()
                 .name(name)
                 .labelAr(request.getLabelAr() != null ? request.getLabelAr().trim() : name)
                 .permissions(request.getPermissions() != null ? request.getPermissions() : Set.of())
+                .tenant(tenant)
                 .build();
 
         return toJobTitleResponse(jobTitleRepo.save(jt));
@@ -102,6 +111,7 @@ public class UserManagementService {
 
     public List<UserResponse> listUsers() {
         return userRepo.findAll().stream()
+                .filter(u -> !u.isPlatformAdmin()) // Don't show platform admin in tenant user list
                 .map(this::toUserResponse)
                 .toList();
     }
@@ -111,12 +121,14 @@ public class UserManagementService {
         if (request.getUsername() == null || request.getUsername().isBlank()) {
             throw new BusinessException("INVALID_INPUT", "اسم المستخدم مطلوب");
         }
-        if (request.getPassword() == null || request.getPassword().length() < 4) {
-            throw new BusinessException("INVALID_INPUT", "كلمة المرور يجب أن تكون 4 أحرف على الأقل");
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            throw new BusinessException("INVALID_INPUT", "كلمة المرور يجب أن تكون 8 أحرف على الأقل");
         }
         if (userRepo.existsByUsername(request.getUsername().trim())) {
             throw new BusinessException("DUPLICATE", "اسم المستخدم موجود بالفعل");
         }
+
+        Tenant tenant = tenantRepo.getReferenceById(TenantContext.requireCurrentTenantId());
 
         AppUser user = AppUser.builder()
                 .username(request.getUsername().trim())
@@ -124,6 +136,7 @@ public class UserManagementService {
                 .displayName(request.getDisplayName() != null ? request.getDisplayName().trim() : null)
                 .role("MANAGER")
                 .active(true)
+                .tenant(tenant)
                 .build();
 
         if (request.getStaffId() != null) {
@@ -146,18 +159,30 @@ public class UserManagementService {
         AppUser user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "المستخدم غير موجود"));
 
-        if (user.isSuperAdmin()) {
-            throw new BusinessException("FORBIDDEN", "لا يمكن تعديل حساب مدير النظام");
+        if (user.isAdmin() || "ADMIN".equals(user.getRole()) || "SUPER_ADMIN".equals(user.getRole())) {
+            throw new BusinessException("FORBIDDEN", "لا يمكن التلاعب أو تغيير وظائف أو صلاحيات مدير الشركة الأساسي");
         }
 
         if (request.getDisplayName() != null) {
             user.setDisplayName(request.getDisplayName().trim());
         }
 
+        // Job Title update or clearing
         if (request.getJobTitleId() != null) {
             JobTitle jt = jobTitleRepo.findById(request.getJobTitleId())
                     .orElseThrow(() -> new BusinessException("NOT_FOUND", "الوظيفة غير موجودة"));
             user.setJobTitle(jt);
+        } else {
+            user.setJobTitle(null);
+        }
+
+        // Staff linking update or clearing
+        if (request.getStaffId() != null) {
+            Staff staff = staffRepo.findById(request.getStaffId())
+                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود"));
+            user.setStaff(staff);
+        } else {
+            user.setStaff(null);
         }
 
         if (request.getActive() != null) {
@@ -165,6 +190,9 @@ public class UserManagementService {
         }
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (request.getPassword().length() < 8) {
+                throw new BusinessException("INVALID_INPUT", "كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+            }
             user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
@@ -175,17 +203,19 @@ public class UserManagementService {
     public void deleteUser(UUID id) {
         AppUser user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "المستخدم غير موجود"));
-        if (user.isSuperAdmin()) {
-            throw new BusinessException("FORBIDDEN", "لا يمكن حذف حساب مدير النظام");
+        if (user.isAdmin() || "ADMIN".equals(user.getRole()) || "SUPER_ADMIN".equals(user.getRole())) {
+            throw new BusinessException("FORBIDDEN", "لا يمكن حذف حساب مدير الشركة الأساسي");
         }
         userRepo.delete(user);
     }
+
 
     // ---- helpers ----
 
     private void validatePermissions(Set<String> permissions) {
         if (permissions == null) return;
         Set<String> valid = Arrays.stream(Permission.values())
+                .filter(p -> !p.isPlatformLevel())
                 .map(Enum::name)
                 .collect(Collectors.toSet());
         for (String p : permissions) {
@@ -207,8 +237,11 @@ public class UserManagementService {
     }
 
     private UserResponse toUserResponse(AppUser user) {
-        Set<String> permissions = user.isSuperAdmin()
-                ? Arrays.stream(Permission.values()).map(Enum::name).collect(Collectors.toSet())
+        Set<String> permissions = user.isAdmin()
+                ? Arrays.stream(Permission.values())
+                        .filter(p -> !p.isPlatformLevel())
+                        .map(Enum::name)
+                        .collect(Collectors.toSet())
                 : (user.getJobTitle() != null ? user.getJobTitle().getPermissions() : Set.of());
 
         return UserResponse.builder()

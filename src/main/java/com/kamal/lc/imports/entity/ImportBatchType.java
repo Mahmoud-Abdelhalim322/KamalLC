@@ -13,5 +13,8 @@ public enum ImportBatchType {
     SHIFTS,
 
     /** Supplier deductions file — daily or periodic penalty and deduction records from supplier. */
-    SUPPLIER_DEDUCTIONS
+    SUPPLIER_DEDUCTIONS,
+
+    /** Supplier holiday/vacation bonus commission file. */
+    VACATION_COMMISSION
 }

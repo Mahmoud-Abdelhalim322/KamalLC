@@ -15,10 +15,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * JWT filter — extracts token from Authorization header, validates it,
- * and sets the SecurityContext for the request.
+ * sets the SecurityContext, and populates the {@link TenantContext} for the request.
  */
 @Component
 @RequiredArgsConstructor
@@ -32,20 +33,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String token = extractToken(request);
+        try {
+            String token = extractToken(request);
 
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            String username = jwtTokenProvider.getUsernameFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+                String username = jwtTokenProvider.getUsernameFromToken(token);
+                try {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    if (userDetails != null && userDetails.isEnabled() && userDetails.isAccountNonLocked()) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        // Set tenant context from JWT claims
+                        UUID tenantId = jwtTokenProvider.getTenantIdFromToken(token);
+                        if (tenantId != null) {
+                            TenantContext.setCurrentTenantId(tenantId);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("JWT token authentication rejected for user '" + username + "': " + e.getMessage());
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        } finally {
+            // Always clear tenant context after request completes
+            TenantContext.clear();
         }
-
-        filterChain.doFilter(request, response);
     }
 
     private String extractToken(HttpServletRequest request) {

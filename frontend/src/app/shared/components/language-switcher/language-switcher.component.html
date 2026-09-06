@@ -1,0 +1,49 @@
+<!-- Language Switcher Component -->
+<div class="lang-switcher-wrapper" [class.is-open]="isOpen" [class]="'variant-' + variant">
+
+  <!-- DROPDOWN MODE -->
+  <ng-container *ngIf="mode === 'dropdown'">
+    <button type="button" class="lang-trigger-btn" (click)="toggleDropdown($event)"
+            [title]="translationService.currentLang() === 'ar' ? 'تغيير اللغة' : 'Change Language'">
+      <span class="lang-flag">{{ currentOption.flag }}</span>
+      <span class="lang-name">{{ currentOption.nativeName }}</span>
+      <span class="material-icons-round lang-chevron">{{ isOpen ? 'expand_less' : 'expand_more' }}</span>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div class="lang-dropdown-menu animate-fade-in" *ngIf="isOpen">
+      <div class="lang-menu-header">
+        <span class="material-icons-round">translate</span>
+        <span>{{ translationService.currentLang() === 'ar' ? 'اختر اللغة' : 'Select Language' }}</span>
+      </div>
+
+      <div class="lang-options-list">
+        <button type="button"
+                *ngFor="let opt of languages"
+                class="lang-option-item"
+                [class.is-active]="opt.code === translationService.currentLang()"
+                (click)="selectLanguage(opt.code, $event)">
+          <div class="opt-left">
+            <span class="opt-flag">{{ opt.flag }}</span>
+            <div class="opt-text">
+              <span class="opt-native">{{ opt.nativeName }}</span>
+              <span class="opt-label">{{ opt.label }}</span>
+            </div>
+          </div>
+          <span class="material-icons-round opt-check" *ngIf="opt.code === translationService.currentLang()">check</span>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- COMPACT / TOGGLE PILL MODE -->
+  <ng-container *ngIf="mode === 'compact' || mode === 'toggle'">
+    <button type="button" class="lang-pill-btn" (click)="toggleQuick()"
+            [title]="translationService.currentLang() === 'ar' ? 'Switch to English' : 'التحويل للعربية'">
+      <span class="lang-flag">{{ currentOption.flag }}</span>
+      <span class="lang-code-tag">{{ translationService.currentLang() === 'ar' ? 'EN' : 'عربي' }}</span>
+      <span class="material-icons-round swap-icon">swap_horiz</span>
+    </button>
+  </ng-container>
+
+</div>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -39,7 +39,32 @@ export class CaptainDetailComponent implements OnInit {
   idError = '';
   private slotSearch$ = new Subject<string>();
 
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
+
+  deleteCaptain(): void {
+    if (!this.captain) return;
+    if (!confirm(`هل أنت تأكد من حذف الكابتن "${this.captain.fullNameAr}" (كود: ${this.captain.kamalCode}) نهائياً؟`)) {
+      return;
+    }
+
+    this.http.delete<ApiResponse<void>>(`/api/captains/${this.captain.id}`)
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.router.navigate(['/captains']);
+          } else {
+            alert(res.message || 'فشل حذف الكابتن');
+          }
+        },
+        error: (err) => {
+          alert(err?.error?.message || 'فشل حذف الكابتن');
+        }
+      });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -201,7 +226,7 @@ export class CaptainDetailComponent implements OnInit {
   }
 
   getTypeLabel(type: string): string {
-    return type === 'EMPLOYEE' ? 'كفالة' : 'فريلانس';
+    return type === 'EMPLOYEE' ? 'KSC' : 'KSCFL';
   }
 
   getTypeClass(type: string): string {

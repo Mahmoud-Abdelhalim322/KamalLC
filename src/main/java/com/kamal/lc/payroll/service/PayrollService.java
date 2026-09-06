@@ -67,6 +67,7 @@ public class PayrollService {
     private final PayrollCalculator calculator;
     private final ObjectMapper objectMapper;
     private final LoanService loanService;
+    private final com.kamal.lc.imports.repository.VacationCommissionRepository vacationCommissionRepo;
 
     // ---- Runs ----
 
@@ -97,6 +98,32 @@ public class PayrollService {
                 .toList();
     }
 
+    /** Efficient single-line retrieval for payslips — avoids loading all lines (#5). */
+    @Transactional(readOnly = true)
+    public PayrollLineResponse getLine(UUID runId, UUID captainId) {
+        PayrollRun run = requireRun(runId);
+        PayrollLine line = lineRepo.findByPayrollRunIdAndCaptainId(runId, captainId)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "الكابتن غير موجود في المسير"));
+
+        List<CaptainAdjustment> adjustments = adjustmentRepo.findForCaptainInPeriod(
+                captainId, run.getPeriodFrom(), run.getPeriodTo());
+        BigDecimal activeLoan = loanService.getActiveLoanBalance(captainId, "CAPTAIN");
+        return toLineResponse(line, adjustments, activeLoan);
+    }
+
+    /** Efficient single staff line retrieval for payslips — avoids loading all lines (#5). */
+    @Transactional(readOnly = true)
+    public StaffPayrollLineResponse getStaffLine(UUID runId, UUID staffId) {
+        PayrollRun run = requireRun(runId);
+        StaffPayrollLine staffLine = staffLineRepo.findByPayrollRunIdAndStaffId(runId, staffId)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود في المسير"));
+
+        List<StaffAdjustment> adjustments = staffAdjustmentRepo.findForStaffInPeriod(
+                staffId, run.getPeriodFrom(), run.getPeriodTo());
+        BigDecimal activeLoan = loanService.getActiveLoanBalance(staffId, staffLine.getStaffType());
+        return toStaffLineResponse(staffLine, adjustments, activeLoan);
+    }
+
     /**
      * Builds (or rebuilds) the run for a period. Rebuilding a draft replaces its lines;
      * an approved run refuses, because its numbers have already been acted on.
@@ -107,7 +134,18 @@ public class PayrollService {
             throw new BusinessException("INVALID_PERIOD", "تاريخ نهاية الفترة يجب ألا يسبق بدايتها");
         }
 
+        // Prevent overlapping payroll periods (#10)
         PayrollRun run = runRepo.findByPeriodFromAndPeriodTo(periodFrom, periodTo).orElse(null);
+        List<PayrollRun> overlapping = new ArrayList<>(runRepo.findOverlapping(periodFrom, periodTo));
+        // Exclude the exact same period (that's a rebuild, not an overlap)
+        overlapping.removeIf(r -> r.getPeriodFrom().equals(periodFrom) && r.getPeriodTo().equals(periodTo));
+        if (!overlapping.isEmpty()) {
+            PayrollRun first = overlapping.get(0);
+            throw new BusinessException("OVERLAPPING_PERIOD",
+                    "الفترة تتداخل مع مسير آخر: " + first.getPeriodFrom() + " إلى " + first.getPeriodTo()
+                    + " (" + first.getTitle() + ")");
+        }
+
         if (run != null && run.isLocked()) {
             throw new BusinessException("RUN_LOCKED",
                     "مسير هذه الفترة معتمد بالفعل — أنشئ فترة جديدة أو ألغِ الاعتماد");
@@ -139,13 +177,40 @@ public class PayrollService {
         run = runRepo.save(run);
 
         Map<UUID, BigDecimal> adjustmentTotals = adjustmentTotals(periodFrom, periodTo);
+        Map<UUID, BigDecimal> vacationCommissions = vacationCommissionRepo.aggregateByCaptain(periodFrom, periodTo).stream()
+                .collect(Collectors.toMap(com.kamal.lc.imports.repository.VacationCommissionRepository.CaptainVacationCommissionTotals::getCaptainId,
+                        com.kamal.lc.imports.repository.VacationCommissionRepository.CaptainVacationCommissionTotals::getTotalVacationCommission));
+
+        // Batch-load captains and supplier IDs to avoid N+1 queries (#4)
+        List<ShiftRepository.CaptainPeriodTotals> allTotals = shiftRepo.aggregateByCaptain(periodFrom, periodTo);
+        Set<UUID> captainIds = allTotals.stream()
+                .map(ShiftRepository.CaptainPeriodTotals::getCaptainId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, Captain> captainsMap = captainRepo.findAllById(captainIds).stream()
+                .collect(Collectors.toMap(Captain::getId, c -> c));
+
+        // Pre-load supplier IDs for all captains at once
+        Map<UUID, String> supplierIdsMap = new HashMap<>();
+        if (!captainIds.isEmpty()) {
+            assignmentRepo.findByCaptainIdIn(captainIds).stream()
+                    .collect(Collectors.groupingBy(a -> a.getCaptain().getId()))
+                    .forEach((capId, assignments) -> {
+                        List<String> ids = assignments.stream()
+                                .map(a -> a.getSupplierIdSlot().getExternalId())
+                                .distinct()
+                                .toList();
+                        supplierIdsMap.put(capId, ids.isEmpty() ? null : String.join(", ", ids));
+                    });
+        }
 
         List<PayrollLine> lines = new ArrayList<>();
-        for (ShiftRepository.CaptainPeriodTotals totals : shiftRepo.aggregateByCaptain(periodFrom, periodTo)) {
-            Captain captain = captainRepo.findById(totals.getCaptainId()).orElse(null);
+        for (ShiftRepository.CaptainPeriodTotals totals : allTotals) {
+            Captain captain = captainsMap.get(totals.getCaptainId());
             if (captain == null) continue;
 
             BigDecimal adjustments = adjustmentTotals.getOrDefault(captain.getId(), BigDecimal.ZERO);
+            BigDecimal vacationComm = vacationCommissions.getOrDefault(captain.getId(), BigDecimal.ZERO);
 
             PayrollCalculator.Result result = calculator.compute(new PayrollCalculator.Input(
                     captain.getCaptainType(),
@@ -157,6 +222,7 @@ public class PayrollService {
                     totals.getDailyIncentives(),
                     totals.getFuelAllowances(),
                     totals.getCarAllowances(),
+                    vacationComm,
                     adjustments
             ), settings);
 
@@ -169,7 +235,7 @@ public class PayrollService {
                     .captainName(captain.getFullNameAr())
                     .captainNameEn(captain.getFullNameEn())
                     .captainType(captain.getCaptainType())
-                    .supplierExternalIds(supplierIdsFor(captain.getId()))
+                    .supplierExternalIds(supplierIdsMap.get(captain.getId()))
                     .attendedShifts((int) totals.getAttendedShifts())
                     .absentShifts((int) totals.getAbsentShifts())
                     .totalOrders((int) totals.getTotalOrders())
@@ -185,6 +251,7 @@ public class PayrollService {
                     .carAllowances(result.carAllowances())
                     .targetBonus(result.targetBonus())
                     .extraOrderPay(result.extraOrderPay())
+                    .vacationCommission(result.vacationCommission())
                     .gross(result.gross())
                     .adjustmentsTotal(result.adjustmentsTotal())
                     .net(result.net())
@@ -219,7 +286,7 @@ public class PayrollService {
 
         Map<UUID, BigDecimal> staffAdjs = staffAdjustmentRepo.findInPeriod(run.getPeriodFrom(), run.getPeriodTo())
                 .stream().collect(Collectors.groupingBy(a -> a.getStaff().getId(),
-                        Collectors.reducing(BigDecimal.ZERO, PayrollService::signedAmount, BigDecimal::add)));
+                        Collectors.reducing(BigDecimal.ZERO, (StaffAdjustment a) -> signedAmount(a), BigDecimal::add)));
 
         List<StaffPayrollLine> staffLines = new ArrayList<>();
         for (Staff s : activeStaff) {
@@ -273,6 +340,8 @@ public class PayrollService {
             throw new BusinessException("NOT_APPROVED", "يجب اعتماد المسير أولًا قبل تسجيله كمدفوع");
         }
         run.setStatus(PayrollRun.PAID);
+        run.setPaidAt(OffsetDateTime.now());
+        run.setPaidBy(currentUser());
         return toRunResponse(runRepo.save(run));
     }
 
@@ -465,6 +534,8 @@ public class PayrollService {
                 .generatedBy(run.getGeneratedBy())
                 .approvedAt(run.getApprovedAt() != null ? run.getApprovedAt().toString() : null)
                 .approvedBy(run.getApprovedBy())
+                .paidAt(run.getPaidAt() != null ? run.getPaidAt().toString() : null)
+                .paidBy(run.getPaidBy())
                 .notes(run.getNotes())
                 .locked(run.isLocked())
                 .captainCount(lines.size())
@@ -491,9 +562,13 @@ public class PayrollService {
     }
 
     static PayrollLineResponse toLineResponse(PayrollLine line, List<CaptainAdjustment> adjustments, BigDecimal activeLoanBalance) {
+        // Flag inactive captains so the UI can warn the user (#3)
+        Captain captain = line.getCaptain();
+        boolean inactive = captain != null && !"ACTIVE".equals(captain.getStatus());
+
         return PayrollLineResponse.builder()
                 .id(line.getId())
-                .captainId(line.getCaptain().getId())
+                .captainId(captain != null ? captain.getId() : null)
                 .captainCode(line.getCaptainCode())
                 .captainName(line.getCaptainName())
                 .captainNameEn(line.getCaptainNameEn())
@@ -514,12 +589,14 @@ public class PayrollService {
                 .carAllowances(line.getCarAllowances())
                 .targetBonus(line.getTargetBonus())
                 .extraOrderPay(line.getExtraOrderPay())
+                .vacationCommission(line.getVacationCommission())
                 .gross(line.getGross())
                 .adjustmentsTotal(line.getAdjustmentsTotal())
                 .net(line.getNet())
                 .supplierRevenueTotal(line.getSupplierRevenueTotal())
                 .margin(line.getMargin())
                 .activeLoanBalance(activeLoanBalance)
+                .inactiveCaptain(inactive)
                 .notes(line.getNotes())
                 .adjustments(adjustments.stream().map(PayrollService::toAdjustmentResponse).toList())
                 .build();

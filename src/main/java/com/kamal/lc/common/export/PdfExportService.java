@@ -164,15 +164,15 @@ public class PdfExportService {
                 "الكود\nCode", "اسم الكابتن\nCaptain Name", "النوع\nType",
                 "الشفتات\nShifts", "الطلبات\nOrders", "الساعات\nHours",
                 "الأساسي\nBase", "خصم تأخير\nLate Dec.", "خصم مورد\nSupp. Dec.", "حافز\nIncentive",
-                "بنزين\nFuel", "سيارة\nCar", "تعديلات\nAdj.", "صافي الراتب\nNet Pay"
+                "بنزين\nFuel", "سيارة\nCar", "عمولة إجازة\nVacation Comm.", "تعديلات\nAdj.", "صافي الراتب\nNet Pay"
             };
-            float[] widths = { 7, 20, 9, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 11 };
+            float[] widths = { 6, 18, 8, 6, 6, 6, 8, 8, 8, 8, 8, 8, 9, 8, 10 };
 
             PdfPTable table = createRtlTable(widths);
             addHeaderRow(table, headers);
 
             BigDecimal sumBase = BigDecimal.ZERO, sumLate = BigDecimal.ZERO, sumSupp = BigDecimal.ZERO, sumInc = BigDecimal.ZERO;
-            BigDecimal sumFuel = BigDecimal.ZERO, sumCar = BigDecimal.ZERO, sumAdj = BigDecimal.ZERO;
+            BigDecimal sumFuel = BigDecimal.ZERO, sumCar = BigDecimal.ZERO, sumVacation = BigDecimal.ZERO, sumAdj = BigDecimal.ZERO;
             BigDecimal sumNet = BigDecimal.ZERO;
             int totalOrders = 0, totalShifts = 0;
 
@@ -190,6 +190,7 @@ public class PdfExportService {
                 addCell(table, fmtMoney(line.getDailyIncentives()), true);
                 addCell(table, fmtMoney(line.getFuelAllowances()), true);
                 addCell(table, fmtMoney(line.getCarAllowances()), true);
+                addCell(table, fmtMoney(line.getVacationCommission()), true);
                 addCell(table, fmtMoney(line.getAdjustmentsTotal()), true);
                 addCell(table, fmtMoney(line.getNet()), true, true);
 
@@ -201,6 +202,7 @@ public class PdfExportService {
                 sumInc = sumInc.add(nz(line.getDailyIncentives()));
                 sumFuel = sumFuel.add(nz(line.getFuelAllowances()));
                 sumCar = sumCar.add(nz(line.getCarAllowances()));
+                sumVacation = sumVacation.add(nz(line.getVacationCommission()));
                 sumAdj = sumAdj.add(nz(line.getAdjustmentsTotal()));
                 sumNet = sumNet.add(nz(line.getNet()));
             }
@@ -216,10 +218,12 @@ public class PdfExportService {
             addTotalCell(table, fmtMoney(sumInc), 1);
             addTotalCell(table, fmtMoney(sumFuel), 1);
             addTotalCell(table, fmtMoney(sumCar), 1);
+            addTotalCell(table, fmtMoney(sumVacation), 1);
             addTotalCell(table, fmtMoney(sumAdj), 1);
             addTotalCell(table, fmtMoney(sumNet), 1);
 
             document.add(table);
+            addOfficialSignatures(document);
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
@@ -284,6 +288,7 @@ public class PdfExportService {
             addTotalCell(table, fmtMoney(sumNet), 1);
 
             document.add(table);
+            addOfficialSignatures(document);
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
@@ -631,6 +636,7 @@ public class PdfExportService {
         BigDecimal carAllowance = nz(line.getCarAllowances());
         BigDecimal targetBonusVal = nz(line.getTargetBonus());
         BigDecimal extraOrderPay = nz(line.getExtraOrderPay());
+        BigDecimal vacationCommission = nz(line.getVacationCommission());
 
         // Row 1
         addSalaryValueCell(salaryTable, fmtMoney(lateDeduction), fontBold, borderColor);
@@ -648,8 +654,8 @@ public class PdfExportService {
         addSalaryLabelCell(salaryTable, "غرامة نينجا\nDEDUCTION NINJA APP", fontSmall, borderColor);
         addSalaryValueCell(salaryTable, fmtMoney(housingAllowance), fontBold, borderColor);
         addSalaryLabelCell(salaryTable, "بدل سكن\nHousing allowance", fontSmall, borderColor);
-        addSalaryValueCell(salaryTable, "", fontBold, borderColor);
-        addSalaryLabelCell(salaryTable, "", fontSmall, borderColor);
+        addSalaryValueCell(salaryTable, fmtMoney(vacationCommission), fontBold, borderColor);
+        addSalaryLabelCell(salaryTable, "عمولة الإجازة\nVacation Bonus", fontSmall, borderColor);
         addSalaryValueCell(salaryTable, "", fontBold, borderColor);
         addSalaryLabelCell(salaryTable, "", fontSmall, borderColor);
 
@@ -1318,6 +1324,54 @@ public class PdfExportService {
         c2.setPadding(6);
         c2.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         table.addCell(c2);
+    }
+
+    /**
+     * Adds the official payroll signatures block: HR, Finance Manager, and Executive Manager.
+     * This is appended to every payroll PDF report.
+     */
+    private void addOfficialSignatures(Document document) throws DocumentException {
+        document.add(spacer(20));
+
+        Font labelFont = getFont(9, Font.BOLD, Color.BLACK);
+        Font lineFont = getFont(9, Font.NORMAL, Color.DARK_GRAY);
+
+        PdfPTable signTable = new PdfPTable(3);
+        signTable.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        signTable.setWidthPercentage(90);
+        signTable.setWidths(new float[]{33, 34, 33});
+        signTable.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        // Row 1: Title labels
+        addSignatureLabel(signTable, "شؤون الموظفين\nHR Department", labelFont);
+        addSignatureLabel(signTable, "المدير المالي\nFinance Manager", labelFont);
+        addSignatureLabel(signTable, "المدير التنفيذي\nExecutive Manager", labelFont);
+
+        // Row 2: Signature lines
+        addSignatureLabel(signTable, "\n\n_______________________", lineFont);
+        addSignatureLabel(signTable, "\n\n_______________________", lineFont);
+        addSignatureLabel(signTable, "\n\n_______________________", lineFont);
+
+        // Row 3: Name placeholder
+        addSignatureLabel(signTable, "الاسم / Name: ..................", lineFont);
+        addSignatureLabel(signTable, "الاسم / Name: ..................", lineFont);
+        addSignatureLabel(signTable, "الاسم / Name: ..................", lineFont);
+
+        // Row 4: Date placeholder
+        addSignatureLabel(signTable, "التاريخ / Date: ....../....../......", lineFont);
+        addSignatureLabel(signTable, "التاريخ / Date: ....../....../......", lineFont);
+        addSignatureLabel(signTable, "التاريخ / Date: ....../....../......", lineFont);
+
+        document.add(signTable);
+    }
+
+    private void addSignatureLabel(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(shapeArabic(text), font));
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4);
+        cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        table.addCell(cell);
     }
 
     private String fmtMoney(BigDecimal val) {

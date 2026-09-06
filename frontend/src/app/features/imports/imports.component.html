@@ -7,7 +7,9 @@
             ? 'رفع ملف بيانات الكباتن ومعرفات الموردين'
             : activeTab === 'reports'
               ? 'رفع تقرير شيفتات المورد الذي تُبنى عليه التقارير والرواتب'
-              : 'رفع ملف خصومات وغرامات المورد لتطبيقها على الشيفتات والرواتب' }}
+              : activeTab === 'deductions'
+                ? 'رفع ملف خصومات وغرامات المورد لتطبيقها على الشيفتات والرواتب'
+                : 'رفع ملف عمولة ومكافآت أوقات الإجازات المرسلة من المورد لترحيلها إلى الشيفتات والرواتب' }}
       </p>
     </div>
     <button class="btn btn-outline" (click)="downloadTemplate()">
@@ -16,7 +18,9 @@
           ? 'تحميل نموذج Excel'
           : activeTab === 'reports'
             ? 'تحميل نموذج تقرير المورد'
-            : 'تحميل نموذج خصومات المورد' }}
+            : activeTab === 'deductions'
+              ? 'تحميل نموذج خصومات المورد'
+              : 'تحميل نموذج عمولة أوقات الإجازة' }}
     </button>
   </div>
 
@@ -37,6 +41,36 @@
       <span class="material-icons-round">money_off</span>
       استيراد خصومات المورد
     </button>
+    <button class="filter-tab" [class.active]="activeTab === 'vacation-commission'"
+            (click)="setTab('vacation-commission')">
+      <span class="material-icons-round">beach_access</span>
+      أستيراد عمولة اوقات الاجازة
+    </button>
+  </div>
+
+  <!-- ====================================================== SUPPLIER SELECTOR -->
+  <div class="supplier-selector-card" *ngIf="suppliers.length > 0">
+    <div class="supplier-selector-header">
+      <div class="supplier-selector-title">
+        <span class="material-icons-round">storefront</span>
+        <span>اختيار المورد المستهدف:</span>
+      </div>
+      <span class="supplier-selected-badge" *ngIf="selectedSupplier">
+        <span class="supplier-dot" [style.background-color]="selectedSupplier.color"></span>
+        {{ selectedSupplier.name }} ({{ selectedSupplier.code }})
+      </span>
+    </div>
+    <div class="supplier-chips">
+      <button type="button"
+              *ngFor="let s of suppliers"
+              class="supplier-chip-btn"
+              [class.active]="selectedSupplierId === s.id"
+              (click)="onSupplierChange(s.id)">
+        <span class="supplier-dot" [style.background-color]="s.color"></span>
+        <span class="supplier-chip-name">{{ s.name }}</span>
+        <span class="supplier-chip-code">{{ s.code }}</span>
+      </button>
+    </div>
   </div>
 
   <!-- ============================================================ MESSAGES -->
@@ -505,10 +539,129 @@
     </div>
   </div>
 
+  <!-- ======================================= VACATION COMMISSION: PREVIEW -->
+  <div class="preview-section" *ngIf="vacationCommissionPreview">
+    <div class="preview-header">
+      <div class="preview-file">
+        <span class="material-icons-round">description</span>
+        <div>
+          <h3>{{ vacationCommissionPreview.fileName }}</h3>
+          <span>{{ vacationCommissionPreview.totalRows }} صف</span>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-primary" (click)="confirmImport()"
+                [disabled]="isCommitting || vacationCommissionPreview.matchedRows === 0">
+          <span class="material-icons-round" *ngIf="!isCommitting">check</span>
+          <div class="spinner-sm" *ngIf="isCommitting"></div>
+          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد استيراد العمولات' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-stats">
+      <div class="stat-card new">
+        <span class="material-icons-round">check_circle</span>
+        <div>
+          <span class="stat-value">{{ vacationCommissionPreview.matchedRows }}</span>
+          <span class="stat-label">سجل مطابق</span>
+        </div>
+      </div>
+      <div class="stat-card existing" [class.error-card]="vacationCommissionPreview.unmatchedRows > 0">
+        <span class="material-icons-round">remove_circle_outline</span>
+        <div>
+          <span class="stat-value">{{ vacationCommissionPreview.unmatchedRows }}</span>
+          <span class="stat-label">غير مطابق</span>
+        </div>
+      </div>
+      <div class="stat-card total">
+        <span class="material-icons-round">payments</span>
+        <div>
+          <span class="stat-value">{{ vacationCommissionPreview.totalAmount | number:'1.2-2' }} ر.س</span>
+          <span class="stat-label">إجمالي العمولات</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vacation Commission rows preview table -->
+    <div class="preview-table-wrap" *ngIf="vacationCommissionPreview.rows.length" style="margin-top: 1rem; overflow-x: auto;">
+      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">معاينة تفاصيل عمولات أوقات الإجازة</h4>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الصف</th>
+            <th>رقم الشيفت (Days)</th>
+            <th>الكابتن</th>
+            <th>المورد</th>
+            <th>المنطقة</th>
+            <th>الوسم / FLAG</th>
+            <th>الملاحظة / NOTE</th>
+            <th>المبلغ</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of vacationCommissionPreview.rows">
+            <td>{{ row.rowNumber }}</td>
+            <td><code>{{ row.daysCode }}</code></td>
+            <td>
+              <div>
+                <strong>{{ row.captainName || '—' }}</strong>
+                <div class="muted" style="font-size: 0.8rem;">
+                  ID: {{ row.externalCaptainId }} {{ row.captainCode ? '| KSC: ' + row.captainCode : '' }}
+                </div>
+              </div>
+            </td>
+            <td>{{ row.supplierName || '—' }}</td>
+            <td>{{ row.zoneName || '—' }}</td>
+            <td><span class="chip chip-required" *ngIf="row.flag">{{ row.flag }}</span></td>
+            <td>{{ row.note || '—' }}</td>
+            <td style="font-weight: 700; color: #2e7d32;">{{ row.amount | number:'1.2-2' }} ر.س</td>
+            <td>
+              <span class="status-badge" [class.status-committed]="row.matched" [class.status-failed]="!row.matched">
+                {{ row.statusMessage }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ======================================= VACATION COMMISSION: RESULT -->
+  <div class="result-card" *ngIf="vacationCommissionResult">
+    <div class="result-header">
+      <span class="material-icons-round result-icon success">task_alt</span>
+      <h2>تم استيراد وتأكيد عمولة أوقات الإجازة بنجاح</h2>
+    </div>
+    <p class="result-file">{{ vacationCommissionResult.fileName }}</p>
+    <div class="result-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{ vacationCommissionResult.matchedRows }}</span>
+        <span class="stat-label">سجل عمولة تم حفظه</span>
+      </div>
+      <div class="stat-item" *ngIf="vacationCommissionResult.unmatchedRows > 0">
+        <span class="stat-value warning">{{ vacationCommissionResult.unmatchedRows }}</span>
+        <span class="stat-label">صف غير مطابق</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ vacationCommissionResult.totalAmount | number:'1.2-2' }} ر.س</span>
+        <span class="stat-label">إجمالي المبالغ المستوردة</span>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" (click)="goToShifts()">
+        <span class="material-icons-round">list</span> عرض أيام الإجازة في الشيفتات
+      </button>
+      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+    </div>
+  </div>
+
   <!-- ============================================================= HISTORY -->
   <div class="history-section">
     <h2 class="section-title">
-      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : activeTab === 'reports' ? 'سجل استيراد تقارير الموردين' : 'سجل استيراد خصومات المورد' }}
+      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : activeTab === 'reports' ? 'سجل استيراد تقارير الموردين' : activeTab === 'deductions' ? 'سجل استيراد خصومات المورد' : 'سجل استيراد عمولة أوقات الإجازة' }}
     </h2>
 
     <div class="loading-container" *ngIf="isLoadingHistory">
@@ -525,6 +678,7 @@
         <thead>
           <tr>
             <th>اسم الملف</th>
+            <th>المورد</th>
             <th>التاريخ</th>
             <th *ngIf="activeTab === 'reports'">فترة التقرير</th>
             <th>الصفوف</th>
@@ -538,6 +692,10 @@
             <td class="file-name-cell">
               <span class="material-icons-round">description</span>
               {{ batch.fileName }}
+            </td>
+            <td>
+              <span class="chip chip-required" *ngIf="batch.supplierName">{{ batch.supplierName }}</span>
+              <span class="muted" *ngIf="!batch.supplierName">—</span>
             </td>
             <td>{{ formatDate(batch.uploadedAt) }}</td>
             <td *ngIf="activeTab === 'reports'">

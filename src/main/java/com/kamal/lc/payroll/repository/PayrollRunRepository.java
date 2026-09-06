@@ -25,4 +25,8 @@ public interface PayrollRunRepository extends JpaRepository<PayrollRun, UUID> {
     @Query("SELECT r FROM PayrollRun r WHERE r.status IN ('APPROVED', 'PAID') "
             + "AND r.periodFrom <= :to AND r.periodTo >= :from")
     List<PayrollRun> findLockedOverlapping(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    /** All runs (any status) whose period overlaps [from, to] — used to prevent overlapping payroll periods. */
+    @Query("SELECT r FROM PayrollRun r WHERE r.periodFrom <= :to AND r.periodTo >= :from")
+    List<PayrollRun> findOverlapping(@Param("from") LocalDate from, @Param("to") LocalDate to);
 }

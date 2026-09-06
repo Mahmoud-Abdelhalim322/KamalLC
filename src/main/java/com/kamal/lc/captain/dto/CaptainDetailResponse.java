@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,22 +19,87 @@ public class CaptainDetailResponse {
     private String captainType;
     private String fullNameAr;
     private String fullNameEn;
+    private String gender;
     private String nationality;
     private String dateOfBirth;
     private String phone;
     private String email;
-    private String iqamaNumber;
-    private String iqamaExpiry;
+    private String placeOfResidence;
+    private String homeAddress;
+    private String jobTitle;
+    private String appId;
+
+    // Passport
     private String passportNumber;
+    private String passportIssueDate;
     private String passportExpiry;
+    private String passportStatus;
+
+    // Iqama
+    private String iqamaNumber;
+    private String iqamaOccupation;
+    private String iqamaExpiry;
+    private String iqamaExpiryRenewed;
+    private String iqamaStatus;
+
+    // Qiwa
+    private String qiwaContractNumber;
+    private String establishmentNumber;
+    private String qiwaContractStart;
+    private String qiwaContractEnd;
+    private String qiwaContractStatus;
+
+    // Work Permit
+    private String workPermitExpiry;
+    private String workPermitStatus;
+
+    // Company
+    private String affiliatedCompany;
+    private String crNumber;
+
+    // Driving Licence
     private String drivingLicenceNo;
     private String licenceExpiry;
-    private String workPermitExpiry;
+    private boolean hasLicence;
+    private String licenceStatus;
+
+    // Insurance
     private String insuranceNumber;
+    private String insuranceCategory;
+    private String insuranceIssueDate;
     private String insuranceCompany;
     private String insuranceExpiry;
+    private String insuranceStatus;
+
+    // Other Personal
+    private String bloodType;
+    private Integer trialPeriodDays;
+
+    // Bank
+    private String bankAccountNumber;
+    private String bankName;
+
+    // Salary & Allowances
+    private BigDecimal basicSalary;
+    private BigDecimal housingAllowance;
+    private BigDecimal transportationAllowance;
+    private BigDecimal fuelAllowanceAmount;
+    private BigDecimal callInternetAllowance;
+    private BigDecimal rewardAllowance;
+
+    // Vehicle & Fuel flags
     private boolean usesOwnVehicle;
     private boolean fuelAllowanceEligible;
+
+    // Work Info
+    private String workPhone;
+    private String department;
+    private String section;
+    private String supervisor;
+    private String workLocation;
+    private String workWith;
+
+    // Status
     private String status;
     private String joinDate;
     private String leaveDate;

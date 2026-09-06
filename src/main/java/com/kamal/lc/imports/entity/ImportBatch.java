@@ -1,7 +1,11 @@
 package com.kamal.lc.imports.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -14,7 +18,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImportBatch {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class ImportBatch implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -65,4 +71,12 @@ public class ImportBatch {
 
     @Column(name = "period_to")
     private LocalDate periodTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
+    private com.kamal.lc.supplier.entity.Supplier supplier;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 }

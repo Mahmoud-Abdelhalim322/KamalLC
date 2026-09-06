@@ -31,6 +31,7 @@ public class ImportController {
     private final ImportService importService;
     private final ShiftImportService shiftImportService;
     private final SupplierDeductionImportService supplierDeductionImportService;
+    private final com.kamal.lc.imports.service.VacationCommissionImportService vacationCommissionImportService;
     private final ExcelTemplateService templateService;
 
     /** Blank sheet with the expected columns, so files are shaped right before upload. */
@@ -51,6 +52,12 @@ public class ImportController {
         return xlsx(templateService.buildDeductions(), "supplier-deductions-template.xlsx");
     }
 
+    /** Blank template for supplier vacation commission import. */
+    @GetMapping("/vacation-commission/template")
+    public ResponseEntity<byte[]> vacationCommissionTemplate() {
+        return xlsx(templateService.buildVacationCommission(), "vacation-commission-template.xlsx");
+    }
+
     private ResponseEntity<byte[]> xlsx(byte[] workbook, String fileName) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(
@@ -61,32 +68,37 @@ public class ImportController {
     }
 
     @PostMapping("/preview")
-    public ResponseEntity<ApiResponse<ImportPreviewResponse>> preview(@RequestParam("file") MultipartFile file) {
-        ImportPreviewResponse result = importService.preview(file);
+    public ResponseEntity<ApiResponse<ImportPreviewResponse>> preview(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        ImportPreviewResponse result = importService.preview(file, supplierId);
         return ResponseEntity.ok(ApiResponse.ok("تم تحليل الملف بنجاح", result));
     }
 
     @PostMapping("/{batchId}/commit")
     public ResponseEntity<ApiResponse<ImportPreviewResponse>> commit(
             @PathVariable UUID batchId,
-            @RequestParam("file") MultipartFile file) {
-        ImportPreviewResponse result = importService.commit(file, batchId);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        ImportPreviewResponse result = importService.commit(file, batchId, supplierId);
         return ResponseEntity.ok(ApiResponse.ok("تم الاستيراد بنجاح", result));
     }
 
     /** Supplier shift file — the daily upload that feeds reports and payroll. */
     @PostMapping("/shifts/preview")
     public ResponseEntity<ApiResponse<ShiftImportPreviewResponse>> previewShifts(
-            @RequestParam("file") MultipartFile file) {
-        ShiftImportPreviewResponse result = shiftImportService.preview(file);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        ShiftImportPreviewResponse result = shiftImportService.preview(file, supplierId);
         return ResponseEntity.ok(ApiResponse.ok("تم تحليل ملف الشيفتات بنجاح", result));
     }
 
     @PostMapping("/shifts/{batchId}/commit")
     public ResponseEntity<ApiResponse<ShiftImportPreviewResponse>> commitShifts(
             @PathVariable UUID batchId,
-            @RequestParam("file") MultipartFile file) {
-        ShiftImportPreviewResponse result = shiftImportService.commit(file, batchId);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        ShiftImportPreviewResponse result = shiftImportService.commit(file, batchId, supplierId);
         return ResponseEntity.ok(ApiResponse.ok(
                 "تم استيراد " + result.getCommittedRows() + " شفت بنجاح", result));
     }
@@ -94,7 +106,8 @@ public class ImportController {
     /** Supplier deductions file — penalty and deduction records from supplier. */
     @PostMapping("/deductions/preview")
     public ResponseEntity<ApiResponse<DeductionImportPreviewResponse>> previewDeductions(
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
         DeductionImportPreviewResponse result = supplierDeductionImportService.previewDeductions(file);
         return ResponseEntity.ok(ApiResponse.ok("تم تحليل ملف خصومات المورد بنجاح", result));
     }
@@ -102,10 +115,30 @@ public class ImportController {
     @PostMapping("/deductions/{batchId}/commit")
     public ResponseEntity<ApiResponse<DeductionImportPreviewResponse>> commitDeductions(
             @PathVariable UUID batchId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
         DeductionImportPreviewResponse result = supplierDeductionImportService.commitDeductions(batchId, file);
         return ResponseEntity.ok(ApiResponse.ok(
                 "تم تطبيق خصومات المورد على " + result.getMatchedRows() + " شيفت بنجاح", result));
+    }
+
+    /** Supplier vacation commission file — holiday bonus records from supplier. */
+    @PostMapping("/vacation-commission/preview")
+    public ResponseEntity<ApiResponse<com.kamal.lc.imports.dto.VacationCommissionImportPreviewResponse>> previewVacationCommission(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        com.kamal.lc.imports.dto.VacationCommissionImportPreviewResponse result = vacationCommissionImportService.previewVacationCommission(file, supplierId);
+        return ResponseEntity.ok(ApiResponse.ok("تم تحليل ملف عمولة أوقات الإجازة بنجاح", result));
+    }
+
+    @PostMapping("/vacation-commission/{batchId}/commit")
+    public ResponseEntity<ApiResponse<com.kamal.lc.imports.dto.VacationCommissionImportPreviewResponse>> commitVacationCommission(
+            @PathVariable UUID batchId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "supplierId", required = false) UUID supplierId) {
+        com.kamal.lc.imports.dto.VacationCommissionImportPreviewResponse result = vacationCommissionImportService.commitVacationCommission(batchId, file, supplierId);
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم استيراد عمولة أوقات الإجازة لـ " + result.getMatchedRows() + " كابتن بنجاح", result));
     }
 
     @GetMapping

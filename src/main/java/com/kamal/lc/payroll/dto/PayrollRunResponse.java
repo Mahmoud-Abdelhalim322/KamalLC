@@ -18,6 +18,8 @@ public class PayrollRunResponse {
     private String generatedBy;
     private String approvedAt;
     private String approvedBy;
+    private String paidAt;
+    private String paidBy;
     private String notes;
     private boolean locked;
 

@@ -19,9 +19,15 @@ public interface StaffPayrollLineRepository extends JpaRepository<StaffPayrollLi
 
     Optional<StaffPayrollLine> findByPayrollRunIdAndStaffId(UUID runId, UUID staffId);
 
+    boolean existsByStaffId(UUID staffId);
+
     void deleteByPayrollRunId(UUID runId);
 
     @Modifying
-    @Query("UPDATE StaffPayrollLine spl SET spl.jobTitle = :jobTitle WHERE spl.staff.id = :staffId AND spl.payrollRun.status = 'DRAFT'")
+    @Query("DELETE FROM StaffPayrollLine spl WHERE spl.staff.id = :staffId AND (spl.tenant.id = :#{T(com.kamal.lc.common.security.TenantContext).getCurrentTenantId()} OR :#{T(com.kamal.lc.common.security.TenantContext).getCurrentTenantId()} IS NULL)")
+    void deleteByStaffId(@Param("staffId") UUID staffId);
+
+    @Modifying
+    @Query("UPDATE StaffPayrollLine spl SET spl.jobTitle = :jobTitle WHERE spl.staff.id = :staffId AND spl.payrollRun.status = 'DRAFT' AND (spl.tenant.id = :#{T(com.kamal.lc.common.security.TenantContext).getCurrentTenantId()} OR :#{T(com.kamal.lc.common.security.TenantContext).getCurrentTenantId()} IS NULL)")
     void updateJobTitleForDraftRuns(@Param("staffId") UUID staffId, @Param("jobTitle") String jobTitle);
 }

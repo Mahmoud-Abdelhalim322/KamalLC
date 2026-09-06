@@ -1,8 +1,12 @@
 package com.kamal.lc.staff.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -21,7 +25,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Staff {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class Staff implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -65,6 +71,9 @@ public class Staff {
 
     @Column(length = 255)
     private String email;
+
+    @Column(name = "app_id", length = 100)
+    private String appId;
 
     // ---- Passport ----
 
@@ -190,6 +199,42 @@ public class Staff {
     @Builder.Default
     private BigDecimal otherAllowances = BigDecimal.ZERO;
 
+    @Column(name = "transportation_allowance", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal transportationAllowance = BigDecimal.ZERO;
+
+    @Column(name = "fuel_allowance_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal fuelAllowanceAmount = BigDecimal.ZERO;
+
+    @Column(name = "call_internet_allowance", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal callInternetAllowance = BigDecimal.ZERO;
+
+    @Column(name = "reward_allowance", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal rewardAllowance = BigDecimal.ZERO;
+
+    // ---- Work Info ----
+
+    @Column(name = "work_phone", length = 30)
+    private String workPhone;
+
+    @Column(length = 255)
+    private String department;
+
+    @Column(length = 255)
+    private String section;
+
+    @Column(length = 255)
+    private String supervisor;
+
+    @Column(name = "work_location", length = 255)
+    private String workLocation;
+
+    @Column(name = "work_with", length = 255)
+    private String workWith;
+
     // ---- Status ----
 
     @Column(nullable = false, length = 20)
@@ -204,6 +249,10 @@ public class Staff {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

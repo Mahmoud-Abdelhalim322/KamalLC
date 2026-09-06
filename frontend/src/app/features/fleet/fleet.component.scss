@@ -103,8 +103,23 @@
 }
 .badge-owned { background: #DBEAFE; color: #1E40AF; }
 .badge-rented { background: #FEF3C7; color: #92400E; }
+.badge-lease { background: #EDE9FE; color: #6D28D9; }
 .badge-other { background: #E0E7FF; color: #3730A3; }
 .agent-name { font-size: 0.78rem; color: var(--text-light); margin-inline-start: 6px; }
+.agent-code { font-size: 0.72rem; color: var(--text-light); }
+
+.vehicle-code-cell { white-space: nowrap; }
+.vehicle-code {
+  font-family: 'Courier New', monospace; font-weight: 800; font-size: 0.9rem;
+  color: #059669; background: #ECFDF5; padding: 4px 10px; border-radius: 6px;
+  letter-spacing: 1px; display: inline-block;
+}
+.vehicle-code-input {
+  font-family: 'Courier New', monospace; font-weight: 800; font-size: 0.9rem;
+  color: #059669 !important; background: #ECFDF5 !important; letter-spacing: 1px;
+}
+
+.lease-row { background: #F5F3FF; }
 
 .status-badge {
   padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;

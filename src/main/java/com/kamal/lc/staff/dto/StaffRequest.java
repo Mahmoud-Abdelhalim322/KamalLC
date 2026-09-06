@@ -36,6 +36,8 @@ public class StaffRequest {
     @Email(message = "البريد الإلكتروني غير صالح")
     private String email;
 
+    private String appId;
+
     // Passport
     private String passportNumber;
     private LocalDate passportIssueDate;
@@ -83,10 +85,22 @@ public class StaffRequest {
     private String bankAccountNumber;
     private String bankName;
 
-    // Salary
+    // Salary & Allowances
     private BigDecimal basicSalary;
     private BigDecimal housingAllowance;
     private BigDecimal otherAllowances;
+    private BigDecimal transportationAllowance;
+    private BigDecimal fuelAllowanceAmount;
+    private BigDecimal callInternetAllowance;
+    private BigDecimal rewardAllowance;
+
+    // Work Info
+    private String workPhone;
+    private String department;
+    private String section;
+    private String supervisor;
+    private String workLocation;
+    private String workWith;
 
     // Status
     private String status;

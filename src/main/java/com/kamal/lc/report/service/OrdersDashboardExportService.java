@@ -135,7 +135,8 @@ public class OrdersDashboardExportService {
 
                 for (int i = 0; i < dates.size(); i++) {
                     String date = dates.get(i);
-                    int orders = captain.getDailyOrders().getOrDefault(date, 0);
+                    java.util.List<Integer> shiftOrders = captain.getDailyOrders().getOrDefault(date, java.util.List.of());
+                    int orders = shiftOrders.stream().mapToInt(Integer::intValue).sum();
                     Cell cell = row.createCell(FIXED_COLS + i);
                     if (orders > 0) {
                         cell.setCellValue(orders);

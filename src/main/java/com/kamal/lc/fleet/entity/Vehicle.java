@@ -1,8 +1,12 @@
 package com.kamal.lc.fleet.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
@@ -16,18 +20,26 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Vehicle {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class Vehicle implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "vehicle_code", length = 30)
+    private String vehicleCode;
 
     @Column(name = "plate_number", nullable = false, unique = true, length = 30)
     private String plateNumber;
 
     @Column(name = "ownership_type", nullable = false, length = 20)
     @Builder.Default
-    private String ownershipType = "OWNED";
+    private String ownershipType = "OWNED";  // OWNED | RENTED | LEASE_TO_OWN
+
+    @Column(name = "rental_agent_code", length = 20)
+    private String rentalAgentCode;
 
     @Column(length = 100)
     private String brand;
@@ -80,6 +92,10 @@ public class Vehicle {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

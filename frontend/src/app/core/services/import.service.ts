@@ -15,9 +15,10 @@ export class ImportService {
 
   // -------------------------------------------------------------- captains
 
-  previewCaptains(file: File): Observable<ImportPreviewResponse> {
+  previewCaptains(file: File, supplierId?: string): Observable<ImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/preview?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/preview`;
     return this.http
-      .post<ApiResponse<ImportPreviewResponse>>(`${this.base}/preview`, this.body(file))
+      .post<ApiResponse<ImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
@@ -25,9 +26,10 @@ export class ImportService {
    * The file is uploaded a second time rather than cached server-side, so the
    * batch id from the preview is what ties the two calls together.
    */
-  commitCaptains(batchId: string, file: File): Observable<ImportPreviewResponse> {
+  commitCaptains(batchId: string, file: File, supplierId?: string): Observable<ImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/${batchId}/commit?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/${batchId}/commit`;
     return this.http
-      .post<ApiResponse<ImportPreviewResponse>>(`${this.base}/${batchId}/commit`, this.body(file))
+      .post<ApiResponse<ImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
@@ -37,16 +39,17 @@ export class ImportService {
 
   // ---------------------------------------------------------------- shifts
 
-  previewShifts(file: File): Observable<ShiftImportPreviewResponse> {
+  previewShifts(file: File, supplierId?: string): Observable<ShiftImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/shifts/preview?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/shifts/preview`;
     return this.http
-      .post<ApiResponse<ShiftImportPreviewResponse>>(`${this.base}/shifts/preview`, this.body(file))
+      .post<ApiResponse<ShiftImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
-  commitShifts(batchId: string, file: File): Observable<ShiftImportPreviewResponse> {
+  commitShifts(batchId: string, file: File, supplierId?: string): Observable<ShiftImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/shifts/${batchId}/commit?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/shifts/${batchId}/commit`;
     return this.http
-      .post<ApiResponse<ShiftImportPreviewResponse>>(
-        `${this.base}/shifts/${batchId}/commit`, this.body(file))
+      .post<ApiResponse<ShiftImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
@@ -56,21 +59,42 @@ export class ImportService {
 
   // ---------------------------------------------------- supplier deductions
 
-  previewDeductions(file: File): Observable<DeductionImportPreviewResponse> {
+  previewDeductions(file: File, supplierId?: string): Observable<DeductionImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/deductions/preview?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/deductions/preview`;
     return this.http
-      .post<ApiResponse<DeductionImportPreviewResponse>>(`${this.base}/deductions/preview`, this.body(file))
+      .post<ApiResponse<DeductionImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
-  commitDeductions(batchId: string, file: File): Observable<DeductionImportPreviewResponse> {
+  commitDeductions(batchId: string, file: File, supplierId?: string): Observable<DeductionImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/deductions/${batchId}/commit?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/deductions/${batchId}/commit`;
     return this.http
-      .post<ApiResponse<DeductionImportPreviewResponse>>(
-        `${this.base}/deductions/${batchId}/commit`, this.body(file))
+      .post<ApiResponse<DeductionImportPreviewResponse>>(url, this.body(file))
       .pipe(map(unwrap));
   }
 
   downloadDeductionTemplate(): Observable<Blob> {
     return this.http.get(`${this.base}/deductions/template`, { responseType: 'blob' });
+  }
+
+  // ---------------------------------------------------- vacation commission
+
+  previewVacationCommission(file: File, supplierId?: string): Observable<import('../models/api.models').VacationCommissionImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/vacation-commission/preview?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/vacation-commission/preview`;
+    return this.http
+      .post<ApiResponse<import('../models/api.models').VacationCommissionImportPreviewResponse>>(url, this.body(file))
+      .pipe(map(unwrap));
+  }
+
+  commitVacationCommission(batchId: string, file: File, supplierId?: string): Observable<import('../models/api.models').VacationCommissionImportPreviewResponse> {
+    const url = supplierId ? `${this.base}/vacation-commission/${batchId}/commit?supplierId=${encodeURIComponent(supplierId)}` : `${this.base}/vacation-commission/${batchId}/commit`;
+    return this.http
+      .post<ApiResponse<import('../models/api.models').VacationCommissionImportPreviewResponse>>(url, this.body(file))
+      .pipe(map(unwrap));
+  }
+
+  downloadVacationCommissionTemplate(): Observable<Blob> {
+    return this.http.get(`${this.base}/vacation-commission/template`, { responseType: 'blob' });
   }
 
   // --------------------------------------------------------------- history

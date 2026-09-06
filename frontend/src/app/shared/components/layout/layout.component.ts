@@ -1,13 +1,17 @@
-import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ApiResponse, NotificationItem } from '../../../core/models/api.models';
 
 interface NavItem {
   icon: string;
   label: string;
+  translationKey?: string;
   route?: string;
   children?: NavItem[];
   expanded?: boolean;
@@ -18,7 +22,14 @@ interface NavItem {
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    TranslatePipe,
+    LanguageSwitcherComponent
+  ],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss']
 })
@@ -32,49 +43,63 @@ export class LayoutComponent implements OnInit, OnDestroy {
   readonly pageSize = 20;
   hasMoreNotifications = true;
   isLoadingMore = false;
+  dataScopeInfo: { dataScope: string; restricted: boolean; assignedCaptainCount: number | null } | null = null;
   private pollTimer: any;
 
+  readonly authService = inject(AuthService);
+  readonly themeService = inject(ThemeService);
+  readonly translationService = inject(TranslationService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly elementRef = inject(ElementRef);
+
   navItems: NavItem[] = [
-    { icon: 'dashboard', label: 'لوحة التحكم', route: '/dashboard' },
-    { icon: 'shopping_bag', label: 'الطلبات', route: '/orders' },
+    { icon: 'dashboard', label: 'لوحة التحكم', translationKey: 'NAV.DASHBOARD', route: '/dashboard' },
+    { icon: 'shopping_bag', label: 'الطلبات', translationKey: 'NAV.ORDERS', route: '/orders' },
     {
-      icon: 'groups', label: 'الأعضاء', expanded: false, permission: 'MEMBERS_VIEW',
+      icon: 'groups', label: 'الأعضاء', translationKey: 'NAV.MEMBERS', expanded: false, permission: 'MEMBERS_VIEW',
       children: [
-        { icon: 'local_shipping', label: 'الكباتن', route: '/captains', permission: 'MEMBERS_VIEW' },
-        { icon: 'engineering', label: 'العاملين', route: '/workers', permission: 'MEMBERS_VIEW' },
-        { icon: 'admin_panel_settings', label: 'الإداريين', route: '/managers', permission: 'MEMBERS_VIEW' },
+        { icon: 'local_shipping', label: 'الكباتن', translationKey: 'NAV.CAPTAINS', route: '/captains', permission: 'MEMBERS_VIEW' },
+        { icon: 'engineering', label: 'العاملين', translationKey: 'NAV.WORKERS', route: '/workers', permission: 'MEMBERS_VIEW' },
+        { icon: 'admin_panel_settings', label: 'الإداريين', translationKey: 'NAV.MANAGERS', route: '/managers', permission: 'MEMBERS_VIEW' },
       ]
     },
-    { icon: 'badge', label: 'سجل المعرفات', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
-    { icon: 'upload_file', label: 'استيراد البيانات', route: '/imports', permission: 'IMPORTS_MANAGE' },
-    { icon: 'event_note', label: 'الشيفتات', route: '/shifts', permission: 'SHIFTS_VIEW' },
-    { icon: 'payments', label: 'مسير الرواتب', route: '/payroll', permission: 'PAYROLL_VIEW' },
-    { icon: 'account_balance_wallet', label: 'السُلف', route: '/loans', permission: 'LOANS_VIEW' },
-    { icon: 'account_balance', label: 'إيراد الموردين', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
-    { icon: 'assessment', label: 'التقارير', route: '/reports', permission: 'REPORTS_VIEW' },
-    { icon: 'directions_car', label: 'أسطول السيارات', route: '/fleet', permission: 'FLEET_VIEW' },
-    { icon: 'inventory_2', label: 'المخزن', route: '/inventory', permission: 'INVENTORY_VIEW' },
-    { icon: 'account_balance_wallet', label: 'سجل العهد', route: '/custody', permission: 'CUSTODY_VIEW' },
-    { icon: 'manage_accounts', label: 'إدارة المستخدمين', route: '/user-management', superAdminOnly: true },
-    { icon: 'settings', label: 'الإعدادات', route: '/settings', permission: 'SETTINGS_MANAGE' },
+    { icon: 'badge', label: 'سجل المعرفات', translationKey: 'NAV.NINJA_IDS', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
+    { icon: 'upload_file', label: 'استيراد البيانات', translationKey: 'NAV.IMPORTS', route: '/imports', permission: 'IMPORTS_MANAGE' },
+    { icon: 'event_note', label: 'الشيفتات', translationKey: 'NAV.SHIFTS', route: '/shifts', permission: 'SHIFTS_VIEW' },
+    { icon: 'payments', label: 'مسير الرواتب', translationKey: 'NAV.PAYROLL', route: '/payroll', permission: 'PAYROLL_VIEW' },
+    { icon: 'account_balance_wallet', label: 'السُلف', translationKey: 'NAV.LOANS', route: '/loans', permission: 'LOANS_VIEW' },
+    { icon: 'account_balance', label: 'إيراد الموردين', translationKey: 'NAV.SUPPLIER_REVENUE', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
+    { icon: 'assessment', label: 'التقارير', translationKey: 'NAV.REPORTS', route: '/reports', permission: 'REPORTS_VIEW' },
+    { icon: 'directions_car', label: 'أسطول السيارات', translationKey: 'NAV.FLEET', route: '/fleet', permission: 'FLEET_VIEW' },
+    { icon: 'inventory_2', label: 'المخزن', translationKey: 'NAV.INVENTORY', route: '/inventory', permission: 'INVENTORY_VIEW' },
+    { icon: 'account_balance_wallet', label: 'سجل العهد', translationKey: 'NAV.CUSTODY', route: '/custody', permission: 'CUSTODY_VIEW' },
+    { icon: 'manage_accounts', label: 'إدارة المستخدمين', translationKey: 'NAV.USER_MANAGEMENT', route: '/user-management', superAdminOnly: true },
+    { icon: 'settings', label: 'الإعدادات', translationKey: 'NAV.SETTINGS', route: '/settings', permission: 'SETTINGS_MANAGE' },
   ];
 
-  constructor(
-    public authService: AuthService,
-    private http: HttpClient,
-    private router: Router,
-    private elementRef: ElementRef
-  ) {}
-
   ngOnInit(): void {
+    if (this.authService.isPlatformAdmin()) {
+      this.router.navigate(['/platform/dashboard']);
+      return;
+    }
+    this.themeService.loadTheme();
     this.loadReadIds();
     this.loadNotifications(true);
+    this.loadDataScopeInfo();
     this.authService.refreshUserProfile().subscribe();
     // Refresh notifications count & permissions periodically
     this.pollTimer = setInterval(() => {
       this.loadNotifications(true);
+      this.loadDataScopeInfo();
       this.authService.refreshUserProfile().subscribe();
     }, 30000);
+  }
+
+  loadDataScopeInfo(): void {
+    this.http.get<{ dataScope: string; restricted: boolean; assignedCaptainCount: number | null }>('/api/auth/me/data-scope').subscribe(res => {
+      if (res) this.dataScopeInfo = res;
+    });
   }
 
   @HostListener('window:focus')
@@ -201,8 +226,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
   get userRole(): string {
     const user = this.authService.getUser();
     if (!user) return '';
-    if (user.role === 'SUPER_ADMIN') return 'مدير النظام';
-    return '';
+    if (user.role === 'PLATFORM_ADMIN') return this.translationService.translate('HEADER.ROLE_PLATFORM_ADMIN');
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') return this.translationService.translate('HEADER.ROLE_ADMIN');
+    if (user.role === 'MANAGER') return this.translationService.translate('HEADER.ROLE_MANAGER');
+    return this.translationService.translate('HEADER.ROLE_STAFF');
   }
 
   toggleSidebar(): void {
@@ -215,7 +242,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   isVisible(item: NavItem): boolean {
     if (item.superAdminOnly) {
-      return this.authService.isSuperAdmin();
+      return this.authService.isAdmin() || this.authService.isPlatformAdmin();
     }
     if (item.children && item.children.length > 0) {
       return item.children.some(child => this.isVisible(child));

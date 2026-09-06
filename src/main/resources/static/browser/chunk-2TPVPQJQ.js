@@ -1,1 +1,0 @@
-import{N as p,T as i,dc as r,o as a}from"./chunk-NSIV2LTK.js";var n=class t{http=i(r);base="/api/captains";lookup(o=""){return this.http.get(`${this.base}/lookup`,{params:{q:o}}).pipe(a(e=>e.data??[]))}static \u0275fac=function(e){return new(e||t)};static \u0275prov=p({token:t,factory:t.\u0275fac,providedIn:"root"})};export{n as a};

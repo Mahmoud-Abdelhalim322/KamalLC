@@ -228,6 +228,10 @@ export class StaffFormComponent implements OnInit {
       bankName: d.bankName,
       basicSalary: d.basicSalary,
       housingAllowance: d.housingAllowance,
+      transportationAllowance: d.transportationAllowance ?? null,
+      fuelAllowanceAmount: d.fuelAllowanceAmount ?? null,
+      callInternetAllowance: d.callInternetAllowance ?? null,
+      rewardAllowance: d.rewardAllowance ?? null,
       otherAllowances: d.otherAllowances,
       status: d.status,
       joinDate: d.joinDate,
@@ -249,7 +253,9 @@ export class StaffFormComponent implements OnInit {
       insuranceNumber: null, insuranceCategory: null, insuranceIssueDate: null, insuranceExpiry: null, insuranceCompany: null, insuranceStatus: null,
       trialPeriodDays: null, hasLicence: false, licenceExpiry: null, licenceStatus: null,
       bloodType: null, bankAccountNumber: null, bankName: null,
-      basicSalary: null, housingAllowance: null, otherAllowances: null,
+      basicSalary: null, housingAllowance: null, transportationAllowance: null,
+      fuelAllowanceAmount: null, callInternetAllowance: null, rewardAllowance: null,
+      otherAllowances: null,
       status: 'ACTIVE', joinDate: null, leaveDate: null, notes: null,
     };
   }

@@ -268,7 +268,7 @@ public class CaptainReportExportService {
     }
 
     private static String typeLabel(String captainType) {
-        return "FREELANCE".equalsIgnoreCase(captainType) ? "فريلانس" : "كفالة";
+        return "FREELANCE".equalsIgnoreCase(captainType) ? "KSCFL" : "KSC";
     }
 
     /** The workbook's styles, built once per file. */

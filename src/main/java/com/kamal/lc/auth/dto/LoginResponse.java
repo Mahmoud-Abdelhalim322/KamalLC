@@ -9,6 +9,7 @@ import java.util.Set;
 
 /**
  * Login response DTO — returned after successful authentication.
+ * Now includes tenant information for multi-tenant support.
  */
 @Data
 @Builder
@@ -22,5 +23,11 @@ public class LoginResponse {
     private String displayName;
     private long expiresIn;
     private Set<String> permissions;
-}
 
+    // ---- Multi-Tenant fields ----
+    private String tenantId;
+    private String tenantName;
+    private String tenantLogo;
+    private String tenantPrimaryColor;
+    private String tenantSecondaryColor;
+}

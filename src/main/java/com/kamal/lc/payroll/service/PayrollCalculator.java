@@ -29,6 +29,7 @@ public class PayrollCalculator {
             BigDecimal dailyIncentives,
             BigDecimal fuelAllowances,
             BigDecimal carAllowances,
+            BigDecimal vacationCommission,
             BigDecimal adjustmentsTotal) {}
 
     public record Result(
@@ -40,6 +41,7 @@ public class PayrollCalculator {
             BigDecimal carAllowances,
             BigDecimal targetBonus,
             BigDecimal extraOrderPay,
+            BigDecimal vacationCommission,
             BigDecimal gross,
             BigDecimal adjustmentsTotal,
             BigDecimal net) {}
@@ -53,6 +55,7 @@ public class PayrollCalculator {
         BigDecimal dailyIncentives = money(nz(input.dailyIncentives()));
         BigDecimal fuelAllowances = money(nz(input.fuelAllowances()));
         BigDecimal carAllowances = money(nz(input.carAllowances()));
+        BigDecimal vacationCommission = money(nz(input.vacationCommission()));
 
         // Hitting the monthly order target pays a flat bonus; orders past it are then paid
         // per order at a rate that depends on who carries the vehicle cost.
@@ -73,13 +76,14 @@ public class PayrollCalculator {
                 .add(fuelAllowances)
                 .add(carAllowances)
                 .add(targetBonus)
-                .add(extraOrderPay));
+                .add(extraOrderPay)
+                .add(vacationCommission));
 
         BigDecimal adjustments = money(nz(input.adjustmentsTotal()));
         BigDecimal net = money(gross.add(adjustments));
 
         return new Result(basePay, lateDeductions, supplierDeductions, dailyIncentives, fuelAllowances, carAllowances,
-                targetBonus, extraOrderPay, gross, adjustments, net);
+                targetBonus, extraOrderPay, vacationCommission, gross, adjustments, net);
     }
 
     private static BigDecimal nz(BigDecimal value) {

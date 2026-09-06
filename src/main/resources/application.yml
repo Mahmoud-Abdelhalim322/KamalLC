@@ -3,7 +3,7 @@
 # =============================================
 
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 spring:
   application:
@@ -11,13 +11,13 @@ spring:
 
   # ---- DataSource ----
   datasource:
-    url: jdbc:postgresql://localhost:5432/kslsc_db
-    username: postgres
-    password: 7ooda123
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/kslsc_db}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:7ooda123}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+      maximum-pool-size: ${HIKARI_MAX_POOL:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
 
   # ---- JPA / Hibernate ----
   jpa:
@@ -52,12 +52,12 @@ spring:
 # ---- JWT Configuration ----
 app:
   jwt:
-    secret: KamalFoodSecretKey2026VeryLongSecureKeyForJWTTokenGeneration!@#$%
-    expiration-ms: 86400000  # 24 hours
+    secret: ${JWT_SECRET:KamalFoodDevOnlyKey2026AtLeast32BytesLongForHMACSHA256!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}  # 24 hours (use env var to override)
 
   # ---- File Storage ----
   file-storage:
-    base-path: ./uploads
+    base-path: ${FILE_STORAGE_PATH:./uploads}
 
   # ---- Captain Code Generation ----
   # NOTE: employee-prefix is a prefix of freelance-prefix; the generator excludes
@@ -71,9 +71,24 @@ app:
     username: ${ADMIN_USERNAME:admin}
     password: ${ADMIN_PASSWORD:Admin@12345}
 
+  # ---- Platform Admin (SaaS Super Admin) ----
+  platform-admin:
+    username: ${PLATFORM_ADMIN_USERNAME:kslsc}
+    password: ${PLATFORM_ADMIN_PASSWORD:admin@kslsc}
+
+  # ---- CORS ----
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8082}
+
+  # ---- Rate Limiting ----
+  rate-limit:
+    login:
+      max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+      window-seconds: ${LOGIN_WINDOW_SECONDS:300}
+
 # ---- Logging ----
 logging:
   level:
-    com.kamal.lc: DEBUG
+    com.kamal.lc: ${LOG_LEVEL_APP:DEBUG}
     org.springframework.security: WARN
     org.hibernate.SQL: WARN

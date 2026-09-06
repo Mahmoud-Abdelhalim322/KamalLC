@@ -27,4 +27,10 @@ public interface AppSettingRepository extends JpaRepository<AppSetting, UUID> {
 
     @Query("SELECT s FROM AppSetting s WHERE s.effectiveTo IS NULL ORDER BY s.settingGroup, s.settingKey")
     List<AppSetting> findAllCurrent();
+
+    @Query(value = "SELECT * FROM app_setting WHERE tenant_id = :tenantId AND effective_to IS NULL ORDER BY setting_group, setting_key", nativeQuery = true)
+    List<AppSetting> findActiveSettingsByTenantIdRaw(@Param("tenantId") UUID tenantId);
+
+    @Query(value = "SELECT COUNT(*) FROM app_setting WHERE tenant_id = :tenantId", nativeQuery = true)
+    long countByTenantIdRaw(@Param("tenantId") UUID tenantId);
 }

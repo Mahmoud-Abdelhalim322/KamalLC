@@ -99,10 +99,10 @@ public class ExcelTemplateService {
     }
 
     public static final List<String> DEDUCTION_TEMPLATE_HEADERS = List.of(
-            "ID - NINJA", "ID-KSLSC", "تاريخ الشيفت", "سعر الخصم", "اسم الكابتن", "سبب الخصم");
+            "shift_id", "SUPPLIER NAME", "CAPTAIN ID", "ZONE NAME", "FLAG", "NOTE", "Amount");
 
     private static final List<Object> DEDUCTION_SAMPLE_ROW = List.of(
-            "95516", "KSC0001", "2026-07-24", 50.00, "محمد أحمد", "خصم تأخير عن الشيفت");
+            "3043452", "Kamal_Food_ftr(car)", "95516", "Riyadh West", "DEDUCTION", "خصم تأخير عن الشيفت", 50.00);
 
     public byte[] buildDeductions() {
         try (Workbook workbook = new XSSFWorkbook();
@@ -138,6 +138,48 @@ public class ExcelTemplateService {
         } catch (Exception e) {
             log.error("Failed to build the deduction import template: {}", e.getMessage(), e);
             throw new BusinessException("TEMPLATE_ERROR", "فشل في إنشاء ملف قالب خصومات المورد");
+        }
+    }
+
+    public static final List<String> VACATION_TEMPLATE_HEADERS = List.of(
+            "Days (ksa start)", "SUPPLIER NAME", "CAPTAIN ID", "ZONE NAME", "FLAG", "NOTE", "Amount");
+
+    private static final List<Object> VACATION_SAMPLE_ROW = List.of(
+            "46203", "Kamal_Food_ftr(car)", "95516", "Riyadh West", "BONUS", "WEEKEND", 50.00);
+
+    public byte[] buildVacationCommission() {
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("عمولة اوقات الاجازة");
+            sheet.setRightToLeft(true);
+
+            CellStyle headerStyle = headerStyle(workbook);
+            CellStyle textStyle = textStyle(workbook);
+            CellStyle currencyStyle = dataFormatStyle(workbook, "#,##0.00");
+
+            writeHeaderRow(sheet, VACATION_TEMPLATE_HEADERS, headerStyle);
+
+            Row sampleRow = sheet.createRow(1);
+            for (int i = 0; i < VACATION_SAMPLE_ROW.size(); i++) {
+                Cell cell = sampleRow.createCell(i);
+                Object val = VACATION_SAMPLE_ROW.get(i);
+                if (val instanceof Number num) {
+                    cell.setCellValue(num.doubleValue());
+                    cell.setCellStyle(currencyStyle);
+                } else {
+                    cell.setCellValue(String.valueOf(val));
+                    cell.setCellStyle(textStyle);
+                }
+            }
+
+            sheet.createFreezePane(0, 1);
+            workbook.write(out);
+            return out.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Failed to build the vacation commission template: {}", e.getMessage(), e);
+            throw new BusinessException("TEMPLATE_ERROR", "فشل في إنشاء ملف قالب عمولة أوقات الإجازة");
         }
     }
 

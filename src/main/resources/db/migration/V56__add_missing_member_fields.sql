@@ -1,0 +1,58 @@
+-- =========================================================================
+-- V56: Add missing member fields to captain and staff tables
+-- =========================================================================
+
+-- ---- Captain: personal / employment fields already in Staff ----
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS place_of_residence VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS home_address VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS job_title VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS passport_issue_date DATE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS passport_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS iqama_occupation VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS iqama_expiry_renewed DATE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS iqama_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS qiwa_contract_number VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS establishment_number VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS qiwa_contract_start DATE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS qiwa_contract_end DATE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS qiwa_contract_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS work_permit_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS affiliated_company VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS cr_number VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS insurance_category VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS insurance_issue_date DATE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS insurance_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS trial_period_days INTEGER;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS has_licence BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS licence_status VARCHAR(50);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS blood_type VARCHAR(10);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS bank_name VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS basic_salary NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS housing_allowance NUMERIC(12,2) DEFAULT 0;
+
+-- ---- New fields for BOTH Captain and Staff ----
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS app_id VARCHAR(100);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS transportation_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS fuel_allowance_amount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS call_internet_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS reward_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS work_phone VARCHAR(30);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS department VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS section VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS supervisor VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS work_location VARCHAR(255);
+ALTER TABLE captain ADD COLUMN IF NOT EXISTS work_with VARCHAR(255);
+
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS app_id VARCHAR(100);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS transportation_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS fuel_allowance_amount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS call_internet_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS reward_allowance NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS work_phone VARCHAR(30);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS department VARCHAR(255);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS section VARCHAR(255);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS supervisor VARCHAR(255);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS work_location VARCHAR(255);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS work_with VARCHAR(255);

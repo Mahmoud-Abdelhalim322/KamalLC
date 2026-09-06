@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { CustodyService } from '../../core/services/custody.service';
 import { CaptainCustodySummary, CustodyRecordResponse } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
@@ -13,6 +14,7 @@ import { errorMessage } from '../../core/services/api.util';
   styleUrls: ['./custody.component.scss']
 })
 export class CustodyComponent implements OnInit {
+  private readonly http = inject(HttpClient);
   summaries: CaptainCustodySummary[] = [];
   filteredSummaries: CaptainCustodySummary[] = [];
   searchQuery = '';
@@ -78,4 +80,48 @@ export class CustodyComponent implements OnInit {
   }
 
   dismissMsg(): void { this.error = ''; }
+
+  // ── Export ──
+
+  isExporting = false;
+
+  exportExcel(): void {
+    this.isExporting = true;
+    this.http.get('/api/custody/export/excel', { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        this.isExporting = false;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'العهد.xlsx';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.isExporting = false;
+        this.error = 'فشل في تصدير ملف الإكسل';
+      }
+    });
+  }
+
+  // ── Handover PDF ──
+
+  exportingCaptainId: string | null = null;
+
+  exportHandoverPdf(summary: CaptainCustodySummary): void {
+    this.exportingCaptainId = summary.captainId;
+    this.http.get(`/api/custody/handover/pdf/${summary.captainId}`, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        this.exportingCaptainId = null;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `محضر-تسليم-${summary.captainName}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.exportingCaptainId = null;
+        this.error = 'فشل في إنشاء محضر التسليم';
+      }
+    });
+  }
 }

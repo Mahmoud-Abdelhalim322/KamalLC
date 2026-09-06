@@ -36,4 +36,12 @@ export class SettingsService {
       .put<ApiResponse<SettingResponse>>(`${this.base}/${key}`, { value, effectiveFrom })
       .pipe(map(unwrap));
   }
+
+  uploadLogo(file: File): Observable<SettingResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<ApiResponse<SettingResponse>>(`${this.base}/logo`, formData)
+      .pipe(map(unwrap));
+  }
 }

@@ -1,7 +1,6 @@
 package com.kamal.lc.common.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -10,9 +9,11 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * JWT token provider — generates, validates, and extracts claims from JWT tokens.
+ * Now includes {@code tenantId} as a custom claim for multi-tenant support.
  */
 @Component
 public class JwtTokenProvider {
@@ -32,19 +33,31 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return generateToken(userDetails.getUsername());
+        return generateToken(userDetails.getUsername(), null);
     }
 
     public String generateToken(String username) {
+        return generateToken(username, null);
+    }
+
+    /**
+     * Generates a JWT with an optional tenant ID claim.
+     * Platform admins have a null tenantId.
+     */
+    public String generateToken(String username, UUID tenantId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(username)
                 .issuedAt(now)
-                .expiration(expiry)
-                .signWith(key)
-                .compact();
+                .expiration(expiry);
+
+        if (tenantId != null) {
+            builder.claim("tenantId", tenantId.toString());
+        }
+
+        return builder.signWith(key).compact();
     }
 
     public String getUsernameFromToken(String token) {
@@ -54,6 +67,20 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    /**
+     * Extracts the tenant ID from the JWT claims. Returns null for platform admins.
+     */
+    public UUID getTenantIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        String tenantId = claims.get("tenantId", String.class);
+        return tenantId != null ? UUID.fromString(tenantId) : null;
     }
 
     public boolean validateToken(String token) {

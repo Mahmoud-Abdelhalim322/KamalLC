@@ -29,6 +29,9 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID>, JpaSpecific
     /** Used by supplier deduction import to match by Ninja captain ID + date. */
     List<Shift> findByNinjaCaptainIdAndShiftDate(String ninjaCaptainId, LocalDate shiftDate);
 
+    /** Used by supplier deduction import to match directly by external shift ID. */
+    Optional<Shift> findByExternalShiftId(String externalShiftId);
+
     /** Match by captain entity ID + shift date. */
     List<Shift> findByCaptainIdAndShiftDate(UUID captainId, LocalDate shiftDate);
 

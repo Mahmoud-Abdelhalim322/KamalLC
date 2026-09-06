@@ -1,0 +1,276 @@
+<div class="tenant-management-page">
+
+  <!-- Header -->
+  <div class="page-header flex-between">
+    <div>
+      <h1 class="page-title">إدارة الشركات (Tenants)</h1>
+      <p class="page-subtitle">إنشاء وإدارة حسابات الشركات والتحكم في حالتها واشتراكاتها</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <span class="material-icons-round">add_business</span>
+      <span>إضافة شركة جديدة</span>
+    </button>
+  </div>
+
+  <!-- Banners for feedback -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>جاري تحميل بيانات الشركات...</p>
+  </div>
+
+  <!-- Tenants Table Card -->
+  <div class="card table-card" *ngIf="!loading">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>اسم الشركة</th>
+            <th>المعرف (Slug)</th>
+            <th>الخطة الحالية</th>
+            <th>حالة الاشتراك</th>
+            <th>الحالة</th>
+            <th>تاريخ الإنشاء</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tenant of tenants">
+            <td>
+              <div class="tenant-cell">
+                <div class="tenant-logo" [style.background-color]="tenant.primaryColor || '#2563EB'">
+                  {{ tenant.name.substring(0, 1) }}
+                </div>
+                <div class="tenant-info">
+                  <span class="tenant-name">{{ tenant.name }}</span>
+                  <span class="tenant-email" *ngIf="tenant.contactEmail">{{ tenant.contactEmail }}</span>
+                </div>
+              </div>
+            </td>
+            <td><code>{{ tenant.slug }}</code></td>
+            <td>
+              <span class="badge badge-info">{{ tenant.currentPlan || 'بدون خطة' }}</span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getSubscriptionBadgeClass(tenant.subscriptionStatus)">
+                {{ tenant.subscriptionStatus || 'غير مسجل' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusBadgeClass(tenant.status)">
+                {{ getStatusLabel(tenant.status) }}
+              </span>
+            </td>
+            <td>{{ tenant.createdAt | date:'yyyy/MM/dd' }}</td>
+            <td>
+              <div class="actions">
+                <!-- Edit Details -->
+                <button class="btn-icon-action text-primary" (click)="openEditModal(tenant)" title="تعديل بيانات الشركة">
+                  <span class="material-icons-round">edit</span>
+                </button>
+                <!-- Change Password -->
+                <button class="btn-icon-action text-warning" (click)="openPasswordModal(tenant)" title="تغيير كلمة المرور">
+                  <span class="material-icons-round">key</span>
+                </button>
+                <!-- Toggle Status -->
+                <button class="btn-icon-action" (click)="toggleTenantStatus(tenant)"
+                  [title]="tenant.status === 'ACTIVE' ? 'تعطيل الشركة' : 'تفعيل الشركة'"
+                  [class.text-danger]="tenant.status === 'ACTIVE'"
+                  [class.text-success]="tenant.status !== 'ACTIVE'">
+                  <span class="material-icons-round">
+                    {{ tenant.status === 'ACTIVE' ? 'block' : 'check_circle' }}
+                  </span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="tenants.length === 0 && !loading">
+            <td colspan="7" class="text-center empty-cell">
+              <span class="material-icons-round empty-icon">domain_disabled</span>
+              <p>لا توجد شركات مسجلة حتى الآن</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create Tenant Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">add_business</span>
+          إضافة شركة جديدة
+        </h2>
+        <button class="btn-close" (click)="closeCreateModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitCreateTenant()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">اسم الشركة *</label>
+            <input type="text" [(ngModel)]="newTenant.name" name="name" required class="form-input" placeholder="مثال: شركة السرعة للتوصيل" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">المعرف بالإنجليزية (Slug) *</label>
+            <input type="text" [(ngModel)]="newTenant.slug" name="slug" required class="form-input" placeholder="speed-express" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">البريد الإلكتروني للتواصل</label>
+            <input type="email" [(ngModel)]="newTenant.contactEmail" name="contactEmail" class="form-input" placeholder="info@company.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="text" [(ngModel)]="newTenant.contactPhone" name="contactPhone" class="form-input" placeholder="0500000000" />
+          </div>
+
+          <div class="section-divider">
+            <span>بيانات مدير الشركة (Admin)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">اسم مستخدم المدير *</label>
+            <input type="text" [(ngModel)]="newTenant.adminUsername" name="adminUsername" required class="form-input" placeholder="admin_company" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">كلمة المرور *</label>
+            <input type="password" [(ngModel)]="newTenant.adminPassword" name="adminPassword" required class="form-input" placeholder="Admin@12345" />
+          </div>
+
+          <div class="section-divider">
+            <span>الاشتراك المبدئي</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">خطة الاشتراك</label>
+            <select [(ngModel)]="newTenant.planId" name="planId" class="form-input">
+              <option [ngValue]="null">بدون خطة حالياً</option>
+              <option *ngFor="let plan of plans" [value]="plan.id">{{ plan.nameAr }} ({{ plan.monthlyPrice }} ر.س/شهر)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">دورة الفوترة</label>
+            <select [(ngModel)]="newTenant.billingCycle" name="billingCycle" class="form-input">
+              <option value="MONTHLY">شهري</option>
+              <option value="YEARLY">سنوي</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" (click)="closeCreateModal()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <span class="material-icons-round" *ngIf="!submitting">check_circle</span>
+            <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
+            <span>{{ submitting ? 'جاري الإنشاء...' : 'إنشاء الحساب' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Tenant Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">edit_location_alt</span>
+          تعديل بيانات الشركة: {{ selectedTenant?.name }}
+        </h2>
+        <button class="btn-close" (click)="closeEditModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitEditTenant()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">اسم الشركة *</label>
+            <input type="text" [(ngModel)]="editForm.name" name="editName" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">البريد الإلكتروني للتواصل</label>
+            <input type="email" [(ngModel)]="editForm.contactEmail" name="editEmail" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="text" [(ngModel)]="editForm.contactPhone" name="editPhone" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">العنوان</label>
+            <input type="text" [(ngModel)]="editForm.address" name="editAddress" class="form-input" />
+          </div>
+
+          <div class="section-divider">
+            <span>تغيير كلمة مرور المدير (اختياري)</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">كلمة مرور جديدة للمدير</label>
+            <input type="password" [(ngModel)]="editForm.newPassword" name="editPassword" class="form-input" placeholder="اتركه فارغاً إذا كنت لا تريد التغيير" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" (click)="closeEditModal()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <span class="material-icons-round" *ngIf="!submitting">save</span>
+            <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
+            <span>{{ submitting ? 'جاري الحفظ...' : 'حفظ التعديلات' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Dedicated Modal -->
+  <div class="modal-overlay" *ngIf="showPasswordModal">
+    <div class="modal-card modal-small">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">key</span>
+          تغيير كلمة المرور لـ: {{ selectedTenant?.name }}
+        </h2>
+        <button class="btn-close" (click)="closePasswordModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitChangePassword()">
+        <div class="form-grid single-column">
+          <div class="form-group">
+            <label class="form-label">كلمة المرور الجديدة *</label>
+            <input type="password" [(ngModel)]="passwordForm.newPassword" name="pwdNew" required class="form-input" placeholder="أدخل كلمة المرور الجديدة" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">تأكيد كلمة المرور الجديدة *</label>
+            <input type="password" [(ngModel)]="passwordForm.confirmPassword" name="pwdConfirm" required class="form-input" placeholder="أعد أدخال كلمة المرور" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" (click)="closePasswordModal()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <span class="material-icons-round" *ngIf="!submitting">check_circle</span>
+            <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
+            <span>{{ submitting ? 'جاري التغيير...' : 'تغيير كلمة المرور' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+

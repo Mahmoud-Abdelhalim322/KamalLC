@@ -51,13 +51,13 @@ class TempCaptainCommitDiagnostic {
                         + " ninja=" + r.getNinjaId() + " name=" + r.getCaptainName()));
 
         try {
-            ImportPreviewResponse preview = importService.preview(file);
+            ImportPreviewResponse preview = importService.preview(file, null);
             System.out.println(">>> PREVIEW OK batch=" + preview.getBatchId()
                     + " rows=" + preview.getTotalRows()
                     + " newCaptains=" + preview.getNewCaptains()
                     + " issues=" + preview.getIssues().size());
 
-            ImportPreviewResponse committed = importService.commit(file, preview.getBatchId());
+            ImportPreviewResponse committed = importService.commit(file, preview.getBatchId(), null);
             System.out.println(">>> COMMIT OK imported=" + committed.getNewCaptains()
                     + " skipped=" + committed.getExistingCaptains()
                     + " issues=" + committed.getIssues().size());

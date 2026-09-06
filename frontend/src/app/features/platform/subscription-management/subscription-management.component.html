@@ -1,0 +1,57 @@
+<div class="sub-management-page animate-fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">إدارة الاشتراكات</h1>
+    <p class="page-subtitle">سجل الاشتراكات وتواريخ التجديد والانتهاء لجميع الشركات</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>جاري تحميل قائمة الاشتراكات...</p>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card table-card" *ngIf="!loading">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الشركة</th>
+            <th>الخطة</th>
+            <th>دورة الفوترة</th>
+            <th>تاريخ البداية</th>
+            <th>تاريخ الانتهاء</th>
+            <th>المبلغ المدفوع</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sub of subscriptions">
+            <td><strong class="tenant-name">{{ sub.tenantName }}</strong></td>
+            <td><span class="badge badge-info">{{ sub.planName }}</span></td>
+            <td>
+              <span class="cycle-tag">{{ sub.billingCycle === 'YEARLY' ? 'سنوي' : 'شهري' }}</span>
+            </td>
+            <td>{{ sub.startDate }}</td>
+            <td>{{ sub.endDate }}</td>
+            <td class="amount-cell">{{ sub.paidAmount ? (sub.paidAmount | currency:'SAR':'symbol':'1.0-0') : '-' }}</td>
+            <td>
+              <span class="badge" [ngClass]="sub.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'">
+                {{ sub.status === 'ACTIVE' ? 'نشط' : 'منتهي' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="subscriptions.length === 0 && !loading">
+            <td colspan="7" class="empty-cell">
+              <span class="material-icons-round empty-icon">credit_card_off</span>
+              <p>لا يوجد اشتراكات مسجلة حالياً</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

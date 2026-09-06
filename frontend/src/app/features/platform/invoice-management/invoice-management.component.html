@@ -1,0 +1,57 @@
+<div class="invoice-management-page animate-fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">إدارة الفواتير والتحصيل</h1>
+    <p class="page-subtitle">تتبع الفواتير الصادرة والمدفوعات والمبالغ المستحقة لكل شركة</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>جاري تحميل قائمة الفواتير...</p>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card table-card" *ngIf="!loading">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>رقم الفاتورة</th>
+            <th>الشركة</th>
+            <th>المبلغ قبل الضريبة</th>
+            <th>الضريبة</th>
+            <th>الإجمالي</th>
+            <th>تاريخ الاستحقاق</th>
+            <th>الحالة</th>
+            <th>تاريخ الدفع</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let inv of invoices">
+            <td><code class="invoice-code">{{ inv.invoiceNumber }}</code></td>
+            <td><strong class="tenant-name">{{ inv.tenantName }}</strong></td>
+            <td>{{ inv.amount | currency:'SAR':'symbol':'1.0-0' }}</td>
+            <td>{{ inv.taxAmount | currency:'SAR':'symbol':'1.0-0' }}</td>
+            <td><strong class="total-amount">{{ inv.totalAmount | currency:'SAR':'symbol':'1.0-0' }}</strong></td>
+            <td>{{ inv.dueDate }}</td>
+            <td>
+              <span class="badge" [ngClass]="inv.status === 'PAID' ? 'badge-success' : 'badge-warning'">
+                {{ inv.status === 'PAID' ? 'مدفوعة' : 'معلقة' }}
+              </span>
+            </td>
+            <td>{{ inv.paidAt ? (inv.paidAt | date:'yyyy/MM/dd HH:mm') : '-' }}</td>
+          </tr>
+          <tr *ngIf="invoices.length === 0 && !loading">
+            <td colspan="8" class="empty-cell">
+              <span class="material-icons-round empty-icon">receipt_long</span>
+              <p>لا يوجد فواتير مسجلة حالياً</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

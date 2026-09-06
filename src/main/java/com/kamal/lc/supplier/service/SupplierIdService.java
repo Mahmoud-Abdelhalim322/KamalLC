@@ -47,9 +47,11 @@ public class SupplierIdService {
         ).toList();
     }
 
-    public Page<SupplierIdSlotResponse> getSlots(UUID supplierId, Pageable pageable) {
+    public Page<SupplierIdSlotResponse> getSlots(UUID supplierId, String q, Pageable pageable) {
         Page<SupplierIdSlot> page;
-        if (supplierId != null) {
+        if (q != null && !q.trim().isEmpty()) {
+            page = slotRepo.searchSlots(supplierId, q.trim(), pageable);
+        } else if (supplierId != null) {
             page = slotRepo.findBySupplierId(supplierId, pageable);
         } else {
             page = slotRepo.findAll(pageable);
@@ -57,9 +59,39 @@ public class SupplierIdService {
         return page.map(this::toSlotResponse);
     }
 
+    @Transactional
+    public void deleteSupplier(UUID supplierId) {
+        Supplier supplier = supplierRepo.findById(supplierId)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "المورد غير موجود"));
+
+        List<SupplierIdSlot> slots = slotRepo.findBySupplierId(supplierId);
+        for (SupplierIdSlot slot : slots) {
+            assignmentRepo.deleteBySupplierIdSlotId(slot.getId());
+        }
+        slotRepo.deleteAll(slots);
+        supplierRepo.delete(supplier);
+    }
+
+    @Transactional
+    public void deleteSlot(UUID slotId) {
+        if (!slotRepo.existsById(slotId)) {
+            throw new BusinessException("NOT_FOUND", "المعرف غير موجود");
+        }
+        assignmentRepo.deleteBySupplierIdSlotId(slotId);
+        slotRepo.deleteById(slotId);
+    }
+
+    @Transactional
+    public void deleteSlots(List<UUID> slotIds) {
+        for (UUID id : slotIds) {
+            deleteSlot(id);
+        }
+    }
+
     public List<AssignmentHistoryItem> getSlotHistory(UUID slotId) {
-        SupplierIdSlot slot = slotRepo.findById(slotId)
-                .orElseThrow(() -> new BusinessException("NOT_FOUND", "المعرف غير موجود"));
+        if (!slotRepo.existsById(slotId)) {
+            throw new BusinessException("NOT_FOUND", "المعرف غير موجود");
+        }
 
         List<SupplierIdAssignment> assignments = assignmentRepo.findBySupplierIdSlotIdOrderByValidFromDesc(slotId);
         return assignments.stream().map(a -> AssignmentHistoryItem.builder()

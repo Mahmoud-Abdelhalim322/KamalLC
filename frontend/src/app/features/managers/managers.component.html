@@ -80,10 +80,13 @@
               {{ getStatusLabel(s.status) }}
             </span>
           </td>
-          <td>
-            <a [routerLink]="['/managers', s.id]" class="btn-link">
+          <td class="actions-cell">
+            <a [routerLink]="['/managers', s.id]" class="btn-link" title="عرض التفاصيل">
               <span class="material-icons-round">visibility</span>
             </a>
+            <button class="btn-link delete-action" *ngIf="canManage" title="حذف" (click)="deleteStaff(s, $event)">
+              <span class="material-icons-round">delete_outline</span>
+            </button>
           </td>
         </tr>
       </tbody>

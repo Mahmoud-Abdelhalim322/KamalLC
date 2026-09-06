@@ -14,6 +14,9 @@
         <span>{{ summaries.length }} كابتن</span>
       </div>
     </div>
+    <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting">
+      <span class="material-icons-round" [class.spinning]="isExporting">download</span> تصدير Excel
+    </button>
   </div>
 
   <div class="loading-bar" *ngIf="isLoading"></div>
@@ -63,9 +66,14 @@
             </tr>
           </tbody>
         </table>
-        <button class="btn btn-secondary btn-sm history-btn" (click)="openHistory(s); $event.stopPropagation()">
-          <span class="material-icons-round">history</span> عرض كل التاريخ
-        </button>
+        <div class="card-actions">
+          <button class="btn btn-secondary btn-sm history-btn" (click)="openHistory(s); $event.stopPropagation()">
+            <span class="material-icons-round">history</span> عرض كل التاريخ
+          </button>
+          <button class="btn btn-outline btn-sm" (click)="exportHandoverPdf(s); $event.stopPropagation()" [disabled]="exportingCaptainId === s.captainId">
+            <span class="material-icons-round" [class.spinning]="exportingCaptainId === s.captainId">picture_as_pdf</span> محضر تسليم PDF
+          </button>
+        </div>
       </div>
     </div>
 

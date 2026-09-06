@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface CaptainDocumentRepository extends JpaRepository<CaptainDocument, UUID> {
 
     List<CaptainDocument> findByCaptainId(UUID captainId);
+
+    void deleteByCaptainId(UUID captainId);
 }

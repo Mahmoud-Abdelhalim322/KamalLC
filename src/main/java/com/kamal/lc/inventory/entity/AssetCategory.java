@@ -1,8 +1,12 @@
 package com.kamal.lc.inventory.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -10,19 +14,23 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "asset_category")
+@Table(name = "asset_category", uniqueConstraints = {
+        @UniqueConstraint(name = "asset_category_name_tenant_unique", columnNames = {"tenant_id", "name"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AssetCategory {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class AssetCategory implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Column(name = "label_ar", nullable = false, length = 100)
@@ -37,6 +45,10 @@ public class AssetCategory {
     @Builder.Default
     private List<AssetCategoryFieldTemplate> fieldTemplates = new ArrayList<>();
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

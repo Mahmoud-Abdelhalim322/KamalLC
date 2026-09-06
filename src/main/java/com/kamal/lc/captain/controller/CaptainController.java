@@ -5,6 +5,7 @@ import com.kamal.lc.captain.dto.CaptainLookupResponse;
 import com.kamal.lc.captain.dto.CaptainRequest;
 import com.kamal.lc.captain.dto.CaptainResponse;
 import com.kamal.lc.captain.service.CaptainService;
+import com.kamal.lc.captain.service.MembersExportService;
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +28,7 @@ import java.util.UUID;
 public class CaptainController {
 
     private final CaptainService captainService;
+    private final MembersExportService membersExportService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<CaptainResponse>>> list(
@@ -75,5 +79,40 @@ public class CaptainController {
             @PathVariable UUID id,
             @Valid @RequestBody CaptainRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("تم حفظ بيانات الكابتن بنجاح", captainService.update(id, request)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        captainService.deleteCaptain(id);
+        return ResponseEntity.ok(ApiResponse.ok("تم حذف الكابتن بنجاح", null));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> bulkDelete(@RequestBody List<UUID> ids) {
+        int deleted = 0;
+        int skipped = 0;
+        for (UUID id : ids) {
+            try {
+                captainService.deleteCaptain(id);
+                deleted++;
+            } catch (Exception e) {
+                skipped++;
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم حذف " + deleted + " كابتن" + (skipped > 0 ? " — تم تخطي " + skipped + " لارتباطهم ببيانات" : ""),
+                Map.of("deleted", deleted, "skipped", skipped)));
+    }
+
+    /** Export captains as Excel with optional type filter. */
+    @GetMapping("/export/excel")
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) String type) {
+        byte[] bytes = membersExportService.exportCaptainsExcel(type);
+        String filename = "captains-export.xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
     }
 }

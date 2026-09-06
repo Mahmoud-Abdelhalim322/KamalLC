@@ -8,12 +8,16 @@ import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.uti
 
 import { AuthService } from '../../core/auth/auth.service';
 
-type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched';
+import { VacationCommissionResponse } from '../../core/models/api.models';
+
+import { TranslationService, TranslatePipe } from '../../core/i18n';
+
+type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched' | 'vacation-days';
 
 @Component({
   selector: 'app-shifts',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './shifts.component.html',
   styleUrls: ['./shifts.component.scss']
 })
@@ -21,18 +25,23 @@ export class ShiftsComponent implements OnInit, OnDestroy {
 
   private shiftService = inject(ShiftService);
   public authService = inject(AuthService);
+  public translationService = inject(TranslationService);
 
   get canManage(): boolean {
     return this.authService.hasPermission('SHIFTS_MANAGE');
   }
 
-  readonly tabs: { key: ShiftTab; label: string; icon: string }[] = [
-    { key: 'all', label: 'الكل', icon: 'list' },
-    { key: 'attended', label: 'حضور', icon: 'check_circle' },
-    { key: 'absent', label: 'غياب', icon: 'cancel' },
-    { key: 'excluded', label: 'مستبعد', icon: 'block' },
-    { key: 'unmatched', label: 'غير مربوط', icon: 'link_off' },
-  ];
+  get tabs(): { key: ShiftTab; label: string; icon: string }[] {
+    const isAr = this.translationService.currentLang() === 'ar';
+    return [
+      { key: 'all', label: isAr ? 'الكل' : 'All', icon: 'list' },
+      { key: 'attended', label: isAr ? 'حضور' : 'Attended', icon: 'check_circle' },
+      { key: 'absent', label: isAr ? 'غياب' : 'Absent', icon: 'cancel' },
+      { key: 'excluded', label: isAr ? 'مستبعد' : 'Excluded', icon: 'block' },
+      { key: 'unmatched', label: isAr ? 'غير مربوط' : 'Unmatched', icon: 'link_off' },
+      { key: 'vacation-days', label: isAr ? 'أيام الإجازة' : 'Vacation Days', icon: 'beach_access' },
+    ];
+  }
 
   activeTab: ShiftTab = 'all';
 
@@ -43,6 +52,8 @@ export class ShiftsComponent implements OnInit, OnDestroy {
   zones: string[] = [];
 
   shifts: ShiftResponse[] = [];
+  vacationCommissions: VacationCommissionResponse[] = [];
+  totalVacationCommissionsAmount = 0;
   page = 0;
   size = 50;
   totalElements = 0;
@@ -89,6 +100,29 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
+    if (this.activeTab === 'vacation-days') {
+      this.shiftService.getVacationCommissions({
+        from: this.from || undefined,
+        to: this.to || undefined,
+        search: this.search.trim() || undefined,
+        page: this.page,
+        size: this.size
+      }).subscribe({
+        next: (page) => {
+          this.isLoading = false;
+          this.vacationCommissions = page.content;
+          this.totalElements = page.totalElements;
+          this.totalPages = page.totalPages;
+          this.totalVacationCommissionsAmount = page.content.reduce((sum, item) => sum + (item.amount || 0), 0);
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.errorMessage = errorMessage(err, 'فشل في تحميل عمولات أوقات الإجازة');
+        }
+      });
+      return;
+    }
+
     this.shiftService.search(this.buildFilter(), this.page, this.size).subscribe({
       next: (page) => {
         this.isLoading = false;
@@ -100,6 +134,17 @@ export class ShiftsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.errorMessage = errorMessage(err, 'فشل في تحميل الشيفتات');
       }
+    });
+  }
+
+  deleteVacationCommission(id: string): void {
+    if (!confirm('هل أنت تأكد من حذف سجل عمولة الإجازة هذا؟')) return;
+    this.shiftService.deleteVacationCommission(id).subscribe({
+      next: () => {
+        this.successMessage = 'تم حذف سجل عمولة الإجازة بنجاح';
+        this.load(false);
+      },
+      error: (err) => this.errorMessage = errorMessage(err, 'فشل في حذف سجل عمولة الإجازة')
     });
   }
 

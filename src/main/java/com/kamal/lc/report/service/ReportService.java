@@ -45,6 +45,8 @@ public class ReportService {
     private final SupplierIdAssignmentRepository assignmentRepo;
     private final SettingsResolver settingsResolver;
     private final PayrollCalculator calculator;
+    private final com.kamal.lc.auth.service.CaptainAllocationService allocationService;
+    private final com.kamal.lc.imports.repository.VacationCommissionRepository vacationCommissionRepo;
 
     public CaptainReportResponse captainReport(UUID captainId, LocalDate from, LocalDate to) {
         Captain captain = captainRepo.findById(captainId)
@@ -72,10 +74,12 @@ public class ReportService {
                 .map(ReportService::signedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        BigDecimal vacationCommission = vacationCommissionRepo.sumByCaptainAndDateBetween(captainId, from, to);
+
         PayrollCalculator.Result pay = calculator.compute(new PayrollCalculator.Input(
                 captain.getCaptainType(), captain.isUsesOwnVehicle(),
                 attended, totalOrders, lateDeductions, supplierDeductions, dailyIncentives, fuelAllowances,
-                carAllowances, adjustments
+                carAllowances, vacationCommission, adjustments
         ), settings);
 
         int ordersToTarget = Math.max(0, settings.getMonthlyOrderTarget() - totalOrders);
@@ -142,6 +146,11 @@ public class ReportService {
                         a -> a.getCaptain().getId(),
                         Collectors.reducing(BigDecimal.ZERO, ReportService::signedAmount, BigDecimal::add)));
 
+        Map<UUID, BigDecimal> vacationCommissionsByCaptain = vacationCommissionRepo.aggregateByCaptain(from, to).stream()
+                .collect(Collectors.toMap(
+                        com.kamal.lc.imports.repository.VacationCommissionRepository.CaptainVacationCommissionTotals::getCaptainId,
+                        com.kamal.lc.imports.repository.VacationCommissionRepository.CaptainVacationCommissionTotals::getTotalVacationCommission));
+
         List<TeamReportResponse.Row> rows = new ArrayList<>();
         for (ShiftRepository.CaptainPeriodTotals totals : shiftRepo.aggregateByCaptain(from, to)) {
             Captain captain = captains.get(totals.getCaptainId());
@@ -155,6 +164,7 @@ public class ReportService {
                     captain.getCaptainType(), captain.isUsesOwnVehicle(), attended, orders,
                     totals.getLateDeductions(), totals.getSupplierDeductions(), totals.getDailyIncentives(), totals.getFuelAllowances(),
                     totals.getCarAllowances(),
+                    vacationCommissionsByCaptain.getOrDefault(captain.getId(), BigDecimal.ZERO),
                     adjustmentsByCaptain.getOrDefault(captain.getId(), BigDecimal.ZERO)
             ), settings);
 
@@ -187,6 +197,11 @@ public class ReportService {
 
         rows.sort(Comparator.comparing(TeamReportResponse.Row::getTotalOrders).reversed());
 
+        List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
+        if (accessibleIds != null) {
+            rows = rows.stream().filter(r -> accessibleIds.contains(r.getCaptainId())).toList();
+        }
+
         return TeamReportResponse.builder()
                 .periodFrom(from.toString())
                 .periodTo(to.toString())
@@ -208,8 +223,9 @@ public class ReportService {
         int target = settingsResolver.resolve(to).getMonthlyOrderTarget();
 
         // All non-excluded shifts in the period, with their captain eagerly available.
+        List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
         List<Shift> shifts = shiftRepo.findByShiftDateBetween(from, to).stream()
-                .filter(s -> !s.isExcluded() && s.getCaptain() != null)
+                .filter(s -> !s.isExcluded() && s.getCaptain() != null && (accessibleIds == null || accessibleIds.contains(s.getCaptain().getId())))
                 .toList();
 
         // Build a lookup of captains; optionally filter by type.
@@ -224,26 +240,74 @@ public class ReportService {
                 .map(LocalDate::toString)
                 .toList();
 
-        // Group: captainId → date → sum(totalDelivered)
-        Map<UUID, Map<String, Integer>> grid = new LinkedHashMap<>();
+        // Group: captainId → date → list of order counts (one per shift)
+        Map<UUID, Map<String, List<Integer>>> grid = new LinkedHashMap<>();
+        // Group: captainId → date → list of working hours (one per shift)
+        Map<UUID, Map<String, List<BigDecimal>>> hoursGrid = new LinkedHashMap<>();
+        // Accumulate hours and utilization per captain
+        Map<UUID, BigDecimal> hoursMap = new LinkedHashMap<>();
+        Map<UUID, List<BigDecimal>> utilizationMap = new LinkedHashMap<>();
+        // Accumulate late deductions and extra orders per captain
+        Map<UUID, BigDecimal> lateDeductionMap = new LinkedHashMap<>();
+        Map<UUID, Integer> extraOrdersMap = new LinkedHashMap<>();
+
         for (Shift shift : shifts) {
             UUID cid = shift.getCaptain().getId();
             if (!captains.containsKey(cid)) continue;
+
+            String dateKey = shift.getShiftDate().toString();
+            int delivered = nz(shift.getTotalDelivered());
             grid.computeIfAbsent(cid, k -> new LinkedHashMap<>())
-                    .merge(shift.getShiftDate().toString(), nz(shift.getTotalDelivered()), Integer::sum);
+                    .computeIfAbsent(dateKey, k -> new ArrayList<>())
+                    .add(delivered);
+
+            // Accumulate hours per day per shift
+            BigDecimal hours = shift.getWorkingHours() != null ? shift.getWorkingHours() : BigDecimal.ZERO;
+            hoursGrid.computeIfAbsent(cid, k -> new LinkedHashMap<>())
+                    .computeIfAbsent(dateKey, k -> new ArrayList<>())
+                    .add(hours.setScale(1, RoundingMode.HALF_UP));
+
+            // Accumulate total hours
+            hoursMap.merge(cid, hours, BigDecimal::add);
+
+            // Accumulate utilization values for averaging later
+            if (shift.getBusyUtilization() != null) {
+                utilizationMap.computeIfAbsent(cid, k -> new ArrayList<>())
+                        .add(shift.getBusyUtilization());
+            }
+
+            // Accumulate late deductions
+            BigDecimal lateDed = shift.getLateDeduction() != null ? shift.getLateDeduction() : BigDecimal.ZERO;
+            lateDeductionMap.merge(cid, lateDed, BigDecimal::add);
+
+            // Extra orders beyond 18 per shift
+            if (delivered > 18) {
+                extraOrdersMap.merge(cid, delivered - 18, Integer::sum);
+            }
         }
 
         // Build rows
         List<OrdersDashboardResponse.CaptainRow> rows = new ArrayList<>();
-        for (Map.Entry<UUID, Map<String, Integer>> entry : grid.entrySet()) {
+        for (Map.Entry<UUID, Map<String, List<Integer>>> entry : grid.entrySet()) {
             Captain captain = captains.get(entry.getKey());
             if (captain == null) continue;
 
-            Map<String, Integer> daily = entry.getValue();
-            int actual = daily.values().stream().mapToInt(Integer::intValue).sum();
+            Map<String, List<Integer>> daily = entry.getValue();
+            int actual = daily.values().stream()
+                    .flatMapToInt(list -> list.stream().mapToInt(Integer::intValue))
+                    .sum();
             BigDecimal rate = target > 0
                     ? BigDecimal.valueOf(actual).divide(BigDecimal.valueOf(target), 4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
+
+            int workDays = daily.size(); // number of distinct days with shifts
+
+            BigDecimal totalHours = hoursMap.getOrDefault(entry.getKey(), BigDecimal.ZERO);
+
+            List<BigDecimal> utils = utilizationMap.getOrDefault(entry.getKey(), List.of());
+            BigDecimal avgUtil = utils.isEmpty() ? BigDecimal.ZERO
+                    : utils.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(utils.size()), 4, RoundingMode.HALF_UP);
 
             rows.add(OrdersDashboardResponse.CaptainRow.builder()
                     .captainId(captain.getId())
@@ -254,6 +318,12 @@ public class ReportService {
                     .actual(actual)
                     .achievementRate(rate)
                     .dailyOrders(daily)
+                    .dailyHours(hoursGrid.getOrDefault(entry.getKey(), Map.of()))
+                    .workDays(workDays)
+                    .totalHours(totalHours.setScale(2, RoundingMode.HALF_UP))
+                    .avgBusyUtilization(avgUtil)
+                    .totalLateDeduction(lateDeductionMap.getOrDefault(entry.getKey(), BigDecimal.ZERO))
+                    .totalExtraOrders(extraOrdersMap.getOrDefault(entry.getKey(), 0))
                     .build());
         }
 
@@ -264,7 +334,8 @@ public class ReportService {
         Map<String, Integer> dailyTotals = new LinkedHashMap<>();
         for (String date : dates) {
             int dayTotal = rows.stream()
-                    .mapToInt(r -> r.getDailyOrders().getOrDefault(date, 0))
+                    .mapToInt(r -> r.getDailyOrders().getOrDefault(date, List.of()).stream()
+                            .mapToInt(Integer::intValue).sum())
                     .sum();
             dailyTotals.put(date, dayTotal);
         }

@@ -1,9 +1,13 @@
 package com.kamal.lc.payroll.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
 import com.kamal.lc.captain.entity.Captain;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -21,7 +25,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PayrollLine {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class PayrollLine implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -111,6 +117,10 @@ public class PayrollLine {
     @Builder.Default
     private BigDecimal extraOrderPay = BigDecimal.ZERO;
 
+    @Column(name = "vacation_commission", nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal vacationCommission = BigDecimal.ZERO;
+
     @Column(nullable = false, precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal gross = BigDecimal.ZERO;
@@ -136,6 +146,10 @@ public class PayrollLine {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

@@ -37,10 +37,16 @@
           </div>
         </div>
 
-        <a class="btn btn-primary" [routerLink]="['/captains', captain.id, 'edit']">
-          <span class="material-icons-round">edit</span>
-          تعديل البيانات
-        </a>
+        <div class="header-actions">
+          <a class="btn btn-primary" [routerLink]="['/captains', captain.id, 'edit']">
+            <span class="material-icons-round">edit</span>
+            تعديل البيانات
+          </a>
+          <button class="btn btn-danger" (click)="deleteCaptain()">
+            <span class="material-icons-round">delete_outline</span>
+            حذف الكابتن
+          </button>
+        </div>
       </div>
     </div>
 

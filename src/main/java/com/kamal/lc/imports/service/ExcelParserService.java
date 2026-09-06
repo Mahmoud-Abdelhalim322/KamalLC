@@ -157,9 +157,7 @@ public class ExcelParserService {
             if (!fieldToCol.containsKey("kamalCode")) {
                 throw new ExcelParseException("عمود 'ID-KSLSC' غير موجود في الملف");
             }
-            if (!fieldToCol.containsKey("ninjaId")) {
-                throw new ExcelParseException("عمود 'ID - NINJA' غير موجود في الملف");
-            }
+            // ninjaId is now optional — captains can be created without a supplier ID
             if (!fieldToCol.containsKey("captainName")) {
                 throw new ExcelParseException("عمود 'اسم الكابتن' غير موجود في الملف");
             }
@@ -222,7 +220,7 @@ public class ExcelParserService {
             // No header matched at all — say what was looked for, not just that it failed.
             throw new ExcelParseException(
                     "لم يتم التعرف على أي عمود في الملف — يجب أن يحتوي صف العناوين على "
-                            + "'ID-KSLSC' و 'ID - NINJA' و 'اسم الكابتن'");
+                            + "'ID-KSLSC' و 'اسم الكابتن'");
         }
         return fieldToCol;
     }

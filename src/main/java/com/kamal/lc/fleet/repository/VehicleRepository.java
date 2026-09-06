@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,10 +18,10 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     boolean existsByPlateNumber(String plateNumber);
 
-    @Query("SELECT v FROM Vehicle v WHERE v.plateNumber LIKE %:q% OR v.brand LIKE %:q% OR v.model LIKE %:q%")
+    @Query("SELECT v FROM Vehicle v WHERE v.plateNumber LIKE %:q% OR v.brand LIKE %:q% OR v.model LIKE %:q% OR v.vehicleCode LIKE %:q%")
     Page<Vehicle> search(String q, Pageable pageable);
 
-    @Query("SELECT v FROM Vehicle v WHERE v.status = :status AND (v.plateNumber LIKE %:q% OR v.brand LIKE %:q% OR v.model LIKE %:q%)")
+    @Query("SELECT v FROM Vehicle v WHERE v.status = :status AND (v.plateNumber LIKE %:q% OR v.brand LIKE %:q% OR v.model LIKE %:q% OR v.vehicleCode LIKE %:q%)")
     Page<Vehicle> searchByStatus(String q, String status, Pageable pageable);
 
     Page<Vehicle> findByStatus(String status, Pageable pageable);
@@ -47,4 +48,8 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     @Query("SELECT v FROM Vehicle v WHERE v.ownershipType = 'RENTED' AND v.rentalAgentName = :agent AND v.status = :status")
     Page<Vehicle> findByRentalAgentAndStatus(String agent, String status, Pageable pageable);
+
+    /** Highest vehicle code with the given prefix — for auto-generation */
+    @Query("SELECT MAX(v.vehicleCode) FROM Vehicle v WHERE v.vehicleCode LIKE CONCAT(:prefix, '%')")
+    Optional<String> findMaxCodeByPrefix(@Param("prefix") String prefix);
 }

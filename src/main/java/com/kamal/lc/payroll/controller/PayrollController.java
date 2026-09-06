@@ -51,8 +51,16 @@ public class PayrollController {
     }
 
     @GetMapping("/runs/{runId}/lines")
-    public ResponseEntity<ApiResponse<List<PayrollLineResponse>>> lines(@PathVariable UUID runId) {
-        return ResponseEntity.ok(ApiResponse.ok(payrollService.getLines(runId)));
+    public ResponseEntity<ApiResponse<List<PayrollLineResponse>>> lines(
+            @PathVariable UUID runId,
+            @RequestParam(required = false) String captainType) {
+        List<PayrollLineResponse> all = payrollService.getLines(runId);
+        if (captainType != null && !captainType.isBlank()) {
+            all = all.stream()
+                    .filter(l -> captainType.equalsIgnoreCase(l.getCaptainType()))
+                    .toList();
+        }
+        return ResponseEntity.ok(ApiResponse.ok(all));
     }
 
     @GetMapping("/runs/{runId}/staff-lines")
@@ -114,7 +122,8 @@ public class PayrollController {
     @GetMapping("/runs/{runId}/export")
     public ResponseEntity<byte[]> export(
             @PathVariable UUID runId,
-            @RequestParam(required = false) String staffType) {
+            @RequestParam(required = false) String staffType,
+            @RequestParam(required = false) String captainType) {
         PayrollRunResponse run = payrollService.get(runId);
         byte[] workbook;
         String rawFileName;
@@ -127,8 +136,16 @@ public class PayrollController {
                     : "MANAGER".equalsIgnoreCase(staffType) ? "مسير-رواتب-الإداريين-" : "مسير-رواتب-الموظفين-";
             rawFileName = prefix + run.getPeriodFrom() + ".xlsx";
         } else {
-            workbook = exportService.build(run, payrollService.getLines(runId));
-            rawFileName = "مسير-رواتب-" + run.getPeriodFrom() + ".xlsx";
+            List<PayrollLineResponse> lines = payrollService.getLines(runId);
+            if (captainType != null && !captainType.isBlank()) {
+                lines = lines.stream()
+                        .filter(l -> captainType.equalsIgnoreCase(l.getCaptainType()))
+                        .toList();
+            }
+            workbook = exportService.build(run, lines);
+            String suffix = "EMPLOYEE".equalsIgnoreCase(captainType) ? "-KSC"
+                    : "FREELANCE".equalsIgnoreCase(captainType) ? "-KSCFL" : "";
+            rawFileName = "مسير-رواتب" + suffix + "-" + run.getPeriodFrom() + ".xlsx";
         }
 
         String fileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8);
@@ -144,7 +161,8 @@ public class PayrollController {
     @GetMapping("/runs/{runId}/export-pdf")
     public ResponseEntity<byte[]> exportPdf(
             @PathVariable UUID runId,
-            @RequestParam(required = false) String staffType) {
+            @RequestParam(required = false) String staffType,
+            @RequestParam(required = false) String captainType) {
         PayrollRunResponse run = payrollService.get(runId);
         byte[] pdf;
         String rawFileName;
@@ -157,8 +175,16 @@ public class PayrollController {
                     : "MANAGER".equalsIgnoreCase(staffType) ? "مسير-رواتب-الإداريين-" : "مسير-رواتب-الموظفين-";
             rawFileName = prefix + run.getPeriodFrom() + ".pdf";
         } else {
-            pdf = pdfExportService.buildPayrollPdf(run, payrollService.getLines(runId));
-            rawFileName = "مسير-رواتب-" + run.getPeriodFrom() + ".pdf";
+            List<PayrollLineResponse> lines = payrollService.getLines(runId);
+            if (captainType != null && !captainType.isBlank()) {
+                lines = lines.stream()
+                        .filter(l -> captainType.equalsIgnoreCase(l.getCaptainType()))
+                        .toList();
+            }
+            pdf = pdfExportService.buildPayrollPdf(run, lines);
+            String suffix = "EMPLOYEE".equalsIgnoreCase(captainType) ? "-KSC"
+                    : "FREELANCE".equalsIgnoreCase(captainType) ? "-KSCFL" : "";
+            rawFileName = "مسير-رواتب" + suffix + "-" + run.getPeriodFrom() + ".pdf";
         }
 
         String fileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8);
@@ -174,10 +200,8 @@ public class PayrollController {
             @PathVariable UUID runId,
             @PathVariable UUID captainId) {
         PayrollRunResponse run = payrollService.get(runId);
-        PayrollLineResponse line = payrollService.getLines(runId).stream()
-                .filter(l -> captainId.equals(l.getCaptainId()))
-                .findFirst()
-                .orElseThrow(() -> new com.kamal.lc.common.exception.BusinessException("NOT_FOUND", "الكابتن غير موجود في المسير"));
+        // Efficient single-line retrieval instead of loading all lines (#5)
+        PayrollLineResponse line = payrollService.getLine(runId, captainId);
 
         byte[] pdf = pdfExportService.buildPayslipPdf(run, line);
         String fileName = URLEncoder.encode("مسير-فردي-" + line.getCaptainCode() + ".pdf", StandardCharsets.UTF_8);
@@ -207,11 +231,8 @@ public class PayrollController {
             @PathVariable UUID runId,
             @PathVariable UUID staffId) {
         PayrollRunResponse run = payrollService.get(runId);
-        StaffPayrollLineResponse line = payrollService.getStaffLines(runId, null).stream()
-                .filter(l -> staffId.equals(l.getStaffId()))
-                .findFirst()
-                .orElseThrow(() -> new com.kamal.lc.common.exception.BusinessException(
-                        "NOT_FOUND", "الموظف غير موجود في المسير"));
+        // Efficient single-line retrieval instead of loading all lines (#5)
+        StaffPayrollLineResponse line = payrollService.getStaffLine(runId, staffId);
 
         byte[] pdf = pdfExportService.buildStaffPayslipPdf(run, line);
         String fileName = URLEncoder.encode("مسير-فردي-" + line.getStaffCode() + ".pdf", StandardCharsets.UTF_8);

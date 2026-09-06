@@ -3,7 +3,7 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">
-        <img src="logo-ksclc.png" alt="KSCLC Logo" class="sidebar-logo-img">
+        <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="sidebar-logo-img">
       </div>
     </div>
 
@@ -15,16 +15,16 @@
              [routerLink]="item.route"
              routerLinkActive="active"
              class="nav-item"
-             [title]="item.label">
+             [title]="item.translationKey ? (item.translationKey | translate) : item.label">
             <span class="material-icons-round nav-icon">{{ item.icon }}</span>
-            <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+            <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.translationKey ? (item.translationKey | translate) : item.label }}</span>
           </a>
 
           <!-- Nav group with children -->
           <div *ngIf="item.children" class="nav-group" [class.expanded]="item.expanded">
-            <button class="nav-item nav-group-toggle" (click)="toggleGroup(item)" [title]="item.label">
+            <button class="nav-item nav-group-toggle" (click)="toggleGroup(item)" [title]="item.translationKey ? (item.translationKey | translate) : item.label">
               <span class="material-icons-round nav-icon">{{ item.icon }}</span>
-              <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+              <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.translationKey ? (item.translationKey | translate) : item.label }}</span>
               <span class="material-icons-round nav-chevron" *ngIf="!sidebarCollapsed">
                 {{ item.expanded ? 'expand_less' : 'expand_more' }}
               </span>
@@ -35,9 +35,9 @@
                    [routerLink]="child.route"
                    routerLinkActive="active"
                    class="nav-item nav-child"
-                   [title]="child.label">
+                   [title]="child.translationKey ? (child.translationKey | translate) : child.label">
                   <span class="material-icons-round nav-icon">{{ child.icon }}</span>
-                  <span class="nav-label">{{ child.label }}</span>
+                  <span class="nav-label">{{ child.translationKey ? (child.translationKey | translate) : child.label }}</span>
                 </a>
               </ng-container>
             </div>
@@ -47,9 +47,9 @@
     </nav>
 
     <div class="sidebar-footer">
-      <button class="nav-item logout-btn" (click)="logout()" title="تسجيل الخروج">
+      <button class="nav-item logout-btn" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
         <span class="material-icons-round nav-icon">logout</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">تسجيل الخروج</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.LOGOUT' | translate }}</span>
       </button>
     </div>
   </aside>
@@ -58,18 +58,21 @@
   <div class="main-wrapper">
     <!-- Header -->
     <header class="app-header">
-      <div class="header-right">
-        <button class="toggle-btn" (click)="toggleSidebar()">
+      <div class="header-start">
+        <button class="toggle-btn" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
           <span class="material-icons-round">{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</span>
         </button>
       </div>
 
-      <span class="header-company-name">شركة كمال بن خلف السلمي للخدمات اللوجستية</span>
+      <span class="header-company-name">{{ themeService.brandText() }}</span>
 
-      <div class="header-left">
+      <div class="header-end">
+        <!-- Language Switcher in Top Bar -->
+        <app-language-switcher mode="dropdown" variant="header"></app-language-switcher>
+
         <!-- Notifications Bell -->
         <div class="notifications-wrapper">
-          <button class="notif-btn" (click)="toggleNotifications()" title="الإشعارات">
+          <button class="notif-btn" (click)="toggleNotifications()" [title]="'HEADER.NOTIFICATIONS' | translate">
             <span class="material-icons-round">notifications</span>
             <span class="notif-badge" *ngIf="notificationCount > 0">{{ notificationCount > 99 ? '99+' : notificationCount }}</span>
           </button>
@@ -79,21 +82,21 @@
             <div class="notif-header">
               <h3>
                 <span class="material-icons-round">notifications_active</span>
-                الإشعارات والتنبيهات
+                {{ 'HEADER.NOTIFICATIONS' | translate }}
               </h3>
               <div class="notif-header-actions">
-                <button class="mark-all-read-btn" *ngIf="notificationCount > 0" (click)="markAllAsRead($event)" title="تحديد الكل كمقروء">
+                <button class="mark-all-read-btn" *ngIf="notificationCount > 0" (click)="markAllAsRead($event)" [title]="'HEADER.MARK_ALL_READ' | translate">
                   <span class="material-icons-round">done_all</span>
-                  تحديد الكل كمقروء
+                  {{ 'HEADER.MARK_ALL_READ' | translate }}
                 </button>
-                <span class="notif-count-chip" *ngIf="notificationCount > 0">{{ notificationCount }} جديد</span>
+                <span class="notif-count-chip" *ngIf="notificationCount > 0">{{ notificationCount }} {{ 'HEADER.NEW_COUNT' | translate }}</span>
               </div>
             </div>
 
             <div class="notif-body" (scroll)="onNotifScroll($event)">
               <div class="notif-empty" *ngIf="notifications.length === 0 && !isLoadingMore">
                 <span class="material-icons-round">check_circle_outline</span>
-                <p>لا توجد تنبيهات جديدة، جميع الوثائق سارية!</p>
+                <p>{{ 'HEADER.NOTIFICATIONS_EMPTY' | translate }}</p>
               </div>
 
               <div class="notif-item" *ngFor="let item of notifications"
@@ -117,17 +120,23 @@
                   <div class="notif-item-meta">
                     <span class="notif-doc-name">{{ item.documentLabelAr }}</span>
                     <span class="notif-status-chip" [class]="'status-' + item.status.toLowerCase()">{{ item.statusLabelAr }}</span>
-                    <span class="read-tag" *ngIf="item.isRead">مقروء</span>
+                    <span class="read-tag" *ngIf="item.isRead">{{ 'HEADER.READ' | translate }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="notif-loading-indicator" *ngIf="isLoadingMore">
                 <span class="material-icons-round spinning">sync</span>
-                <span>جاري تحميل المزيد من الإشعارات...</span>
+                <span>{{ 'HEADER.LOADING_MORE_NOTIFS' | translate }}</span>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="topbar-scope-badge" *ngIf="dataScopeInfo" [class.is-restricted]="dataScopeInfo.restricted"
+             [title]="dataScopeInfo.restricted ? ('HEADER.DATA_SCOPE_RESTRICTED_TOOLTIP' | translate) : ('HEADER.DATA_SCOPE_ALL_TOOLTIP' | translate)">
+          <span class="material-icons-round font-icon">{{ dataScopeInfo.restricted ? 'lock' : 'public' }}</span>
+          <span>{{ dataScopeInfo.restricted ? (dataScopeInfo.assignedCaptainCount + ' ' + ('HEADER.ASSIGNED_CAPTAINS' | translate)) : ('HEADER.ALL_CAPTAINS' | translate) }}</span>
         </div>
 
         <div class="user-info">

@@ -14,7 +14,8 @@ public class VehicleRequest {
     @NotBlank(message = "رقم اللوحة مطلوب")
     private String plateNumber;
 
-    private String ownershipType;  // OWNED | RENTED
+    private String ownershipType;  // OWNED | RENTED | LEASE_TO_OWN
+    private String rentalAgentCode;   // e.g. TOJI (for RENTED only)
     private String brand;
     private String model;
     private Integer year;

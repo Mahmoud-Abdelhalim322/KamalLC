@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -28,6 +29,7 @@ public class CaptainRequest {
     private String fullNameAr;
 
     private String fullNameEn;
+    private String gender;
     private String nationality;
     private LocalDate dateOfBirth;
     private String phone;
@@ -35,24 +37,82 @@ public class CaptainRequest {
     @Email(message = "البريد الإلكتروني غير صالح")
     private String email;
 
-    private String iqamaNumber;
-    private LocalDate iqamaExpiry;
+    private String placeOfResidence;
+    private String homeAddress;
+    private String jobTitle;
+    private String appId;
+
+    // Passport
     private String passportNumber;
+    private LocalDate passportIssueDate;
     private LocalDate passportExpiry;
+    private String passportStatus;
+
+    // Iqama
+    private String iqamaNumber;
+    private String iqamaOccupation;
+    private LocalDate iqamaExpiry;
+    private LocalDate iqamaExpiryRenewed;
+    private String iqamaStatus;
+
+    // Qiwa
+    private String qiwaContractNumber;
+    private String establishmentNumber;
+    private LocalDate qiwaContractStart;
+    private LocalDate qiwaContractEnd;
+    private String qiwaContractStatus;
+
+    // Work Permit
+    private LocalDate workPermitExpiry;
+    private String workPermitStatus;
+
+    // Company
+    private String affiliatedCompany;
+    private String crNumber;
+
+    // Driving Licence
     private String drivingLicenceNo;
     private LocalDate licenceExpiry;
-    private LocalDate workPermitExpiry;
+    private boolean hasLicence;
+    private String licenceStatus;
+
+    // Insurance
     private String insuranceNumber;
+    private String insuranceCategory;
+    private LocalDate insuranceIssueDate;
     private String insuranceCompany;
     private LocalDate insuranceExpiry;
-    private boolean usesOwnVehicle;
+    private String insuranceStatus;
 
-    /**
-     * Nullable on purpose: when the client leaves it out, eligibility follows
-     * {@code usesOwnVehicle} instead of being silently cleared.
-     */
+    // Other Personal
+    private String bloodType;
+    private Integer trialPeriodDays;
+
+    // Bank
+    private String bankAccountNumber;
+    private String bankName;
+
+    // Salary & Allowances
+    private BigDecimal basicSalary;
+    private BigDecimal housingAllowance;
+    private BigDecimal transportationAllowance;
+    private BigDecimal fuelAllowanceAmount;
+    private BigDecimal callInternetAllowance;
+    private BigDecimal rewardAllowance;
+
+    // Vehicle & Fuel flags
+    private boolean usesOwnVehicle;
     private Boolean fuelAllowanceEligible;
 
+    // Work Info
+    private String workPhone;
+    private String department;
+    private String section;
+    private String supervisor;
+    private String workLocation;
+    private String workWith;
+
+    // Status
     private String status;           // ACTIVE | INACTIVE | TERMINATED
     private LocalDate joinDate;
     private LocalDate leaveDate;

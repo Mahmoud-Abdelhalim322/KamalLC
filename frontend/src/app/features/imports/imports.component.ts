@@ -1,38 +1,48 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import {
-  DeductionImportPreviewResponse,
-  ImportBatchResponse, ImportBatchType, ImportPreviewResponse, ShiftImportPreviewResponse
+  ApiResponse, DeductionImportPreviewResponse,
+  ImportBatchResponse, ImportBatchType, ImportPreviewResponse, ShiftImportPreviewResponse,
+  SupplierResponse, VacationCommissionImportPreviewResponse
 } from '../../core/models/api.models';
 import { ImportService } from '../../core/services/import.service';
 import { downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
 
 /**
- * Three import domains: captain roster, supplier shift export, and supplier deductions.
+ * Four import domains: captain roster, supplier shift export, supplier deductions, and vacation commission.
  */
-type ImportTab = 'captains' | 'reports' | 'deductions';
+type ImportTab = 'captains' | 'reports' | 'deductions' | 'vacation-commission';
 
 @Component({
   selector: 'app-imports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './imports.component.html',
   styleUrls: ['./imports.component.scss']
 })
 export class ImportsComponent implements OnInit {
 
   private importService = inject(ImportService);
+  private http = inject(HttpClient);
   private router = inject(Router);
 
   activeTab: ImportTab = 'captains';
 
+  // ------------------------------------------------------------- suppliers
+
+  suppliers: SupplierResponse[] = [];
+  selectedSupplierId = '';
+  isLoadingSuppliers = false;
+
   // ------------------------------------------------- expected sheet layouts
 
   /** Mirrors TEMPLATE_HEADERS in ExcelTemplateService — the layout the parser expects. */
-  readonly captainRequiredColumns = ['ID-KSLSC', 'ID - NINJA', 'اسم الكابتن'];
+  readonly captainRequiredColumns = ['ID-KSLSC', 'اسم الكابتن'];
   readonly captainOptionalColumns = [
-    'الهاتف', 'الجنسية', 'تاريخ الميلاد', 'البريد الالكتروني',
+    'ID - NINJA', 'الهاتف', 'الجنسية', 'تاريخ الميلاد', 'البريد الالكتروني',
     'رقم الإقامة', 'انتهاء الإقامة', 'رقم الجواز', 'انتهاء الجواز',
     'رقم الرخصة', 'انتهاء الرخصة'
   ];
@@ -53,6 +63,12 @@ export class ImportsComponent implements OnInit {
     'اسم الكابتن', 'سبب الخصم / البيان', 'الهاتف/الهوية'
   ];
 
+  /** Vacation commission import column layout. */
+  readonly vacationCommissionRequiredColumns = ['Days (ksa start)', 'CAPTAIN ID', 'Amount'];
+  readonly vacationCommissionOptionalColumns = [
+    'SUPPLIER NAME', 'ZONE NAME', 'FLAG', 'NOTE'
+  ];
+
   // ------------------------------------------------------------ upload state
 
   selectedFile: File | null = null;
@@ -69,6 +85,9 @@ export class ImportsComponent implements OnInit {
   deductionPreview: DeductionImportPreviewResponse | null = null;
   deductionResult: DeductionImportPreviewResponse | null = null;
 
+  vacationCommissionPreview: VacationCommissionImportPreviewResponse | null = null;
+  vacationCommissionResult: VacationCommissionImportPreviewResponse | null = null;
+
   /**
    * The file the server identified as belonging to the other tab. Held so the user
    * can be moved there with the same file rather than having to pick it again.
@@ -84,7 +103,40 @@ export class ImportsComponent implements OnInit {
   successMessage = '';
 
   ngOnInit(): void {
+    this.loadSuppliers();
     this.loadHistory();
+  }
+
+  loadSuppliers(): void {
+    this.isLoadingSuppliers = true;
+    this.http.get<ApiResponse<SupplierResponse[]>>('/api/supplier-ids/suppliers')
+      .subscribe({
+        next: (res) => {
+          this.isLoadingSuppliers = false;
+          if (res.success && res.data) {
+            this.suppliers = res.data;
+            const savedSupplierId = localStorage.getItem('selectedImportSupplierId');
+            if (savedSupplierId && this.suppliers.some(s => s.id === savedSupplierId)) {
+              this.selectedSupplierId = savedSupplierId;
+            } else {
+              const ninja = this.suppliers.find(s => s.code === 'NINJA');
+              this.selectedSupplierId = ninja ? ninja.id : (this.suppliers[0]?.id ?? '');
+            }
+          }
+        },
+        error: () => {
+          this.isLoadingSuppliers = false;
+        }
+      });
+  }
+
+  onSupplierChange(supplierId: string): void {
+    this.selectedSupplierId = supplierId;
+    localStorage.setItem('selectedImportSupplierId', supplierId);
+  }
+
+  get selectedSupplier(): SupplierResponse | undefined {
+    return this.suppliers.find(s => s.id === this.selectedSupplierId);
   }
 
   setTab(tab: ImportTab): void {
@@ -156,8 +208,10 @@ export class ImportsComponent implements OnInit {
     this.isUploading = true;
     this.clearMessages();
 
+    const supplierId = this.selectedSupplierId;
+
     if (this.activeTab === 'captains') {
-      this.importService.previewCaptains(file).subscribe({
+      this.importService.previewCaptains(file, supplierId).subscribe({
         next: (preview) => {
           this.isUploading = false;
           this.captainPreview = preview;
@@ -165,18 +219,26 @@ export class ImportsComponent implements OnInit {
         error: (err) => this.failPreview(err, file)
       });
     } else if (this.activeTab === 'reports') {
-      this.importService.previewShifts(file).subscribe({
+      this.importService.previewShifts(file, supplierId).subscribe({
         next: (preview) => {
           this.isUploading = false;
           this.shiftPreview = preview;
         },
         error: (err) => this.failPreview(err, file)
       });
-    } else {
-      this.importService.previewDeductions(file).subscribe({
+    } else if (this.activeTab === 'deductions') {
+      this.importService.previewDeductions(file, supplierId).subscribe({
         next: (preview) => {
           this.isUploading = false;
           this.deductionPreview = preview;
+        },
+        error: (err) => this.failPreview(err, file)
+      });
+    } else {
+      this.importService.previewVacationCommission(file, supplierId).subscribe({
+        next: (preview) => {
+          this.isUploading = false;
+          this.vacationCommissionPreview = preview;
         },
         error: (err) => this.failPreview(err, file)
       });
@@ -199,36 +261,49 @@ export class ImportsComponent implements OnInit {
       ? this.captainPreview?.batchId
       : this.activeTab === 'reports'
         ? this.shiftPreview?.batchId
-        : this.deductionPreview?.batchId;
+        : this.activeTab === 'deductions'
+          ? this.deductionPreview?.batchId
+          : this.vacationCommissionPreview?.batchId;
     if (!file || !batchId) return;
 
     this.isCommitting = true;
     this.clearMessages();
 
+    const supplierId = this.selectedSupplierId;
+
     if (this.activeTab === 'captains') {
-      this.importService.commitCaptains(batchId, file).subscribe({
+      this.importService.commitCaptains(batchId, file, supplierId).subscribe({
         next: (result) => {
           this.finishCommit();
           this.captainResult = result;
-          this.successMessage = `تم استيراد ${result.newCaptains} كابتن بنجاح`;
+          this.successMessage = `تم استيراد ${result.newCaptains} كابتن بنجاح للمورد ${this.selectedSupplier?.name || ''}`;
         },
         error: (err) => this.failCommit(err)
       });
     } else if (this.activeTab === 'reports') {
-      this.importService.commitShifts(batchId, file).subscribe({
+      this.importService.commitShifts(batchId, file, supplierId).subscribe({
         next: (result) => {
           this.finishCommit();
           this.shiftResult = result;
-          this.successMessage = `تم استيراد ${result.committedRows} شفت بنجاح`;
+          this.successMessage = `تم استيراد ${result.committedRows} شفت بنجاح للمورد ${this.selectedSupplier?.name || ''}`;
         },
         error: (err) => this.failCommit(err)
       });
-    } else {
-      this.importService.commitDeductions(batchId, file).subscribe({
+    } else if (this.activeTab === 'deductions') {
+      this.importService.commitDeductions(batchId, file, supplierId).subscribe({
         next: (result) => {
           this.finishCommit();
           this.deductionResult = result;
           this.successMessage = `تم تطبيق خصومات المورد على ${result.matchedRows} شيفت بنجاح`;
+        },
+        error: (err) => this.failCommit(err)
+      });
+    } else {
+      this.importService.commitVacationCommission(batchId, file, supplierId).subscribe({
+        next: (result) => {
+          this.finishCommit();
+          this.vacationCommissionResult = result;
+          this.successMessage = `تم استيراد عمولة أوقات الإجازة لـ ${result.matchedRows} كابتن بنجاح`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -240,6 +315,7 @@ export class ImportsComponent implements OnInit {
     this.captainPreview = null;
     this.shiftPreview = null;
     this.deductionPreview = null;
+    this.vacationCommissionPreview = null;
     this.selectedFile = null;
     this.loadHistory();
   }
@@ -254,9 +330,11 @@ export class ImportsComponent implements OnInit {
     this.captainPreview = null;
     this.shiftPreview = null;
     this.deductionPreview = null;
+    this.vacationCommissionPreview = null;
     this.captainResult = null;
     this.shiftResult = null;
     this.deductionResult = null;
+    this.vacationCommissionResult = null;
     this.clearMessages();
   }
 
@@ -279,7 +357,8 @@ export class ImportsComponent implements OnInit {
   get batchType(): ImportBatchType {
     if (this.activeTab === 'captains') return 'CAPTAINS';
     if (this.activeTab === 'reports') return 'SHIFTS';
-    return 'SUPPLIER_DEDUCTIONS';
+    if (this.activeTab === 'deductions') return 'SUPPLIER_DEDUCTIONS';
+    return 'VACATION_COMMISSION';
   }
 
   // --------------------------------------------------------------- template
@@ -293,13 +372,17 @@ export class ImportsComponent implements OnInit {
       ? this.importService.downloadTemplate()
       : this.activeTab === 'reports'
         ? this.importService.downloadShiftTemplate()
-        : this.importService.downloadDeductionTemplate();
+        : this.activeTab === 'deductions'
+          ? this.importService.downloadDeductionTemplate()
+          : this.importService.downloadVacationCommissionTemplate();
 
     const fileName = this.activeTab === 'captains'
       ? 'نموذج-استيراد-الكباتن.xlsx'
       : this.activeTab === 'reports'
         ? 'نموذج-استيراد-تقارير-الموردين.xlsx'
-        : 'نموذج-استيراد-خصومات-المورد.xlsx';
+        : this.activeTab === 'deductions'
+          ? 'نموذج-استيراد-خصومات-المورد.xlsx'
+          : 'نموذج-استيراد-عمولة-أوقات-الإجازة.xlsx';
 
     request.subscribe({
       next: (blob) => downloadBlob(blob, fileName),

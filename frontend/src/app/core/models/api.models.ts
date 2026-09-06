@@ -21,6 +21,44 @@ export interface LoginResponse {
   displayName: string | null;
   expiresIn: number;
   permissions: string[];
+  // Multi-tenant fields
+  tenantId: string | null;
+  tenantName: string | null;
+  tenantLogo: string | null;
+  tenantPrimaryColor: string | null;
+  tenantSecondaryColor: string | null;
+}
+
+export interface UserAllocationSummary {
+  userId: string;
+  username: string;
+  displayName: string;
+  role: string;
+  dataScope: 'ALL_CAPTAINS' | 'ASSIGNED_ONLY';
+  assignedCaptainCount: number;
+}
+
+export interface CaptainSimple {
+  id: string;
+  fullNameAr: string;
+  kamalCode: string;
+  phone: string;
+  status: string;
+}
+
+export interface UserAllocationDetail {
+  userId: string;
+  username: string;
+  displayName: string;
+  role: string;
+  dataScope: 'ALL_CAPTAINS' | 'ASSIGNED_ONLY';
+  assignedCaptains: CaptainSimple[];
+  availableCaptains: CaptainSimple[];
+}
+
+export interface UpdateUserAllocationRequest {
+  dataScope: 'ALL_CAPTAINS' | 'ASSIGNED_ONLY';
+  captainIds: string[];
 }
 
 // Dashboard
@@ -121,22 +159,74 @@ export interface CaptainDetailResponse {
   captainType: string;
   fullNameAr: string;
   fullNameEn: string | null;
+  gender: string | null;
   nationality: string | null;
   dateOfBirth: string | null;
   phone: string | null;
   email: string | null;
-  iqamaNumber: string | null;
-  iqamaExpiry: string | null;
+  placeOfResidence: string | null;
+  homeAddress: string | null;
+  jobTitle: string | null;
+  appId: string | null;
+  // Passport
   passportNumber: string | null;
+  passportIssueDate: string | null;
   passportExpiry: string | null;
+  passportStatus: string | null;
+  // Iqama
+  iqamaNumber: string | null;
+  iqamaOccupation: string | null;
+  iqamaExpiry: string | null;
+  iqamaExpiryRenewed: string | null;
+  iqamaStatus: string | null;
+  // Qiwa
+  qiwaContractNumber: string | null;
+  establishmentNumber: string | null;
+  qiwaContractStart: string | null;
+  qiwaContractEnd: string | null;
+  qiwaContractStatus: string | null;
+  // Work Permit
+  workPermitExpiry: string | null;
+  workPermitStatus: string | null;
+  // Company
+  affiliatedCompany: string | null;
+  crNumber: string | null;
+  // Driving Licence
   drivingLicenceNo: string | null;
   licenceExpiry: string | null;
-  workPermitExpiry: string | null;
+  hasLicence: boolean;
+  licenceStatus: string | null;
+  // Insurance
   insuranceNumber: string | null;
+  insuranceCategory: string | null;
+  insuranceIssueDate: string | null;
   insuranceCompany: string | null;
   insuranceExpiry: string | null;
+  insuranceStatus: string | null;
+  // Other Personal
+  bloodType: string | null;
+  trialPeriodDays: number | null;
+  // Bank
+  bankAccountNumber: string | null;
+  bankName: string | null;
+  // Salary & Allowances
+  basicSalary: number | null;
+  housingAllowance: number | null;
+  transportationAllowance: number | null;
+  fuelAllowanceAmount: number | null;
+  callInternetAllowance: number | null;
+  rewardAllowance: number | null;
+  // Vehicle & Fuel flags
   usesOwnVehicle: boolean;
   fuelAllowanceEligible: boolean;
+  // Work Info
+  workPhone: string | null;
+  department: string | null;
+  section: string | null;
+  supervisor: string | null;
+  workLocation: string | null;
+  workWith: string | null;
+  // Status
   status: string;
   joinDate: string | null;
   leaveDate: string | null;
@@ -164,22 +254,74 @@ export interface CaptainRequest {
   captainType: string;
   fullNameAr: string;
   fullNameEn: string | null;
+  gender: string | null;
   nationality: string | null;
   dateOfBirth: string | null;
   phone: string | null;
   email: string | null;
-  iqamaNumber: string | null;
-  iqamaExpiry: string | null;
+  placeOfResidence: string | null;
+  homeAddress: string | null;
+  jobTitle: string | null;
+  appId: string | null;
+  // Passport
   passportNumber: string | null;
+  passportIssueDate: string | null;
   passportExpiry: string | null;
+  passportStatus: string | null;
+  // Iqama
+  iqamaNumber: string | null;
+  iqamaOccupation: string | null;
+  iqamaExpiry: string | null;
+  iqamaExpiryRenewed: string | null;
+  iqamaStatus: string | null;
+  // Qiwa
+  qiwaContractNumber: string | null;
+  establishmentNumber: string | null;
+  qiwaContractStart: string | null;
+  qiwaContractEnd: string | null;
+  qiwaContractStatus: string | null;
+  // Work Permit
+  workPermitExpiry: string | null;
+  workPermitStatus: string | null;
+  // Company
+  affiliatedCompany: string | null;
+  crNumber: string | null;
+  // Driving Licence
   drivingLicenceNo: string | null;
   licenceExpiry: string | null;
-  workPermitExpiry: string | null;
+  hasLicence: boolean;
+  licenceStatus: string | null;
+  // Insurance
   insuranceNumber: string | null;
+  insuranceCategory: string | null;
+  insuranceIssueDate: string | null;
   insuranceCompany: string | null;
   insuranceExpiry: string | null;
+  insuranceStatus: string | null;
+  // Other Personal
+  bloodType: string | null;
+  trialPeriodDays: number | null;
+  // Bank
+  bankAccountNumber: string | null;
+  bankName: string | null;
+  // Salary & Allowances
+  basicSalary: number | null;
+  housingAllowance: number | null;
+  transportationAllowance: number | null;
+  fuelAllowanceAmount: number | null;
+  callInternetAllowance: number | null;
+  rewardAllowance: number | null;
+  // Vehicle & Fuel flags
   usesOwnVehicle: boolean;
   fuelAllowanceEligible: boolean;
+  // Work Info
+  workPhone: string | null;
+  department: string | null;
+  section: string | null;
+  supervisor: string | null;
+  workLocation: string | null;
+  workWith: string | null;
+  // Status
   status: string;
   joinDate: string | null;
   leaveDate: string | null;
@@ -245,10 +387,12 @@ export interface ImportBatchResponse {
   /** Shift batches only — the span of days the file covered. */
   periodFrom: string | null;
   periodTo: string | null;
+  supplierId?: string | null;
+  supplierName?: string | null;
 }
 
 /** Which importer produced a batch; the history never mixes. */
-export type ImportBatchType = 'CAPTAINS' | 'SHIFTS' | 'SUPPLIER_DEDUCTIONS';
+export type ImportBatchType = 'CAPTAINS' | 'SHIFTS' | 'SUPPLIER_DEDUCTIONS' | 'VACATION_COMMISSION';
 
 export interface DeductionImportRowPreview {
   rowNumber: number;
@@ -273,6 +417,52 @@ export interface DeductionImportPreviewResponse {
   totalDeductionAmount: number;
   issues: ImportIssue[];
   rows: DeductionImportRowPreview[];
+}
+
+export interface VacationCommissionRowPreview {
+  rowNumber: number;
+  daysCode: string;
+  externalCaptainId: string;
+  captainCode: string | null;
+  captainName: string | null;
+  supplierName: string | null;
+  zoneName: string | null;
+  flag: string | null;
+  note: string | null;
+  amount: number;
+  vacationDate: string;
+  matched: boolean;
+  matchingScope: string;
+  statusMessage: string;
+}
+
+export interface VacationCommissionImportPreviewResponse {
+  batchId: string;
+  fileName: string;
+  totalRows: number;
+  matchedRows: number;
+  unmatchedRows: number;
+  totalAmount: number;
+  issues: ImportIssue[];
+  rows: VacationCommissionRowPreview[];
+}
+
+export interface VacationCommissionResponse {
+  id: string;
+  daysCode: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  externalCaptainId: string;
+  captainId: string | null;
+  captainCode: string | null;
+  captainName: string | null;
+  zoneName: string | null;
+  flag: string | null;
+  note: string | null;
+  amount: number;
+  vacationDate: string;
+  importBatchId: string | null;
+  createdAt: string;
 }
 
 // Supplier
@@ -476,6 +666,7 @@ export interface PayrollLineResponse {
   carAllowances: number;
   targetBonus: number;
   extraOrderPay: number;
+  vacationCommission: number;
   gross: number;
   adjustmentsTotal: number;
   net: number;
@@ -641,7 +832,20 @@ export interface OrdersCaptainRow {
   target: number;
   actual: number;
   achievementRate: number;
-  dailyOrders: Record<string, number>;
+  /** date → list of order counts per shift on that day */
+  dailyOrders: Record<string, number[]>;
+  /** date → list of working hours per shift on that day */
+  dailyHours: Record<string, number[]>;
+  /** Number of distinct days the captain attended */
+  workDays: number;
+  /** Total working hours across all shifts in the period */
+  totalHours: number;
+  /** Average busy utilization across all shifts */
+  avgBusyUtilization: number;
+  /** Total late deduction across all shifts in the period */
+  totalLateDeduction: number;
+  /** Total extra orders beyond 18 across all shifts */
+  totalExtraOrders: number;
 }
 
 export interface OrdersDailySummary {
@@ -683,8 +887,10 @@ export type SettingsByGroup = Record<string, SettingResponse[]>;
 
 export interface VehicleResponse {
   id: string;
+  vehicleCode: string;
   plateNumber: string;
   ownershipType: string;
+  rentalAgentCode: string | null;
   brand: string | null;
   model: string | null;
   year: number | null;
@@ -713,6 +919,7 @@ export interface VehicleResponse {
 export interface VehicleRequest {
   plateNumber: string;
   ownershipType: string;
+  rentalAgentCode: string | null;
   brand: string | null;
   model: string | null;
   year: number | null;
@@ -967,6 +1174,10 @@ export interface StaffDetailResponse {
   bankName: string | null;
   basicSalary: number;
   housingAllowance: number;
+  transportationAllowance: number | null;
+  fuelAllowanceAmount: number | null;
+  callInternetAllowance: number | null;
+  rewardAllowance: number | null;
   otherAllowances: number;
   status: string;
   joinDate: string | null;
@@ -1041,6 +1252,10 @@ export interface StaffRequest {
   bankName: string | null;
   basicSalary: number | null;
   housingAllowance: number | null;
+  transportationAllowance: number | null;
+  fuelAllowanceAmount: number | null;
+  callInternetAllowance: number | null;
+  rewardAllowance: number | null;
   otherAllowances: number | null;
   status: string | null;
   joinDate: string | null;
@@ -1284,4 +1499,175 @@ export interface LoanRequest {
 export interface LoanPaymentRequest {
   amount: number;
   notes: string | null;
+}
+
+// ---------------------------------------------------------------- Platform Management (SaaS)
+
+export interface TenantResponse {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  status: string;
+  trialEndsAt: string | null;
+  createdAt: string | null;
+  userCount: number;
+  captainCount: number;
+  currentPlan: string | null;
+  subscriptionStatus: string | null;
+  subscriptionEndDate: string | null;
+}
+
+export interface CreateTenantRequest {
+  name: string;
+  slug: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  logo: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  adminUsername: string;
+  adminPassword: string;
+  adminDisplayName: string | null;
+  planId: string | null;
+  billingCycle: string | null;
+}
+
+export interface UpdateTenantRequest {
+  name: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  logo: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  newPassword?: string | null;
+}
+
+export interface TenantStatusRequest {
+  status: string;
+  reason: string | null;
+}
+
+export interface PlanResponse {
+  id: string;
+  name: string;
+  nameAr: string;
+  description: string | null;
+  descriptionAr: string | null;
+  monthlyPrice: number;
+  yearlyPrice: number | null;
+  active: boolean;
+  features: string | null;
+  sortOrder: number;
+  tenantCount: number;
+}
+
+export interface PlanRequest {
+  name: string;
+  nameAr: string;
+  description: string | null;
+  descriptionAr: string | null;
+  monthlyPrice: number;
+  yearlyPrice: number | null;
+  features: string | null;
+  sortOrder: number;
+}
+
+export interface SubscriptionResponse {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  planId: string;
+  planName: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  paidAmount: number | null;
+  billingCycle: string;
+  autoRenew: boolean;
+  notes: string | null;
+  createdAt: string | null;
+}
+
+export interface CreateSubscriptionRequest {
+  tenantId: string;
+  planId: string;
+  startDate: string | null;
+  endDate: string | null;
+  paidAmount: number | null;
+  billingCycle: string;
+  autoRenew: boolean;
+  notes: string | null;
+}
+
+export interface InvoiceResponse {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  invoiceNumber: string;
+  amount: number;
+  taxAmount: number;
+  totalAmount: number;
+  status: string;
+  dueDate: string;
+  paidAt: string | null;
+  paymentMethod: string | null;
+  paymentRef: string | null;
+  notes: string | null;
+  createdAt: string | null;
+}
+
+export interface CreateInvoiceRequest {
+  tenantId: string;
+  subscriptionId: string | null;
+  amount: number;
+  taxAmount: number | null;
+  dueDate: string | null;
+  notes: string | null;
+}
+
+export interface PayInvoiceRequest {
+  paymentMethod: string;
+  paymentRef: string | null;
+  notes: string | null;
+}
+
+export interface AuditLogResponse {
+  id: string;
+  actorUsername: string;
+  actorRole: string;
+  tenantId: string | null;
+  tenantName: string | null;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  details: string | null;
+  ipAddress: string | null;
+  createdAt: string | null;
+}
+
+export interface PlatformDashboardResponse {
+  totalTenants: number;
+  activeTenants: number;
+  suspendedTenants: number;
+  trialTenants: number;
+  totalUsers: number;
+  totalCaptains: number;
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  totalRevenue: number;
+  monthlyRecurringRevenue: number;
+  pendingInvoices: number;
+  pendingInvoiceAmount: number;
+}
+
+export interface ChangePasswordRequest {
+  newPassword: string;
 }

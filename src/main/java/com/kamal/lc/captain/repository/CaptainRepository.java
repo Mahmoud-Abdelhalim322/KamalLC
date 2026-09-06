@@ -43,18 +43,26 @@ public interface CaptainRepository extends JpaRepository<Captain, UUID> {
             + "AND a.supplierIdSlot.externalId LIKE %:query%))")
     Page<Captain> searchByType(String query, String type, Pageable pageable);
 
+
+
     long countByStatus(String status);
 
     List<Captain> findByStatus(String status);
 
-    /**
-     * The page of captains whose documents raised an alert.
-     *
-     * <p>The set of ids comes from
-     * {@link com.kamal.lc.captain.expiry.DocumentAlertEvaluator}, so the filter and the badge
-     * on the row always agree about what an alert is.
-     */
+    List<Captain> findByTenantId(UUID tenantId);
+
     Page<Captain> findByIdIn(Collection<UUID> ids, Pageable pageable);
+
+    Page<Captain> findByIdInAndCaptainType(Collection<UUID> ids, String captainType, Pageable pageable);
+
+    @Query("SELECT c FROM Captain c WHERE c.id IN :ids AND (c.fullNameAr LIKE %:query% OR c.kamalCode LIKE %:query% "
+            + "OR EXISTS (SELECT 1 FROM SupplierIdAssignment a WHERE a.captain = c AND a.supplierIdSlot.externalId LIKE %:query%))")
+    Page<Captain> searchAndIdIn(@Param("query") String query, @Param("ids") Collection<UUID> ids, Pageable pageable);
+
+    @Query("SELECT c FROM Captain c WHERE c.id IN :ids AND c.captainType = :type AND (c.fullNameAr LIKE %:query% "
+            + "OR c.kamalCode LIKE %:query% "
+            + "OR EXISTS (SELECT 1 FROM SupplierIdAssignment a WHERE a.captain = c AND a.supplierIdSlot.externalId LIKE %:query%))")
+    Page<Captain> searchByTypeAndIdIn(@Param("query") String query, @Param("type") String type, @Param("ids") Collection<UUID> ids, Pageable pageable);
 
     /** All existing codes sharing a prefix — used to compute the next free sequence number. */
     @Query("SELECT c.kamalCode FROM Captain c WHERE c.kamalCode LIKE CONCAT(:prefix, '%')")

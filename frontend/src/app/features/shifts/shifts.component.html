@@ -57,7 +57,7 @@
 
     <div class="search-box">
       <span class="material-icons-round">search</span>
-      <input type="text" placeholder="ابحث برقم الشفت أو معرف المورد أو الاسم"
+      <input type="text" placeholder="ابحث برقم الشفت أو ID-APP أو الاسم"
              [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keyup.enter)="load()">
     </div>
   </div>
@@ -76,19 +76,86 @@
     <p>جارٍ التحميل…</p>
   </div>
 
-  <div class="empty-state card" *ngIf="!isLoading && shifts.length === 0">
+  <div class="empty-state card" *ngIf="!isLoading && activeTab !== 'vacation-days' && shifts.length === 0">
     <span class="material-icons-round">event_busy</span>
     <h3>لا توجد شيفتات في هذه الفترة</h3>
     <p>ارفع ملف الشيفتات من صفحة استيراد البيانات لتظهر هنا.</p>
   </div>
 
-  <div class="table-wrap card" *ngIf="!isLoading && shifts.length > 0">
+  <div class="empty-state card" *ngIf="!isLoading && activeTab === 'vacation-days' && vacationCommissions.length === 0">
+    <span class="material-icons-round">beach_access</span>
+    <h3>لا توجد سجلات لعمولة أوقات الإجازة في هذه الفترة</h3>
+    <p>استورد شيت عمولة الإجازة من صفحة الاستيرادات لتسجيل مبالغ الإجازة للكباتن.</p>
+  </div>
+
+  <!-- ======================================= VACATION COMMISSIONS TABLE -->
+  <div class="table-wrap card" *ngIf="!isLoading && activeTab === 'vacation-days' && vacationCommissions.length > 0">
+    <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; margin: 1rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="color: #2e7d32; font-size: 1.1rem;">إجمالي عمولة أوقات الإجازة في الفترة:</strong>
+        <span style="font-size: 1.25rem; font-weight: bold; margin-right: 0.5rem; color: #1b5e20;">
+          {{ totalVacationCommissionsAmount | number:'1.2-2' }} ر.س
+        </span>
+      </div>
+      <span class="muted">{{ totalElements }} سجل</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>رقم الشيفت (Days)</th>
+          <th>تاريخ الاستيراد</th>
+          <th>المورد</th>
+          <th>الكابتن</th>
+          <th>ID الكابتن</th>
+          <th>المنطقة</th>
+          <th>الوسم / FLAG</th>
+          <th>الملاحظة / NOTE</th>
+          <th>المبلغ</th>
+          <th *ngIf="canManage">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let vc of vacationCommissions">
+          <td><code>{{ vc.daysCode }}</code></td>
+          <td class="nowrap">{{ vc.vacationDate }}</td>
+          <td>
+            <span class="chip chip-required" *ngIf="vc.supplierName">{{ vc.supplierName }}</span>
+            <span class="muted" *ngIf="!vc.supplierName">—</span>
+          </td>
+          <td>
+            <div class="name-cell" *ngIf="vc.captainName">
+              <span class="code-cell">{{ vc.captainCode }}</span>
+              {{ vc.captainName }}
+            </div>
+            <span class="unlinked" *ngIf="!vc.captainName">
+              <span class="material-icons-round">link_off</span> غير مربوط
+            </span>
+          </td>
+          <td class="mono">{{ vc.externalCaptainId }}</td>
+          <td class="nowrap">{{ vc.zoneName || '—' }}</td>
+          <td><span class="chip chip-required" *ngIf="vc.flag">{{ vc.flag }}</span></td>
+          <td>{{ vc.note || '—' }}</td>
+          <td class="strong" style="color: #2e7d32; font-size: 1.05rem;">
+            +{{ vc.amount | number:'1.2-2' }} ر.س
+          </td>
+          <td *ngIf="canManage">
+            <button class="btn btn-sm btn-outline btn-danger" (click)="deleteVacationCommission(vc.id)" title="حذف">
+              <span class="material-icons-round">delete</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ======================================================== SHIFTS TABLE -->
+  <div class="table-wrap card" *ngIf="!isLoading && activeTab !== 'vacation-days' && shifts.length > 0">
     <table class="data-table">
       <thead>
         <tr>
           <th>التاريخ</th>
           <th>الكابتن</th>
-          <th>معرف المورد</th>
+          <th>ID-APP</th>
           <th>المنطقة</th>
           <th>الحالة</th>
           <th>الساعات</th>
@@ -206,8 +273,8 @@
         </div>
         <div class="kv-grid">
           <div class="kv"><span>الاسم</span><b class="val-name">{{ selected.captainName || 'غير مربوط' }}</b></div>
-          <div class="kv"><span>كود كمال</span><b class="code-cell">{{ selected.captainCode || '—' }}</b></div>
-          <div class="kv"><span>معرف المورد</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
+          <div class="kv"><span>ID-KSLSC</span><b class="code-cell">{{ selected.captainCode || '—' }}</b></div>
+          <div class="kv"><span>ID-APP</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
           <div class="kv"><span>الاسم لدى المورد</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
         </div>
       </section>

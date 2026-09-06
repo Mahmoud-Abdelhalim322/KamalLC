@@ -50,6 +50,7 @@ public class PayrollExportService {
             "بدل سيارة\nCAR ALLOWANCE",
             "تحقيق التارقيت\nACHIEVE THE TARGET",
             "بعد التارقيت\nAFTER TARGET",
+            "عمولة الإجازة\nVACATION COMMISSION",
             "مجموع الراتب\nTOTAL SALARY",
             "بدل سكن\nHOUSING ALLOWANCE",
             "مكافأة\nREWARD",
@@ -129,6 +130,7 @@ public class PayrollExportService {
                 number(row, c++, line.getCarAllowances(), moneyStyle);
                 number(row, c++, line.getTargetBonus(), moneyStyle);
                 number(row, c++, line.getExtraOrderPay(), moneyStyle);
+                number(row, c++, line.getVacationCommission(), moneyStyle);
                 number(row, c++, line.getGross(), moneyStyle);
                 number(row, c++, adjustment(line, "HOUSING_ALLOWANCE"), moneyStyle);
                 number(row, c++, adjustment(line, "REWARD"), moneyStyle);
@@ -174,10 +176,11 @@ public class PayrollExportService {
                 new Total(14, PayrollLineResponse::getCarAllowances),
                 new Total(15, PayrollLineResponse::getTargetBonus),
                 new Total(16, PayrollLineResponse::getExtraOrderPay),
-                new Total(17, PayrollLineResponse::getGross),
-                new Total(23, PayrollLineResponse::getNet),
-                new Total(24, PayrollLineResponse::getSupplierRevenueTotal),
-                new Total(25, PayrollLineResponse::getMargin));
+                new Total(17, PayrollLineResponse::getVacationCommission),
+                new Total(18, PayrollLineResponse::getGross),
+                new Total(24, PayrollLineResponse::getNet),
+                new Total(25, PayrollLineResponse::getSupplierRevenueTotal),
+                new Total(26, PayrollLineResponse::getMargin));
 
         for (Total total : totals) {
             BigDecimal sum = lines.stream().map(total.field())
@@ -209,7 +212,7 @@ public class PayrollExportService {
     }
 
     private static String typeLabel(String captainType) {
-        return "FREELANCE".equalsIgnoreCase(captainType) ? "فريلانس" : "كفالة";
+        return "FREELANCE".equalsIgnoreCase(captainType) ? "KSCFL" : "KSC";
     }
 
     private static String statusLabel(String status) {

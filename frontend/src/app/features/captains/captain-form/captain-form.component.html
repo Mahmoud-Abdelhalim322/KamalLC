@@ -5,7 +5,7 @@
       العودة لقائمة الكباتن
     </a>
     <h1 class="page-title">{{ isEditMode ? 'تعديل بيانات الكابتن' : 'إضافة كابتن جديد' }}</h1>
-    <p class="page-subtitle" *ngIf="isEditMode">كود كمال: <span class="code">{{ kamalCode }}</span></p>
+    <p class="page-subtitle" *ngIf="isEditMode">ID-KSLSC: <span class="code">{{ kamalCode }}</span></p>
   </div>
 
   <div class="loading-container" *ngIf="isLoading">
@@ -36,13 +36,13 @@
         <div class="form-group">
           <label class="form-label">نوع الكابتن *</label>
           <select class="form-input" formControlName="captainType" (change)="onTypeChange()">
-            <option value="EMPLOYEE">كفالة</option>
-            <option value="FREELANCE">فريلانس</option>
+            <option value="EMPLOYEE">KSC</option>
+            <option value="FREELANCE">KSCFL</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">كود كمال</label>
+          <label class="form-label">ID-KSLSC</label>
           <input class="form-input readonly-input" [value]="kamalCode || '...'" readonly>
           <p class="field-hint">
             <span class="material-icons-round">auto_awesome</span>
@@ -63,6 +63,15 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">الجنس</label>
+          <select class="form-input" formControlName="gender">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="MALE">ذكر</option>
+            <option value="FEMALE">أنثى</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">الجنسية</label>
           <input class="form-input" formControlName="nationality" placeholder="مثال: مصري">
         </div>
@@ -73,75 +82,284 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">فصيلة الدم</label>
+          <select class="form-input" formControlName="bloodType">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== بيانات التواصل ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">phone</span>
+        بيانات التواصل والإقامة
+      </h2>
+      <div class="fields-grid">
+        <div class="form-group">
           <label class="form-label">رقم الجوال</label>
           <input class="form-input" formControlName="phone" placeholder="05xxxxxxxx" dir="ltr">
         </div>
-
         <div class="form-group">
           <label class="form-label">البريد الإلكتروني</label>
           <input class="form-input" type="email" formControlName="email"
                  [class.error]="isInvalid('email')" dir="ltr" placeholder="name@example.com">
           <p class="form-error" *ngIf="isInvalid('email')">البريد الإلكتروني غير صالح</p>
         </div>
+        <div class="form-group">
+          <label class="form-label">مكان الإقامة</label>
+          <input class="form-input" formControlName="placeOfResidence" placeholder="المدينة">
+        </div>
+        <div class="form-group">
+          <label class="form-label">العنوان</label>
+          <input class="form-input" formControlName="homeAddress" placeholder="الحي / الشارع">
+        </div>
+        <div class="form-group">
+          <label class="form-label">المسمى الوظيفي</label>
+          <input class="form-input" formControlName="jobTitle" placeholder="كابتن توصيل">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم تطبيق النينجا</label>
+          <input class="form-input" formControlName="appId" dir="ltr">
+        </div>
       </div>
     </section>
 
-    <!-- ===== الوثائق الرسمية ===== -->
+    <!-- ===== جواز السفر ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">flight</span>
+        جواز السفر
+      </h2>
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">رقم الجواز</label>
+          <input class="form-input" formControlName="passportNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ الإصدار</label>
+          <input class="form-input" type="date" formControlName="passportIssueDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ الانتهاء</label>
+          <input class="form-input" type="date" formControlName="passportExpiry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select class="form-input" formControlName="passportStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== الإقامة ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">contact_page</span>
-        الوثائق الرسمية
+        الإقامة
       </h2>
-
       <div class="fields-grid">
         <div class="form-group">
           <label class="form-label">رقم الإقامة</label>
           <input class="form-input" formControlName="iqamaNumber" dir="ltr">
         </div>
-
+        <div class="form-group">
+          <label class="form-label">المهنة في الإقامة</label>
+          <input class="form-input" formControlName="iqamaOccupation">
+        </div>
         <div class="form-group">
           <label class="form-label">تاريخ انتهاء الإقامة</label>
           <input class="form-input" type="date" formControlName="iqamaExpiry">
         </div>
-
         <div class="form-group">
-          <label class="form-label">رقم الجواز</label>
-          <input class="form-input" formControlName="passportNumber" dir="ltr">
+          <label class="form-label">تاريخ الانتهاء بعد التجديد</label>
+          <input class="form-input" type="date" formControlName="iqamaExpiryRenewed">
         </div>
-
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء الجواز</label>
-          <input class="form-input" type="date" formControlName="passportExpiry">
+          <label class="form-label">حالة الإقامة</label>
+          <select class="form-input" formControlName="iqamaStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
         </div>
+      </div>
+    </section>
 
+    <!-- ===== عقد قوى ورخصة العمل ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">description</span>
+        عقد قوى ورخصة العمل
+      </h2>
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">رقم عقد قوى</label>
+          <input class="form-input" formControlName="qiwaContractNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم المنشأة</label>
+          <input class="form-input" formControlName="establishmentNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بداية عقد قوى</label>
+          <input class="form-input" type="date" formControlName="qiwaContractStart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نهاية عقد قوى</label>
+          <input class="form-input" type="date" formControlName="qiwaContractEnd">
+        </div>
+        <div class="form-group">
+          <label class="form-label">حالة عقد قوى</label>
+          <select class="form-input" formControlName="qiwaContractStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ انتهاء رخصة العمل</label>
+          <input class="form-input" type="date" formControlName="workPermitExpiry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">حالة رخصة العمل</label>
+          <select class="form-input" formControlName="workPermitStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الشركة التابع لها</label>
+          <input class="form-input" formControlName="affiliatedCompany">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم السجل التجاري</label>
+          <input class="form-input" formControlName="crNumber" dir="ltr">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== الرخصة والتأمين ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">verified_user</span>
+        رخصة القيادة والتأمين
+      </h2>
+      <div class="fields-grid">
         <div class="form-group">
           <label class="form-label">رقم رخصة القيادة</label>
           <input class="form-input" formControlName="drivingLicenceNo" dir="ltr">
         </div>
-
         <div class="form-group">
           <label class="form-label">تاريخ انتهاء الرخصة</label>
           <input class="form-input" type="date" formControlName="licenceExpiry">
         </div>
-
-        <div class="form-group">
-          <label class="form-label">تاريخ انتهاء رخصة العمل (قوى)</label>
-          <input class="form-input" type="date" formControlName="workPermitExpiry">
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="hasLicence">
+            <span>يحمل رخصة قيادة</span>
+          </label>
         </div>
-
+        <div class="form-group">
+          <label class="form-label">حالة الرخصة</label>
+          <select class="form-input" formControlName="licenceStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
+        </div>
         <div class="form-group">
           <label class="form-label">رقم التأمين</label>
           <input class="form-input" formControlName="insuranceNumber" dir="ltr">
         </div>
-
+        <div class="form-group">
+          <label class="form-label">فئة التأمين</label>
+          <input class="form-input" formControlName="insuranceCategory">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ إصدار التأمين</label>
+          <input class="form-input" type="date" formControlName="insuranceIssueDate">
+        </div>
         <div class="form-group">
           <label class="form-label">شركة التأمين الطبي</label>
           <input class="form-input" formControlName="insuranceCompany">
         </div>
-
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء التأمين الطبي</label>
+          <label class="form-label">تاريخ انتهاء التأمين</label>
           <input class="form-input" type="date" formControlName="insuranceExpiry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">حالة التأمين</label>
+          <select class="form-input" formControlName="insuranceStatus">
+            <option [ngValue]="null">— اختر —</option>
+            <option value="ساري">ساري</option>
+            <option value="منتهي">منتهي</option>
+            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== البيانات البنكية والراتب ===== -->
+    <section class="form-card">
+      <h2 class="card-title">
+        <span class="material-icons-round">account_balance</span>
+        البيانات البنكية والبدلات
+      </h2>
+      <div class="fields-grid">
+        <div class="form-group">
+          <label class="form-label">رقم الحساب البنكي</label>
+          <input class="form-input" formControlName="bankAccountNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم البنك</label>
+          <input class="form-input" formControlName="bankName">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الراتب الأساسي</label>
+          <input class="form-input" type="number" formControlName="basicSalary" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بدل السكن</label>
+          <input class="form-input" type="number" formControlName="housingAllowance" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بدل النقل</label>
+          <input class="form-input" type="number" formControlName="transportationAllowance" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بدل محروقات</label>
+          <input class="form-input" type="number" formControlName="fuelAllowanceAmount" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بدل اتصالات</label>
+          <input class="form-input" type="number" formControlName="callInternetAllowance" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">مكافأة</label>
+          <input class="form-input" type="number" formControlName="rewardAllowance" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">فترة التجربة (أيام)</label>
+          <input class="form-input" type="number" formControlName="trialPeriodDays" dir="ltr">
         </div>
       </div>
     </section>
@@ -157,8 +375,8 @@
         <div class="form-group">
           <label class="form-label">الحالة</label>
           <select class="form-input" formControlName="status">
-            <option value="ACTIVE">نشط</option>
-            <option value="INACTIVE">غير نشط</option>
+            <option value="ACTIVE">ساري</option>
+            <option value="INACTIVE">علي وشك الانتهاء</option>
             <option value="TERMINATED">منتهي</option>
           </select>
         </div>
@@ -173,6 +391,36 @@
           <input class="form-input" type="date" formControlName="leaveDate">
         </div>
 
+        <div class="form-group">
+          <label class="form-label">هاتف العمل</label>
+          <input class="form-input" formControlName="workPhone" dir="ltr">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">القسم</label>
+          <input class="form-input" formControlName="department">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الإدارة</label>
+          <input class="form-input" formControlName="section">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">المشرف</label>
+          <input class="form-input" formControlName="supervisor">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">موقع العمل</label>
+          <input class="form-input" formControlName="workLocation">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">يعمل مع</label>
+          <input class="form-input" formControlName="workWith">
+        </div>
+
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" formControlName="usesOwnVehicle" (change)="onOwnVehicleChange()">
@@ -182,10 +430,6 @@
             <input type="checkbox" formControlName="fuelAllowanceEligible">
             <span>مستحق بدل بنزين</span>
           </label>
-          <p class="field-hint">
-            بدل السيارة يتبع خيار «يستخدم مركبته الخاصة»، ويُصرف لكل شفت يحقق الحد الأدنى
-            من الساعات — بشرط تفعيله من شاشة الإعدادات، وهو منفصل عن بدل البنزين.
-          </p>
         </div>
       </div>
 

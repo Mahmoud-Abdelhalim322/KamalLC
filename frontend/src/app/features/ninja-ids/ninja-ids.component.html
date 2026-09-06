@@ -5,10 +5,25 @@
         <h1 class="page-title">سجل المعرفات</h1>
         <p class="page-subtitle">إدارة معرفات الموردين وربطها بالكباتن — {{ totalElements }} معرف</p>
       </div>
-      <button class="btn btn-primary" (click)="openAddSlot()" [disabled]="suppliers.length === 0">
-        <span class="material-icons-round">add</span>
-        معرف جديد
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-danger" *ngIf="selectedSlotIds.size > 0" (click)="deleteSelected()">
+          <span class="material-icons-round">delete_sweep</span>
+          حذف المحدد ({{ selectedSlotIds.size }})
+        </button>
+        <button class="btn btn-primary" (click)="openAddSlot()" [disabled]="suppliers.length === 0">
+          <span class="material-icons-round">add</span>
+          معرف جديد
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Supplier Bar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="material-icons-round">search</span>
+      <input type="text" placeholder="بحث باسم الكابتن، الكود، أو رقم المعرف..."
+             [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
     </div>
   </div>
 
@@ -24,6 +39,9 @@
         <span class="supplier-dot" [style.background]="s.color"></span>
         {{ s.name }}
         <span class="slot-count">{{ s.slotCount }}</span>
+        <span class="delete-supplier-btn" (click)="deleteSupplier(s, $event)" title="حذف المورد">
+          <span class="material-icons-round">delete_outline</span>
+        </span>
       </button>
     </div>
 
@@ -61,26 +79,32 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th class="checkbox-col">
+            <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()" title="تحديد الكل">
+          </th>
           <th>المعرف</th>
           <th>المورد</th>
           <th>الكابتن المربوط</th>
           <th>كود الكابتن</th>
           <th>مخصص منذ</th>
           <th>الحالة</th>
-          <th>التاريخ</th>
+          <th>إجراءات</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let slot of slots" class="clickable-row" (click)="openHistory(slot)">
-          <td class="id-cell">
+        <tr *ngFor="let slot of slots" class="clickable-row" [class.selected-row]="isSlotSelected(slot.id)">
+          <td class="checkbox-col" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="isSlotSelected(slot.id)" (change)="toggleSlot(slot.id)">
+          </td>
+          <td class="id-cell" (click)="openHistory(slot)">
             <span class="id-value">{{ slot.externalId }}</span>
           </td>
-          <td>
+          <td (click)="openHistory(slot)">
             <span class="supplier-chip" [style.background]="slot.supplierColor + '20'" [style.color]="slot.supplierColor">
               {{ slot.supplierName }}
             </span>
           </td>
-          <td class="captain-cell">
+          <td class="captain-cell" (click)="openHistory(slot)">
             <ng-container *ngIf="slot.currentCaptainName">
               <a [routerLink]="['/captains', slot.currentCaptainId]" class="captain-link" (click)="$event.stopPropagation()">
                 {{ slot.currentCaptainName }}
@@ -88,19 +112,22 @@
             </ng-container>
             <span class="unassigned" *ngIf="!slot.currentCaptainName">غير مخصص</span>
           </td>
-          <td>
+          <td (click)="openHistory(slot)">
             <span class="code" *ngIf="slot.currentCaptainCode">{{ slot.currentCaptainCode }}</span>
             <span class="no-data" *ngIf="!slot.currentCaptainCode">—</span>
           </td>
-          <td>{{ slot.assignedSince || '—' }}</td>
-          <td>
+          <td (click)="openHistory(slot)">{{ slot.assignedSince || '—' }}</td>
+          <td (click)="openHistory(slot)">
             <span class="status-badge" [class]="slot.currentCaptainName ? 'status-assigned' : 'status-unassigned'">
               {{ slot.currentCaptainName ? 'مخصص' : 'متاح' }}
             </span>
           </td>
-          <td>
-            <button class="history-btn" title="عرض التاريخ">
+          <td class="actions-col">
+            <button class="history-btn" title="عرض التاريخ" (click)="openHistory(slot)">
               <span class="material-icons-round">history</span>
+            </button>
+            <button class="delete-slot-btn" title="حذف المعرف" (click)="deleteSingleSlot(slot.id, $event)">
+              <span class="material-icons-round">delete_outline</span>
             </button>
           </td>
         </tr>
@@ -248,7 +275,7 @@
           </div>
 
           <div class="form-group captain-picker">
-            <label class="form-label">ابحث بالاسم أو كود كمال</label>
+            <label class="form-label">ابحث بالاسم أو ID-KSLSC</label>
             <div class="picker-input">
               <input class="form-input" [ngModel]="captainQuery"
                      (ngModelChange)="onCaptainQueryChange($event)"

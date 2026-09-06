@@ -15,6 +15,6 @@ public class WebConfig implements WebMvcConfigurer {
         // Serve Angular built files from static/browser/
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/browser/")
-                .setCachePeriod(0);
+                .setCachePeriod(3600); // 1 hour — safe because Angular files have content hashes in names
     }
 }

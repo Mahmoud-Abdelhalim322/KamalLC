@@ -5,11 +5,11 @@
     <div class="header-titles">
       <div class="badge-tag">
         <span class="pulse-dot"></span>
-        مركز القيادة والعمليات التنفيذي
+        {{ 'DASHBOARD.HERO_TAG' | translate }}
       </div>
-      <h1 class="page-title">لوحة التحكم والأداء الإستراتيجي</h1>
+      <h1 class="page-title">{{ 'DASHBOARD.TITLE' | translate }}</h1>
       <p class="page-subtitle" *ngIf="data">
-        نظرة عامة شمولية من {{ data.currentPeriodFrom }} إلى {{ data.currentPeriodTo }}
+        {{ 'DASHBOARD.SUBTITLE_PERIOD' | translate:{ from: data.currentPeriodFrom, to: data.currentPeriodTo } }}
       </p>
     </div>
 
@@ -19,33 +19,33 @@
         <div class="preset-pills">
           <button type="button" class="preset-btn" [class.active]="activePreset === 'THIS_MONTH'"
             (click)="applyPreset('THIS_MONTH')">
-            الشهر الحالي
+            {{ 'DASHBOARD.PRESET_THIS_MONTH' | translate }}
           </button>
           <button type="button" class="preset-btn" [class.active]="activePreset === 'LAST_MONTH'"
             (click)="applyPreset('LAST_MONTH')">
-            الشهر السابق
+            {{ 'DASHBOARD.PRESET_LAST_MONTH' | translate }}
           </button>
           <button type="button" class="preset-btn" [class.active]="activePreset === 'LAST_30'"
             (click)="applyPreset('LAST_30')">
-            آخر 30 يوم
+            {{ 'DASHBOARD.PRESET_LAST_30' | translate }}
           </button>
         </div>
 
         <div class="custom-date-inputs">
           <div class="date-input-group">
-            <span class="date-label">من:</span>
+            <span class="date-label">{{ 'DASHBOARD.FROM_LABEL' | translate }}</span>
             <input type="date" [(ngModel)]="fromDate" (change)="onDateChange()" class="date-field" />
           </div>
           <div class="date-input-group">
-            <span class="date-label">إلى:</span>
+            <span class="date-label">{{ 'DASHBOARD.TO_LABEL' | translate }}</span>
             <input type="date" [(ngModel)]="toDate" (change)="onDateChange()" class="date-field" />
           </div>
         </div>
       </div>
 
-      <button class="btn-refresh" (click)="loadDashboard()" [class.spinning]="isLoading" title="تحديث البيانات">
+      <button class="btn-refresh" (click)="loadDashboard()" [class.spinning]="isLoading" [title]="'COMMON.REFRESH' | translate">
         <span class="material-icons-round">refresh</span>
-        <span>تحديث لحظي</span>
+        <span>{{ 'DASHBOARD.LIVE_REFRESH' | translate }}</span>
       </button>
     </div>
   </div>
@@ -53,7 +53,7 @@
   <!-- Loading State -->
   <div class="loading-container" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جاري تجميع المؤشرات والتحليلات المالية...</p>
+    <p>{{ 'DASHBOARD.LOADING_METRICS' | translate }}</p>
   </div>
 
   <div class="dashboard-content" *ngIf="!isLoading && data">
@@ -63,39 +63,44 @@
       <div class="financial-card net-payroll">
         <div class="fin-icon"><span class="material-icons-round">payments</span></div>
         <div class="fin-info">
-          <span class="fin-label">إجمالي الرواتب الصافية (المتوقعة)</span>
+          <span class="fin-label">{{ 'DASHBOARD.NET_PAYROLL_LABEL' | translate }}</span>
           <span class="fin-value">{{ (data.totalNetPayroll || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
-          <span class="fin-sub">من إجمالي {{ (data.totalGrossPayroll || 0) | currency:'SAR':'symbol':'1.0-0' }} مستحقات
-            قائمة</span>
+          <span class="fin-sub">
+            {{ 'DASHBOARD.GROSS_PAYROLL_SUB' | translate:{ amount: ((data.totalGrossPayroll || 0) | currency:'SAR':'symbol':'1.0-0') } }}
+          </span>
         </div>
       </div>
 
       <div class="financial-card revenue">
         <div class="fin-icon"><span class="material-icons-round">point_of_sale</span></div>
         <div class="fin-info">
-          <span class="fin-label">إجمالي إيراد الموردين</span>
+          <span class="fin-label">{{ 'DASHBOARD.SUPPLIER_REVENUE_LABEL' | translate }}</span>
           <span class="fin-value">{{ (data.totalSupplierRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
-          <span class="fin-sub">عن {{ data.ordersThisMonth | number }} طلب منفذ</span>
+          <span class="fin-sub">
+            {{ 'DASHBOARD.SUPPLIER_REVENUE_SUB' | translate:{ count: (data.ordersThisMonth | number) } }}
+          </span>
         </div>
       </div>
 
       <div class="financial-card margin">
         <div class="fin-icon"><span class="material-icons-round">trending_up</span></div>
         <div class="fin-info">
-          <span class="fin-label">هامش الأرباح التشغيلية (Estimated Margin)</span>
+          <span class="fin-label">{{ 'DASHBOARD.ESTIMATED_MARGIN_LABEL' | translate }}</span>
           <span class="fin-value" [class.negative]="(data.estimatedMargin || 0) < 0">
             {{ (data.estimatedMargin || 0) | currency:'SAR':'symbol':'1.0-0' }}
           </span>
-          <span class="fin-sub">فرق إيرادات الموردين عن الرواتب الصافية</span>
+          <span class="fin-sub">{{ 'DASHBOARD.ESTIMATED_MARGIN_SUB' | translate }}</span>
         </div>
       </div>
 
       <div class="financial-card productivity">
         <div class="fin-icon"><span class="material-icons-round">speed</span></div>
         <div class="fin-info">
-          <span class="fin-label">إنتاجية الشفت الواحد</span>
-          <span class="fin-value">{{ data.avgOrdersPerShift || 0 }} <small>طلب/شفت</small></span>
-          <span class="fin-sub">إجمالي {{ data.shiftsThisMonth | number }} شفت عمل</span>
+          <span class="fin-label">{{ 'DASHBOARD.SHIFT_PRODUCTIVITY_LABEL' | translate }}</span>
+          <span class="fin-value">{{ data.avgOrdersPerShift || 0 }} <small>{{ 'DASHBOARD.SHIFT_PRODUCTIVITY_UNIT' | translate }}</small></span>
+          <span class="fin-sub">
+            {{ 'DASHBOARD.TOTAL_SHIFTS_SUB' | translate:{ count: (data.shiftsThisMonth | number) } }}
+          </span>
         </div>
       </div>
     </div>
@@ -105,7 +110,7 @@
       *ngIf="expiredDocuments > 0 || hasUnmatched || (data.lateReturns && data.lateReturns > 0)">
       <div class="action-center-header">
         <span class="material-icons-round alert-icon-main">error</span>
-        <h2>مركز الإجراءات العاجلة والمخاطر التشغيلية</h2>
+        <h2>{{ 'DASHBOARD.ACTION_CENTER_TITLE' | translate }}</h2>
       </div>
 
       <div class="alerts-grid">
@@ -114,31 +119,30 @@
           [queryParams]="{ alert: 'EXPIRED' }">
           <div class="alert-card-icon"><span class="material-icons-round">event_busy</span></div>
           <div class="alert-card-body">
-            <span class="alert-title">{{ expiredDocuments }} وثيقة منتهية الصلاحية</span>
-            <span class="alert-desc">تحتاج لتجديد فوري لتجنب العقوبات والمخاطر القانونية</span>
+            <span class="alert-title">{{ 'DASHBOARD.EXPIRED_DOCS_TITLE' | translate:{ count: expiredDocuments } }}</span>
+            <span class="alert-desc">{{ 'DASHBOARD.EXPIRED_DOCS_DESC' | translate }}</span>
           </div>
-          <span class="btn-action">مراجعة الآن &larr;</span>
+          <span class="btn-action">{{ 'DASHBOARD.REVIEW_NOW' | translate }} &rarr;</span>
         </a>
 
         <!-- Unmatched IDs -->
         <a class="alert-action-card warning" *ngIf="hasUnmatched" routerLink="/suppliers">
           <div class="alert-card-icon"><span class="material-icons-round">link_off</span></div>
           <div class="alert-card-body">
-            <span class="alert-title">{{ data.unmatchedNinjaIds }} معرف + {{ data.unmatchedShifts }} شفت غير
-              مربوط</span>
-            <span class="alert-desc">شفتات عمل تحتاج لربطها بالكباتن المناسبين</span>
+            <span class="alert-title">{{ 'DASHBOARD.UNMATCHED_TITLE' | translate:{ ids: data.unmatchedNinjaIds, shifts: data.unmatchedShifts } }}</span>
+            <span class="alert-desc">{{ 'DASHBOARD.UNMATCHED_DESC' | translate }}</span>
           </div>
-          <span class="btn-action">ربط الهويات &larr;</span>
+          <span class="btn-action">{{ 'DASHBOARD.LINK_IDENTITIES' | translate }} &rarr;</span>
         </a>
 
         <!-- Late Returns -->
         <a class="alert-action-card warning" *ngIf="data.lateReturns && data.lateReturns > 0" routerLink="/fleet">
           <div class="alert-card-icon"><span class="material-icons-round">no_crash</span></div>
           <div class="alert-card-body">
-            <span class="alert-title">{{ data.lateReturns }} سيارة متأخرة عن الإرجاع</span>
-            <span class="alert-desc">كباتن يتجاوزون فترة التخصيص المحددة للسيارات</span>
+            <span class="alert-title">{{ 'DASHBOARD.LATE_RETURNS_TITLE' | translate:{ count: data.lateReturns } }}</span>
+            <span class="alert-desc">{{ 'DASHBOARD.LATE_RETURNS_DESC' | translate }}</span>
           </div>
-          <span class="btn-action">متابعة الأسطول &larr;</span>
+          <span class="btn-action">{{ 'DASHBOARD.TRACK_FLEET' | translate }} &rarr;</span>
         </a>
       </div>
     </div>
@@ -151,22 +155,25 @@
         <div class="panel-header">
           <div class="panel-title-wrap">
             <span class="material-icons-round panel-icon">workspace_premium</span>
-            <h3>تنافسية الأداء والكباتن</h3>
+            <h3>{{ 'DASHBOARD.LEADERBOARD_TITLE' | translate }}</h3>
           </div>
           <div class="panel-controls">
             <!-- Timeframe selector -->
             <div class="pill-group">
               <button class="pill-btn" [class.active]="leaderboardTimeframe === 'MONTH'"
-                (click)="setTimeframe('MONTH')">كامل الفترة</button>
+                (click)="setTimeframe('MONTH')">{{ 'DASHBOARD.TIMEFRAME_FULL' | translate }}</button>
               <button class="pill-btn" [class.active]="leaderboardTimeframe === 'WEEK'"
-                (click)="setTimeframe('WEEK')">الأسبوع الحالي</button>
+                (click)="setTimeframe('WEEK')">{{ 'DASHBOARD.TIMEFRAME_WEEK' | translate }}</button>
             </div>
             <!-- Rank selector -->
             <div class="pill-group">
-              <button class="pill-btn rank-top" [class.active]="leaderboardTab === 'TOP'" (click)="setTab('TOP')">الأعلى
-                5 ✨</button>
+              <button class="pill-btn rank-top" [class.active]="leaderboardTab === 'TOP'" (click)="setTab('TOP')">
+                {{ 'DASHBOARD.RANK_TOP_5' | translate }}
+              </button>
               <button class="pill-btn rank-bottom" [class.active]="leaderboardTab === 'BOTTOM'"
-                (click)="setTab('BOTTOM')">الأقل 5 ⚠️</button>
+                (click)="setTab('BOTTOM')">
+                {{ 'DASHBOARD.RANK_BOTTOM_5' | translate }}
+              </button>
             </div>
           </div>
         </div>
@@ -184,25 +191,25 @@
                 <span class="kamal-code">({{ item.kamalCode }})</span>
               </div>
               <div class="captain-meta">
-                <span>{{ item.captainType === 'EMPLOYEE' ? 'موظف' : 'أجير' }}</span> &bull;
-                <span>{{ item.attendedShifts }} شفت حضور</span>
+                <span>{{ item.captainType === 'EMPLOYEE' ? ('CAPTAINS.TYPE_EMPLOYEE' | translate) : ('CAPTAINS.TYPE_FREELANCE' | translate) }}</span> &bull;
+                <span>{{ 'DASHBOARD.ATTENDED_SHIFTS' | translate:{ count: item.attendedShifts } }}</span>
               </div>
             </div>
             <div class="captain-metrics">
               <div class="metric-box">
                 <span class="metric-val">{{ item.totalOrders | number }}</span>
-                <span class="metric-lbl">طلب</span>
+                <span class="metric-lbl">{{ 'DASHBOARD.ORDERS_UNIT' | translate }}</span>
               </div>
               <div class="metric-box">
                 <span class="metric-val highlight">{{ item.netPay | currency:'SAR':'symbol':'1.0-0' }}</span>
-                <span class="metric-lbl">صافي المستحق</span>
+                <span class="metric-lbl">{{ 'DASHBOARD.NET_DUE' | translate }}</span>
               </div>
             </div>
           </div>
 
           <div class="empty-state" *ngIf="currentLeaderboard.length === 0">
             <span class="material-icons-round">info</span>
-            <p>لا توجد بيانات شفتات مسجلة لهذه الفترة حتى الآن.</p>
+            <p>{{ 'DASHBOARD.NO_SHIFTS_PERIOD' | translate }}</p>
           </div>
         </div>
       </div>
@@ -213,15 +220,15 @@
         <!-- Target Distribution Card -->
         <div class="sub-chart-card">
           <div class="chart-card-header">
-            <h4><span class="material-icons-round">flag</span> إنجاز أهداف الكباتن (Target)</h4>
-            <span class="chart-tag">{{ data.targetAchievementRate || 0 }}% محققون</span>
+            <h4><span class="material-icons-round">flag</span> {{ 'DASHBOARD.TARGET_TITLE' | translate }}</h4>
+            <span class="chart-tag">{{ 'DASHBOARD.TARGET_RATE' | translate:{ rate: (data.targetAchievementRate || 0) } }}</span>
           </div>
 
           <div class="target-bars">
             <div class="target-bar-group">
               <div class="bar-label">
-                <span>محققو الهدف (&ge; {{ data.ordersThisMonth > 0 ? 'التارقت' : 'المطلوب' }})</span>
-                <strong>{{ data.captainsAtTarget }} كابتن</strong>
+                <span>{{ 'DASHBOARD.TARGET_ACHIEVED' | translate }}</span>
+                <strong>{{ 'DASHBOARD.CAPTAINS_COUNT' | translate:{ count: data.captainsAtTarget } }}</strong>
               </div>
               <div class="bar-track">
                 <div class="bar-fill green"
@@ -232,8 +239,8 @@
 
             <div class="target-bar-group">
               <div class="bar-label">
-                <span>قريبون من Target (&lt; 60 طلب)</span>
-                <strong>{{ data.captainsNearTarget }} كابتن</strong>
+                <span>{{ 'DASHBOARD.TARGET_NEAR' | translate }}</span>
+                <strong>{{ 'DASHBOARD.CAPTAINS_COUNT' | translate:{ count: data.captainsNearTarget } }}</strong>
               </div>
               <div class="bar-track">
                 <div class="bar-fill orange"
@@ -244,8 +251,8 @@
 
             <div class="target-bar-group">
               <div class="bar-label">
-                <span>تحت التارقت</span>
-                <strong>{{ data.captainsBelowTarget || 0 }} كابتن</strong>
+                <span>{{ 'DASHBOARD.TARGET_BELOW' | translate }}</span>
+                <strong>{{ 'DASHBOARD.CAPTAINS_COUNT' | translate:{ count: (data.captainsBelowTarget || 0) } }}</strong>
               </div>
               <div class="bar-track">
                 <div class="bar-fill red"
@@ -259,8 +266,8 @@
         <!-- Fleet Utilization Donut SVG Chart -->
         <div class="sub-chart-card">
           <div class="chart-card-header">
-            <h4><span class="material-icons-round">directions_car</span> توزيع الأسطول والسيارات</h4>
-            <span class="chart-tag">إجمالي {{ data.totalVehicles }} سيارة</span>
+            <h4><span class="material-icons-round">directions_car</span> {{ 'DASHBOARD.FLEET_TITLE' | translate }}</h4>
+            <span class="chart-tag">{{ 'DASHBOARD.FLEET_TOTAL_SUB' | translate:{ count: data.totalVehicles } }}</span>
           </div>
 
           <div class="donut-chart-container">
@@ -275,22 +282,22 @@
               </svg>
               <div class="donut-center">
                 <span class="donut-val">{{ assignedPct }}%</span>
-                <span class="donut-lbl">مستغلة</span>
+                <span class="donut-lbl">{{ 'DASHBOARD.FLEET_UTILIZED' | translate }}</span>
               </div>
             </div>
 
             <div class="donut-legend">
               <div class="legend-item">
                 <span class="legend-dot assigned"></span>
-                <span>مخصصة: <strong>{{ data.assignedVehicles }}</strong></span>
+                <span>{{ 'DASHBOARD.FLEET_ASSIGNED' | translate }}: <strong>{{ data.assignedVehicles }}</strong></span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot available"></span>
-                <span>متاحة: <strong>{{ data.availableVehicles }}</strong></span>
+                <span>{{ 'DASHBOARD.FLEET_AVAILABLE' | translate }}: <strong>{{ data.availableVehicles }}</strong></span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot maintenance"></span>
-                <span>في الصيانة: <strong>{{ data.maintenanceVehicles }}</strong></span>
+                <span>{{ 'DASHBOARD.FLEET_MAINTENANCE' | translate }}: <strong>{{ data.maintenanceVehicles }}</strong></span>
               </div>
             </div>
           </div>
@@ -302,7 +309,7 @@
 
     <!-- Core Operational Stats Grid -->
     <div class="cards-section-header">
-      <h3>مؤشرات التشغيل والأصول</h3>
+      <h3>{{ 'DASHBOARD.OPERATIONAL_STATS_HEADER' | translate }}</h3>
     </div>
 
     <div class="cards-grid">
@@ -323,28 +330,28 @@
     <div class="quick-actions-toolbar">
       <div class="actions-header">
         <span class="material-icons-round">bolt</span>
-        <span>إجراءات سريعة واختصارات التشغيل</span>
+        <span>{{ 'DASHBOARD.QUICK_ACTIONS_HEADER' | translate }}</span>
       </div>
       <div class="actions-buttons">
         <a routerLink="/imports" class="action-btn btn-primary">
           <span class="material-icons-round">cloud_upload</span>
-          <span>استيراد كشف الشفتات</span>
+          <span>{{ 'DASHBOARD.ACTION_IMPORT_SHIFTS' | translate }}</span>
         </a>
         <a routerLink="/captains" class="action-btn">
           <span class="material-icons-round">person_add</span>
-          <span>إدارة الكباتن</span>
+          <span>{{ 'DASHBOARD.ACTION_MANAGE_CAPTAINS' | translate }}</span>
         </a>
         <a routerLink="/payroll" class="action-btn">
           <span class="material-icons-round">request_quote</span>
-          <span>مسير الرواتب</span>
+          <span>{{ 'DASHBOARD.ACTION_PAYROLL' | translate }}</span>
         </a>
         <a routerLink="/fleet" class="action-btn">
           <span class="material-icons-round">commute</span>
-          <span>إدارة الأسطول</span>
+          <span>{{ 'DASHBOARD.ACTION_MANAGE_FLEET' | translate }}</span>
         </a>
         <a routerLink="/custody" class="action-btn">
           <span class="material-icons-round">inventory_2</span>
-          <span>تسليم/استلام عهدة</span>
+          <span>{{ 'DASHBOARD.ACTION_CUSTODY_HANDOVER' | translate }}</span>
         </a>
       </div>
     </div>

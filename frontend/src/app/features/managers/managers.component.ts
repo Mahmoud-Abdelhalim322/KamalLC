@@ -86,6 +86,26 @@ export class ManagersComponent implements OnInit {
     this.load();
   }
 
+  deleteStaff(s: StaffResponse, event: Event): void {
+    event.stopPropagation();
+    if (!confirm(`هل أنت متأكد من حذف الإداري "${s.fullNameAr}" (كود: ${s.staffCode}) نهائياً؟`)) {
+      return;
+    }
+
+    this.http.delete<ApiResponse<void>>(`/api/staff/${s.id}`).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.load();
+        } else {
+          alert(res.message || 'فشل حذف الإداري');
+        }
+      },
+      error: (err) => {
+        alert(err?.error?.message || 'فشل حذف الإداري');
+      }
+    });
+  }
+
   nextPage(): void {
     if (this.currentPage < this.totalPages - 1) {
       this.currentPage++;

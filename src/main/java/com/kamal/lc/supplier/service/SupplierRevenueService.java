@@ -25,10 +25,17 @@ public class SupplierRevenueService {
     private final SupplierRepository supplierRepo;
     private final ShiftRepository shiftRepo;
     private final SupplierAdjustmentRepository adjustmentRepo;
+    private final com.kamal.lc.auth.service.CaptainAllocationService allocationService;
 
     public SupplierRevenueSummaryResponse getRevenueSummary(LocalDate from, LocalDate to) {
         List<Supplier> suppliers = supplierRepo.findAll();
         List<Shift> shifts = shiftRepo.findByShiftDateBetween(from, to);
+        List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
+        if (accessibleIds != null) {
+            shifts = shifts.stream()
+                    .filter(s -> s.getCaptain() != null && accessibleIds.contains(s.getCaptain().getId()))
+                    .toList();
+        }
         List<SupplierAdjustment> adjustments = adjustmentRepo.findByAdjustmentDateBetweenOrderByAdjustmentDateDesc(from, to);
 
         Map<UUID, List<Shift>> shiftsBySupplier = groupShiftsBySupplier(shifts, suppliers);

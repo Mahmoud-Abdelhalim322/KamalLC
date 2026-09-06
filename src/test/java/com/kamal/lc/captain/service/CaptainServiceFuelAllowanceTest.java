@@ -50,8 +50,12 @@ class CaptainServiceFuelAllowanceTest {
         DocumentAlertEvaluator documentAlerts = new DocumentAlertEvaluator(
                 new DocumentAlertPolicy(mock(AppSettingRepository.class)));
 
+        com.kamal.lc.auth.service.CaptainAllocationService allocationService = mock(com.kamal.lc.auth.service.CaptainAllocationService.class);
+        com.kamal.lc.payroll.repository.PayrollLineRepository payrollLineRepo = mock(com.kamal.lc.payroll.repository.PayrollLineRepository.class);
+        com.kamal.lc.loan.repository.LoanRepository loanRepo = mock(com.kamal.lc.loan.repository.LoanRepository.class);
+
         service = new CaptainService(captainRepo, documentRepo, assignmentRepo, codeGenerator,
-                documentAlerts);
+                documentAlerts, allocationService, payrollLineRepo, loanRepo);
     }
 
     private Captain savedCaptain;

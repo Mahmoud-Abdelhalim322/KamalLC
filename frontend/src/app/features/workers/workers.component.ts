@@ -25,6 +25,9 @@ export class WorkersComponent implements OnInit {
   totalElements = 0;
   totalPages = 0;
 
+  // Bulk selection
+  selectedIds = new Set<string>();
+
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
@@ -33,6 +36,10 @@ export class WorkersComponent implements OnInit {
 
   get canManage(): boolean {
     return this.authService.hasPermission('MEMBERS_MANAGE');
+  }
+
+  get allSelected(): boolean {
+    return this.staff.length > 0 && this.staff.every(s => this.selectedIds.has(s.id));
   }
 
   ngOnInit(): void {
@@ -86,6 +93,67 @@ export class WorkersComponent implements OnInit {
     this.load();
   }
 
+  deleteStaff(s: StaffResponse, event: Event): void {
+    event.stopPropagation();
+    if (!confirm(`هل أنت متأكد من حذف العامل "${s.fullNameAr}" (كود: ${s.staffCode}) نهائياً؟`)) {
+      return;
+    }
+
+    this.http.delete<ApiResponse<void>>(`/api/staff/${s.id}`).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.load();
+        } else {
+          alert(res.message || 'فشل حذف العامل');
+        }
+      },
+      error: (err) => {
+        alert(err?.error?.message || 'فشل حذف العامل');
+      }
+    });
+  }
+
+  // ---------- Selection ----------
+
+  toggleSelectAll(): void {
+    if (this.allSelected) {
+      this.staff.forEach(s => this.selectedIds.delete(s.id));
+    } else {
+      this.staff.forEach(s => this.selectedIds.add(s.id));
+    }
+  }
+
+  toggleSelect(staffId: string, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedIds.has(staffId)) {
+      this.selectedIds.delete(staffId);
+    } else {
+      this.selectedIds.add(staffId);
+    }
+  }
+
+  isSelected(staffId: string): boolean {
+    return this.selectedIds.has(staffId);
+  }
+
+  deleteSelected(): void {
+    if (this.selectedIds.size === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${this.selectedIds.size} عامل؟`)) return;
+
+    this.http.request<ApiResponse<any>>('DELETE', '/api/staff/bulk', {
+      body: Array.from(this.selectedIds)
+    }).subscribe({
+      next: (res) => {
+        this.selectedIds.clear();
+        this.load();
+        alert(res.message || 'تم الحذف بنجاح');
+      },
+      error: (err) => {
+        alert(err?.error?.message || 'فشل حذف الأعضاء');
+      }
+    });
+  }
+
   nextPage(): void {
     if (this.currentPage < this.totalPages - 1) {
       this.currentPage++;
@@ -101,7 +169,7 @@ export class WorkersComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = { 'ACTIVE': 'نشط', 'INACTIVE': 'غير نشط', 'TERMINATED': 'منتهي' };
+    const map: Record<string, string> = { 'ACTIVE': 'ساري', 'INACTIVE': 'علي وشك الانتهاء', 'TERMINATED': 'منتهي' };
     return map[status] || status;
   }
 

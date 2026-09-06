@@ -1,0 +1,52 @@
+<div class="audit-log-page animate-fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">سجل المراجعة (Audit Log)</h1>
+    <p class="page-subtitle">تتبع كافة الإجراءات والعمليات الحساسة التي قام بها مدراء المنصة</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>جاري تحميل سجل المراجعة والعمليات...</p>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card table-card" *ngIf="!loading">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>التاريخ والوقت</th>
+            <th>المستخدم</th>
+            <th>العملية (Action)</th>
+            <th>نوع الكيان</th>
+            <th>الشركة المتأثرة</th>
+            <th>التفاصيل</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logs">
+            <td class="date-cell">{{ log.createdAt | date:'yyyy/MM/dd HH:mm:ss' }}</td>
+            <td>
+              <strong class="actor-name">{{ log.actorUsername }}</strong>
+              <span class="actor-role" *ngIf="log.actorRole"> ({{ log.actorRole }})</span>
+            </td>
+            <td><span class="badge badge-action">{{ log.action }}</span></td>
+            <td>{{ log.entityType || '-' }}</td>
+            <td>{{ log.tenantName || '-' }}</td>
+            <td><code class="details-code">{{ log.details || '-' }}</code></td>
+          </tr>
+          <tr *ngIf="logs.length === 0 && !loading">
+            <td colspan="6" class="empty-cell">
+              <span class="material-icons-round empty-icon">history_toggle_off</span>
+              <p>لا يوجد سجلات مراجعة مسجلة حتى الآن</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

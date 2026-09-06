@@ -23,8 +23,12 @@ public class StaffService {
     private final StaffRepository staffRepo;
     private final StaffCodeGenerator codeGenerator;
     private final StaffDocumentService documentService;
+    private final com.kamal.lc.staff.repository.StaffDocumentRepository staffDocumentRepo;
     private final com.kamal.lc.staff.expiry.StaffDocumentAlertEvaluator documentAlerts;
     private final com.kamal.lc.payroll.repository.StaffPayrollLineRepository staffPayrollLineRepo;
+    private final com.kamal.lc.payroll.repository.StaffAdjustmentRepository staffAdjustmentRepo;
+    private final com.kamal.lc.loan.repository.LoanRepository loanRepo;
+    private final com.kamal.lc.auth.repository.UserRepository userRepo;
 
     @Transactional
     public StaffDetailResponse create(StaffRequest request) {
@@ -115,6 +119,22 @@ public class StaffService {
     public void delete(UUID id) {
         Staff staff = staffRepo.findById(id)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود"));
+
+        if (staffPayrollLineRepo.existsByStaffId(id)) {
+            throw new BusinessException("HAS_DEPENDENCIES",
+                    "لا يمكن حذف الموظف لارتباطه بمسيرات رواتب سابقة، يمكنك تحويل حالته إلى غير نشط بدلاً من الحذف");
+        }
+        if (loanRepo.findActiveLoanBalanceByStaffId(id).compareTo(java.math.BigDecimal.ZERO) > 0) {
+            throw new BusinessException("HAS_DEPENDENCIES",
+                    "لا يمكن حذف الموظف لوجود سُلف/قروض نشطة غير مسددة عليه");
+        }
+
+        userRepo.unlinkStaff(id);
+        staffDocumentRepo.deleteByStaffId(id);
+        loanRepo.deleteByStaffId(id);
+        staffAdjustmentRepo.deleteByStaffId(id);
+        staffPayrollLineRepo.deleteByStaffId(id);
+
         staffRepo.delete(staff);
     }
 
@@ -136,6 +156,7 @@ public class StaffService {
         s.setPlaceOfResidence(blank(r.getPlaceOfResidence()));
         s.setHomeAddress(blank(r.getHomeAddress()));
         s.setEmail(blank(r.getEmail()));
+        s.setAppId(blank(r.getAppId()));
 
         // Passport
         s.setPassportNumber(blank(r.getPassportNumber()));
@@ -184,10 +205,22 @@ public class StaffService {
         s.setBankAccountNumber(blank(r.getBankAccountNumber()));
         s.setBankName(blank(r.getBankName()));
 
-        // Salary
+        // Salary & Allowances
         s.setBasicSalary(r.getBasicSalary() != null ? r.getBasicSalary() : BigDecimal.ZERO);
         s.setHousingAllowance(r.getHousingAllowance() != null ? r.getHousingAllowance() : BigDecimal.ZERO);
         s.setOtherAllowances(r.getOtherAllowances() != null ? r.getOtherAllowances() : BigDecimal.ZERO);
+        s.setTransportationAllowance(r.getTransportationAllowance() != null ? r.getTransportationAllowance() : BigDecimal.ZERO);
+        s.setFuelAllowanceAmount(r.getFuelAllowanceAmount() != null ? r.getFuelAllowanceAmount() : BigDecimal.ZERO);
+        s.setCallInternetAllowance(r.getCallInternetAllowance() != null ? r.getCallInternetAllowance() : BigDecimal.ZERO);
+        s.setRewardAllowance(r.getRewardAllowance() != null ? r.getRewardAllowance() : BigDecimal.ZERO);
+
+        // Work Info
+        s.setWorkPhone(blank(r.getWorkPhone()));
+        s.setDepartment(blank(r.getDepartment()));
+        s.setSection(blank(r.getSection()));
+        s.setSupervisor(blank(r.getSupervisor()));
+        s.setWorkLocation(blank(r.getWorkLocation()));
+        s.setWorkWith(blank(r.getWorkWith()));
 
         // Status
         s.setStatus(r.getStatus() != null && !r.getStatus().isBlank() ? r.getStatus().toUpperCase() : "ACTIVE");
@@ -265,6 +298,7 @@ public class StaffService {
                 .placeOfResidence(s.getPlaceOfResidence())
                 .homeAddress(s.getHomeAddress())
                 .email(s.getEmail())
+                .appId(s.getAppId())
                 .passportNumber(s.getPassportNumber())
                 .passportIssueDate(dateStr(s.getPassportIssueDate()))
                 .passportExpiry(dateStr(s.getPassportExpiry()))
@@ -299,6 +333,16 @@ public class StaffService {
                 .basicSalary(s.getBasicSalary())
                 .housingAllowance(s.getHousingAllowance())
                 .otherAllowances(s.getOtherAllowances())
+                .transportationAllowance(s.getTransportationAllowance())
+                .fuelAllowanceAmount(s.getFuelAllowanceAmount())
+                .callInternetAllowance(s.getCallInternetAllowance())
+                .rewardAllowance(s.getRewardAllowance())
+                .workPhone(s.getWorkPhone())
+                .department(s.getDepartment())
+                .section(s.getSection())
+                .supervisor(s.getSupervisor())
+                .workLocation(s.getWorkLocation())
+                .workWith(s.getWorkWith())
                 .status(s.getStatus())
                 .joinDate(dateStr(s.getJoinDate()))
                 .leaveDate(dateStr(s.getLeaveDate()))

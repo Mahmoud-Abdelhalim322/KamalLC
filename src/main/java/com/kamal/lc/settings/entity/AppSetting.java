@@ -1,8 +1,12 @@
 package com.kamal.lc.settings.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Filter;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,7 +26,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AppSetting {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class AppSetting implements TenantAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -52,6 +58,10 @@ public class AppSetting {
     /** NULL means this row is the currently active value. */
     @Column(name = "effective_to")
     private LocalDate effectiveTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

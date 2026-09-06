@@ -32,9 +32,13 @@ export class PayrollService {
       .pipe(map(unwrap));
   }
 
-  getLines(runId: string): Observable<PayrollLineResponse[]> {
+  getLines(runId: string, captainType?: string): Observable<PayrollLineResponse[]> {
+    let url = `${this.base}/${runId}/lines`;
+    if (captainType) {
+      url += `?captainType=${encodeURIComponent(captainType)}`;
+    }
     return this.http
-      .get<ApiResponse<PayrollLineResponse[]>>(`${this.base}/${runId}/lines`)
+      .get<ApiResponse<PayrollLineResponse[]>>(url)
       .pipe(map(res => res.data ?? []));
   }
 
@@ -103,18 +107,24 @@ export class PayrollService {
       .pipe(map(unwrap));
   }
 
-  exportWorkbook(runId: string, staffType?: string): Observable<Blob> {
+  exportWorkbook(runId: string, staffType?: string, captainType?: string): Observable<Blob> {
     let params = new HttpParams();
     if (staffType) {
       params = params.set('staffType', staffType);
     }
+    if (captainType) {
+      params = params.set('captainType', captainType);
+    }
     return this.http.get(`${this.base}/${runId}/export`, { params, responseType: 'blob' });
   }
 
-  exportPdf(runId: string, staffType?: string): Observable<Blob> {
+  exportPdf(runId: string, staffType?: string, captainType?: string): Observable<Blob> {
     let params = new HttpParams();
     if (staffType) {
       params = params.set('staffType', staffType);
+    }
+    if (captainType) {
+      params = params.set('captainType', captainType);
     }
     return this.http.get(`${this.base}/${runId}/export-pdf`, { params, responseType: 'blob' });
   }

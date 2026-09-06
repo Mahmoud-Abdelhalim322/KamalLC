@@ -26,12 +26,17 @@ export class NinjaIdsComponent implements OnInit {
   hasLoadedSuppliers = false;
   slots: SupplierIdSlotResponse[] = [];
   isLoading = true;
+  searchQuery = '';
 
   // Pagination
   currentPage = 0;
   pageSize = 20;
   totalElements = 0;
   totalPages = 0;
+
+  // Multi-select for deletion
+  selectedSlotIds = new Set<string>();
+  selectAll = false;
 
   // History modal
   selectedSlot: SupplierIdSlotResponse | null = null;
@@ -100,6 +105,9 @@ export class NinjaIdsComponent implements OnInit {
     if (this.activeSupplier) {
       url += `&supplierId=${this.activeSupplier.id}`;
     }
+    if (this.searchQuery.trim()) {
+      url += `&q=${encodeURIComponent(this.searchQuery.trim())}`;
+    }
 
     this.http.get<ApiResponse<PageResponse<SupplierIdSlotResponse>>>(url)
       .subscribe({
@@ -118,15 +126,119 @@ export class NinjaIdsComponent implements OnInit {
       });
   }
 
+  onSearch(): void {
+    this.currentPage = 0;
+    this.clearSelection();
+    this.loadSlots();
+  }
+
+  // ---------- Multi-select deletion ----------
+
+  toggleSlot(slotId: string): void {
+    if (this.selectedSlotIds.has(slotId)) {
+      this.selectedSlotIds.delete(slotId);
+    } else {
+      this.selectedSlotIds.add(slotId);
+    }
+    this.selectAll = this.slots.length > 0 && this.slots.every(s => this.selectedSlotIds.has(s.id));
+  }
+
+  toggleSelectAll(): void {
+    if (this.selectAll) {
+      this.slots.forEach(s => this.selectedSlotIds.delete(s.id));
+      this.selectAll = false;
+    } else {
+      this.slots.forEach(s => this.selectedSlotIds.add(s.id));
+      this.selectAll = true;
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedSlotIds.clear();
+    this.selectAll = false;
+  }
+
+  isSlotSelected(slotId: string): boolean {
+    return this.selectedSlotIds.has(slotId);
+  }
+
+  deleteSelected(): void {
+    const count = this.selectedSlotIds.size;
+    if (count === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${count} معرف${count > 1 ? 'ات' : ''} مع سجلاتها؟`)) return;
+
+    const ids = Array.from(this.selectedSlotIds);
+    this.http.request<ApiResponse<void>>('DELETE', '/api/supplier-ids/slots/batch', { body: ids })
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.clearSelection();
+            this.loadSuppliers();
+          } else {
+            alert(res.message || 'فشل حذف المعرفات');
+          }
+        },
+        error: (err) => {
+          alert(err?.error?.message || 'فشل حذف المعرفات');
+        }
+      });
+  }
+
+  deleteSingleSlot(slotId: string, event: Event): void {
+    event.stopPropagation();
+    if (!confirm('هل أنت متأكد من حذف هذا المعرف مع سجلاته؟')) return;
+
+    this.http.delete<ApiResponse<void>>(`/api/supplier-ids/slots/${slotId}`)
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.selectedSlotIds.delete(slotId);
+            this.loadSuppliers();
+          } else {
+            alert(res.message || 'فشل حذف المعرف');
+          }
+        },
+        error: (err) => {
+          alert(err?.error?.message || 'فشل حذف المعرف');
+        }
+      });
+  }
+
+  deleteSupplier(supplier: SupplierResponse, event: Event): void {
+    event.stopPropagation();
+    if (!confirm(`هل أنت تأكد من حذف المورد "${supplier.name}" وجميع المعرفات التابعة له؟`)) {
+      return;
+    }
+
+    this.http.delete<ApiResponse<void>>(`/api/supplier-ids/suppliers/${supplier.id}`)
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            if (this.activeSupplier?.id === supplier.id) {
+              this.activeSupplier = null;
+            }
+            this.loadSuppliers();
+          } else {
+            alert(res.message || 'فشل حذف المورد');
+          }
+        },
+        error: (err) => {
+          alert(err?.error?.message || 'فشل حذف المورد');
+        }
+      });
+  }
+
   selectSupplier(supplier: SupplierResponse): void {
     this.activeSupplier = supplier;
     this.currentPage = 0;
+    this.clearSelection();
     this.loadSlots();
   }
 
   showAll(): void {
     this.activeSupplier = null;
     this.currentPage = 0;
+    this.clearSelection();
     this.loadSlots();
   }
 

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { ApiResponse, CaptainPerformance, DashboardData } from '../../core/models/api.models';
 
 interface DashboardCard {
@@ -19,11 +20,14 @@ interface DashboardCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
+  readonly translationService = inject(TranslationService);
+  private readonly http = inject(HttpClient);
+
   data: DashboardData | null = null;
   cards: DashboardCard[] = [];
   hasUnmatched = false;
@@ -48,8 +52,6 @@ export class DashboardComponent implements OnInit {
   assignedDash = '0 100';
   availableDash = '0 100';
   maintenanceDash = '0 100';
-
-  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     // Initialize with current month as default
@@ -146,75 +148,76 @@ export class DashboardComponent implements OnInit {
   }
 
   private buildCards(d: DashboardData): void {
+    const isAr = this.translationService.currentLang() === 'ar';
     this.cards = [
       {
         icon: 'people',
-        label: 'الكباتن النشطين',
+        label: isAr ? 'الكباتن النشطين' : 'Active Captains',
         value: d.totalActiveCaptains,
         color: '#1B5E20',
         bgColor: '#E8F5E9',
-        subtext: `${d.captainsAtTarget} محقق للتارقت`,
+        subtext: isAr ? `${d.captainsAtTarget} محقق للتارقت` : `${d.captainsAtTarget} at target`,
         link: '/captains'
       },
       {
         icon: 'work_history',
-        label: 'شفتات الفترة',
+        label: isAr ? 'شفتات الفترة' : 'Period Shifts',
         value: d.shiftsThisMonth,
         color: '#1565C0',
         bgColor: '#E3F2FD',
-        subtext: `${d.shiftsLast7Days} شفت آخر 7 أيام بالفترة`,
+        subtext: isAr ? `${d.shiftsLast7Days} شفت آخر 7 أيام بالفترة` : `${d.shiftsLast7Days} shifts last 7 days`,
         link: '/shifts'
       },
       {
         icon: 'shopping_bag',
-        label: 'الطلبات المنفذة',
+        label: isAr ? 'الطلبات المنفذة' : 'Fulfilled Orders',
         value: d.ordersThisMonth.toLocaleString(),
         color: '#2E7D32',
         bgColor: '#E8F5E9',
-        subtext: `متوسط ${d.avgOrdersPerShift || 0} طلب/شفت`,
+        subtext: isAr ? `متوسط ${d.avgOrdersPerShift || 0} طلب/شفت` : `Avg ${d.avgOrdersPerShift || 0} orders/shift`,
         link: '/reports'
       },
       {
         icon: 'warning',
-        label: 'معرفات غير مطابقة',
+        label: isAr ? 'معرفات غير مطابقة' : 'Unmatched IDs',
         value: d.unmatchedNinjaIds,
         color: d.unmatchedNinjaIds > 0 ? '#C62828' : '#2E7D32',
         bgColor: d.unmatchedNinjaIds > 0 ? '#FFEBEE' : '#E8F5E9',
-        subtext: `${d.unmatchedShifts} شفت غير مربوط`,
+        subtext: isAr ? `${d.unmatchedShifts} شفت غير مربوط` : `${d.unmatchedShifts} unlinked shifts`,
         link: '/suppliers'
       },
       ...this.documentCards(d),
       {
         icon: 'directions_car',
-        label: 'السيارات (متاحة / إجمالي)',
+        label: isAr ? 'السيارات (متاحة / إجمالي)' : 'Vehicles (Avail / Total)',
         value: `${d.availableVehicles} / ${d.totalVehicles}`,
         color: '#0D47A1',
         bgColor: '#E3F2FD',
-        subtext: `استغلال ${d.fleetUtilizationRate || 0}%`,
+        subtext: isAr ? `استغلال ${d.fleetUtilizationRate || 0}%` : `${d.fleetUtilizationRate || 0}% utilization`,
         link: '/fleet'
       },
       ...(d.lateReturns > 0 ? [{
         icon: 'alarm',
-        label: 'تأخيرات إرجاع السيارات',
+        label: isAr ? 'تأخيرات إرجاع السيارات' : 'Overdue Vehicle Returns',
         value: d.lateReturns,
         color: '#B71C1C',
         bgColor: '#FFEBEE',
-        subtext: 'تحتاج متابعة مع الكباتن',
+        subtext: isAr ? 'تحتاج متابعة مع الكباتن' : 'Requires follow-up',
         link: '/fleet'
       }] : []),
       {
         icon: 'account_balance_wallet',
-        label: 'العهد النشطة',
+        label: isAr ? 'العهد النشطة' : 'Active Custodies',
         value: d.activeCustodyItems,
         color: '#4A148C',
         bgColor: '#F3E5F5',
-        subtext: 'أجهزة وسيارات وبطاقات',
+        subtext: isAr ? 'أجهزة وسيارات وبطاقات' : 'Devices, vehicles & cards',
         link: '/custody'
       },
       {
         icon: 'cloud_upload',
-        label: 'آخر ملف استيراد',
-        value: d.lastImportFile || 'لا يوجد',
+        label: isAr ? 'آخر ملف استيراد' : 'Last Import File',
+        value: d.lastImportFile || (isAr ? 'لا يوجد' : 'None'),
         color: '#E65100',
         bgColor: '#FFF3E0',
         subtext: d.lastImportResult || '',
@@ -224,16 +227,17 @@ export class DashboardComponent implements OnInit {
   }
 
   private documentCards(d: DashboardData): DashboardCard[] {
+    const isAr = this.translationService.currentLang() === 'ar';
     const cards: DashboardCard[] = [];
 
     if (d.expiredDocuments > 0) {
       cards.push({
         icon: 'event_busy',
-        label: 'وثائق منتهية',
+        label: isAr ? 'وثائق منتهية' : 'Expired Docs',
         value: d.expiredDocuments,
         color: '#C62828',
         bgColor: '#FFEBEE',
-        subtext: 'إجبارية التجديد',
+        subtext: isAr ? 'إجبارية التجديد' : 'Mandatory renewal',
         link: '/captains',
         linkParams: { alert: 'EXPIRED' }
       });
@@ -241,11 +245,11 @@ export class DashboardComponent implements OnInit {
     if (d.expiringDocuments > 0) {
       cards.push({
         icon: 'schedule',
-        label: 'وثائق على وشك الانتهاء',
+        label: isAr ? 'وثائق على وشك الانتهاء' : 'Expiring Soon Docs',
         value: d.expiringDocuments,
         color: '#E65100',
         bgColor: '#FFF3E0',
-        subtext: `خلال ${d.currentAlertDays || 30} يوم`,
+        subtext: isAr ? `خلال ${d.currentAlertDays || 30} يوم` : `Within ${d.currentAlertDays || 30} days`,
         link: '/captains',
         linkParams: { alert: 'EXPIRING' }
       });
@@ -253,11 +257,11 @@ export class DashboardComponent implements OnInit {
     if (d.missingDocuments > 0) {
       cards.push({
         icon: 'help_outline',
-        label: 'وثائق غير مسجلة',
+        label: isAr ? 'وثائق غير مسجلة' : 'Missing Documents',
         value: d.missingDocuments,
         color: '#6A1B9A',
         bgColor: '#F3E5F5',
-        subtext: 'بيانات غير مكملة',
+        subtext: isAr ? 'بيانات غير مكملة' : 'Incomplete data',
         link: '/captains',
         linkParams: { alert: 'MISSING' }
       });

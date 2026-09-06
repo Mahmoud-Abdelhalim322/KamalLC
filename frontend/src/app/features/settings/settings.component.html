@@ -1,7 +1,20 @@
-﻿<div class="page-container">
+<div class="page-container">
   <div class="page-header">
     <h1 class="page-title">الإعدادات</h1>
-    <p class="page-subtitle">قواعد احتساب الرواتب والبدلات</p>
+    <p class="page-subtitle">تخصيص قواعد التشغيل ومظهر المنظومة للشركة</p>
+  </div>
+
+  <!-- Tabs Bar -->
+  <div class="settings-nav-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'OPERATIONAL'" (click)="setTab('OPERATIONAL')">
+      <span class="material-icons-round">tune</span>
+      <span>إعدادات التشغيل</span>
+    </button>
+
+    <button class="tab-btn" [class.active]="activeTab === 'APPEARANCE'" (click)="setTab('APPEARANCE')">
+      <span class="material-icons-round">palette</span>
+      <span>إعدادات المظهر</span>
+    </button>
   </div>
 
   <!-- Messages -->
@@ -14,8 +27,9 @@
     <button class="alert-close" (click)="successMessage = ''">×</button>
   </div>
 
-  <!-- ============================================================ RULES -->
-  <div class="info-banner">
+  <!-- ============================================================ OPERATIONAL SETTINGS TAB -->
+  <div *ngIf="activeTab === 'OPERATIONAL'">
+    <div class="info-banner">
       <span class="material-icons-round">history_toggle_off</span>
       <p>
         كل إعداد مؤرَّخ: عند التعديل يُقفل السعر القديم ويبدأ الجديد من التاريخ الذي تحدده،
@@ -141,4 +155,189 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ============================================================ APPEARANCE SETTINGS TAB -->
+  <div *ngIf="activeTab === 'APPEARANCE'" class="appearance-tab-container">
+
+    <div class="appearance-grid">
+      <!-- Controls Column -->
+      <div class="appearance-controls card">
+        <div class="card-header">
+          <span class="material-icons-round icon-badge">brush</span>
+          <div>
+            <h2>تخصيص مظهر وشعار الشركة</h2>
+            <p class="muted">قم بتخصيص اللوجو، الألوان، والنص الظاهر للنظام لمنشأتك</p>
+          </div>
+        </div>
+
+        <!-- 1. Logo Section -->
+        <div class="control-section">
+          <label class="section-label">
+            <span class="material-icons-round">image</span>
+            شعار الشركة (اللوجو)
+          </label>
+          <div class="logo-upload-box">
+            <div class="logo-preview-wrapper">
+              <img [src]="logoPreviewUrl || appearanceForm.logoUrl" alt="شعار الشركة" class="logo-preview-img">
+            </div>
+            <div class="logo-upload-controls">
+              <input type="file" #fileInput (change)="onLogoSelected($event)" accept="image/*" class="file-input-hidden">
+              <button class="btn btn-outline btn-sm" (click)="fileInput.click()">
+                <span class="material-icons-round">upload_file</span>
+                اختر صورة شعار جديدة
+              </button>
+
+              <button class="btn btn-primary btn-sm" *ngIf="selectedLogoFile" (click)="uploadLogo()" [disabled]="isUploadingLogo">
+                <span class="spinner-sm" *ngIf="isUploadingLogo"></span>
+                {{ isUploadingLogo ? 'جاري الرفع…' : 'رفع وحفظ الشعار' }}
+              </button>
+
+              <p class="file-name-tag" *ngIf="selectedLogoFile">المحددة: {{ selectedLogoFile.name }}</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 2. Colors Section -->
+        <div class="control-section">
+          <label class="section-label">
+            <span class="material-icons-round">palette</span>
+            ألوان الهيكل (السايدبار والتوب بار)
+          </label>
+
+          <div class="color-inputs-grid">
+            <!-- Sidebar Color -->
+            <div class="color-picker-card">
+              <div class="color-picker-header">
+                <label>لون السايدبار ( القائمة الجانبية )</label>
+                <div class="color-sample" [style.background]="appearanceForm.sidebarBg"></div>
+              </div>
+              <div class="color-picker-controls">
+                <input type="color" [(ngModel)]="appearanceForm.sidebarBg" (ngModelChange)="onLiveColorChange()" class="color-input">
+                <input type="text" [(ngModel)]="appearanceForm.sidebarBg" (ngModelChange)="onLiveColorChange()" class="form-input hex-input" placeholder="#F5B000">
+              </div>
+            </div>
+
+            <!-- Topbar Color -->
+            <div class="color-picker-card">
+              <div class="color-picker-header">
+                <label>لون التوب بار ( الشريط العلوي )</label>
+                <div class="color-sample" [style.background]="appearanceForm.topbarBg"></div>
+              </div>
+              <div class="color-picker-controls">
+                <input type="color" [(ngModel)]="appearanceForm.topbarBg" (ngModelChange)="onLiveColorChange()" class="color-input">
+                <input type="text" [(ngModel)]="appearanceForm.topbarBg" (ngModelChange)="onLiveColorChange()" class="form-input hex-input" placeholder="#F5B000">
+              </div>
+            </div>
+
+            <!-- Sidebar Active Page Color -->
+            <div class="color-picker-card">
+              <div class="color-picker-header">
+                <label>لون تحديد الصفحة في السايدبار</label>
+                <div class="color-sample" [style.background]="appearanceForm.sidebarActiveBg"></div>
+              </div>
+              <div class="color-picker-controls">
+                <input type="color" [(ngModel)]="appearanceForm.sidebarActiveBg" (ngModelChange)="onLiveColorChange()" class="color-input">
+                <input type="text" [(ngModel)]="appearanceForm.sidebarActiveBg" (ngModelChange)="onLiveColorChange()" class="form-input hex-input" placeholder="#D98E04">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 3. Company Brand Text -->
+        <div class="control-section">
+          <label class="section-label">
+            <span class="material-icons-round">subtitles</span>
+            اسم الشركة / النص الظاهر
+          </label>
+          <input type="text" [(ngModel)]="appearanceForm.brandText" (ngModelChange)="onLiveColorChange()" class="form-input brand-input" placeholder="أدخل اسم الشركة الرسمي…">
+          <span class="field-hint">يظهر هذا النص في منتصف الشريط العلوي والسايدبار للتعريف بالمنشأة</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Appearance Actions -->
+        <div class="appearance-actions">
+          <button class="btn btn-primary" (click)="saveAppearance()" [disabled]="isSavingAppearance">
+            <span class="spinner-sm" *ngIf="isSavingAppearance"></span>
+            <span class="material-icons-round" *ngIf="!isSavingAppearance">save</span>
+            {{ isSavingAppearance ? 'جارٍ حفظ المظهر…' : 'حفظ إعدادات المظهر' }}
+          </button>
+
+          <button class="btn btn-outline" (click)="resetAppearanceToDefault()" [disabled]="isSavingAppearance">
+            <span class="material-icons-round">restart_alt</span>
+            إعادة المظهر للافتراضي
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Preview Column -->
+      <div class="appearance-preview-card card">
+        <div class="preview-header-bar">
+          <span class="material-icons-round">visibility</span>
+          <h3>معاينة مظهر النظام الحي (Live Preview)</h3>
+        </div>
+
+        <div class="mockup-frame">
+          <div class="mockup-header" [style.background]="appearanceForm.topbarBg">
+            <div class="mockup-header-right">
+              <span class="material-icons-round mockup-icon">menu</span>
+            </div>
+            <div class="mockup-brand-badge">
+              {{ appearanceForm.brandText || 'اسم الشركة' }}
+            </div>
+            <div class="mockup-header-left">
+              <span class="material-icons-round mockup-icon">notifications</span>
+              <div class="mockup-user-chip"></div>
+            </div>
+          </div>
+
+          <div class="mockup-body">
+            <div class="mockup-sidebar" [style.background]="appearanceForm.sidebarBg">
+              <div class="mockup-logo-area">
+                <img [src]="logoPreviewUrl || appearanceForm.logoUrl" alt="Logo Mockup" class="mockup-logo-img">
+              </div>
+
+              <div class="mockup-nav">
+                <div class="mockup-nav-item active" [style.background]="appearanceForm.sidebarActiveBg">
+                  <span class="material-icons-round mockup-nav-icon">dashboard</span>
+                  <span class="mockup-nav-text">لوحة التحكم</span>
+                </div>
+                <div class="mockup-nav-item">
+                  <span class="material-icons-round mockup-nav-icon">shopping_bag</span>
+                  <span class="mockup-nav-text">الطلبات</span>
+                </div>
+                <div class="mockup-nav-item">
+                  <span class="material-icons-round mockup-nav-icon">local_shipping</span>
+                  <span class="mockup-nav-text">الكباتن</span>
+                </div>
+                <div class="mockup-nav-item">
+                  <span class="material-icons-round mockup-nav-icon">payments</span>
+                  <span class="mockup-nav-text">الرواتب</span>
+                </div>
+                <div class="mockup-nav-item">
+                  <span class="material-icons-round mockup-nav-icon">settings</span>
+                  <span class="mockup-nav-text">الإعدادات</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mockup-content">
+              <div class="mockup-card-skeleton"></div>
+              <div class="mockup-table-skeleton">
+                <div class="skeleton-line width-100"></div>
+                <div class="skeleton-line width-80"></div>
+                <div class="skeleton-line width-90"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>

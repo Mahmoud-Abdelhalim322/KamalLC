@@ -13,5 +13,7 @@ public interface PayrollLineRepository extends JpaRepository<PayrollLine, UUID> 
 
     Optional<PayrollLine> findByPayrollRunIdAndCaptainId(UUID payrollRunId, UUID captainId);
 
+    boolean existsByCaptainId(UUID captainId);
+
     void deleteByPayrollRunId(UUID payrollRunId);
 }

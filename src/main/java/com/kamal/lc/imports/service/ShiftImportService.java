@@ -66,13 +66,13 @@ public class ShiftImportService {
 
     /** Step 1: read the file and report what committing it would do. Nothing is persisted. */
     @Transactional
-    public ShiftImportPreviewResponse preview(MultipartFile file) {
+    public ShiftImportPreviewResponse preview(MultipartFile file, UUID supplierId) {
         // A captain roster here is a wrong-screen mistake, not a malformed file.
         fileDetector.requireNot(file, ImportBatchType.CAPTAINS);
 
         List<NinjaShiftRow> rows = parse(file);
 
-        Supplier supplier = requireSupplier();
+        Supplier supplier = requireSupplier(supplierId);
         LocalDate periodFrom = minDate(rows);
         LocalDate periodTo = maxDate(rows);
 
@@ -82,6 +82,7 @@ public class ShiftImportService {
         batch.setFileName(file.getOriginalFilename());
         batch.setRowCount(rows.size());
         batch.setStatus("PREVIEW");
+        batch.setSupplier(supplier);
         batch.setPeriodFrom(periodFrom);
         batch.setPeriodTo(periodTo);
         batch = batchRepo.save(batch);
@@ -155,7 +156,7 @@ public class ShiftImportService {
 
     /** Step 2: write the shifts. Safe to run on a file that was already partly imported. */
     @Transactional
-    public ShiftImportPreviewResponse commit(MultipartFile file, UUID batchId) {
+    public ShiftImportPreviewResponse commit(MultipartFile file, UUID batchId, UUID supplierId) {
         ImportBatch batch = batchRepo.findById(batchId)
                 .orElseThrow(() -> new BusinessException("BATCH_NOT_FOUND", "عملية الاستيراد غير موجودة"));
         if ("COMMITTED".equals(batch.getStatus())) {
@@ -186,7 +187,9 @@ public class ShiftImportService {
                             + " مقفلة بمسير رواتب معتمد");
         }
 
-        Supplier supplier = requireSupplier();
+        Supplier supplier = supplierId != null
+                ? requireSupplier(supplierId)
+                : (batch.getSupplier() != null ? batch.getSupplier() : requireSupplier(null));
         List<ImportIssue> issues = new ArrayList<>();
         Set<String> unmatchedIds = new LinkedHashSet<>();
         int imported = 0, skipped = 0, newShifts = 0, updatedShifts = 0, matched = 0, absent = 0;
@@ -252,6 +255,7 @@ public class ShiftImportService {
         batch.setRowCount(rows.size());
         batch.setPeriodFrom(periodFrom);
         batch.setPeriodTo(periodTo);
+        batch.setSupplier(supplier);
         batch.setStatus("COMMITTED");
         batch.setWarningCount(count(issues, "WARNING"));
         batch.setErrorCount(count(issues, "ERROR"));
@@ -290,13 +294,13 @@ public class ShiftImportService {
                             + " مقفلة بمسير رواتب معتمد");
         }
 
-        Supplier supplier = requireSupplier();
+        Supplier supplier = requireSupplier(null);
         List<Shift> shifts = shiftRepo.findForRecalculation(from, to);
         int relinked = 0;
 
         for (Shift shift : shifts) {
             Captain before = shift.getCaptain();
-            Captain captain = resolveCaptain(supplier, shift.getNinjaCaptainId(), shift.getShiftDate());
+            Captain captain = resolveCaptain(shift.getSupplier() != null ? shift.getSupplier() : supplier, shift.getNinjaCaptainId(), shift.getShiftDate());
             if (captain != null && (before == null || !before.getId().equals(captain.getId()))) {
                 shift.setCaptain(captain);
                 relinked++;
@@ -318,13 +322,17 @@ public class ShiftImportService {
      * otherwise a fresh batch. A PREVIEW batch owns no shifts yet, so reusing it is safe.
      */
     private ImportBatch reusablePreview(String fileHash) {
-        ImportBatch batch = batchRepo
-                .findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
-                        fileHash, ImportBatchType.SHIFTS, "PREVIEW")
-                .orElseGet(() -> ImportBatch.builder()
-                        .fileHash(fileHash)
-                        .batchType(ImportBatchType.SHIFTS)
-                        .build());
+        UUID tenantId = com.kamal.lc.common.security.TenantContext.getCurrentTenantId();
+        Optional<ImportBatch> existing = tenantId != null
+                ? batchRepo.findFirstByFileHashAndBatchTypeAndStatusAndTenantIdOrderByUploadedAtDesc(
+                        fileHash, ImportBatchType.SHIFTS, "PREVIEW", tenantId)
+                : batchRepo.findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
+                        fileHash, ImportBatchType.SHIFTS, "PREVIEW");
+
+        ImportBatch batch = existing.orElseGet(() -> ImportBatch.builder()
+                .fileHash(fileHash)
+                .batchType(ImportBatchType.SHIFTS)
+                .build());
 
         if (batch.getId() != null) {
             // This run replaces the earlier one — its findings must not be counted twice.
@@ -387,9 +395,14 @@ public class ShiftImportService {
         return problems;
     }
 
-    private Supplier requireSupplier() {
+    private Supplier requireSupplier(UUID supplierId) {
+        if (supplierId != null) {
+            return supplierRepo.findById(supplierId)
+                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "المورد المحدد غير موجود"));
+        }
         return supplierRepo.findByCode("NINJA")
-                .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على مورد نينجا"));
+                .orElseGet(() -> supplierRepo.findAll().stream().findFirst()
+                        .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على أي مورد")));
     }
 
     private SupplierIdSlot findOrCreateSlot(Supplier supplier, String externalId) {

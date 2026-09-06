@@ -61,17 +61,64 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.hasToken();
+    const token = this.getToken();
+    if (!token) return false;
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return false;
+    }
+    return true;
   }
 
+  isTokenExpired(token: string | null): boolean {
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload.exp) return false;
+      return Date.now() >= payload.exp * 1000;
+    } catch {
+      return true;
+    }
+  }
+
+  /** Platform admin (SaaS super admin) — manages all tenants */
+  isPlatformAdmin(): boolean {
+    return this.getUser()?.role === 'PLATFORM_ADMIN';
+  }
+
+  /** Company admin (was SUPER_ADMIN) — manages a single tenant */
+  isAdmin(): boolean {
+    return this.getUser()?.role === 'ADMIN';
+  }
+
+  /** @deprecated Use isAdmin() instead */
   isSuperAdmin(): boolean {
-    return this.getUser()?.role === 'SUPER_ADMIN';
+    return this.isAdmin();
+  }
+
+  /** Get the current tenant ID (null for platform admin) */
+  getTenantId(): string | null {
+    return this.getUser()?.tenantId ?? null;
+  }
+
+  /** Get tenant branding */
+  getTenantBranding(): { name: string | null; logo: string | null; primaryColor: string | null; secondaryColor: string | null } {
+    const user = this.getUser();
+    return {
+      name: user?.tenantName ?? null,
+      logo: user?.tenantLogo ?? null,
+      primaryColor: user?.tenantPrimaryColor ?? null,
+      secondaryColor: user?.tenantSecondaryColor ?? null,
+    };
   }
 
   hasPermission(permission: string): boolean {
     const user = this.getUser();
     if (!user) return false;
-    if (user.role === 'SUPER_ADMIN') return true;
+    if (user.role === 'PLATFORM_ADMIN') return true;
+    if (user.role === 'ADMIN') return true;
     if (!user.permissions) return false;
 
     if (user.permissions.includes(permission)) return true;
@@ -105,4 +152,3 @@ export class AuthService {
     return !!localStorage.getItem(TOKEN_KEY);
   }
 }
-

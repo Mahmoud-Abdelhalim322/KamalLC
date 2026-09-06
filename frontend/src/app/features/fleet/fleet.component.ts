@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { FleetService } from '../../core/services/fleet.service';
 import { CaptainService } from '../../core/services/captain.service';
 import {
@@ -82,6 +83,7 @@ export class FleetComponent implements OnInit {
   constructor(
     private fleetService: FleetService,
     private captainService: CaptainService,
+    private http: HttpClient,
     public authService: AuthService
   ) {}
 
@@ -130,6 +132,7 @@ export class FleetComponent implements OnInit {
     this.editingVehicle = v;
     this.vForm = {
       plateNumber: v.plateNumber, ownershipType: v.ownershipType,
+      rentalAgentCode: v.rentalAgentCode || '',
       brand: v.brand || '', model: v.model || '', year: v.year, color: v.color || '',
       odometer: v.odometer, inspectionDate: v.inspectionDate || '',
       rentalAgentName: v.rentalAgentName || '', rentalStartDate: v.rentalStartDate || '',
@@ -349,6 +352,7 @@ export class FleetComponent implements OnInit {
 
   ownershipLabel(s: string): string {
     if (s === 'RENTED') return 'مؤجرة';
+    if (s === 'LEASE_TO_OWN') return 'تمويلية';
     if (s === 'OTHER') return 'أخرى (خاصة)';
     return 'مملوكة';
   }
@@ -357,12 +361,38 @@ export class FleetComponent implements OnInit {
 
   private emptyVehicleForm() {
     return {
-      plateNumber: '', ownershipType: 'OWNED', brand: '', model: '',
+      plateNumber: '', ownershipType: 'OWNED', rentalAgentCode: '',
+      brand: '', model: '',
       year: null as number | null, color: '', odometer: null as number | null,
       inspectionDate: '', rentalAgentName: '', rentalStartDate: '', rentalEndDate: '',
       registrationNumber: '', vin: '', registrationExpiryDate: '',
       operatingCardNumber: '', insuranceCompany: '', inspectionExpiryDate: '',
       notes: '', status: 'AVAILABLE'
     };
+  }
+
+  // ── Export ──
+
+  isExportingExcel = false;
+
+  exportExcel(): void {
+    this.isExportingExcel = true;
+    const params: Record<string, string> = {};
+    if (this.vehicleOwnershipFilter) params['ownership'] = this.vehicleOwnershipFilter;
+
+    this.http.get('/api/fleet/vehicles/export/excel', { params, responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.isExportingExcel = false;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `الأسطول.xlsx`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.isExportingExcel = false;
+        this.error = 'فشل في تصدير ملف الإكسل';
+      }
+    });
   }
 }

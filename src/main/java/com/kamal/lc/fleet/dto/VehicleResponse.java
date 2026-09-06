@@ -10,8 +10,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class VehicleResponse {
     private UUID id;
+    private String vehicleCode;
     private String plateNumber;
     private String ownershipType;
+    private String rentalAgentCode;
     private String brand;
     private String model;
     private Integer year;

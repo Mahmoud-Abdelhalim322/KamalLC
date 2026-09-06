@@ -73,4 +73,21 @@ public class StaffController {
         staffService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("تم حذف الموظف"));
     }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> bulkDelete(@RequestBody java.util.List<UUID> ids) {
+        int deleted = 0;
+        int skipped = 0;
+        for (UUID id : ids) {
+            try {
+                staffService.delete(id);
+                deleted++;
+            } catch (Exception e) {
+                skipped++;
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                "تم حذف " + deleted + " موظف" + (skipped > 0 ? " — تم تخطي " + skipped + " لارتباطهم ببيانات" : ""),
+                java.util.Map.of("deleted", deleted, "skipped", skipped)));
+    }
 }

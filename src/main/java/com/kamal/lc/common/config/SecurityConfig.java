@@ -2,6 +2,7 @@ package com.kamal.lc.common.config;
 
 import com.kamal.lc.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,11 +21,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Spring Security configuration:
  * - Stateless (JWT-based, no sessions)
  * - /api/auth/login is public
- * - Specific /api/** endpoints require respective permissions or SUPER_ADMIN role
+ * - /api/platform/** requires PLATFORM_ADMIN role
+ * - /api/admin/** requires ADMIN role (company admin, was SUPER_ADMIN)
+ * - Specific /api/** endpoints require respective permissions
  * - Static resources (Angular) are public
  * - CORS configured for Angular dev server
  */
@@ -36,15 +41,33 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082}")
+    private String[] allowedOrigins;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(eh -> eh
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"الجلسة انتهت أو غير مصرح بها. يرجى إعادة تسجيل الدخول.\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"ليس لديك صلاحية الوصول لهذا المورد.\"}");
+                })
+            )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+                .requestMatchers("/api/auth/login", "/api/settings/logo/file/**").permitAll()
+                // Platform admin endpoints (Super Admin of the SaaS platform)
+                .requestMatchers("/api/platform/**").hasRole("PLATFORM_ADMIN")
+                // Company admin endpoints (was SUPER_ADMIN, now ADMIN)
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/inventory/**").hasAnyAuthority("INVENTORY_VIEW", "INVENTORY_MANAGE")
                 .requestMatchers("/api/fleet/**").hasAnyAuthority("FLEET_VIEW", "FLEET_MANAGE")
                 .requestMatchers("/api/shifts/**").hasAnyAuthority("SHIFTS_VIEW", "SHIFTS_MANAGE")
@@ -79,7 +102,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:8082"));
+        config.setAllowedOrigins(List.of(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

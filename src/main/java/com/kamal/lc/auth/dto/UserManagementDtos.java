@@ -61,6 +61,7 @@ public class UserManagementDtos {
     public static class UpdateUserRequest {
         private String displayName;
         private UUID jobTitleId;
+        private UUID staffId;
         private Boolean active;
         private String password;     // null = don't change
     }

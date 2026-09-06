@@ -36,6 +36,9 @@ class SupplierRevenueServiceTest {
     @Mock
     private SupplierAdjustmentRepository adjustmentRepo;
 
+    @Mock
+    private com.kamal.lc.auth.service.CaptainAllocationService allocationService;
+
     @InjectMocks
     private SupplierRevenueService service;
 
@@ -87,6 +90,7 @@ class SupplierRevenueServiceTest {
 
         when(supplierRepo.findAll()).thenReturn(List.of(supplier));
         when(shiftRepo.findByShiftDateBetween(from, to)).thenReturn(List.of(shift1));
+        when(allocationService.getCurrentUserAccessibleCaptainIds()).thenReturn(null);
         when(adjustmentRepo.findByAdjustmentDateBetweenOrderByAdjustmentDateDesc(from, to))
                 .thenReturn(List.of(addition, deduction));
 

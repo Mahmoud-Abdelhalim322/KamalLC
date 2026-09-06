@@ -50,13 +50,18 @@ public class ImportService {
      * The ImportBatch is saved in PREVIEW status so the user can later commit.
      */
     @Transactional
-    public ImportPreviewResponse preview(MultipartFile file) {
+    public ImportPreviewResponse preview(MultipartFile file, UUID supplierId) {
         // 0. A shift report here is a wrong-screen mistake, not a malformed file.
         fileDetector.requireNot(file, ImportBatchType.SHIFTS);
 
         // 1. Check duplicate by file hash
         String fileHash = computeHash(file);
-        if (batchRepo.existsByFileHashAndBatchTypeAndStatus(fileHash, ImportBatchType.CAPTAINS, "COMMITTED")) {
+        UUID tenantId = com.kamal.lc.common.security.TenantContext.getCurrentTenantId();
+        boolean exists = tenantId != null
+                ? batchRepo.existsByFileHashAndBatchTypeAndStatusAndTenantId(fileHash, ImportBatchType.CAPTAINS, "COMMITTED", tenantId)
+                : batchRepo.existsByFileHashAndBatchTypeAndStatus(fileHash, ImportBatchType.CAPTAINS, "COMMITTED");
+
+        if (exists) {
             throw new BusinessException("DUPLICATE_FILE", "هذا الملف تم استيراده من قبل");
         }
 
@@ -72,18 +77,18 @@ public class ImportService {
             throw new BusinessException("EMPTY_FILE", "الملف لا يحتوي على بيانات");
         }
 
+        Supplier supplier = resolveSupplier(supplierId);
+
         // 3. Put the file in PREVIEW status. Re-uploading a file that is still awaiting a
         //    commit refreshes that attempt instead of adding another history row for it.
         ImportBatch batch = reusablePreview(fileHash);
         batch.setFileName(file.getOriginalFilename());
         batch.setRowCount(rows.size());
         batch.setStatus("PREVIEW");
+        batch.setSupplier(supplier);
         batch = batchRepo.save(batch);
 
         // 4. Analyze rows
-        Supplier ninja = supplierRepo.findByCode("NINJA")
-                .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على مورد نينجا"));
-
         int newCaptains = 0, existingCaptains = 0;
         int newNinjaIds = 0, existingNinjaIds = 0;
         List<ImportPreviewResponse.ImportIssue> issues = new ArrayList<>();
@@ -100,7 +105,7 @@ public class ImportService {
                 continue;
             }
             if (row.getNinjaId() == null || row.getNinjaId().isEmpty()) {
-                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_NINJA_ID", "معرف نينجا مفقود"));
+                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_NINJA_ID", "معرف الكابتن لدى المورد مفقود"));
                 continue;
             }
             if (row.getCaptainName() == null || row.getCaptainName().isEmpty()) {
@@ -116,7 +121,7 @@ public class ImportService {
             ExcelCaptainRow firstUse = firstRowPerNinjaId.putIfAbsent(row.getNinjaId(), row);
             if (firstUse != null && !firstUse.getKamalCode().equals(row.getKamalCode())) {
                 issues.add(issue(row.getRowNumber(), "WARNING", "DUPLICATE_NINJA_ID",
-                        "معرف نينجا " + row.getNinjaId() + " مستخدم أيضًا في الصف " + firstUse.getRowNumber()
+                        "معرف المورد " + row.getNinjaId() + " مستخدم أيضًا في الصف " + firstUse.getRowNumber()
                                 + " لكابتن " + firstUse.getCaptainName()
                                 + " — سيبقى المعرف مربوطًا بالصف الأول فقط"));
             }
@@ -129,15 +134,15 @@ public class ImportService {
             }
 
             // Check ninja ID
-            if (slotRepo.existsByExternalIdAndSupplierId(row.getNinjaId(), ninja.getId())) {
+            if (slotRepo.existsByExternalIdAndSupplierId(row.getNinjaId(), supplier.getId())) {
                 existingNinjaIds++;
                 // Check if assigned to a different captain
-                slotRepo.findByExternalIdAndSupplierId(row.getNinjaId(), ninja.getId()).ifPresent(slot -> {
+                slotRepo.findByExternalIdAndSupplierId(row.getNinjaId(), supplier.getId()).ifPresent(slot -> {
                     assignmentRepo.findBySupplierIdSlotIdAndValidToIsNull(slot.getId()).ifPresent(assignment -> {
                         Captain assignedCaptain = assignment.getCaptain();
                         if (!assignedCaptain.getKamalCode().equals(row.getKamalCode())) {
                             issues.add(issue(row.getRowNumber(), "WARNING", "NINJA_ID_REASSIGNMENT",
-                                    "معرف نينجا " + row.getNinjaId() + " مربوط حاليًا بكابتن " + assignedCaptain.getFullNameAr()));
+                                    "معرف المورد " + row.getNinjaId() + " مربوط حاليًا بكابتن " + assignedCaptain.getFullNameAr()));
                         }
                     });
                 });
@@ -180,7 +185,7 @@ public class ImportService {
      * Re-parses the file (which must be re-uploaded) or uses the batch ID from preview.
      */
     @Transactional
-    public ImportPreviewResponse commit(MultipartFile file, UUID batchId) {
+    public ImportPreviewResponse commit(MultipartFile file, UUID batchId, UUID supplierId) {
         ImportBatch batch = batchRepo.findById(batchId)
                 .orElseThrow(() -> new BusinessException("BATCH_NOT_FOUND", "عملية الاستيراد غير موجودة"));
 
@@ -203,8 +208,9 @@ public class ImportService {
             throw new BusinessException("PARSE_ERROR", e.getMessage());
         }
 
-        Supplier ninja = supplierRepo.findByCode("NINJA")
-                .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على مورد نينجا"));
+        Supplier supplier = supplierId != null
+                ? resolveSupplier(supplierId)
+                : (batch.getSupplier() != null ? batch.getSupplier() : resolveSupplier(null));
 
         int imported = 0, skipped = 0;
         List<ImportPreviewResponse.ImportIssue> issues = new ArrayList<>();
@@ -225,7 +231,7 @@ public class ImportService {
             // Each row is written in its own transaction, so one that hits a constraint is
             // skipped and reported instead of aborting the transaction the rest depends on.
             try {
-                issues.addAll(rowWriter.write(row, ninja));
+                issues.addAll(rowWriter.write(row, supplier));
                 imported++;
             } catch (Exception e) {
                 skipped++;
@@ -239,6 +245,7 @@ public class ImportService {
         batch.setImportedCount(imported);
         batch.setSkippedCount(skipped);
         batch.setStatus("COMMITTED");
+        batch.setSupplier(supplier);
         batch.setWarningCount((int) issues.stream().filter(i -> "WARNING".equals(i.getSeverity())).count());
         batch.setErrorCount((int) issues.stream().filter(i -> "ERROR".equals(i.getSeverity())).count());
         batchRepo.save(batch);
@@ -255,19 +262,33 @@ public class ImportService {
                 .build();
     }
 
+    private Supplier resolveSupplier(UUID supplierId) {
+        if (supplierId != null) {
+            return supplierRepo.findById(supplierId)
+                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "المورد المحدد غير موجود"));
+        }
+        return supplierRepo.findByCode("NINJA")
+                .orElseGet(() -> supplierRepo.findAll().stream().findFirst()
+                        .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على أي مورد")));
+    }
+
     /**
      * The batch this preview should write to: the file's pending preview if it has one,
      * otherwise a fresh batch. Reusing it keeps one history row per uncommitted file, so
      * a hash never ends up on more than one PREVIEW batch.
      */
     private ImportBatch reusablePreview(String fileHash) {
-        ImportBatch batch = batchRepo
-                .findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
-                        fileHash, ImportBatchType.CAPTAINS, "PREVIEW")
-                .orElseGet(() -> ImportBatch.builder()
-                        .fileHash(fileHash)
-                        .batchType(ImportBatchType.CAPTAINS)
-                        .build());
+        UUID tenantId = com.kamal.lc.common.security.TenantContext.getCurrentTenantId();
+        Optional<ImportBatch> existing = tenantId != null
+                ? batchRepo.findFirstByFileHashAndBatchTypeAndStatusAndTenantIdOrderByUploadedAtDesc(
+                        fileHash, ImportBatchType.CAPTAINS, "PREVIEW", tenantId)
+                : batchRepo.findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
+                        fileHash, ImportBatchType.CAPTAINS, "PREVIEW");
+
+        ImportBatch batch = existing.orElseGet(() -> ImportBatch.builder()
+                .fileHash(fileHash)
+                .batchType(ImportBatchType.CAPTAINS)
+                .build());
 
         if (batch.getId() != null) {
             // This run replaces the earlier one — its findings must not be counted twice.
@@ -292,9 +313,17 @@ public class ImportService {
 
     /** History for one import screen; {@code null} keeps the old combined listing. */
     public Page<ImportBatchResponse> getHistory(ImportBatchType type, Pageable pageable) {
-        Page<ImportBatch> page = type == null
-                ? batchRepo.findAllByOrderByUploadedAtDesc(pageable)
-                : batchRepo.findAllByBatchTypeOrderByUploadedAtDesc(type, pageable);
+        UUID tenantId = com.kamal.lc.common.security.TenantContext.getCurrentTenantId();
+        Page<ImportBatch> page;
+        if (tenantId != null) {
+            page = type == null
+                    ? batchRepo.findAllByTenantIdOrderByUploadedAtDesc(tenantId, pageable)
+                    : batchRepo.findAllByBatchTypeAndTenantIdOrderByUploadedAtDesc(type, tenantId, pageable);
+        } else {
+            page = type == null
+                    ? batchRepo.findAllByOrderByUploadedAtDesc(pageable)
+                    : batchRepo.findAllByBatchTypeOrderByUploadedAtDesc(type, pageable);
+        }
         return page.map(this::toResponse);
     }
 

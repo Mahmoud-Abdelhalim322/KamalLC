@@ -20,7 +20,7 @@ class PayrollCalculatorTest {
 
     private PayrollCalculator.Input input(String type, boolean ownVehicle, int shifts, int orders) {
         return new PayrollCalculator.Input(type, ownVehicle, shifts, orders,
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     @Nested
@@ -122,6 +122,7 @@ class PayrollCalculatorTest {
                     new BigDecimal("240"),   // daily incentives
                     new BigDecimal("350"),   // fuel allowances
                     new BigDecimal("310"),   // car allowances
+                    BigDecimal.ZERO,
                     BigDecimal.ZERO), settings);
 
             // 1539 − 120 − 50 + 240 + 350 + 310 + 1000 + 213
@@ -136,6 +137,7 @@ class PayrollCalculatorTest {
                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
                     new BigDecimal("350"),   // fuel allowances
                     new BigDecimal("310"),   // car allowances
+                    BigDecimal.ZERO,
                     BigDecimal.ZERO), settings);
 
             assertThat(result.fuelAllowances()).isEqualByComparingTo("350");
@@ -149,7 +151,7 @@ class PayrollCalculatorTest {
         void dailyIncentivesStackWithTheTargetBonus() {
             PayrollCalculator.Result withIncentives = calculator.compute(new PayrollCalculator.Input(
                     "EMPLOYEE", false, 27, 421, BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("240"),
-                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO), settings);
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO), settings);
             PayrollCalculator.Result without = calculator.compute(
                     input("EMPLOYEE", false, 27, 421), settings);
 
@@ -163,7 +165,7 @@ class PayrollCalculatorTest {
             PayrollCalculator.Result result = calculator.compute(new PayrollCalculator.Input(
                     "EMPLOYEE", false, 27, 421,
                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                    new BigDecimal("118")), settings); // +200 housing +135 reward −217 loan
+                    BigDecimal.ZERO, new BigDecimal("118")), settings); // +200 housing +135 reward −217 loan
 
             assertThat(result.net()).isEqualByComparingTo(result.gross().add(new BigDecimal("118")));
         }

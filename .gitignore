@@ -31,3 +31,21 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment & Secrets ###
+*.env
+.env.*
+application-local.yml
+application-prod.yml
+application-staging.yml
+
+### Uploads & Logs ###
+uploads/
+logs/
+*.log
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+

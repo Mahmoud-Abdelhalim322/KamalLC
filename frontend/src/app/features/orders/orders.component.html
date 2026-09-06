@@ -41,24 +41,54 @@
           <span class="material-icons-round">groups</span> الكل
         </button>
         <button class="filter-tab" [class.active]="captainType === 'EMPLOYEE'" (click)="setCaptainType('EMPLOYEE')">
-          <span class="material-icons-round">badge</span> كفالة
+          <span class="material-icons-round">badge</span> KSC
         </button>
         <button class="filter-tab" [class.active]="captainType === 'FREELANCE'" (click)="setCaptainType('FREELANCE')">
-          <span class="material-icons-round">directions_bike</span> فري لانس
+          <span class="material-icons-round">directions_bike</span> KSCFL
+        </button>
+      </div>
+
+      <div class="display-mode-tabs">
+        <button class="mode-tab" [class.active]="displayMode === 'ORDERS'" (click)="setDisplayMode('ORDERS')">
+          <span class="material-icons-round">shopping_bag</span> الطلبات
+        </button>
+        <button class="mode-tab" [class.active]="displayMode === 'PERFORMANCE'" (click)="setDisplayMode('PERFORMANCE')">
+          <span class="material-icons-round">insights</span> الأداء
+        </button>
+        <button class="mode-tab" [class.active]="displayMode === 'HOURS'" (click)="setDisplayMode('HOURS')">
+          <span class="material-icons-round">schedule</span> عدد الساعات
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Legend bar -->
-  <div class="card legend-card">
+  <!-- Legend bar (clickable for filtering) -->
+  <div class="card legend-card" *ngIf="displayMode !== 'HOURS'">
     <span class="legend-title"><span class="material-icons-round">palette</span> قواعد التنسيق الشرطي:</span>
     <div class="legend-items">
-      <div class="legend-item"><span class="swatch cell-grey"></span> <span>1 إلى 4</span></div>
-      <div class="legend-item"><span class="swatch cell-red"></span> <span>5 إلى 8</span></div>
-      <div class="legend-item"><span class="swatch cell-orange"></span> <span>9 إلى 12</span></div>
-      <div class="legend-item"><span class="swatch cell-yellow-green"></span> <span>13 إلى 18</span></div>
-      <div class="legend-item"><span class="swatch cell-green"></span> <span>19 أو أكثر</span></div>
+      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-grey'" (click)="toggleLegendFilter('cell-grey')">
+        <span class="swatch cell-grey"></span> <span>1 إلى 4</span>
+      </div>
+      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-red'" (click)="toggleLegendFilter('cell-red')">
+        <span class="swatch cell-red"></span> <span>5 إلى 8</span>
+      </div>
+      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-orange'" (click)="toggleLegendFilter('cell-orange')">
+        <span class="swatch cell-orange"></span> <span>9 إلى 12</span>
+      </div>
+      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-yellow-green'" (click)="toggleLegendFilter('cell-yellow-green')">
+        <span class="swatch cell-yellow-green"></span> <span>13 إلى 18</span>
+      </div>
+      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-green'" (click)="toggleLegendFilter('cell-green')">
+        <span class="swatch cell-green"></span> <span>19 أو أكثر</span>
+      </div>
+    </div>
+    <!-- Active filter info -->
+    <div class="legend-filter-info" *ngIf="activeLegendFilter">
+      <span class="material-icons-round">filter_alt</span>
+      <span>{{ filteredRows.length }} كابتن — {{ filteredWorkDays }} يوم</span>
+      <button class="btn-clear-filter" (click)="activeLegendFilter = null">
+        <span class="material-icons-round">close</span>
+      </button>
     </div>
   </div>
 
@@ -84,9 +114,25 @@
           <tr class="header-days">
             <th class="sticky-col col-name" rowspan="2">اسم الكابتن</th>
             <th class="sticky-col col-code" rowspan="2">الكود</th>
-            <th class="sticky-col col-rate" rowspan="2">النسبة%</th>
-            <th class="sticky-col col-target" rowspan="2">الهدف</th>
-            <th class="sticky-col col-actual" rowspan="2">الفعلي</th>
+            <th class="sticky-col col-workdays" rowspan="2">عدد الشفتات</th>
+            <!-- ORDERS mode columns -->
+            <ng-container *ngIf="displayMode === 'ORDERS'">
+              <th class="sticky-col col-rate" rowspan="2">النسبة%</th>
+              <th class="sticky-col col-target" rowspan="2">الهدف</th>
+              <th class="sticky-col col-actual" rowspan="2">الفعلي</th>
+            </ng-container>
+            <!-- PERFORMANCE mode columns -->
+            <ng-container *ngIf="displayMode === 'PERFORMANCE'">
+              <th class="sticky-col col-hours" rowspan="2">الساعات</th>
+              <th class="sticky-col col-util" rowspan="2">نسبة التشغيل</th>
+              <th class="sticky-col col-extra" rowspan="2">عمولة بعد 18</th>
+              <th class="sticky-col col-late" rowspan="2">خصم التأخير</th>
+            </ng-container>
+            <!-- HOURS mode columns -->
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <th class="sticky-col col-hours" rowspan="2">إجمالي الساعات</th>
+              <th class="sticky-col col-util" rowspan="2">نسبة التشغيل</th>
+            </ng-container>
             <th *ngFor="let dateStr of data.dates" class="day-dow">
               {{ getDayNameAr(dateStr) }}
             </th>
@@ -100,18 +146,69 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let row of data.captainRows" class="captain-row">
+          <tr *ngFor="let row of filteredRows" class="captain-row">
             <td class="sticky-col col-name name-text" [title]="row.captainName">{{ row.captainName }}</td>
             <td class="sticky-col col-code code-text">{{ row.captainCode }}</td>
-            <td class="sticky-col col-rate rate-text" [class.achieved]="row.achievementRate >= 1">
-              {{ percent(row.achievementRate) }}
-            </td>
-            <td class="sticky-col col-target num-text">{{ row.target }}</td>
-            <td class="sticky-col col-actual num-text strong">{{ row.actual }}</td>
+            <td class="sticky-col col-workdays workdays-text">{{ getCaptainWorkDays(row) }}</td>
 
-            <td *ngFor="let dateStr of data.dates" class="day-cell" [ngClass]="getColorClass(row.dailyOrders[dateStr])">
-              {{ row.dailyOrders[dateStr] || '' }}
-            </td>
+            <!-- ORDERS mode -->
+            <ng-container *ngIf="displayMode === 'ORDERS'">
+              <td class="sticky-col col-rate rate-text" [class.achieved]="getCaptainAchievementRate(row) >= 1">
+                {{ percent(getCaptainAchievementRate(row)) }}
+              </td>
+              <td class="sticky-col col-target num-text">{{ row.target }}</td>
+              <td class="sticky-col col-actual num-text strong">{{ getCaptainActual(row) }}</td>
+            </ng-container>
+
+            <!-- PERFORMANCE mode -->
+            <ng-container *ngIf="displayMode === 'PERFORMANCE'">
+              <td class="sticky-col col-hours num-text">{{ hours(row.totalHours) }}</td>
+              <td class="sticky-col col-util rate-text">{{ percent(row.avgBusyUtilization) }}</td>
+              <td class="sticky-col col-extra num-text">{{ row.totalExtraOrders || '—' }}</td>
+              <td class="sticky-col col-late num-text late-deduction">{{ row.totalLateDeduction ? row.totalLateDeduction.toFixed(0) : '—' }}</td>
+            </ng-container>
+
+            <!-- HOURS mode -->
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td class="sticky-col col-hours num-text">{{ hours(row.totalHours) }}</td>
+              <td class="sticky-col col-util rate-text">{{ percent(row.avgBusyUtilization) }}</td>
+            </ng-container>
+
+            <!-- Day cells — ORDERS & PERFORMANCE modes -->
+            <ng-container *ngIf="displayMode !== 'HOURS'">
+              <td *ngFor="let dateStr of data.dates"
+                  class="day-cell"
+                  [ngClass]="isDayMatchingFilter(row.dailyOrders[dateStr]) ? getDayCellColorClass(row.dailyOrders[dateStr]) : 'cell-blank'"
+                  [class.multi-shift-cell]="isDayMatchingFilter(row.dailyOrders[dateStr]) && isMultiShift(row.dailyOrders[dateStr])">
+                <ng-container *ngIf="isDayMatchingFilter(row.dailyOrders[dateStr])">
+                  <ng-container *ngIf="!isMultiShift(row.dailyOrders[dateStr])">
+                    {{ dayTotal(row.dailyOrders[dateStr]) || '' }}
+                  </ng-container>
+                  <ng-container *ngIf="isMultiShift(row.dailyOrders[dateStr])">
+                    <div class="shift-split">
+                      <span *ngFor="let shiftVal of row.dailyOrders[dateStr]" class="shift-value">{{ shiftVal }}</span>
+                    </div>
+                  </ng-container>
+                </ng-container>
+              </td>
+            </ng-container>
+
+            <!-- Day cells — HOURS mode -->
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td *ngFor="let dateStr of data.dates"
+                  class="day-cell cell-hours">
+                <ng-container *ngIf="row.dailyHours && row.dailyHours[dateStr]">
+                  <ng-container *ngIf="!isMultiShiftHours(row.dailyHours[dateStr])">
+                    {{ formatHours(dayHoursTotal(row.dailyHours[dateStr])) }}
+                  </ng-container>
+                  <ng-container *ngIf="isMultiShiftHours(row.dailyHours[dateStr])">
+                    <div class="shift-split">
+                      <span *ngFor="let h of row.dailyHours[dateStr]" class="shift-value">{{ formatHours(h) }}</span>
+                    </div>
+                  </ng-container>
+                </ng-container>
+              </td>
+            </ng-container>
           </tr>
         </tbody>
 
@@ -119,19 +216,39 @@
           <!-- Totals row -->
           <tr class="totals-row">
             <td class="sticky-col col-name strong" colspan="2">المجموع</td>
-            <td class="sticky-col col-rate rate-text">{{ percent(data.dailySummary.totalRate) }}</td>
-            <td class="sticky-col col-target num-text">{{ data.dailySummary.totalTarget }}</td>
-            <td class="sticky-col col-actual num-text strong">{{ data.dailySummary.totalActual }}</td>
+            <td class="sticky-col col-workdays num-text">{{ filteredWorkDays }}</td>
+            <ng-container *ngIf="displayMode === 'ORDERS'">
+              <td class="sticky-col col-rate rate-text">{{ percent(filteredTotalRate) }}</td>
+              <td class="sticky-col col-target num-text">{{ filteredTotalTarget }}</td>
+              <td class="sticky-col col-actual num-text strong">{{ filteredTotalActual }}</td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'PERFORMANCE'">
+              <td class="sticky-col col-hours num-text"></td>
+              <td class="sticky-col col-util rate-text"></td>
+              <td class="sticky-col col-extra num-text strong">{{ filteredTotalExtraOrders }}</td>
+              <td class="sticky-col col-late num-text late-deduction">{{ filteredTotalLateDeduction.toFixed(0) }}</td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td class="sticky-col col-hours num-text strong">{{ hours(filteredTotalHours) }}</td>
+              <td class="sticky-col col-util rate-text"></td>
+            </ng-container>
 
-            <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
-              {{ data.dailySummary.dailyTotals[dateStr] || 0 }}
-            </td>
+            <ng-container *ngIf="displayMode !== 'HOURS'">
+              <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
+                {{ getDailyTotalForDate(dateStr) }}
+              </td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
+                {{ getDailyHoursTotalForDate(dateStr) ? getDailyHoursTotalForDate(dateStr).toFixed(1) : '' }}
+              </td>
+            </ng-container>
           </tr>
 
           <!-- Summary row for Captain Count -->
           <tr class="count-row">
-            <td class="sticky-col col-name" colspan="4">عدد الكباتن</td>
-            <td class="sticky-col col-actual num-text strong">{{ data.dailySummary.totalCaptains }}</td>
+            <td class="sticky-col col-name" [attr.colspan]="displayMode === 'ORDERS' ? 5 : displayMode === 'PERFORMANCE' ? 6 : 4">عدد الكباتن</td>
+            <td class="sticky-col col-actual num-text strong">{{ filteredRows.length }}</td>
             <td [attr.colspan]="data.dates.length" class="empty-footer-cell"></td>
           </tr>
         </tfoot>

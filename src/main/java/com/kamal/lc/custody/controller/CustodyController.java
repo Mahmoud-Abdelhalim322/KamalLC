@@ -4,11 +4,15 @@ import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
 import com.kamal.lc.custody.dto.CaptainCustodySummary;
 import com.kamal.lc.custody.dto.CustodyRecordResponse;
+import com.kamal.lc.custody.service.CustodyExportService;
+import com.kamal.lc.custody.service.CustodyHandoverPdfService;
 import com.kamal.lc.custody.service.CustodyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +25,8 @@ import java.util.UUID;
 public class CustodyController {
 
     private final CustodyService service;
+    private final CustodyExportService exportService;
+    private final CustodyHandoverPdfService handoverPdfService;
 
     /** All captains who hold at least one active item, with their items. */
     @GetMapping("/summaries")
@@ -99,5 +105,25 @@ public class CustodyController {
                 .totalPages(result.getTotalPages())
                 .last(result.isLast())
                 .build()));
+    }
+
+    // ── Export ──
+
+    @GetMapping("/export/excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] bytes = exportService.exportAllExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"custody-export.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    @GetMapping("/handover/pdf/{captainId}")
+    public ResponseEntity<byte[]> handoverPdf(@PathVariable UUID captainId) {
+        byte[] bytes = handoverPdfService.buildHandoverPdf(captainId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"handover-" + captainId + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(bytes);
     }
 }

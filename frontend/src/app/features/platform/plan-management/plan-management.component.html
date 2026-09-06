@@ -1,0 +1,117 @@
+<div class="plan-management-page">
+
+  <!-- Header -->
+  <div class="page-header flex-between">
+    <div>
+      <h1 class="page-title">خطط الاشتراك</h1>
+      <p class="page-subtitle">تحديد أسعار ومواصفات الخطط وتحديث بيانات الخطط الحالية</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <span class="material-icons-round">add</span>
+      <span>إضافة خطة جديدة</span>
+    </button>
+  </div>
+
+  <!-- Banners for feedback -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="material-icons-round">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="material-icons-round">error</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Plans Cards Grid -->
+  <div class="plans-grid">
+    <div *ngFor="let plan of plans" class="plan-card" [class.inactive]="!plan.active">
+      <div class="plan-card-top-bar">
+        <div class="plan-badge-top">
+          <span class="material-icons-round">workspace_premium</span>
+        </div>
+        <div class="plan-actions">
+          <button class="btn-icon-sm btn-edit" (click)="openEditModal(plan)" title="تعديل الخطة">
+            <span class="material-icons-round">edit</span>
+          </button>
+          <button class="btn-icon-sm btn-delete" (click)="deletePlan(plan)" title="تعطيل الخطة" *ngIf="plan.active">
+            <span class="material-icons-round">block</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="plan-header">
+        <h3>{{ plan.nameAr }}</h3>
+        <span class="plan-en">{{ plan.name }}</span>
+      </div>
+
+      <div class="plan-pricing">
+        <div class="price-wrap">
+          <span class="price">{{ plan.monthlyPrice | number:'1.0-2' }}</span>
+          <span class="currency">ر.س / شهرياً</span>
+        </div>
+        <div class="yearly" *ngIf="plan.yearlyPrice">
+          <span class="material-icons-round icon-discount">stars</span>
+          <span>{{ plan.yearlyPrice | number:'1.0-2' }} ر.س سنوي الكترونياً</span>
+        </div>
+      </div>
+
+      <p class="description">{{ plan.descriptionAr || plan.description }}</p>
+
+      <div class="no-quota-badge">
+        <span class="material-icons-round">auto_awesome</span>
+        <span>وصول كامل لكافة المميزات وبدون أي حدود على عدد الكباتن والمستخدمين</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Plan Modal -->
+  <div class="modal-overlay" *ngIf="showModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons-round">assignment</span>
+          <span>{{ editingPlanId ? 'تعديل خطة الاشتراك' : 'إضافة خطة اشتراك جديدة' }}</span>
+        </h2>
+        <button class="btn-close" (click)="closeModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitPlan()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">الاسم بالعربية *</label>
+            <input type="text" [(ngModel)]="newPlan.nameAr" name="nameAr" required class="form-input" placeholder="مثال: الخطة الذهبية" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">الاسم بالإنجليزية *</label>
+            <input type="text" [(ngModel)]="newPlan.name" name="name" required class="form-input" placeholder="Gold Plan" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">السعر الشهري (ر.س) *</label>
+            <input type="number" [(ngModel)]="newPlan.monthlyPrice" name="monthlyPrice" required class="form-input" placeholder="1000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">السعر السنوي (ر.س)</label>
+            <input type="number" [(ngModel)]="newPlan.yearlyPrice" name="yearlyPrice" class="form-input" placeholder="10000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">الوصف بالعربية</label>
+            <textarea [(ngModel)]="newPlan.descriptionAr" name="descriptionAr" rows="3" class="form-input" placeholder="وصف مميزات الخطة..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" (click)="closeModal()">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <span class="material-icons-round" *ngIf="!submitting">save</span>
+            <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
+            <span>{{ submitting ? 'جاري الحفظ...' : (editingPlanId ? 'تحديث الخطة' : 'حفظ الخطة') }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+

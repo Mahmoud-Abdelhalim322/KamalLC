@@ -1,8 +1,12 @@
 package com.kamal.lc.payroll.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -21,7 +25,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PayrollRun {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class PayrollRun implements TenantAware {
 
     public static final String DRAFT = "DRAFT";
     public static final String APPROVED = "APPROVED";
@@ -57,6 +63,12 @@ public class PayrollRun {
     @Column(name = "approved_by", length = 100)
     private String approvedBy;
 
+    @Column(name = "paid_at")
+    private OffsetDateTime paidAt;
+
+    @Column(name = "paid_by", length = 100)
+    private String paidBy;
+
     /** The rates used at generation time, so an approved run can always explain itself. */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "settings_snapshot", columnDefinition = "jsonb")
@@ -69,4 +81,9 @@ public class PayrollRun {
     public boolean isLocked() {
         return APPROVED.equals(status) || PAID.equals(status);
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+
 }

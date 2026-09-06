@@ -37,4 +37,30 @@ public class SettingsController {
         SettingResponse updated = settingsService.update(key, request.getValue(), request.getEffectiveFrom());
         return ResponseEntity.ok(ApiResponse.ok("تم تحديث الإعداد بنجاح", updated));
     }
+
+    @PostMapping(value = "/logo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<SettingResponse>> uploadLogo(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        SettingResponse updated = settingsService.uploadLogo(file);
+        return ResponseEntity.ok(ApiResponse.ok("تم رفع وتحديث شعار الشركة بنجاح", updated));
+    }
+
+    @GetMapping("/logo/file/{filename:.+}")
+    public ResponseEntity<org.springframework.core.io.Resource> getLogoFile(@PathVariable String filename) {
+        org.springframework.core.io.Resource resource = settingsService.loadLogo(filename);
+        String contentType = "image/png";
+        if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+            contentType = "image/jpeg";
+        } else if (filename.endsWith(".webp")) {
+            contentType = "image/webp";
+        } else if (filename.endsWith(".gif")) {
+            contentType = "image/gif";
+        } else if (filename.endsWith(".svg")) {
+            contentType = "image/svg+xml";
+        }
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .body(resource);
+    }
 }

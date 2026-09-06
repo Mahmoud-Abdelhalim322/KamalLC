@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +16,14 @@ public interface SupplierIdAssignmentRepository extends JpaRepository<SupplierId
     List<SupplierIdAssignment> findBySupplierIdSlotIdOrderByValidFromDesc(UUID slotId);
 
     List<SupplierIdAssignment> findByCaptainIdOrderByValidFromDesc(UUID captainId);
+
+    /** Batch-load assignments for multiple captains to avoid N+1 queries during payroll generation. */
+    @Query("SELECT a FROM SupplierIdAssignment a JOIN FETCH a.supplierIdSlot WHERE a.captain.id IN :captainIds")
+    List<SupplierIdAssignment> findByCaptainIdIn(@Param("captainIds") Collection<UUID> captainIds);
+
+    void deleteBySupplierIdSlotId(UUID slotId);
+
+    void deleteByCaptainId(UUID captainId);
 
     /** Find the currently active assignment for a slot (valid_to IS NULL). */
     Optional<SupplierIdAssignment> findBySupplierIdSlotIdAndValidToIsNull(UUID slotId);

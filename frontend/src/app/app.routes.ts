@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, loginGuard, permissionGuard } from './core/auth/auth.guard';
+import { authGuard, loginGuard, permissionGuard, platformAdminGuard, tenantGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -7,9 +7,48 @@ export const routes: Routes = [
     canActivate: [loginGuard],
     loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent)
   },
+  // ============================================ Platform Admin Routes
+  {
+    path: 'platform',
+    canActivate: [authGuard, platformAdminGuard],
+    loadComponent: () => import('./features/platform/platform-layout/platform-layout.component').then(m => m.PlatformLayoutComponent),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/platform/platform-dashboard/platform-dashboard.component').then(m => m.PlatformDashboardComponent)
+      },
+      {
+        path: 'tenants',
+        loadComponent: () => import('./features/platform/tenant-management/tenant-management.component').then(m => m.TenantManagementComponent)
+      },
+      {
+        path: 'plans',
+        loadComponent: () => import('./features/platform/plan-management/plan-management.component').then(m => m.PlanManagementComponent)
+      },
+      {
+        path: 'subscriptions',
+        loadComponent: () => import('./features/platform/subscription-management/subscription-management.component').then(m => m.SubscriptionManagementComponent)
+      },
+      {
+        path: 'invoices',
+        loadComponent: () => import('./features/platform/invoice-management/invoice-management.component').then(m => m.InvoiceManagementComponent)
+      },
+      {
+        path: 'audit-log',
+        loadComponent: () => import('./features/platform/audit-log/audit-log.component').then(m => m.AuditLogComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
+  },
+  // ============================================ Tenant (Company) Routes
   {
     path: '',
-    canActivate: [authGuard],
+    canActivate: [tenantGuard],
+
     loadComponent: () => import('./shared/components/layout/layout.component').then(m => m.LayoutComponent),
     children: [
       {
@@ -95,11 +134,11 @@ export const routes: Routes = [
         data: { permission: 'MEMBERS_VIEW' },
         loadComponent: () => import('./features/staff-form/staff-detail/staff-detail.component').then(m => m.StaffDetailComponent)
       },
-      // ---- User Management (SUPER_ADMIN only) ----
+      // ---- User Management (Company ADMIN only) ----
       {
         path: 'user-management',
         canActivate: [permissionGuard],
-        data: { superAdminOnly: true },
+        data: { adminOnly: true },
         loadComponent: () => import('./features/user-management/user-management.component').then(m => m.UserManagementComponent)
       },
       // ---- Existing ----

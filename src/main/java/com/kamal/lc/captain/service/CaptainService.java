@@ -39,6 +39,9 @@ public class CaptainService {
     private final SupplierIdAssignmentRepository assignmentRepo;
     private final CaptainCodeGenerator codeGenerator;
     private final DocumentAlertEvaluator documentAlerts;
+    private final com.kamal.lc.auth.service.CaptainAllocationService allocationService;
+    private final com.kamal.lc.payroll.repository.PayrollLineRepository payrollLineRepo;
+    private final com.kamal.lc.loan.repository.LoanRepository loanRepo;
 
     /** Creates a captain; the kamal code is generated here and never taken from the client. */
     @Transactional
@@ -64,16 +67,47 @@ public class CaptainService {
         return getCaptainDetail(id);
     }
 
+    @Transactional
+    public void deleteCaptain(UUID id) {
+        Captain captain = captainRepo.findById(id)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "الكابتن غير موجود"));
+
+        if (payrollLineRepo.existsByCaptainId(id)) {
+            throw new BusinessException("HAS_DEPENDENCIES",
+                    "لا يمكن حذف الكابتن لارتباطه بمسيرات رواتب سابقة، يمكنك تحويل حالته إلى غير نشط بدلاً من الحذف");
+        }
+        if (loanRepo.findActiveLoanBalanceByCaptainId(id).compareTo(java.math.BigDecimal.ZERO) > 0) {
+            throw new BusinessException("HAS_DEPENDENCIES",
+                    "لا يمكن حذف الكابتن لوجود سُلف/قروض نشطة غير مسددة عليه");
+        }
+
+        assignmentRepo.deleteByCaptainId(id);
+        documentRepo.deleteByCaptainId(id);
+        captainRepo.delete(captain);
+    }
+
     /** Preview of the code that would be issued next — not reserved. */
     public String previewNextCode(String captainType) {
         return codeGenerator.generate(captainType);
     }
 
     public List<CaptainLookupResponse> lookup(String query) {
+        List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
+        if (accessibleIds != null && accessibleIds.isEmpty()) {
+            return List.of();
+        }
+
         Pageable topTen = PageRequest.of(0, 10, Sort.by("fullNameAr"));
-        Page<Captain> page = (query != null && !query.trim().isEmpty())
-                ? captainRepo.search(query.trim(), topTen)
-                : captainRepo.findAll(topTen);
+        Page<Captain> page;
+        if (accessibleIds != null) {
+            page = (query != null && !query.trim().isEmpty())
+                    ? captainRepo.searchAndIdIn(query.trim(), accessibleIds, topTen)
+                    : captainRepo.findByIdIn(accessibleIds, topTen);
+        } else {
+            page = (query != null && !query.trim().isEmpty())
+                    ? captainRepo.search(query.trim(), topTen)
+                    : captainRepo.findAll(topTen);
+        }
 
         return page.getContent().stream().map(c -> CaptainLookupResponse.builder()
                 .id(c.getId())
@@ -87,27 +121,89 @@ public class CaptainService {
     private void applyRequest(Captain captain, CaptainRequest r) {
         captain.setFullNameAr(r.getFullNameAr());
         captain.setFullNameEn(blankToNull(r.getFullNameEn()));
+        captain.setGender(blankToNull(r.getGender()));
         captain.setNationality(blankToNull(r.getNationality()));
         captain.setDateOfBirth(r.getDateOfBirth());
         captain.setPhone(blankToNull(r.getPhone()));
         captain.setEmail(blankToNull(r.getEmail()));
-        captain.setIqamaNumber(blankToNull(r.getIqamaNumber()));
-        captain.setIqamaExpiry(r.getIqamaExpiry());
+        captain.setPlaceOfResidence(blankToNull(r.getPlaceOfResidence()));
+        captain.setHomeAddress(blankToNull(r.getHomeAddress()));
+        captain.setJobTitle(blankToNull(r.getJobTitle()));
+        captain.setAppId(blankToNull(r.getAppId()));
+
+        // Passport
         captain.setPassportNumber(blankToNull(r.getPassportNumber()));
+        captain.setPassportIssueDate(r.getPassportIssueDate());
         captain.setPassportExpiry(r.getPassportExpiry());
+        captain.setPassportStatus(blankToNull(r.getPassportStatus()));
+
+        // Iqama
+        captain.setIqamaNumber(blankToNull(r.getIqamaNumber()));
+        captain.setIqamaOccupation(blankToNull(r.getIqamaOccupation()));
+        captain.setIqamaExpiry(r.getIqamaExpiry());
+        captain.setIqamaExpiryRenewed(r.getIqamaExpiryRenewed());
+        captain.setIqamaStatus(blankToNull(r.getIqamaStatus()));
+
+        // Qiwa
+        captain.setQiwaContractNumber(blankToNull(r.getQiwaContractNumber()));
+        captain.setEstablishmentNumber(blankToNull(r.getEstablishmentNumber()));
+        captain.setQiwaContractStart(r.getQiwaContractStart());
+        captain.setQiwaContractEnd(r.getQiwaContractEnd());
+        captain.setQiwaContractStatus(blankToNull(r.getQiwaContractStatus()));
+
+        // Work Permit
+        captain.setWorkPermitExpiry(r.getWorkPermitExpiry());
+        captain.setWorkPermitStatus(blankToNull(r.getWorkPermitStatus()));
+
+        // Company
+        captain.setAffiliatedCompany(blankToNull(r.getAffiliatedCompany()));
+        captain.setCrNumber(blankToNull(r.getCrNumber()));
+
+        // Driving Licence
         captain.setDrivingLicenceNo(blankToNull(r.getDrivingLicenceNo()));
         captain.setLicenceExpiry(r.getLicenceExpiry());
-        captain.setWorkPermitExpiry(r.getWorkPermitExpiry());
+        captain.setHasLicence(r.isHasLicence());
+        captain.setLicenceStatus(blankToNull(r.getLicenceStatus()));
+
+        // Insurance
         captain.setInsuranceNumber(blankToNull(r.getInsuranceNumber()));
+        captain.setInsuranceCategory(blankToNull(r.getInsuranceCategory()));
+        captain.setInsuranceIssueDate(r.getInsuranceIssueDate());
         captain.setInsuranceCompany(blankToNull(r.getInsuranceCompany()));
         captain.setInsuranceExpiry(r.getInsuranceExpiry());
+        captain.setInsuranceStatus(blankToNull(r.getInsuranceStatus()));
+
+        // Other Personal
+        captain.setBloodType(blankToNull(r.getBloodType()));
+        captain.setTrialPeriodDays(r.getTrialPeriodDays());
+
+        // Bank
+        captain.setBankAccountNumber(blankToNull(r.getBankAccountNumber()));
+        captain.setBankName(blankToNull(r.getBankName()));
+
+        // Salary & Allowances
+        captain.setBasicSalary(r.getBasicSalary() != null ? r.getBasicSalary() : java.math.BigDecimal.ZERO);
+        captain.setHousingAllowance(r.getHousingAllowance() != null ? r.getHousingAllowance() : java.math.BigDecimal.ZERO);
+        captain.setTransportationAllowance(r.getTransportationAllowance() != null ? r.getTransportationAllowance() : java.math.BigDecimal.ZERO);
+        captain.setFuelAllowanceAmount(r.getFuelAllowanceAmount() != null ? r.getFuelAllowanceAmount() : java.math.BigDecimal.ZERO);
+        captain.setCallInternetAllowance(r.getCallInternetAllowance() != null ? r.getCallInternetAllowance() : java.math.BigDecimal.ZERO);
+        captain.setRewardAllowance(r.getRewardAllowance() != null ? r.getRewardAllowance() : java.math.BigDecimal.ZERO);
+
+        // Vehicle & Fuel flags
         captain.setUsesOwnVehicle(r.isUsesOwnVehicle());
-        // A captain driving his own vehicle carries the fuel cost, so eligibility follows the
-        // vehicle flag by default. Sending it explicitly still wins, which is how the rare
-        // exception (own vehicle without the allowance, or the reverse) is recorded.
         captain.setFuelAllowanceEligible(r.getFuelAllowanceEligible() != null
                 ? r.getFuelAllowanceEligible()
                 : r.isUsesOwnVehicle());
+
+        // Work Info
+        captain.setWorkPhone(blankToNull(r.getWorkPhone()));
+        captain.setDepartment(blankToNull(r.getDepartment()));
+        captain.setSection(blankToNull(r.getSection()));
+        captain.setSupervisor(blankToNull(r.getSupervisor()));
+        captain.setWorkLocation(blankToNull(r.getWorkLocation()));
+        captain.setWorkWith(blankToNull(r.getWorkWith()));
+
+        // Status
         captain.setStatus(r.getStatus() != null && !r.getStatus().isBlank()
                 ? r.getStatus().toUpperCase() : "ACTIVE");
         captain.setJoinDate(r.getJoinDate());
@@ -127,43 +223,73 @@ public class CaptainService {
 
     /**
      * A page of captains, optionally narrowed to those whose documents raised an alert.
-     *
-     * <p>{@code alert} is {@code ANY} for every kind of problem, or one
-     * {@link DocumentStatus} name to see just the expired, just the expiring, or just the
-     * ones nobody has recorded a date for.
-     *
-     * <p>{@code alert} takes precedence over {@code search} and {@code type}: the screen
-     * offers them as one row of mutually exclusive tabs, so they never arrive together.
      */
     public Page<CaptainResponse> getCaptains(String search, String type, String alert, Pageable pageable) {
+        List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
+        if (accessibleIds != null && accessibleIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
         Page<Captain> page;
 
         boolean hasSearch = search != null && !search.trim().isEmpty();
         boolean hasType = type != null && !type.trim().isEmpty();
         boolean hasAlert = alert != null && !alert.trim().isEmpty();
 
-        if (hasAlert) {
-            // The evaluator decides who is alerting, then the page is taken from that set —
-            // so this filter cannot disagree with the badge it filters on, and paging still
-            // counts what it should.
-            Set<UUID> alerting = alertingCaptainIds(alert.trim());
-            if (alerting.isEmpty()) {
-                return Page.empty(pageable);
+        if (accessibleIds != null) {
+            if (hasAlert) {
+                Set<UUID> alerting = alertingCaptainIds(alert.trim());
+                alerting.retainAll(accessibleIds);
+                if (alerting.isEmpty()) {
+                    return Page.empty(pageable);
+                }
+                page = captainRepo.findByIdIn(alerting, pageable);
+            } else if (hasSearch && hasType) {
+                page = captainRepo.searchByTypeAndIdIn(search.trim(), type, accessibleIds, pageable);
+            } else if (hasSearch) {
+                page = captainRepo.searchAndIdIn(search.trim(), accessibleIds, pageable);
+            } else if (hasType) {
+                page = captainRepo.findByIdInAndCaptainType(accessibleIds, type, pageable);
+            } else {
+                page = captainRepo.findByIdIn(accessibleIds, pageable);
             }
-            page = captainRepo.findByIdIn(alerting, pageable);
-        } else if (hasSearch && hasType) {
-            page = captainRepo.searchByType(search.trim(), type, pageable);
-        } else if (hasSearch) {
-            page = captainRepo.search(search.trim(), pageable);
-        } else if (hasType) {
-            page = captainRepo.findByCaptainType(type, pageable);
         } else {
-            page = captainRepo.findAll(pageable);
+            if (hasAlert) {
+                Set<UUID> alerting = alertingCaptainIds(alert.trim());
+                if (alerting.isEmpty()) {
+                    return Page.empty(pageable);
+                }
+                page = captainRepo.findByIdIn(alerting, pageable);
+            } else if (hasSearch && hasType) {
+                page = captainRepo.searchByType(search.trim(), type, pageable);
+            } else if (hasSearch) {
+                page = captainRepo.search(search.trim(), pageable);
+            } else if (hasType) {
+                page = captainRepo.findByCaptainType(type, pageable);
+            } else {
+                page = captainRepo.findAll(pageable);
+            }
         }
 
         LocalDate today = LocalDate.now();
         Map<DocumentKind, Integer> alertDays = documentAlerts.alertDays(today);
-        return page.map(c -> toResponse(c, today, alertDays));
+
+        // Batch-load active ninja IDs for all captains in this page (avoids N+1 queries)
+        List<UUID> pageIds = page.getContent().stream().map(Captain::getId).toList();
+        List<SupplierIdAssignment> allAssignments = pageIds.isEmpty()
+                ? List.of()
+                : assignmentRepo.findByCaptainIdIn(pageIds);
+
+        // Build lookup: captainId → current ninja ID (active = validTo IS NULL)
+        Map<UUID, String> ninjaIdByCaptain = allAssignments.stream()
+                .filter(a -> a.getValidTo() == null)
+                .collect(java.util.stream.Collectors.toMap(
+                        a -> a.getCaptain().getId(),
+                        a -> a.getSupplierIdSlot().getExternalId(),
+                        (existing, replacement) -> existing  // keep first if duplicates
+                ));
+
+        return page.map(c -> toResponse(c, today, alertDays, ninjaIdByCaptain.get(c.getId())));
     }
 
     /** Active captains matching an alert filter — {@code ANY}, or one status name. */
@@ -204,24 +330,74 @@ public class CaptainService {
                 .captainType(captain.getCaptainType())
                 .fullNameAr(captain.getFullNameAr())
                 .fullNameEn(captain.getFullNameEn())
+                .gender(captain.getGender())
                 .nationality(captain.getNationality())
                 .dateOfBirth(captain.getDateOfBirth() != null ? captain.getDateOfBirth().toString() : null)
                 .phone(captain.getPhone())
                 .email(captain.getEmail())
-                .iqamaNumber(captain.getIqamaNumber())
-                .iqamaExpiry(captain.getIqamaExpiry() != null ? captain.getIqamaExpiry().toString() : null)
+                .placeOfResidence(captain.getPlaceOfResidence())
+                .homeAddress(captain.getHomeAddress())
+                .jobTitle(captain.getJobTitle())
+                .appId(captain.getAppId())
+                // Passport
                 .passportNumber(captain.getPassportNumber())
+                .passportIssueDate(captain.getPassportIssueDate() != null ? captain.getPassportIssueDate().toString() : null)
                 .passportExpiry(captain.getPassportExpiry() != null ? captain.getPassportExpiry().toString() : null)
+                .passportStatus(captain.getPassportStatus())
+                // Iqama
+                .iqamaNumber(captain.getIqamaNumber())
+                .iqamaOccupation(captain.getIqamaOccupation())
+                .iqamaExpiry(captain.getIqamaExpiry() != null ? captain.getIqamaExpiry().toString() : null)
+                .iqamaExpiryRenewed(captain.getIqamaExpiryRenewed() != null ? captain.getIqamaExpiryRenewed().toString() : null)
+                .iqamaStatus(captain.getIqamaStatus())
+                // Qiwa
+                .qiwaContractNumber(captain.getQiwaContractNumber())
+                .establishmentNumber(captain.getEstablishmentNumber())
+                .qiwaContractStart(captain.getQiwaContractStart() != null ? captain.getQiwaContractStart().toString() : null)
+                .qiwaContractEnd(captain.getQiwaContractEnd() != null ? captain.getQiwaContractEnd().toString() : null)
+                .qiwaContractStatus(captain.getQiwaContractStatus())
+                // Work Permit
+                .workPermitExpiry(captain.getWorkPermitExpiry() != null ? captain.getWorkPermitExpiry().toString() : null)
+                .workPermitStatus(captain.getWorkPermitStatus())
+                // Company
+                .affiliatedCompany(captain.getAffiliatedCompany())
+                .crNumber(captain.getCrNumber())
+                // Driving Licence
                 .drivingLicenceNo(captain.getDrivingLicenceNo())
                 .licenceExpiry(captain.getLicenceExpiry() != null ? captain.getLicenceExpiry().toString() : null)
-                .workPermitExpiry(captain.getWorkPermitExpiry() != null
-                        ? captain.getWorkPermitExpiry().toString() : null)
+                .hasLicence(captain.isHasLicence())
+                .licenceStatus(captain.getLicenceStatus())
+                // Insurance
                 .insuranceNumber(captain.getInsuranceNumber())
+                .insuranceCategory(captain.getInsuranceCategory())
+                .insuranceIssueDate(captain.getInsuranceIssueDate() != null ? captain.getInsuranceIssueDate().toString() : null)
                 .insuranceCompany(captain.getInsuranceCompany())
-                .insuranceExpiry(captain.getInsuranceExpiry() != null
-                        ? captain.getInsuranceExpiry().toString() : null)
+                .insuranceExpiry(captain.getInsuranceExpiry() != null ? captain.getInsuranceExpiry().toString() : null)
+                .insuranceStatus(captain.getInsuranceStatus())
+                // Other Personal
+                .bloodType(captain.getBloodType())
+                .trialPeriodDays(captain.getTrialPeriodDays())
+                // Bank
+                .bankAccountNumber(captain.getBankAccountNumber())
+                .bankName(captain.getBankName())
+                // Salary & Allowances
+                .basicSalary(captain.getBasicSalary())
+                .housingAllowance(captain.getHousingAllowance())
+                .transportationAllowance(captain.getTransportationAllowance())
+                .fuelAllowanceAmount(captain.getFuelAllowanceAmount())
+                .callInternetAllowance(captain.getCallInternetAllowance())
+                .rewardAllowance(captain.getRewardAllowance())
+                // Vehicle flags
                 .usesOwnVehicle(captain.isUsesOwnVehicle())
                 .fuelAllowanceEligible(captain.isFuelAllowanceEligible())
+                // Work Info
+                .workPhone(captain.getWorkPhone())
+                .department(captain.getDepartment())
+                .section(captain.getSection())
+                .supervisor(captain.getSupervisor())
+                .workLocation(captain.getWorkLocation())
+                .workWith(captain.getWorkWith())
+                // Status
                 .status(captain.getStatus())
                 .joinDate(captain.getJoinDate() != null ? captain.getJoinDate().toString() : null)
                 .leaveDate(captain.getLeaveDate() != null ? captain.getLeaveDate().toString() : null)
@@ -252,15 +428,12 @@ public class CaptainService {
                 .build();
     }
 
-    private CaptainResponse toResponse(Captain c, LocalDate today, Map<DocumentKind, Integer> alertDays) {
-        // Find current ninja ID for this captain
-        List<SupplierIdAssignment> activeAssignments = assignmentRepo.findByCaptainIdOrderByValidFromDesc(c.getId());
-        String currentNinjaId = activeAssignments.stream()
-                .filter(a -> a.getValidTo() == null)
-                .map(a -> a.getSupplierIdSlot().getExternalId())
-                .findFirst()
-                .orElse(null);
-
+    /**
+     * Maps a Captain to its list response DTO.
+     * @param currentNinjaId pre-loaded ninja ID (may be null) — avoids N+1 query
+     */
+    private CaptainResponse toResponse(Captain c, LocalDate today,
+                                        Map<DocumentKind, Integer> alertDays, String currentNinjaId) {
         List<DocumentAlert> alerts = documentAlerts.isTracked(c)
                 ? documentAlerts.evaluate(c, today, alertDays)
                 : List.of();

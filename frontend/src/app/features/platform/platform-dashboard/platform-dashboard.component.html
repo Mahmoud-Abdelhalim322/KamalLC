@@ -1,0 +1,226 @@
+<div class="dashboard-page animate-fade-in">
+
+  <!-- Executive Hero Header -->
+  <div class="executive-header">
+    <div class="header-titles">
+      <div class="badge-tag">
+        <span class="pulse-dot"></span>
+        مركز التحكم والعمليات التنفيذي لمدير المنصة
+      </div>
+      <h1 class="page-title">لوحة مؤشرات الأداء والنمو الاستراتيجي</h1>
+      <p class="page-subtitle">
+        نظرة عامة وشمولية على حركة الشركات، الاشتراكات، والإيرادات الدورية
+      </p>
+    </div>
+
+    <div class="header-controls">
+      <div class="live-status-badge">
+        <span class="material-icons-round">sensors</span>
+        <span>تحديث لحظي مباشر</span>
+      </div>
+      <button class="btn-refresh" (click)="fetchDashboard()" [class.spinning]="loading" title="تحديث البيانات">
+        <span class="material-icons-round">refresh</span>
+        <span>تحديث الآن</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>جاري تجميع المؤشرات المالية والتحليلات التشغيلية للمنصة...</p>
+  </div>
+
+  <div class="dashboard-content" *ngIf="!loading && stats">
+
+    <!-- Primary Platform & Financial Cards Grid -->
+    <div class="financial-overview-grid">
+
+      <!-- MRR Card -->
+      <div class="financial-card mrr">
+        <div class="fin-icon"><span class="material-icons-round">savings</span></div>
+        <div class="fin-info">
+          <span class="fin-label">الدخل الشهري المتكرر (MRR)</span>
+          <span class="fin-value">{{ (stats.monthlyRecurringRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
+          <span class="fin-sub">من إجمالي {{ (stats.totalRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }} إيرادات محصلة</span>
+        </div>
+      </div>
+
+      <!-- Active Subscriptions Card -->
+      <div class="financial-card subscriptions">
+        <div class="fin-icon"><span class="material-icons-round">card_membership</span></div>
+        <div class="fin-info">
+          <span class="fin-label">الاشتراكات النشطة</span>
+          <span class="fin-value">{{ stats.activeSubscriptions }} / {{ stats.totalSubscriptions }}</span>
+          <span class="fin-sub">نسبة نشاط الاشتراكات: <strong>{{ getActiveSubRate() }}%</strong></span>
+        </div>
+      </div>
+
+      <!-- Total Tenants Card -->
+      <div class="financial-card tenants">
+        <div class="fin-icon"><span class="material-icons-round">business</span></div>
+        <div class="fin-info">
+          <span class="fin-label">إجمالي الشركات المسجلة</span>
+          <span class="fin-value">{{ stats.totalTenants }} <small>شركة</small></span>
+          <span class="fin-sub">نشط: {{ stats.activeTenants }} &bull; تجريبي: {{ stats.trialTenants || 0 }} &bull; معطل: {{ stats.suspendedTenants }}</span>
+        </div>
+      </div>
+
+      <!-- Scale Card -->
+      <div class="financial-card scale">
+        <div class="fin-icon"><span class="material-icons-round">groups</span></div>
+        <div class="fin-info">
+          <span class="fin-label">حجم المنصة الإجمالي</span>
+          <span class="fin-value">{{ stats.totalUsers }} <small>مستخدم</small></span>
+          <span class="fin-sub">عبر جميع الشركات بالإضافة إلى {{ stats.totalCaptains }} كابتن</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Critical Action Center (Alerts for Invoices & Suspended Tenants) -->
+    <div class="action-center-container" *ngIf="stats.pendingInvoices > 0 || stats.suspendedTenants > 0">
+      <div class="action-center-header">
+        <span class="material-icons-round alert-icon-main">warning_amber</span>
+        <h2>مركز الإجراءات العاجلة والمخاطر المالية</h2>
+      </div>
+
+      <div class="alerts-grid">
+        <!-- Pending Invoices Alert -->
+        <a class="alert-action-card warning" *ngIf="stats.pendingInvoices > 0" routerLink="/platform/invoices">
+          <div class="alert-card-icon"><span class="material-icons-round">pending_actions</span></div>
+          <div class="alert-card-body">
+            <span class="alert-title">{{ stats.pendingInvoices }} فواتير معلقة التحصيل</span>
+            <span class="alert-desc">مبالغ مستحقة بإجمالي {{ stats.pendingInvoiceAmount | currency:'SAR':'symbol':'1.0-0' }} بانتظار السداد</span>
+          </div>
+          <span class="btn-action">مراجعة الفواتير &larr;</span>
+        </a>
+
+        <!-- Suspended Tenants Alert -->
+        <a class="alert-action-card critical" *ngIf="stats.suspendedTenants > 0" routerLink="/platform/tenants">
+          <div class="alert-card-icon"><span class="material-icons-round">domain_disabled</span></div>
+          <div class="alert-card-body">
+            <span class="alert-title">{{ stats.suspendedTenants }} شركات بحالة معطلة</span>
+            <span class="alert-desc">تحتاج لمراجعة حالة الاشتراك والتفعيل</span>
+          </div>
+          <span class="btn-action">إدارة الشركات &larr;</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Analytics & Breakdown Grid -->
+    <div class="analytics-main-grid">
+
+      <!-- Tenants Breakdown Panel -->
+      <div class="dashboard-panel tenants-breakdown-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <span class="material-icons-round panel-icon">domain</span>
+            <h3>توزيع حالة الشركات المسجلة</h3>
+          </div>
+          <a routerLink="/platform/tenants" class="btn-link">عرض الكل</a>
+        </div>
+
+        <div class="breakdown-bars">
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>الشركات النشطة</span>
+              <strong>{{ stats.activeTenants }} شركة ({{ getTenantPct(stats.activeTenants) }}%)</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill green" [style.width.%]="getTenantPct(stats.activeTenants)"></div>
+            </div>
+          </div>
+
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>الفترة التجريبية (Trial)</span>
+              <strong>{{ stats.trialTenants || 0 }} شركة ({{ getTenantPct(stats.trialTenants || 0) }}%)</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill blue" [style.width.%]="getTenantPct(stats.trialTenants || 0)"></div>
+            </div>
+          </div>
+
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>الشركات المعطلة (Suspended)</span>
+              <strong>{{ stats.suspendedTenants }} شركة ({{ getTenantPct(stats.suspendedTenants) }}%)</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill red" [style.width.%]="getTenantPct(stats.suspendedTenants)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscriptions SVG Donut Chart Card -->
+      <div class="dashboard-panel subscription-chart-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <span class="material-icons-round panel-icon">pie_chart</span>
+            <h3>معدل نشاط الاشتراكات</h3>
+          </div>
+        </div>
+
+        <div class="donut-chart-container">
+          <div class="svg-donut">
+            <svg viewBox="0 0 36 36" class="donut">
+              <path class="donut-ring"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="donut-segment active-seg" [attr.stroke-dasharray]="getActiveSubRate() + ', 100'" stroke-dashoffset="25"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="donut-center">
+              <span class="donut-val">{{ getActiveSubRate() }}%</span>
+              <span class="donut-lbl">اشتراكات نشطة</span>
+            </div>
+          </div>
+
+          <div class="donut-legend">
+            <div class="legend-item">
+              <span class="legend-dot active-dot"></span>
+              <span>اشتراكات نشطة: <strong>{{ stats.activeSubscriptions }}</strong></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot inactive-dot"></span>
+              <span>اشتراكات غير نشطة/منتهية: <strong>{{ stats.totalSubscriptions - stats.activeSubscriptions }}</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Actions Toolbar -->
+    <div class="quick-actions-toolbar">
+      <div class="actions-header">
+        <span class="material-icons-round">bolt</span>
+        <span>اختصارات الإدارة السريعة للمنصة</span>
+      </div>
+      <div class="actions-buttons">
+        <a routerLink="/platform/tenants" class="action-btn btn-primary">
+          <span class="material-icons-round">add_business</span>
+          <span>إضافة وإدارة الشركات</span>
+        </a>
+        <a routerLink="/platform/plans" class="action-btn">
+          <span class="material-icons-round">assignment</span>
+          <span>إدارة خطط الاشتراك</span>
+        </a>
+        <a routerLink="/platform/subscriptions" class="action-btn">
+          <span class="material-icons-round">credit_card</span>
+          <span>الاشتراكات الحالية</span>
+        </a>
+        <a routerLink="/platform/invoices" class="action-btn">
+          <span class="material-icons-round">receipt_long</span>
+          <span>الفواتير والتحصيل</span>
+        </a>
+        <a routerLink="/platform/audit-log" class="action-btn">
+          <span class="material-icons-round">history</span>
+          <span>سجل العمليات والمراجعة</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>

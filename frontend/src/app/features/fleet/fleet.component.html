@@ -34,6 +34,7 @@
           <option value="">كل الملكيات</option>
           <option value="OWNED">مملوكة</option>
           <option value="RENTED">مؤجرة</option>
+          <option value="LEASE_TO_OWN">تمويلية</option>
           <option value="OTHER">أخرى (خاصة)</option>
         </select>
         <select class="filter-select" *ngIf="vehicleOwnershipFilter === 'RENTED' || vehicleOwnershipFilter === ''" [(ngModel)]="vehicleAgentFilter" (change)="searchVehicles()">
@@ -41,9 +42,14 @@
           <option *ngFor="let a of rentalAgents" [value]="a">{{ a }}</option>
         </select>
       </div>
-      <button class="btn btn-primary" (click)="openAddVehicle()" *ngIf="canManage">
-        <span class="material-icons-round">add</span> إضافة سيارة
-      </button>
+      <div class="toolbar-actions">
+        <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExportingExcel">
+          <span class="material-icons-round" [class.spinning]="isExportingExcel">download</span> تصدير Excel
+        </button>
+        <button class="btn btn-primary" (click)="openAddVehicle()" *ngIf="canManage">
+          <span class="material-icons-round">add</span> إضافة سيارة
+        </button>
+      </div>
     </div>
 
     <div class="loading-bar" *ngIf="isLoading"></div>
@@ -52,6 +58,7 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th>الرقم المركبي</th>
             <th>رقم اللوحة</th>
             <th>الماركة / الموديل</th>
             <th>الملكية</th>
@@ -64,17 +71,23 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let v of vehicles" [class.rented-row]="v.ownershipType === 'RENTED'">
+          <tr *ngFor="let v of vehicles" [class.rented-row]="v.ownershipType === 'RENTED'" [class.lease-row]="v.ownershipType === 'LEASE_TO_OWN'">
+            <td class="vehicle-code-cell">
+              <span class="vehicle-code">{{ v.vehicleCode }}</span>
+            </td>
             <td class="plate-cell">
               {{ v.plateNumber }}
               <div *ngIf="v.operatingCardNumber" class="text-muted" style="font-size:11px;">بطاقة تشغيل: {{ v.operatingCardNumber }}</div>
             </td>
             <td>{{ v.brand }} {{ v.model }} <span class="year-tag" *ngIf="v.year">{{ v.year }}</span></td>
             <td>
-              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'" [class.badge-other]="v.ownershipType === 'OTHER'">
+              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'" [class.badge-lease]="v.ownershipType === 'LEASE_TO_OWN'" [class.badge-other]="v.ownershipType === 'OTHER'">
                 {{ ownershipLabel(v.ownershipType) }}
               </span>
-              <span class="agent-name" *ngIf="v.rentalAgentName">{{ v.rentalAgentName }}</span>
+              <span class="agent-name" *ngIf="v.rentalAgentName">
+                {{ v.rentalAgentName }}
+                <span *ngIf="v.rentalAgentCode" class="agent-code">({{ v.rentalAgentCode }})</span>
+              </span>
             </td>
             <td style="font-size: 12px;">
               <div *ngIf="v.registrationNumber">استمارة: <strong>{{ v.registrationNumber }}</strong></div>
@@ -125,7 +138,7 @@
             </td>
           </tr>
           <tr *ngIf="vehicles.length === 0 && !isLoading">
-            <td colspan="9" class="empty-row">لا توجد سيارات</td>
+            <td colspan="10" class="empty-row">لا توجد سيارات</td>
           </tr>
         </tbody>
       </table>
@@ -287,8 +300,13 @@
           <select [(ngModel)]="vForm.ownershipType">
             <option value="OWNED">مملوكة (شركة)</option>
             <option value="RENTED">مؤجرة</option>
+            <option value="LEASE_TO_OWN">تمويلية (منتهية بالتمليك)</option>
             <option value="OTHER">أخرى (خاصة)</option>
           </select>
+        </div>
+        <div class="form-group" *ngIf="editingVehicle">
+          <label>الرقم المركبي</label>
+          <input type="text" [value]="editingVehicle.vehicleCode" disabled class="vehicle-code-input">
         </div>
         <div class="form-group">
           <label>الماركة</label>
@@ -341,20 +359,25 @@
         </div>
 
         <!-- Rental fields -->
-        <ng-container *ngIf="vForm.ownershipType === 'RENTED'">
+        <ng-container *ngIf="vForm.ownershipType === 'RENTED' || vForm.ownershipType === 'LEASE_TO_OWN'">
           <div class="form-group full-width rental-section">
-            <label class="section-label">بيانات الوكيل</label>
+            <label class="section-label">{{ vForm.ownershipType === 'RENTED' ? 'بيانات المؤجر' : 'بيانات التمويل' }}</label>
+          </div>
+          <div class="form-group" *ngIf="vForm.ownershipType === 'RENTED'">
+            <label>رمز المؤجر *</label>
+            <input type="text" [(ngModel)]="vForm.rentalAgentCode" placeholder="TOJI" dir="ltr" style="text-transform: uppercase;">
+            <small class="text-muted">رمز إنجليزي فريد يُستخدم كبادئة للكود المركبي</small>
           </div>
           <div class="form-group">
-            <label>اسم وكيل التأجير</label>
-            <input type="text" [(ngModel)]="vForm.rentalAgentName" placeholder="شركة التأجير">
+            <label>اسم {{ vForm.ownershipType === 'RENTED' ? 'وكيل التأجير' : 'جهة التمويل' }}</label>
+            <input type="text" [(ngModel)]="vForm.rentalAgentName" placeholder="{{ vForm.ownershipType === 'RENTED' ? 'شركة التأجير' : 'بنك / شركة تمويل' }}">
           </div>
           <div class="form-group">
-            <label>بداية التأجير</label>
+            <label>بداية {{ vForm.ownershipType === 'RENTED' ? 'التأجير' : 'التمويل' }}</label>
             <input type="date" [(ngModel)]="vForm.rentalStartDate">
           </div>
           <div class="form-group">
-            <label>نهاية التأجير</label>
+            <label>نهاية {{ vForm.ownershipType === 'RENTED' ? 'التأجير' : 'التمويل' }}</label>
             <input type="date" [(ngModel)]="vForm.rentalEndDate">
           </div>
         </ng-container>

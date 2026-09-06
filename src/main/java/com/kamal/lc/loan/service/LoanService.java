@@ -3,6 +3,7 @@ package com.kamal.lc.loan.service;
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
 import com.kamal.lc.common.exception.BusinessException;
+import com.kamal.lc.common.security.TenantContext;
 import com.kamal.lc.loan.dto.*;
 import com.kamal.lc.loan.entity.Loan;
 import com.kamal.lc.loan.entity.LoanPayment;
@@ -36,6 +37,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class LoanService {
+
+    /** Maximum number of active loans allowed per member. */
+    private static final int MAX_ACTIVE_LOANS_PER_MEMBER = 5;
 
     private final LoanRepository loanRepo;
     private final LoanPaymentRepository paymentRepo;
@@ -86,18 +90,43 @@ public class LoanService {
         Captain captain = null;
         Staff staff = null;
 
+        // --- Validation (#7) ---
+        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("INVALID_AMOUNT", "مبلغ السلفة يجب أن يكون أكبر من صفر");
+        }
+        if (request.getMonthlyDeduction() != null
+                && request.getMonthlyDeduction().compareTo(BigDecimal.ZERO) > 0
+                && request.getMonthlyDeduction().compareTo(request.getAmount()) > 0) {
+            throw new BusinessException("DEDUCTION_EXCEEDS_AMOUNT",
+                    "مبلغ الخصم الشهري لا يمكن أن يتجاوز مبلغ السلفة الأصلي");
+        }
+
         if ("CAPTAIN".equalsIgnoreCase(request.getMemberType())) {
             if (request.getCaptainId() == null) {
                 throw new BusinessException("MISSING_CAPTAIN", "معرف الكابتن مطلوب");
             }
             captain = captainRepo.findById(request.getCaptainId())
                     .orElseThrow(() -> new BusinessException("NOT_FOUND", "الكابتن غير موجود"));
+
+            // Check active loan limit
+            long activeCount = loanRepo.findByCaptainIdAndStatus(captain.getId(), Loan.ACTIVE).size();
+            if (activeCount >= MAX_ACTIVE_LOANS_PER_MEMBER) {
+                throw new BusinessException("MAX_LOANS_REACHED",
+                        "الحد الأقصى للسلف النشطة (" + MAX_ACTIVE_LOANS_PER_MEMBER + ") تم الوصول إليه لهذا الكابتن");
+            }
         } else {
             if (request.getStaffId() == null) {
                 throw new BusinessException("MISSING_STAFF", "معرف الموظف مطلوب");
             }
             staff = staffRepo.findById(request.getStaffId())
                     .orElseThrow(() -> new BusinessException("NOT_FOUND", "الموظف غير موجود"));
+
+            // Check active loan limit
+            long activeCount = loanRepo.findByStaffIdAndStatus(staff.getId(), Loan.ACTIVE).size();
+            if (activeCount >= MAX_ACTIVE_LOANS_PER_MEMBER) {
+                throw new BusinessException("MAX_LOANS_REACHED",
+                        "الحد الأقصى للسلف النشطة (" + MAX_ACTIVE_LOANS_PER_MEMBER + ") تم الوصول إليه لهذا الموظف");
+            }
         }
 
         Loan loan = Loan.builder()
@@ -125,7 +154,9 @@ public class LoanService {
 
     @Transactional
     public LoanResponse addManualPayment(UUID loanId, LoanPaymentRequest request) {
-        Loan loan = requireLoan(loanId);
+        // Use pessimistic lock to prevent race condition with concurrent payroll deductions (#2)
+        Loan loan = loanRepo.findByIdForUpdate(loanId)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "السلفة غير موجودة"));
         if (!loan.isActive()) {
             throw new BusinessException("LOAN_NOT_ACTIVE", "السلفة غير نشطة — لا يمكن تسجيل دفعة");
         }
@@ -191,7 +222,9 @@ public class LoanService {
      */
     @Transactional
     public void processPayrollDeductions(PayrollRun run) {
-        List<Loan> activeLoans = loanRepo.findByStatusOrderByCreatedAtAsc(Loan.ACTIVE);
+        // Use tenant-scoped query to ensure we only process loans for the current tenant (#1)
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+        List<Loan> activeLoans = loanRepo.findByStatusAndTenantIdOrderByCreatedAtAsc(Loan.ACTIVE, tenantId);
         int count = 0;
 
         for (Loan loan : activeLoans) {
@@ -294,12 +327,17 @@ public class LoanService {
     public void processManualLoanDeduction(UUID memberId, String memberType, BigDecimal amount, PayrollRun run, UUID captainAdjId, UUID staffAdjId, String notes) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
 
+        // Use pessimistic lock to prevent race condition with concurrent operations (#2)
         List<Loan> activeLoans;
         if ("CAPTAIN".equalsIgnoreCase(memberType)) {
             activeLoans = loanRepo.findByCaptainIdAndStatusOrderByCreatedAtAsc(memberId, Loan.ACTIVE);
         } else {
             activeLoans = loanRepo.findByStaffIdAndStatusOrderByCreatedAtAsc(memberId, Loan.ACTIVE);
         }
+        // Re-fetch each loan with pessimistic lock before modifying
+        activeLoans = activeLoans.stream()
+                .map(l -> loanRepo.findByIdForUpdate(l.getId()).orElse(l))
+                .toList();
 
         BigDecimal remainingToDeduct = amount;
 

@@ -43,6 +43,10 @@ public class ImportFileDetector {
             Sheet sheet = workbook.getSheetAt(0);
             if (sheet == null) return Optional.empty();
 
+            if (isVacationCommission(sheet)) {
+                return Optional.of(ImportBatchType.VACATION_COMMISSION);
+            }
+
             if (isSupplierDeductions(sheet)) {
                 return Optional.of(ImportBatchType.SUPPLIER_DEDUCTIONS);
             }
@@ -58,6 +62,34 @@ public class ImportFileDetector {
             log.debug("Could not classify '{}': {}", file.getOriginalFilename(), e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private boolean isVacationCommission(Sheet sheet) {
+        for (int i = 0; i <= Math.min(sheet.getLastRowNum(), 10); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            boolean hasDays = false;
+            boolean hasCaptainId = false;
+
+            for (Cell cell : row) {
+                String val = ExcelCellSupport.getCellString(row, cell.getColumnIndex());
+                if (val == null || val.isBlank()) continue;
+
+                String normalized = ExcelCellSupport.normalizeHeader(val);
+                if (normalized.contains("days")) {
+                    hasDays = true;
+                }
+                if (normalized.contains("captain id") || (normalized.contains("captain") && normalized.contains("id"))) {
+                    hasCaptainId = true;
+                }
+            }
+
+            if (hasDays && hasCaptainId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isSupplierDeductions(Sheet sheet) {
@@ -120,6 +152,7 @@ public class ImportFileDetector {
             case SHIFTS -> "هذا الملف تقرير شيفتات من المورد — استورده من تبويب «استيراد تقارير الموردين»";
             case CAPTAINS -> "هذا الملف يحتوي بيانات كباتن ومعرفات — استورده من تبويب «استيراد بيانات الكباتن والموردين»";
             case SUPPLIER_DEDUCTIONS -> "هذا الملف يحتوي خصومات المورد — استورده من تبويب «استيراد خصومات المورد»";
+            case VACATION_COMMISSION -> "هذا الملف يحتوي عمولة أوقات الإجازة — استورده من تبويب «أستيراد عمولة اوقات الاجازة»";
         };
     }
 }

@@ -1,9 +1,13 @@
 package com.kamal.lc.settings.service;
 
 import com.kamal.lc.common.exception.BusinessException;
+import com.kamal.lc.common.security.TenantContext;
+import com.kamal.lc.common.security.TenantEntityListener;
 import com.kamal.lc.settings.dto.SettingResponse;
 import com.kamal.lc.settings.entity.AppSetting;
 import com.kamal.lc.settings.repository.AppSettingRepository;
+import com.kamal.lc.tenant.entity.Tenant;
+import com.kamal.lc.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +16,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,15 +25,61 @@ public class SettingsService {
 
     private final AppSettingRepository repository;
     private final SettingsResolver resolver;
+    private final TenantRepository tenantRepo;
+    private final com.kamal.lc.common.service.FileStorageService fileStorage;
 
     /** All currently active settings, grouped by {@code setting_group} for the settings screen. */
+    @Transactional
     public Map<String, List<SettingResponse>> getCurrentGrouped() {
+        List<AppSetting> current = repository.findAllCurrent();
+        if (current.isEmpty()) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            if (tenantId != null) {
+                Tenant tenant = tenantRepo.findById(tenantId).orElse(null);
+                if (tenant != null) {
+                    current = initializeDefaultSettingsForTenant(tenant);
+                }
+            }
+        }
         Map<String, List<SettingResponse>> grouped = new LinkedHashMap<>();
-        for (AppSetting setting : repository.findAllCurrent()) {
+        for (AppSetting setting : current) {
             String group = setting.getSettingGroup() != null ? setting.getSettingGroup() : "OTHER";
             grouped.computeIfAbsent(group, k -> new java.util.ArrayList<>()).add(toResponse(setting));
         }
         return grouped;
+    }
+
+    /** Copies default settings from default tenant template for a newly created tenant or a tenant with 0 settings. */
+    @Transactional
+    public List<AppSetting> initializeDefaultSettingsForTenant(Tenant tenant) {
+        if (tenant == null || tenant.getId() == null) return List.of();
+
+        if (repository.countByTenantIdRaw(tenant.getId()) > 0) {
+            return repository.findActiveSettingsByTenantIdRaw(tenant.getId());
+        }
+
+        List<AppSetting> defaults = repository.findActiveSettingsByTenantIdRaw(TenantEntityListener.DEFAULT_TENANT_ID);
+        if (defaults.isEmpty()) {
+            return List.of();
+        }
+
+        List<AppSetting> newSettings = defaults.stream()
+                .map(d -> AppSetting.builder()
+                        .settingKey(d.getSettingKey())
+                        .settingGroup(d.getSettingGroup())
+                        .labelAr(d.getLabelAr())
+                        .value(d.getValue())
+                        .valueType(d.getValueType())
+                        .unitLabel(d.getUnitLabel())
+                        .effectiveFrom(d.getEffectiveFrom())
+                        .effectiveTo(null)
+                        .tenant(tenant)
+                        .build())
+                .toList();
+
+        List<AppSetting> saved = repository.saveAll(newSettings);
+        resolver.invalidate();
+        return saved;
     }
 
     public List<SettingResponse> getHistory(String key) {
@@ -49,15 +100,23 @@ public class SettingsService {
 
         LocalDate from = effectiveFrom != null ? effectiveFrom : LocalDate.now();
 
-        if (!from.isAfter(current.getEffectiveFrom())) {
-            throw new BusinessException("INVALID_DATE",
-                    "تاريخ السريان يجب أن يكون بعد " + current.getEffectiveFrom()
-                            + " (تاريخ سريان القيمة الحالية)");
-        }
-        if (newValue.equals(current.getValue())) {
-            throw new BusinessException("NO_CHANGE", "القيمة الجديدة مطابقة للقيمة الحالية");
+        if (newValue.trim().equals(current.getValue())) {
+            return toResponse(current);
         }
         validate(current.getValueType(), newValue);
+
+        if (from.equals(current.getEffectiveFrom())) {
+            current.setValue(newValue.trim());
+            AppSetting saved = repository.save(current);
+            resolver.invalidate();
+            return toResponse(saved);
+        }
+
+        if (from.isBefore(current.getEffectiveFrom())) {
+            throw new BusinessException("INVALID_DATE",
+                    "تاريخ السريان يجب أن يكون بعد أو يطابق " + current.getEffectiveFrom()
+                            + " (تاريخ سريان القيمة الحالية)");
+        }
 
         current.setEffectiveTo(from.minusDays(1));
         repository.save(current);
@@ -76,6 +135,31 @@ public class SettingsService {
         return toResponse(next);
     }
 
+    @Transactional
+    public SettingResponse uploadLogo(org.springframework.web.multipart.MultipartFile file) {
+        String path = fileStorage.store(file, "logos");
+        String filename = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+        String logoUrl = "/api/settings/logo/file/" + filename;
+
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            tenantRepo.findById(tenantId).ifPresent(t -> {
+                t.setLogo(logoUrl);
+                tenantRepo.save(t);
+            });
+        }
+
+        return update("THEME_LOGO", logoUrl, LocalDate.now());
+    }
+
+    public org.springframework.core.io.Resource loadLogo(String filename) {
+        try {
+            return fileStorage.load("logos/" + filename);
+        } catch (Exception e) {
+            return new org.springframework.core.io.ClassPathResource("branding/logo-ksclc.png");
+        }
+    }
+
     private void validate(String valueType, String value) {
         if (valueType == null) return;
         try {
@@ -88,7 +172,7 @@ public class SettingsService {
                         throw new NumberFormatException();
                     }
                 }
-                default -> { /* free text */ }
+                default -> { /* free text, color, string */ }
             }
         } catch (NumberFormatException e) {
             throw new BusinessException("INVALID_VALUE", "القيمة غير صالحة لهذا النوع (" + valueType + ")");

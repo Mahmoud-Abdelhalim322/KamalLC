@@ -28,4 +28,7 @@ public class ImportBatchResponse {
     /** Shift batches only: the span of days the file covered. */
     private String periodFrom;
     private String periodTo;
+
+    private UUID supplierId;
+    private String supplierName;
 }

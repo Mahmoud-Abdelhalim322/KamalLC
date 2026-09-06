@@ -3,12 +3,15 @@ package com.kamal.lc.fleet.controller;
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
 import com.kamal.lc.fleet.dto.*;
+import com.kamal.lc.fleet.service.FleetExportService;
 import com.kamal.lc.fleet.service.FleetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +25,7 @@ import java.util.UUID;
 public class FleetController {
 
     private final FleetService service;
+    private final FleetExportService exportService;
 
     // ──── Vehicles ────
 
@@ -179,5 +183,17 @@ public class FleetController {
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<FleetService.FleetStats>> stats() {
         return ResponseEntity.ok(ApiResponse.ok(service.getFleetStats()));
+    }
+
+    // ──── Export ────
+
+    @GetMapping("/vehicles/export/excel")
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) String ownership) {
+        byte[] bytes = exportService.exportVehiclesExcel(ownership);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"fleet-export.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
     }
 }

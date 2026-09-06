@@ -65,7 +65,12 @@ public class SupplierDeductionImportService {
         fileDetector.requireNot(file, ImportBatchType.CAPTAINS);
 
         String fileHash = computeHash(file);
-        if (batchRepo.existsByFileHashAndBatchTypeAndStatus(fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "COMMITTED")) {
+        UUID tenantId = com.kamal.lc.common.security.TenantContext.getCurrentTenantId();
+        boolean exists = tenantId != null
+                ? batchRepo.existsByFileHashAndBatchTypeAndStatusAndTenantId(fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "COMMITTED", tenantId)
+                : batchRepo.existsByFileHashAndBatchTypeAndStatus(fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "COMMITTED");
+
+        if (exists) {
             throw new BusinessException("DUPLICATE_FILE", "هذا الملف تم استيراده وتأكيده من قبل");
         }
 
@@ -84,9 +89,11 @@ public class SupplierDeductionImportService {
             }
 
             ColumnIndices cols = detectColumns(headerRow);
-            if (cols.dateCol == -1 || cols.amountCol == -1 || (cols.ninjaIdCol == -1 && cols.kslscCol == -1 && cols.phoneOrIqamaCol == -1)) {
+            boolean hasShiftId = cols.shiftIdCol != -1;
+            boolean hasDate = cols.dateCol != -1;
+            if (cols.amountCol == -1 || (!hasShiftId && !hasDate) || (!hasShiftId && cols.ninjaIdCol == -1 && cols.kslscCol == -1 && cols.phoneOrIqamaCol == -1)) {
                 throw new BusinessException("MISSING_COLUMNS",
-                        "يجب أن يحتوي الملف على عمود التاريخ، عمود مبلغ الخصم، وعلى الأقل أحد معرفات الكابتن (ID - NINJA، ID-KSLSC، أو الهاتف/الهوية)");
+                        "يجب أن يحتوي الملف على عمود مبلغ الخصم، وعلى الأقل عمود shift_id أو (تاريخ + معرّف الكابتن)");
             }
 
             List<DeductionImportPreviewResponse.DeductionRowPreview> rowPreviews = new ArrayList<>();
@@ -109,11 +116,13 @@ public class SupplierDeductionImportService {
                 String phoneOrIqama = cols.phoneOrIqamaCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.phoneOrIqamaCol))).trim() : "";
                 String captainName = cols.nameCol != -1 ? cellText(row.getCell(cols.nameCol)).trim() : "";
                 String reason = cols.reasonCol != -1 ? cellText(row.getCell(cols.reasonCol)).trim() : "";
+                String externalShiftId = cols.shiftIdCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.shiftIdCol))).trim() : "";
 
-                LocalDate shiftDate = cellDate(row.getCell(cols.dateCol));
+                LocalDate shiftDate = cols.dateCol != -1 ? cellDate(row.getCell(cols.dateCol)) : null;
                 BigDecimal amount = cellDecimal(row.getCell(cols.amountCol));
 
-                if (shiftDate == null) {
+                // When shift_id is present, date is optional
+                if (externalShiftId.isEmpty() && shiftDate == null) {
                     issues.add(DeductionImportPreviewResponse.ImportIssue.builder()
                             .rowNumber(rowNumber)
                             .severity("ERROR")
@@ -139,7 +148,7 @@ public class SupplierDeductionImportService {
 
                 BigDecimal absAmount = amount.abs();
 
-                DeductionMatchingResult match = matchRow(ninjaId, kslscId, phoneOrIqama, shiftDate);
+                DeductionMatchingResult match = matchRow(externalShiftId, ninjaId, kslscId, phoneOrIqama, shiftDate);
                 if (match.getShifts().isEmpty()) {
                     unmatchedRows++;
                     issues.add(DeductionImportPreviewResponse.ImportIssue.builder()
@@ -168,8 +177,13 @@ public class SupplierDeductionImportService {
                 }
             }
 
-            ImportBatch batch = batchRepo.findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
-                            fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "PREVIEW")
+            Optional<ImportBatch> existingBatch = tenantId != null
+                    ? batchRepo.findFirstByFileHashAndBatchTypeAndStatusAndTenantIdOrderByUploadedAtDesc(
+                            fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "PREVIEW", tenantId)
+                    : batchRepo.findFirstByFileHashAndBatchTypeAndStatusOrderByUploadedAtDesc(
+                            fileHash, ImportBatchType.SUPPLIER_DEDUCTIONS, "PREVIEW");
+
+            ImportBatch batch = existingBatch
                     .orElseGet(() -> ImportBatch.builder()
                             .fileName(file.getOriginalFilename())
                             .fileHash(fileHash)
@@ -234,23 +248,24 @@ public class SupplierDeductionImportService {
                 totalRows++;
                 int rowNumber = r + 1;
 
+                String externalShiftId = cols.shiftIdCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.shiftIdCol))).trim() : "";
                 String ninjaId = cols.ninjaIdCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.ninjaIdCol))).trim() : "";
                 String kslscId = cols.kslscCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.kslscCol))).trim() : "";
                 String phoneOrIqama = cols.phoneOrIqamaCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.phoneOrIqamaCol))).trim() : "";
                 String captainName = cols.nameCol != -1 ? cellText(row.getCell(cols.nameCol)).trim() : "";
                 String reason = cols.reasonCol != -1 ? cellText(row.getCell(cols.reasonCol)).trim() : "";
 
-                LocalDate shiftDate = cellDate(row.getCell(cols.dateCol));
+                LocalDate shiftDate = cols.dateCol != -1 ? cellDate(row.getCell(cols.dateCol)) : null;
                 BigDecimal amount = cellDecimal(row.getCell(cols.amountCol));
 
-                if (shiftDate == null || amount == null) {
+                if ((externalShiftId.isEmpty() && shiftDate == null) || amount == null) {
                     unmatchedRows++;
                     continue;
                 }
 
                 BigDecimal absAmount = amount.abs();
 
-                DeductionMatchingResult match = matchRow(ninjaId, kslscId, phoneOrIqama, shiftDate);
+                DeductionMatchingResult match = matchRow(externalShiftId, ninjaId, kslscId, phoneOrIqama, shiftDate);
                 if (match.getShifts().isEmpty()) {
                     unmatchedRows++;
                 } else {
@@ -331,19 +346,20 @@ public class SupplierDeductionImportService {
                 Row row = sheet.getRow(r);
                 if (row == null || isRowEmpty(row)) continue;
 
+                String externalShiftId = cols.shiftIdCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.shiftIdCol))).trim() : "";
                 String ninjaId = cols.ninjaIdCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.ninjaIdCol))).trim() : "";
                 String kslscId = cols.kslscCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.kslscCol))).trim() : "";
                 String phoneOrIqama = cols.phoneOrIqamaCol != -1 ? ExcelCellSupport.toWesternDigits(cellText(row.getCell(cols.phoneOrIqamaCol))).trim() : "";
                 String reason = cols.reasonCol != -1 ? cellText(row.getCell(cols.reasonCol)).trim() : "";
-                LocalDate shiftDate = cellDate(row.getCell(cols.dateCol));
+                LocalDate shiftDate = cols.dateCol != -1 ? cellDate(row.getCell(cols.dateCol)) : null;
                 BigDecimal amount = cellDecimal(row.getCell(cols.amountCol));
 
-                if (shiftDate == null || amount == null) continue;
+                if ((externalShiftId.isEmpty() && shiftDate == null) || amount == null) continue;
 
                 BigDecimal absAmount = amount.abs();
 
                 totalRows++;
-                DeductionMatchingResult match = matchRow(ninjaId, kslscId, phoneOrIqama, shiftDate);
+                DeductionMatchingResult match = matchRow(externalShiftId, ninjaId, kslscId, phoneOrIqama, shiftDate);
                 if (match.getShifts().isEmpty()) {
                     unmatched++;
                     unmatchedRows.add("Row " + (r + 1) + ": " + ninjaId + " / " + shiftDate);
@@ -380,7 +396,29 @@ public class SupplierDeductionImportService {
         }
     }
 
-    private DeductionMatchingResult matchRow(String ninjaId, String kslscId, String phoneOrIqama, LocalDate shiftDate) {
+    private DeductionMatchingResult matchRow(String externalShiftId, String ninjaId, String kslscId, String phoneOrIqama, LocalDate shiftDate) {
+        // Scope 0: Direct shift_id lookup
+        if (externalShiftId != null && !externalShiftId.isEmpty()) {
+            Optional<Shift> shiftOpt = shiftRepo.findByExternalShiftId(externalShiftId);
+            if (shiftOpt.isPresent()) {
+                Shift shift = shiftOpt.get();
+                return DeductionMatchingResult.builder()
+                        .scope("SHIFT_ID")
+                        .shifts(List.of(shift))
+                        .captain(shift.getCaptain())
+                        .build();
+            }
+        }
+
+        // If we only have shift_id and no date, we can't do captain+date matching
+        if (shiftDate == null) {
+            return DeductionMatchingResult.builder()
+                    .scope("UNMATCHED")
+                    .shifts(Collections.emptyList())
+                    .captain(null)
+                    .build();
+        }
+
         // Scope 1: Ninja ID
         if (!ninjaId.isEmpty()) {
             List<Shift> shifts = shiftRepo.findByNinjaCaptainIdAndShiftDate(ninjaId, shiftDate);
@@ -434,6 +472,7 @@ public class SupplierDeductionImportService {
 
     private String scopeLabel(String scope) {
         return switch (scope) {
+            case "SHIFT_ID" -> "مطابقة برقم الشيفت shift_id";
             case "NINJA_ID" -> "مطابقة برقم المورد Ninja ID";
             case "KSLSC_ID" -> "مطابقة برقم KSLSC";
             case "PHONE_OR_NATIONAL_ID" -> "مطابقة برقم الهاتف/الهوية";
@@ -508,7 +547,12 @@ public class SupplierDeductionImportService {
             String normalized = ExcelCellSupport.normalizeHeader(raw);
             int idx = cell.getColumnIndex();
 
-            if (normalized.contains("ninja") || normalized.contains("id - ninja") || normalized.equals("id-ninja") || normalized.equals("id ninja")) {
+            if (normalized.contains("shift_id") || normalized.contains("shiftid") || normalized.equals("shift id")) {
+                if (cols.shiftIdCol == -1) cols.shiftIdCol = idx;
+            } else if (normalized.contains("ninja") || normalized.contains("id - ninja") || normalized.equals("id-ninja") || normalized.equals("id ninja")) {
+                if (cols.ninjaIdCol == -1) cols.ninjaIdCol = idx;
+            } else if (normalized.contains("captain_id") || normalized.contains("captain id") || normalized.contains("captainid")) {
+                // captain_id is an alias for ninja ID in the new template layout
                 if (cols.ninjaIdCol == -1) cols.ninjaIdCol = idx;
             } else if (normalized.contains("kslsc") || normalized.contains("ksc") || normalized.contains("id-kslsc")) {
                 if (cols.kslscCol == -1) cols.kslscCol = idx;
@@ -528,6 +572,7 @@ public class SupplierDeductionImportService {
     }
 
     private static class ColumnIndices {
+        int shiftIdCol = -1;
         int ninjaIdCol = -1;
         int kslscCol = -1;
         int phoneOrIqamaCol = -1;

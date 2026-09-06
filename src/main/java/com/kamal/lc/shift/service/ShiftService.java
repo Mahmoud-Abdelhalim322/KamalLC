@@ -33,6 +33,7 @@ public class ShiftService {
     private final ShiftCalculator calculator;
     private final SettingsResolver settingsResolver;
     private final PayrollRunRepository payrollRunRepo;
+    private final com.kamal.lc.auth.service.CaptainAllocationService allocationService;
 
     public Page<ShiftResponse> search(ShiftFilter filter, Pageable pageable) {
         return shiftRepo.findAll(toSpecification(filter), pageable).map(ShiftService::toResponse);
@@ -100,6 +101,15 @@ public class ShiftService {
     private Specification<Shift> toSpecification(ShiftFilter filter) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            List<UUID> accessibleIds = allocationService.getCurrentUserAccessibleCaptainIds();
+            if (accessibleIds != null) {
+                if (accessibleIds.isEmpty()) {
+                    predicates.add(cb.disjunction());
+                } else {
+                    predicates.add(root.get("captain").get("id").in(accessibleIds));
+                }
+            }
 
             if (filter.getFrom() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("shiftDate"), filter.getFrom()));

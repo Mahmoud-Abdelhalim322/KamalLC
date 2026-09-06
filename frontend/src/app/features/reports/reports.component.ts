@@ -177,7 +177,7 @@ export class ReportsComponent implements OnInit {
   }
 
   typeLabel(captainType: string): string {
-    return captainType === 'FREELANCE' ? 'فريلانس' : 'كفالة';
+    return captainType === 'FREELANCE' ? 'KSCFL' : 'KSC';
   }
 
   money(value: number | null | undefined): string {

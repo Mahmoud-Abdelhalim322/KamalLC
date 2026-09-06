@@ -48,9 +48,19 @@
 
   <!-- Table -->
   <div class="table-container" *ngIf="!isLoading">
+    <div class="bulk-actions" *ngIf="selectedIds.size > 0 && canManage">
+      <span class="selected-count">{{ selectedIds.size }} محدد</span>
+      <button class="btn btn-danger btn-sm" (click)="deleteSelected()">
+        <span class="material-icons-round">delete_sweep</span>
+        حذف المحدد
+      </button>
+    </div>
     <table class="data-table">
       <thead>
         <tr>
+          <th class="checkbox-cell" *ngIf="canManage">
+            <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll()" title="تحديد الكل">
+          </th>
           <th>الكود</th>
           <th>الاسم بالعربي</th>
           <th>الوظيفة</th>
@@ -63,7 +73,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let s of staff" class="table-row">
+        <tr *ngFor="let s of staff" class="table-row" [class.selected-row]="isSelected(s.id)">
+          <td class="checkbox-cell" *ngIf="canManage">
+            <input type="checkbox" [checked]="isSelected(s.id)" (click)="toggleSelect(s.id, $event)">
+          </td>
           <td class="code-cell">{{ s.staffCode }}</td>
           <td class="name-cell">{{ s.fullNameAr }}</td>
           <td>{{ s.jobTitle || '—' }}</td>
@@ -80,10 +93,13 @@
               {{ getStatusLabel(s.status) }}
             </span>
           </td>
-          <td>
-            <a [routerLink]="['/workers', s.id]" class="btn-link">
+          <td class="actions-cell">
+            <a [routerLink]="['/workers', s.id]" class="btn-link" title="عرض التفاصيل">
               <span class="material-icons-round">visibility</span>
             </a>
+            <button class="btn-link delete-action" *ngIf="canManage" title="حذف" (click)="deleteStaff(s, $event)">
+              <span class="material-icons-round">delete_outline</span>
+            </button>
           </td>
         </tr>
       </tbody>

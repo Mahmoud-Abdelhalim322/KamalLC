@@ -143,10 +143,18 @@
 .status-inactive { background: #FFF3E0; color: #E65100; }
 .status-terminated { background: #FFEBEE; color: #C62828; }
 
+.actions-cell {
+  display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+}
+
 .btn-link {
-  color: var(--text-light); transition: color var(--transition-fast);
-  &:hover { color: var(--primary); }
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; padding: 4px; border-radius: var(--radius-sm);
+  color: var(--text-light); transition: all var(--transition-fast);
+  &:hover { color: var(--primary); background: var(--primary-50); }
   .material-icons-round { font-size: 20px; }
+
+  &.delete-action:hover { color: #EF4444; background: #FEE2E2; }
 }
 
 .empty-state {

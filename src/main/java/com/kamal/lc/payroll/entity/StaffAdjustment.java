@@ -1,9 +1,13 @@
 package com.kamal.lc.payroll.entity;
 
+import com.kamal.lc.common.security.TenantAware;
+import com.kamal.lc.common.security.TenantEntityListener;
 import com.kamal.lc.staff.entity.Staff;
+import com.kamal.lc.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,7 +25,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StaffAdjustment {
+@EntityListeners(TenantEntityListener.class)
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+public class StaffAdjustment implements TenantAware {
 
     public static final String BONUS = "BONUS";
     public static final String DEDUCTION = "DEDUCTION";
@@ -71,6 +77,10 @@ public class StaffAdjustment {
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

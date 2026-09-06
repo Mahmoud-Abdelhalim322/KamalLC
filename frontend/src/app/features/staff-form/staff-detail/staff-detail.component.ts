@@ -53,9 +53,21 @@ export class StaffDetailComponent implements OnInit {
   }
 
   deleteStaff(): void {
-    if (!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+    if (!this.staff) return;
+    const label = this.staff.staffType === 'MANAGER' ? 'الإداري' : 'العامل';
+    if (!confirm(`هل أنت متأكد من حذف ${label} "${this.staff.fullNameAr}" نهائياً؟`)) return;
+
     this.http.delete<ApiResponse<void>>(`/api/staff/${this.staffId}`).subscribe({
-      next: () => this.router.navigate([this.backRoute]),
+      next: (res) => {
+        if (res.success) {
+          this.router.navigate([this.backRoute]);
+        } else {
+          alert(res.message || 'فشل حذف البيانات');
+        }
+      },
+      error: (err) => {
+        alert(err?.error?.message || 'فشل حذف البيانات');
+      }
     });
   }
 

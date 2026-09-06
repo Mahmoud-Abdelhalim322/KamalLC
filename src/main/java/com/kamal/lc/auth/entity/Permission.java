@@ -2,11 +2,15 @@ package com.kamal.lc.auth.entity;
 
 /**
  * All available system permissions. Each one gates a feature area's view or manage access.
- * The SUPER_ADMIN role implicitly has ALL permissions — this enum is only consulted for
- * manager-level users whose access is defined through their {@link JobTitle}.
+ * <ul>
+ *   <li>{@code PLATFORM_ADMIN} has ALL permissions (including platform-level ones).</li>
+ *   <li>{@code ADMIN} (company admin) has all tenant-level permissions (not PLATFORM_*).</li>
+ *   <li>Manager-level users get their permissions through their {@link JobTitle}.</li>
+ * </ul>
  */
 public enum Permission {
 
+    // ---- Tenant-level permissions (available to company users) ----
     MEMBERS_VIEW("عرض بيانات الأعضاء"),
     MEMBERS_MANAGE("إضافة/تعديل الأعضاء"),
     FLEET_VIEW("عرض أسطول السيارات"),
@@ -23,7 +27,16 @@ public enum Permission {
     LOANS_MANAGE("إدارة السُلف"),
     SETTINGS_MANAGE("إدارة الإعدادات"),
     USERS_MANAGE("إدارة حسابات المستخدمين"),
-    IMPORTS_MANAGE("استيراد البيانات");
+    IMPORTS_MANAGE("استيراد البيانات"),
+
+    // ---- Platform-level permissions (platform admin only) ----
+    PLATFORM_TENANTS_MANAGE("إدارة الشركات"),
+    PLATFORM_SUBSCRIPTIONS_MANAGE("إدارة الاشتراكات"),
+    PLATFORM_PLANS_MANAGE("إدارة خطط الاشتراك"),
+    PLATFORM_REPORTS("تقارير المنصة"),
+    PLATFORM_USERS_MANAGE("إدارة مستخدمي المنصة"),
+    PLATFORM_INVOICES_MANAGE("إدارة الفواتير"),
+    PLATFORM_AUDIT_VIEW("عرض سجل المراجعة");
 
     private final String labelAr;
 
@@ -33,5 +46,10 @@ public enum Permission {
 
     public String getLabelAr() {
         return labelAr;
+    }
+
+    /** Whether this is a platform-level permission (not for regular tenant users). */
+    public boolean isPlatformLevel() {
+        return name().startsWith("PLATFORM_");
     }
 }

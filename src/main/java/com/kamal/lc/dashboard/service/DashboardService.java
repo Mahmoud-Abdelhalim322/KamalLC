@@ -6,6 +6,7 @@ import com.kamal.lc.captain.expiry.DocumentAlertEvaluator;
 import com.kamal.lc.captain.expiry.DocumentKind;
 import com.kamal.lc.captain.expiry.DocumentStatus;
 import com.kamal.lc.captain.repository.CaptainRepository;
+import com.kamal.lc.common.security.TenantContext;
 import com.kamal.lc.custody.service.CustodyService;
 import com.kamal.lc.dashboard.dto.CaptainPerformanceDTO;
 import com.kamal.lc.dashboard.dto.DashboardResponse;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Dashboard service — assembles summary data from all modules.
@@ -53,6 +56,9 @@ public class DashboardService {
             "QIWA_CONTRACT_ALERT_DAYS"
     );
 
+    /** Cache TTL in milliseconds — 5 minutes (#8). */
+    private static final long DOCUMENT_TALLY_TTL_MS = 5 * 60 * 1000L;
+
     private final CaptainRepository captainRepo;
     private final StaffRepository staffRepo;
     private final SupplierIdSlotRepository slotRepo;
@@ -65,6 +71,10 @@ public class DashboardService {
     private final CustodyService custodyService;
     private final AppSettingRepository appSettingRepo;
     private final SettingsResolver settingsResolver;
+
+    /** Per-tenant cached document tally (#8). */
+    private record CachedTally(DocumentTally tally, long timestampMs) {}
+    private final Map<UUID, CachedTally> documentTallyCache = new ConcurrentHashMap<>();
 
     public DashboardResponse getDashboardData() {
         return getDashboardData(null, null);
@@ -99,7 +109,7 @@ public class DashboardService {
 
         TeamReportResponse weekReport = reportService.teamReport(weekStart, weekEnd);
 
-        DocumentTally documents = tallyDocuments(today);
+        DocumentTally documents = cachedTallyDocuments(today);
         FleetService.FleetStats fleetStats = fleetService.getFleetStats();
 
         // Find primary alert threshold setting
@@ -235,6 +245,26 @@ public class DashboardService {
             }
         }
         settingsResolver.invalidate();
+    }
+
+    /**
+     * Returns a cached document tally for the current tenant, recomputing only if
+     * the cached value is older than {@link #DOCUMENT_TALLY_TTL_MS} (#8).
+     */
+    private DocumentTally cachedTallyDocuments(LocalDate today) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        // Use a sentinel key for null tenant (platform admin)
+        UUID cacheKey = tenantId != null ? tenantId : new UUID(0, 0);
+        long now = System.currentTimeMillis();
+
+        CachedTally cached = documentTallyCache.get(cacheKey);
+        if (cached != null && (now - cached.timestampMs()) < DOCUMENT_TALLY_TTL_MS) {
+            return cached.tally();
+        }
+
+        DocumentTally tally = tallyDocuments(today);
+        documentTallyCache.put(cacheKey, new CachedTally(tally, now));
+        return tally;
     }
 
     /**

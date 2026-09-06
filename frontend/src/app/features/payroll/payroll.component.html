@@ -5,7 +5,7 @@
       <h1 class="page-title">المرتبات</h1>
       <p class="page-subtitle">توليد مسير الشهر من الشيفتات المسجلة، ثم اعتماده وقفله</p>
     </div>
-    <button class="btn btn-primary" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
+    <button class="btn btn-new-payroll" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
       <span class="material-icons-round">add</span> مسير جديد
     </button>
   </div>
@@ -94,12 +94,16 @@
               <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span> PDF
             </button>
 
-            <button class="btn btn-outline btn-sm" (click)="exportBulkPayslips()" [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'CAPTAIN'">
-              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات الفردية
+            <button class="btn btn-outline btn-sm" (click)="exportBulkPayslips()" [disabled]="isExportingBulkPayslips"
+              *ngIf="activeTab === 'CAPTAIN'">
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات
+              الفردية
             </button>
 
-            <button class="btn btn-outline btn-sm" (click)="exportBulkStaffPayslips(activeTab)" [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'WORKER' || activeTab === 'MANAGER'">
-              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات الفردية
+            <button class="btn btn-outline btn-sm" (click)="exportBulkStaffPayslips(activeTab)"
+              [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'WORKER' || activeTab === 'MANAGER'">
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات
+              الفردية
             </button>
 
             <ng-container *ngIf="!run.locked">
@@ -187,9 +191,26 @@
         </div>
 
         <div class="tabs-bar">
-          <button class="tab-btn" [class.active]="activeTab === 'CAPTAIN'" (click)="switchTab('CAPTAIN')">الكباتن</button>
-          <button class="tab-btn" [class.active]="activeTab === 'WORKER'" (click)="switchTab('WORKER')">العاملين</button>
-          <button class="tab-btn" [class.active]="activeTab === 'MANAGER'" (click)="switchTab('MANAGER')">الإداريين</button>
+          <div class="tabs-group">
+            <button class="tab-btn" [class.active]="activeTab === 'CAPTAIN'"
+              (click)="switchTab('CAPTAIN')">الكباتن</button>
+            <button class="tab-btn" [class.active]="activeTab === 'WORKER'"
+              (click)="switchTab('WORKER')">العاملين</button>
+            <button class="tab-btn" [class.active]="activeTab === 'MANAGER'"
+              (click)="switchTab('MANAGER')">الإداريين</button>
+          </div>
+          <div class="sub-filters" *ngIf="activeTab === 'CAPTAIN'">
+            <button class="sub-filter-btn" [class.active]="captainTypeFilter === ''"
+              (click)="setCaptainTypeFilter('')">الكل</button>
+            <button class="sub-filter-btn" [class.active]="captainTypeFilter === 'EMPLOYEE'"
+              (click)="setCaptainTypeFilter('EMPLOYEE')">KSC</button>
+            <button class="sub-filter-btn" [class.active]="captainTypeFilter === 'FREELANCE'"
+              (click)="setCaptainTypeFilter('FREELANCE')">KSCFL</button>
+          </div>
+          <div class="search-box">
+            <span class="material-icons-round">search</span>
+            <input type="text" placeholder="بحث بالاسم، الكود، أو ID-APP..." [(ngModel)]="searchQuery">
+          </div>
         </div>
 
         <!-- Summary -->
@@ -276,6 +297,7 @@
               <th>بدل سيارة</th>
               <th>تحقيق الهدف</th>
               <th>بعد الهدف</th>
+              <th>عمولة الإجازة</th>
               <th>مجموع الراتب</th>
               <th>السلف</th>
               <th>بنود يدوية</th>
@@ -285,7 +307,7 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let line of lines">
+            <ng-container *ngFor="let line of filteredLines">
               <tr>
                 <td class="code-cell">{{ line.captainCode }}</td>
                 <td class="name">{{ line.captainName }}</td>
@@ -312,6 +334,8 @@
                 <td [class.positive]="line.carAllowances > 0">{{ money(line.carAllowances) }}</td>
                 <td [class.positive]="line.targetBonus > 0">{{ money(line.targetBonus) }}</td>
                 <td [class.positive]="line.extraOrderPay > 0">{{ money(line.extraOrderPay) }}</td>
+                <td [class.positive]="line.vacationCommission > 0">{{ line.vacationCommission > 0 ? '+' +
+                  money(line.vacationCommission) : '—' }}</td>
                 <td class="strong">{{ money(line.gross) }}</td>
                 <td [class.negative]="(line.activeLoanBalance || 0) > 0" title="المتبقي من السلف النشطة">
                   {{ (line.activeLoanBalance || 0) > 0 ? money(line.activeLoanBalance) : '—' }}
@@ -324,7 +348,8 @@
                   {{ money(line.margin) }}
                 </td>
                 <td>
-                  <button class="icon-btn" title="طباعة المسير الفردي" (click)="exportPayslip(line.captainId, line.captainCode)">
+                  <button class="icon-btn" title="طباعة المسير الفردي"
+                    (click)="exportPayslip(line.captainId, line.captainCode)">
                     <span class="material-icons-round">print</span>
                   </button>
                   <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openAdjustment(line)">
@@ -336,7 +361,7 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="17" class="adjustment-label">
+                <td colspan="18" class="adjustment-label">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
                     [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
@@ -376,6 +401,7 @@
               <td>{{ money(totals.car) }}</td>
               <td>{{ money(totals.targetBonus) }}</td>
               <td>{{ money(totals.extraOrderPay) }}</td>
+              <td>{{ money(totals.vacationCommission) }}</td>
               <td>{{ money(totals.gross) }}</td>
               <td class="negative">{{ totals.activeLoans > 0 ? money(totals.activeLoans) : '—' }}</td>
               <td>{{ money(totals.adjustments) }}</td>
@@ -405,7 +431,7 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let line of staffLines">
+            <ng-container *ngFor="let line of filteredStaffLines">
               <tr>
                 <td class="code-cell">{{ line.staffCode }}</td>
                 <td class="name">{{ line.staffName }}</td>
@@ -422,10 +448,12 @@
                 </td>
                 <td class="net">{{ money(line.net) }}</td>
                 <td>
-                  <button class="icon-btn" title="طباعة المسير الفردي" (click)="exportStaffPayslip(line.staffId, line.staffCode)">
+                  <button class="icon-btn" title="طباعة المسير الفردي"
+                    (click)="exportStaffPayslip(line.staffId, line.staffCode)">
                     <span class="material-icons-round">print</span>
                   </button>
-                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openStaffAdjustment(line)">
+                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي"
+                    (click)="openStaffAdjustment(line)">
                     <span class="material-icons-round">add_circle_outline</span>
                   </button>
                 </td>
@@ -434,7 +462,8 @@
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
                 <td colspan="7" class="adjustment-label">
-                  <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'" [class.down]="adj.kind === 'DEDUCTION'">
+                  <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
+                    [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
                   </span>
                   {{ adj.labelAr }}
@@ -446,7 +475,8 @@
                 </td>
                 <td></td>
                 <td>
-                  <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeStaffAdjustment(adj.id)" title="حذف البند">
+                  <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeStaffAdjustment(adj.id)"
+                    title="حذف البند">
                     <span class="material-icons-round">delete_outline</span>
                   </button>
                 </td>
@@ -525,10 +555,12 @@
       <label class="form-label">النوع</label>
       <select class="form-input" [(ngModel)]="staffAdjustmentType">
         <optgroup label="إضافات">
-          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{ opt.label }}</option>
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{
+            opt.label }}</option>
         </optgroup>
         <optgroup label="خصومات">
-          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{ opt.label }}</option>
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{
+            opt.label }}</option>
         </optgroup>
       </select>
       <p class="hint loan-notice" *ngIf="staffAdjustmentType === 'LOAN'">

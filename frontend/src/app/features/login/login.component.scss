@@ -8,6 +8,13 @@
   overflow: hidden;
 }
 
+.login-topbar {
+  position: absolute;
+  top: 20px;
+  inset-inline-end: 24px;
+  z-index: 10;
+}
+
 /* Animated background circles */
 .login-bg {
   position: absolute;
@@ -190,7 +197,7 @@
 
 /* Form */
 .login-form {
-  text-align: right;
+  text-align: start;
 
   .form-group {
     margin-bottom: 18px;

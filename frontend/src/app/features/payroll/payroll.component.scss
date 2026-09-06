@@ -4,6 +4,30 @@
 .page-title { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
 .page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
 
+.btn-new-payroll {
+  background: #000000;
+  color: #F5B000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-weight: 700;
+  border: 1px solid #000000;
+
+  .material-icons-round {
+    color: #F5B000;
+  }
+
+  &:hover {
+    background: #1f1f1f;
+    color: #FFD000;
+    border-color: #1f1f1f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+
+    .material-icons-round {
+      color: #FFD000;
+    }
+  }
+}
+
 /* ---------- Alerts ---------- */
 .alert {
   display: flex; align-items: center; gap: 10px;
@@ -119,7 +143,11 @@
 
 /* ---------- Tabs ---------- */
 .tabs-bar {
-  display: flex; gap: 8px; border-bottom: 2px solid var(--border-light); margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  border-bottom: 2px solid var(--border-light); margin-bottom: 20px; flex-wrap: wrap;
+}
+.tabs-group {
+  display: flex; gap: 8px;
 }
 .tab-btn {
   background: none; border: none; padding: 10px 16px; cursor: pointer;
@@ -129,6 +157,19 @@
 
   &:hover { color: var(--primary); }
   &.active { color: var(--primary); border-bottom-color: var(--primary); }
+}
+
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-input); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 6px 12px;
+  min-width: 250px; margin-bottom: 4px;
+  .material-icons-round { color: var(--text-light); font-size: 18px; }
+  input {
+    border: none; background: transparent; outline: none;
+    font-size: 0.84rem; color: var(--text-primary); width: 100%;
+    &::placeholder { color: var(--text-light); }
+  }
 }
 
 /* ---------- Summary tiles ---------- */
@@ -262,5 +303,24 @@
     .material-icons-round {
       font-size: 16px;
     }
+  }
+}
+
+/* KSC / KSCFL sub-filters */
+.sub-filters {
+  display: flex; gap: 4px; margin-inline-start: 12px;
+  background: var(--bg-input, #f1f5f9); border-radius: var(--radius-sm, 6px); padding: 3px;
+}
+
+.sub-filter-btn {
+  padding: 5px 14px; border: none; background: none; border-radius: var(--radius-sm, 6px);
+  font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover { color: var(--text-primary); }
+  &.active {
+    background: var(--primary, #3b82f6); color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   }
 }

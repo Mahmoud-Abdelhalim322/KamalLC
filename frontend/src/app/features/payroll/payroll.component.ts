@@ -24,10 +24,12 @@ interface StaffAdjustmentOption {
   kind: 'BONUS' | 'DEDUCTION';
 }
 
+import { TranslationService, TranslatePipe } from '../../core/i18n';
+
 @Component({
   selector: 'app-payroll',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './payroll.component.html',
   styleUrls: ['./payroll.component.scss']
 })
@@ -35,6 +37,7 @@ export class PayrollComponent implements OnInit {
 
   private payrollService = inject(PayrollService);
   public authService = inject(AuthService);
+  public translationService = inject(TranslationService);
 
   get canManage(): boolean {
     return this.authService.hasPermission('PAYROLL_MANAGE');
@@ -61,10 +64,31 @@ export class PayrollComponent implements OnInit {
 
   runs: PayrollRunResponse[] = [];
   selectedRun: PayrollRunResponse | null = null;
-  
+
   activeTab: 'CAPTAIN' | 'WORKER' | 'MANAGER' = 'CAPTAIN';
+  captainTypeFilter: '' | 'EMPLOYEE' | 'FREELANCE' = '';
   lines: PayrollLineResponse[] = [];
   staffLines: StaffPayrollLineResponse[] = [];
+  searchQuery = '';
+
+  get filteredLines(): PayrollLineResponse[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.lines;
+    return this.lines.filter(l =>
+      (l.captainName && l.captainName.toLowerCase().includes(q)) ||
+      (l.captainCode && l.captainCode.toLowerCase().includes(q)) ||
+      (l.supplierExternalIds && l.supplierExternalIds.toLowerCase().includes(q))
+    );
+  }
+
+  get filteredStaffLines(): StaffPayrollLineResponse[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.staffLines;
+    return this.staffLines.filter(s =>
+      (s.staffName && s.staffName.toLowerCase().includes(q)) ||
+      (s.staffCode && s.staffCode.toLowerCase().includes(q))
+    );
+  }
 
   isLoadingRuns = true;
   isLoadingLines = false;
@@ -164,7 +188,7 @@ export class PayrollComponent implements OnInit {
 
   loadLines(runId: string): void {
     this.isLoadingLines = true;
-    this.payrollService.getLines(runId).subscribe({
+    this.payrollService.getLines(runId, this.captainTypeFilter || undefined).subscribe({
       next: (lines) => {
         this.isLoadingLines = false;
         this.lines = lines;
@@ -175,6 +199,13 @@ export class PayrollComponent implements OnInit {
         this.errorMessage = errorMessage(err, 'فشل في تحميل أسطر المسير');
       }
     });
+  }
+
+  setCaptainTypeFilter(filter: '' | 'EMPLOYEE' | 'FREELANCE'): void {
+    this.captainTypeFilter = filter;
+    if (this.selectedRun && this.activeTab === 'CAPTAIN') {
+      this.loadLines(this.selectedRun.id);
+    }
   }
 
   loadStaffLines(runId: string, type: string): void {
@@ -324,8 +355,11 @@ export class PayrollComponent implements OnInit {
     let filePrefix = 'مسير-رواتب-';
     if (tab === 'WORKER') filePrefix = 'مسير-رواتب-العاملين-';
     else if (tab === 'MANAGER') filePrefix = 'مسير-رواتب-الإداريين-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = 'مسير-رواتب-KSC-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = 'مسير-رواتب-KSCFL-';
 
-    this.payrollService.exportWorkbook(run.id, tab).subscribe({
+    const captainType = tab === 'CAPTAIN' && this.captainTypeFilter ? this.captainTypeFilter : undefined;
+    this.payrollService.exportWorkbook(run.id, tab === 'CAPTAIN' ? undefined : tab, captainType).subscribe({
       next: (blob) => downloadBlob(blob, `${filePrefix}${run.periodFrom}.xlsx`),
       error: () => { this.errorMessage = 'فشل تحميل ملف المسير'; }
     });
@@ -341,9 +375,12 @@ export class PayrollComponent implements OnInit {
     let filePrefix = 'مسير-رواتب-';
     if (tab === 'WORKER') filePrefix = 'مسير-رواتب-العاملين-';
     else if (tab === 'MANAGER') filePrefix = 'مسير-رواتب-الإداريين-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = 'مسير-رواتب-KSC-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = 'مسير-رواتب-KSCFL-';
 
+    const captainType = tab === 'CAPTAIN' && this.captainTypeFilter ? this.captainTypeFilter : undefined;
     this.isExportingPdf = true;
-    this.payrollService.exportPdf(run.id, tab).subscribe({
+    this.payrollService.exportPdf(run.id, tab === 'CAPTAIN' ? undefined : tab, captainType).subscribe({
       next: (blob) => {
         this.isExportingPdf = false;
         downloadBlob(blob, `${filePrefix}${run.periodFrom}.pdf`);
@@ -395,8 +432,8 @@ export class PayrollComponent implements OnInit {
       next: (blob) => {
         this.isExportingBulkPayslips = false;
         const prefix = staffType === 'WORKER' ? 'مسيرات-فردية-العاملين-'
-                     : staffType === 'MANAGER' ? 'مسيرات-فردية-الإداريين-'
-                     : 'مسيرات-فردية-الموظفين-';
+          : staffType === 'MANAGER' ? 'مسيرات-فردية-الإداريين-'
+            : 'مسيرات-فردية-الموظفين-';
         downloadBlob(blob, `${prefix}${this.selectedRun?.periodFrom}.pdf`);
       },
       error: () => {
@@ -558,7 +595,7 @@ export class PayrollComponent implements OnInit {
   // ---------------------------------------------------------------- display
 
   get totals() {
-    return this.lines.reduce((acc, l) => ({
+    return this.filteredLines.reduce((acc, l) => ({
       shifts: acc.shifts + l.attendedShifts,
       orders: acc.orders + l.totalOrders,
       basePay: acc.basePay + l.basePay,
@@ -569,6 +606,7 @@ export class PayrollComponent implements OnInit {
       car: acc.car + l.carAllowances,
       targetBonus: acc.targetBonus + l.targetBonus,
       extraOrderPay: acc.extraOrderPay + l.extraOrderPay,
+      vacationCommission: acc.vacationCommission + (l.vacationCommission || 0),
       gross: acc.gross + l.gross,
       activeLoans: acc.activeLoans + (l.activeLoanBalance || 0),
       adjustments: acc.adjustments + l.adjustmentsTotal,
@@ -577,12 +615,15 @@ export class PayrollComponent implements OnInit {
       margin: acc.margin + l.margin,
     }), {
       shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, fuel: 0, car: 0,
-      targetBonus: 0, extraOrderPay: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
+      targetBonus: 0, vacationCommission: 0, extraOrderPay: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
     });
   }
 
   statusLabel(status: string): string {
-    return { DRAFT: 'مسودة', APPROVED: 'معتمد', PAID: 'مدفوع' }[status] || status;
+    const isAr = this.translationService.currentLang() === 'ar';
+    const mapAr: Record<string, string> = { DRAFT: 'مسودة', APPROVED: 'معتمد', PAID: 'مدفوع' };
+    const mapEn: Record<string, string> = { DRAFT: 'Draft', APPROVED: 'Approved', PAID: 'Paid' };
+    return (isAr ? mapAr[status] : mapEn[status]) || status;
   }
 
   statusClass(status: string): string {
@@ -590,7 +631,7 @@ export class PayrollComponent implements OnInit {
   }
 
   typeLabel(captainType: string): string {
-    return captainType === 'FREELANCE' ? 'فريلانس' : 'كفالة';
+    return captainType === 'FREELANCE' ? 'KSCFL' : 'KSC';
   }
 
   money(value: number | null | undefined): string {

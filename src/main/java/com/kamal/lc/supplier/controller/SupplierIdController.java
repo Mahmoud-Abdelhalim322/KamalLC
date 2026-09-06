@@ -41,13 +41,20 @@ public class SupplierIdController {
         return ResponseEntity.ok(ApiResponse.ok("تم إضافة المورد بنجاح", service.createSupplier(name, code, color)));
     }
 
+    @DeleteMapping("/suppliers/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteSupplier(@PathVariable UUID id) {
+        service.deleteSupplier(id);
+        return ResponseEntity.ok(ApiResponse.ok("تم حذف المورد بنجاح", null));
+    }
+
     @GetMapping("/slots")
     public ResponseEntity<ApiResponse<PageResponse<SupplierIdSlotResponse>>> slots(
             @RequestParam(required = false) UUID supplierId,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Page<SupplierIdSlotResponse> result = service.getSlots(supplierId,
+        Page<SupplierIdSlotResponse> result = service.getSlots(supplierId, q,
                 PageRequest.of(page, size, Sort.by("externalId")));
 
         return ResponseEntity.ok(ApiResponse.ok(PageResponse.<SupplierIdSlotResponse>builder()
@@ -95,6 +102,18 @@ public class SupplierIdController {
 
         return ResponseEntity.ok(ApiResponse.ok("تم فك ربط المعرف",
                 service.unassign(slotId, validTo, reason)));
+    }
+
+    @DeleteMapping("/slots/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteSlot(@PathVariable UUID id) {
+        service.deleteSlot(id);
+        return ResponseEntity.ok(ApiResponse.ok("تم حذف المعرف", null));
+    }
+
+    @DeleteMapping("/slots/batch")
+    public ResponseEntity<ApiResponse<Void>> deleteSlots(@RequestBody List<UUID> ids) {
+        service.deleteSlots(ids);
+        return ResponseEntity.ok(ApiResponse.ok("تم حذف المعرفات المحددة", null));
     }
 
     @GetMapping("/slots/{slotId}/history")
