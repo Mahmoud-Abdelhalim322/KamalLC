@@ -5,7 +5,6 @@ import { SettingResponse, SettingsByGroup } from '../../core/models/api.models';
 import { SettingsService } from '../../core/services/settings.service';
 import { ThemeService, DEFAULT_THEME, ThemeSettings } from '../../core/services/theme.service';
 import { errorMessage, isoDate } from '../../core/services/api.util';
-
 import { TranslationService, TranslatePipe } from '../../core/i18n';
 
 /** A setting being edited, held apart so a failed save leaves the row untouched. */
@@ -31,37 +30,8 @@ export class SettingsComponent implements OnInit {
   activeTab: 'OPERATIONAL' | 'APPEARANCE' = 'OPERATIONAL';
 
   getGroupLabel(groupKey: string): string {
-    const isAr = this.translationService.currentLang() === 'ar';
-    const labelsAr: Record<string, string> = {
-      SALARY: 'أساس الراتب',
-      PENALTY: 'شرائح خصم الساعات',
-      SHIFT_INCOME: 'الحافز اليومي للطلبات',
-      ALLOWANCE: 'البدلات',
-      TARGET: 'الهدف الشهري',
-      DOCUMENT_ALERT: 'إنذارات انتهاء الوثائق',
-      OTHER: 'إعدادات أخرى',
-    };
-    const labelsEn: Record<string, string> = {
-      SALARY: 'Base Salary',
-      PENALTY: 'Late Hours Penalties',
-      SHIFT_INCOME: 'Daily Order Incentives',
-      ALLOWANCE: 'Allowances',
-      TARGET: 'Monthly Target',
-      DOCUMENT_ALERT: 'Document Expiry Alerts',
-      OTHER: 'Other Settings',
-    };
-    return (isAr ? labelsAr[groupKey] : labelsEn[groupKey]) || groupKey;
+    return this.translationService.t('SETTINGS.GROUP_' + groupKey) || groupKey;
   }
-
-  readonly groupLabels: Record<string, string> = {
-    SALARY: 'أساس الراتب',
-    PENALTY: 'شرائح خصم الساعات',
-    SHIFT_INCOME: 'الحافز اليومي للطلبات',
-    ALLOWANCE: 'البدلات',
-    TARGET: 'الهدف الشهري',
-    DOCUMENT_ALERT: 'إنذارات انتهاء الوثائق',
-    OTHER: 'إعدادات أخرى',
-  };
 
   readonly groupIcons: Record<string, string> = {
     SALARY: 'payments',
@@ -70,6 +40,7 @@ export class SettingsComponent implements OnInit {
     ALLOWANCE: 'local_gas_station',
     TARGET: 'flag',
     DOCUMENT_ALERT: 'notification_important',
+    FLEET: 'directions_car',
     OTHER: 'tune',
   };
 
@@ -104,6 +75,7 @@ export class SettingsComponent implements OnInit {
       sidebarBg: this.themeService.sidebarBg(),
       topbarBg: this.themeService.topbarBg(),
       sidebarActiveBg: this.themeService.sidebarActiveBg(),
+      sidebarTextColor: this.themeService.sidebarTextColor(),
       brandText: this.themeService.brandText(),
     };
   }
@@ -127,24 +99,34 @@ export class SettingsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoadingSettings = false;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل الإعدادات');
+        this.errorMessage = errorMessage(err, this.translationService.t('SETTINGS.ERR_LOAD_SETTINGS'));
       }
     });
   }
 
   /** Renders operational sections in a stable order excluding APPEARANCE. */
   get groupKeys(): string[] {
-    const known = Object.keys(this.groupLabels).filter(g => this.settings[g]?.length);
-    const extra = Object.keys(this.settings).filter(g => !(g in this.groupLabels) && g !== 'APPEARANCE');
+    const knownOrder = ['SALARY', 'PENALTY', 'SHIFT_INCOME', 'ALLOWANCE', 'TARGET', 'DOCUMENT_ALERT', 'FLEET', 'OTHER'];
+    const known = knownOrder.filter(g => this.settings[g]?.length);
+    const extra = Object.keys(this.settings).filter(g => !knownOrder.includes(g) && g !== 'APPEARANCE');
     return [...known, ...extra];
   }
 
   groupLabel(group: string): string {
-    return this.groupLabels[group] ?? group;
+    return this.getGroupLabel(group);
   }
 
   groupIcon(group: string): string {
     return this.groupIcons[group] ?? 'tune';
+  }
+
+  getSettingLabel(setting: SettingResponse): string {
+    const key = 'SETTINGS.KEY_' + setting.settingKey;
+    const translated = this.translationService.t(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
+    return setting.labelAr || setting.settingKey;
   }
 
   startEdit(setting: SettingResponse): void {
@@ -175,14 +157,16 @@ export class SettingsComponent implements OnInit {
       next: (updated) => {
         this.isSaving = false;
         this.edit = null;
-        this.successMessage =
-          `تم تحديث "${updated.labelAr ?? updated.settingKey}" — يبدأ العمل به من ${effectiveFrom}`;
+        this.successMessage = this.translationService.t('SETTINGS.SUCCESS_UPDATE_SETTING', {
+          label: this.getSettingLabel(updated),
+          date: effectiveFrom
+        });
         this.loadSettings();
         if (this.historyKey === key) this.loadHistory(key);
       },
       error: (err) => {
         this.isSaving = false;
-        this.errorMessage = errorMessage(err, 'فشل في حفظ الإعداد');
+        this.errorMessage = errorMessage(err, this.translationService.t('SETTINGS.ERR_SAVE_SETTING'));
       }
     });
   }
@@ -206,7 +190,7 @@ export class SettingsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoadingHistory = false;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل سجل التغييرات');
+        this.errorMessage = errorMessage(err, this.translationService.t('SETTINGS.ERR_LOAD_HISTORY'));
       }
     });
   }
@@ -238,12 +222,12 @@ export class SettingsComponent implements OnInit {
         this.logoPreviewUrl = null;
         this.appearanceForm.logoUrl = res.value;
         this.themeService.updateTheme({ logoUrl: res.value });
-        this.successMessage = 'تم تحديث ورفع شعار الشركة بنجاح!';
+        this.successMessage = this.translationService.t('SETTINGS.SUCCESS_UPLOAD_LOGO');
         this.loadSettings();
       },
       error: (err) => {
         this.isUploadingLogo = false;
-        this.errorMessage = errorMessage(err, 'فشل في رفع الشعار');
+        this.errorMessage = errorMessage(err, this.translationService.t('SETTINGS.ERR_UPLOAD_LOGO'));
       }
     });
   }
@@ -258,6 +242,7 @@ export class SettingsComponent implements OnInit {
       this.settingsService.update('THEME_SIDEBAR_BG', this.appearanceForm.sidebarBg, today),
       this.settingsService.update('THEME_TOPBAR_BG', this.appearanceForm.topbarBg, today),
       this.settingsService.update('THEME_SIDEBAR_ACTIVE_BG', this.appearanceForm.sidebarActiveBg, today),
+      this.settingsService.update('THEME_SIDEBAR_TEXT_COLOR', this.appearanceForm.sidebarTextColor, today),
       this.settingsService.update('THEME_BRAND_TEXT', this.appearanceForm.brandText, today),
     ];
 
@@ -275,7 +260,7 @@ export class SettingsComponent implements OnInit {
           if (completed === updates.length && !hasError) {
             this.isSavingAppearance = false;
             this.themeService.updateTheme(this.appearanceForm);
-            this.successMessage = 'تم حفظ إعدادات المظهر بنجاح وتطبيقها على كافة أجزاء النظام!';
+            this.successMessage = this.translationService.t('SETTINGS.SUCCESS_SAVE_APPEARANCE');
             this.loadSettings();
           }
         },
@@ -283,7 +268,7 @@ export class SettingsComponent implements OnInit {
           if (!hasError) {
             hasError = true;
             this.isSavingAppearance = false;
-            this.errorMessage = errorMessage(err, 'فشل في حفظ إعدادات المظهر');
+            this.errorMessage = errorMessage(err, this.translationService.t('SETTINGS.ERR_SAVE_APPEARANCE'));
           }
         }
       });
@@ -303,6 +288,7 @@ export class SettingsComponent implements OnInit {
       sidebarBg: this.appearanceForm.sidebarBg,
       topbarBg: this.appearanceForm.topbarBg,
       sidebarActiveBg: this.appearanceForm.sidebarActiveBg,
+      sidebarTextColor: this.appearanceForm.sidebarTextColor,
       brandText: this.appearanceForm.brandText
     });
   }
@@ -318,7 +304,21 @@ export class SettingsComponent implements OnInit {
   }
 
   unitOf(setting: SettingResponse): string {
-    return setting.unitLabel ?? '';
+    const raw = setting.unitLabel?.trim();
+    if (!raw) return '';
+    if (raw === 'ريال' || raw === 'ر.س') {
+      return this.translationService.t('SETTINGS.UNIT_SAR');
+    }
+    if (raw === 'ساعة') {
+      return this.translationService.t('SETTINGS.UNIT_HOURS');
+    }
+    if (raw === 'يوم') {
+      return this.translationService.t('SETTINGS.UNIT_DAYS');
+    }
+    if (raw === 'طلب' || raw === 'أوردر') {
+      return this.translationService.t('SETTINGS.UNIT_ORDERS');
+    }
+    return raw;
   }
 
   isFlag(setting: SettingResponse): boolean {
@@ -326,7 +326,7 @@ export class SettingsComponent implements OnInit {
   }
 
   flagLabel(value: string): string {
-    return value === 'true' ? 'مفعّل' : 'غير مفعّل';
+    return value === 'true' ? this.translationService.t('SETTINGS.ENABLED') : this.translationService.t('SETTINGS.DISABLED');
   }
 
   displayValue(setting: SettingResponse, value: string = setting.value): string {

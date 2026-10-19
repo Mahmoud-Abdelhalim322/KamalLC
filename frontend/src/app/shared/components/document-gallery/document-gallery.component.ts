@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiResponse, DocumentInfo } from '../../../core/models/api.models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
-/** Arabic labels for the document_type values defined in V3__create_captain_tables.sql. */
+/** Fallback labels for the document_type values defined in V3__create_captain_tables.sql. */
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  PERSONAL_PHOTO: 'صورة شخصية',
-  ID_CARD: 'بطاقة هوية',
-  IQAMA: 'إقامة',
-  PASSPORT: 'جواز سفر',
-  DRIVING_LICENCE: 'رخصة قيادة',
-  VEHICLE_REGISTRATION: 'استمارة مركبة',
-  CONTRACT: 'عقد عمل',
-  OTHER: 'أخرى'
+  PERSONAL_PHOTO: 'Personal Photo',
+  ID_CARD: 'ID Card',
+  IQAMA: 'Iqama',
+  PASSPORT: 'Passport',
+  DRIVING_LICENCE: 'Driving Licence',
+  VEHICLE_REGISTRATION: 'Vehicle Registration',
+  CONTRACT: 'Contract',
+  OTHER: 'Other'
 };
 
 /**
@@ -28,7 +30,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-document-gallery',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './document-gallery.component.html',
   styleUrls: ['./document-gallery.component.scss']
 })
@@ -58,7 +60,11 @@ export class DocumentGalleryComponent implements OnDestroy {
   isViewerLoading = false;
   viewerError = '';
 
-  constructor(private http: HttpClient, private sanitizer: DomSanitizer) {}
+  constructor(
+    private http: HttpClient,
+    private sanitizer: DomSanitizer,
+    public i18n: TranslationService
+  ) {}
 
   ngOnDestroy(): void {
     this.objectUrls.forEach(url => URL.revokeObjectURL(url));
@@ -103,7 +109,7 @@ export class DocumentGalleryComponent implements OnDestroy {
       () => {
         if (this.activeDoc?.id !== doc.id) { return; }
         this.isViewerLoading = false;
-        this.viewerError = 'فشل عرض المستند';
+        this.viewerError = this.i18n.t('DOC_GALLERY.PREVIEW_FAILED');
       }
     );
   }
@@ -148,12 +154,13 @@ export class DocumentGalleryComponent implements OnDestroy {
         link.download = doc.fileName;
         link.click();
       },
-      () => { this.errorMessage = 'فشل تحميل المستند'; }
+      () => { this.errorMessage = this.i18n.t('DOC_GALLERY.DOWNLOAD_FAILED'); }
     );
   }
 
   remove(doc: DocumentInfo): void {
-    if (!confirm(`هل تريد حذف المستند "${doc.fileName}"؟`)) {
+    const confirmMsg = this.i18n.t('DOC_GALLERY.CONFIRM_DELETE_FILE', { name: doc.fileName });
+    if (!confirm(confirmMsg)) {
       return;
     }
 
@@ -167,7 +174,7 @@ export class DocumentGalleryComponent implements OnDestroy {
           this.deleted.emit(doc);
         },
         error: (err) => {
-          this.errorMessage = err?.error?.message || 'فشل حذف المستند';
+          this.errorMessage = err?.error?.message || this.i18n.t('DOC_GALLERY.DELETE_FAILED');
         }
       });
   }
@@ -220,7 +227,9 @@ export class DocumentGalleryComponent implements OnDestroy {
   }
 
   getDocTypeLabel(type: string): string {
-    return DOCUMENT_TYPE_LABELS[type] || type;
+    const key = `DOC_TYPES.${type}`;
+    const translated = this.i18n.t(key);
+    return translated !== key ? translated : (DOCUMENT_TYPE_LABELS[type] || type);
   }
 
   getDocIcon(doc: DocumentInfo): string {
@@ -231,8 +240,11 @@ export class DocumentGalleryComponent implements OnDestroy {
 
   formatSize(bytes: number | null): string {
     if (!bytes) { return '—'; }
-    if (bytes < 1024) { return `${bytes} بايت`; }
-    if (bytes < 1024 * 1024) { return `${(bytes / 1024).toFixed(1)} كيلوبايت`; }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} ميجابايت`;
+    const bytesUnit = this.i18n.t('DOC_GALLERY.SIZE_BYTES');
+    const kbUnit = this.i18n.t('DOC_GALLERY.SIZE_KB');
+    const mbUnit = this.i18n.t('DOC_GALLERY.SIZE_MB');
+    if (bytes < 1024) { return `${bytes} ${bytesUnit}`; }
+    if (bytes < 1024 * 1024) { return `${(bytes / 1024).toFixed(1)} ${kbUnit}`; }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} ${mbUnit}`;
   }
 }

@@ -6,6 +6,7 @@ import com.kamal.lc.imports.service.ShiftImportService;
 import com.kamal.lc.imports.service.SupplierDeductionImportService;
 import com.kamal.lc.shift.dto.ShiftFilter;
 import com.kamal.lc.shift.dto.ShiftResponse;
+import com.kamal.lc.shift.dto.ShiftUpdateRequest;
 import com.kamal.lc.shift.service.ShiftExportService;
 import com.kamal.lc.shift.service.ShiftService;
 import lombok.Data;
@@ -17,6 +18,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -88,6 +90,17 @@ public class ShiftController {
         return ResponseEntity.ok(ApiResponse.ok(shiftService.getById(id)));
     }
 
+    /** Update shift editable fields — re-calculates computed values and logs changes. */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ShiftResponse>> update(
+            @PathVariable UUID id,
+            @RequestBody ShiftUpdateRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "مدير النظام";
+        ShiftResponse updated = shiftService.updateShift(id, request, username);
+        return ResponseEntity.ok(ApiResponse.ok("تم تعديل بيانات الشيفت بنجاح", updated));
+    }
+
     /** Shifts whose supplier ID has no captain linked — the inbox to work through. */
     @GetMapping("/unmatched")
     public ResponseEntity<ApiResponse<PageResponse<ShiftResponse>>> unmatched(
@@ -105,10 +118,33 @@ public class ShiftController {
     @PatchMapping("/{id}/exclude")
     public ResponseEntity<ApiResponse<ShiftResponse>> exclude(
             @PathVariable UUID id,
-            @RequestBody ExcludeRequest request) {
-        ShiftResponse updated = shiftService.setExcluded(id, request.isExcluded(), request.getReason());
+            @RequestBody ExcludeRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "مدير النظام";
+        ShiftResponse updated = shiftService.setExcluded(id, request.isExcluded(), request.getReason(), username);
         return ResponseEntity.ok(ApiResponse.ok(
                 request.isExcluded() ? "تم استبعاد الشفت" : "تم إرجاع الشفت للحساب", updated));
+    }
+
+    /** Exclude a supplier deduction — zeroes the value and requires a reason. */
+    @PatchMapping("/{id}/exclude-deduction")
+    public ResponseEntity<ApiResponse<ShiftResponse>> excludeDeduction(
+            @PathVariable UUID id,
+            @RequestBody DeductionExcludeRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "مدير النظام";
+        ShiftResponse updated = shiftService.excludeSupplierDeduction(id, request.getReason(), username);
+        return ResponseEntity.ok(ApiResponse.ok("تم استبعاد خصم المورد", updated));
+    }
+
+    /** Restore a previously excluded supplier deduction to its original value. */
+    @PatchMapping("/{id}/restore-deduction")
+    public ResponseEntity<ApiResponse<ShiftResponse>> restoreDeduction(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "مدير النظام";
+        ShiftResponse updated = shiftService.restoreSupplierDeduction(id, username);
+        return ResponseEntity.ok(ApiResponse.ok("تم إرجاع خصم المورد", updated));
     }
 
     /** Re-matches and re-prices a period — run after linking a supplier ID or fixing a rate. */
@@ -146,6 +182,11 @@ public class ShiftController {
     @Data
     public static class ExcludeRequest {
         private boolean excluded;
+        private String reason;
+    }
+
+    @Data
+    public static class DeductionExcludeRequest {
         private String reason;
     }
 }

@@ -73,7 +73,7 @@
   gap: 14px;
   padding: 12px 14px;
   border-radius: var(--radius-md);
-  color: #000000;
+  color: var(--text-sidebar, #000000);
   transition: all var(--transition-fast);
   cursor: pointer;
   white-space: nowrap;
@@ -85,21 +85,21 @@
 
   &:hover {
     background: var(--bg-sidebar-hover);
-    color: #000000;
+    color: var(--text-sidebar, #000000);
 
     .nav-icon {
-      color: #000000;
+      color: var(--text-sidebar, #000000);
     }
   }
 
   &.active {
     background: var(--bg-sidebar-active, linear-gradient(135deg, #D98E04, #B87B00));
-    color: #000000;
+    color: var(--text-sidebar, #000000);
     font-weight: 700;
     box-shadow: 0 4px 12px rgba(184, 123, 0, 0.35);
 
     .nav-icon {
-      color: #000000;
+      color: var(--text-sidebar, #000000);
     }
   }
 }
@@ -107,7 +107,7 @@
 .nav-icon {
   font-size: 22px;
   min-width: 22px;
-  color: #000000;
+  color: var(--text-sidebar, #000000);
   transition: color var(--transition-fast);
 }
 
@@ -136,17 +136,17 @@
   .nav-chevron {
     margin-inline-start: auto;
     font-size: 18px;
-    color: #000000;
+    color: var(--text-sidebar, #000000);
     transition: transform var(--transition-fast);
   }
 }
 
 .nav-group.expanded .nav-group-toggle {
-  color: #000000;
+  color: var(--text-sidebar, #000000);
   font-weight: 700;
 
   .nav-icon {
-    color: #000000;
+    color: var(--text-sidebar, #000000);
   }
 }
 
@@ -185,18 +185,18 @@
 }
 
 .logout-btn {
-  color: #000000 !important;
+  color: var(--text-sidebar, #000000) !important;
 
   .nav-icon {
-    color: #000000 !important;
+    color: var(--text-sidebar, #000000) !important;
   }
 
   &:hover {
     background: var(--bg-sidebar-hover, rgba(0, 0, 0, 0.08)) !important;
-    color: #000000 !important;
+    color: var(--text-sidebar, #000000) !important;
 
     .nav-icon {
-      color: #000000 !important;
+      color: var(--text-sidebar, #000000) !important;
     }
   }
 }

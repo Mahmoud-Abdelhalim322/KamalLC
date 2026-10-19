@@ -2,14 +2,14 @@
 
   <!-- Header -->
   <div class="page-header">
-    <h1 class="page-title">سجل المراجعة (Audit Log)</h1>
-    <p class="page-subtitle">تتبع كافة الإجراءات والعمليات الحساسة التي قام بها مدراء المنصة</p>
+    <h1 class="page-title">{{ 'PLATFORM.AUDIT_TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'PLATFORM.AUDIT_SUBTITLE' | translate }}</p>
   </div>
 
   <!-- Loading State -->
   <div class="loading-container" *ngIf="loading">
     <div class="spinner"></div>
-    <p>جاري تحميل سجل المراجعة والعمليات...</p>
+    <p>{{ 'PLATFORM.LOADING_AUDIT' | translate }}</p>
   </div>
 
   <!-- Table Card -->
@@ -18,12 +18,12 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>التاريخ والوقت</th>
-            <th>المستخدم</th>
-            <th>العملية (Action)</th>
-            <th>نوع الكيان</th>
-            <th>الشركة المتأثرة</th>
-            <th>التفاصيل</th>
+            <th>{{ 'PLATFORM.COL_DATETIME' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_USER' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_ACTION' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_ENTITY_TYPE' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_AFFECTED_TENANT' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_DETAILS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -41,7 +41,7 @@
           <tr *ngIf="logs.length === 0 && !loading">
             <td colspan="6" class="empty-cell">
               <span class="material-icons-round empty-icon">history_toggle_off</span>
-              <p>لا يوجد سجلات مراجعة مسجلة حتى الآن</p>
+              <p>{{ 'PLATFORM.NO_AUDIT_LOGS' | translate }}</p>
             </td>
           </tr>
         </tbody>

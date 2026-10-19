@@ -32,14 +32,13 @@ export class ShiftsComponent implements OnInit, OnDestroy {
   }
 
   get tabs(): { key: ShiftTab; label: string; icon: string }[] {
-    const isAr = this.translationService.currentLang() === 'ar';
     return [
-      { key: 'all', label: isAr ? 'الكل' : 'All', icon: 'list' },
-      { key: 'attended', label: isAr ? 'حضور' : 'Attended', icon: 'check_circle' },
-      { key: 'absent', label: isAr ? 'غياب' : 'Absent', icon: 'cancel' },
-      { key: 'excluded', label: isAr ? 'مستبعد' : 'Excluded', icon: 'block' },
-      { key: 'unmatched', label: isAr ? 'غير مربوط' : 'Unmatched', icon: 'link_off' },
-      { key: 'vacation-days', label: isAr ? 'أيام الإجازة' : 'Vacation Days', icon: 'beach_access' },
+      { key: 'all', label: this.translationService.translate('SHIFTS.TAB_ALL'), icon: 'list' },
+      { key: 'attended', label: this.translationService.translate('SHIFTS.TAB_ATTENDED'), icon: 'check_circle' },
+      { key: 'absent', label: this.translationService.translate('SHIFTS.TAB_ABSENT'), icon: 'cancel' },
+      { key: 'excluded', label: this.translationService.translate('SHIFTS.TAB_EXCLUDED'), icon: 'block' },
+      { key: 'unmatched', label: this.translationService.translate('SHIFTS.TAB_UNMATCHED'), icon: 'link_off' },
+      { key: 'vacation-days', label: this.translationService.translate('SHIFTS.TAB_VACATION_DAYS'), icon: 'beach_access' },
     ];
   }
 
@@ -67,6 +66,9 @@ export class ShiftsComponent implements OnInit, OnDestroy {
   isExporting = false;
   excludeReason = '';
   showExcludeForm = false;
+
+  deductionExcludeReason = '';
+  showDeductionExcludeForm = false;
 
   errorMessage = '';
   successMessage = '';
@@ -117,7 +119,7 @@ export class ShiftsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading = false;
-          this.errorMessage = errorMessage(err, 'فشل في تحميل عمولات أوقات الإجازة');
+          this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.LOAD_VACATION_FAILED'));
         }
       });
       return;
@@ -132,19 +134,19 @@ export class ShiftsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل الشيفتات');
+        this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.LOAD_SHIFTS_FAILED'));
       }
     });
   }
 
   deleteVacationCommission(id: string): void {
-    if (!confirm('هل أنت تأكد من حذف سجل عمولة الإجازة هذا؟')) return;
+    if (!confirm(this.translationService.translate('SHIFTS.DELETE_VACATION_CONFIRM'))) return;
     this.shiftService.deleteVacationCommission(id).subscribe({
       next: () => {
-        this.successMessage = 'تم حذف سجل عمولة الإجازة بنجاح';
+        this.successMessage = this.translationService.translate('SHIFTS.DELETE_VACATION_SUCCESS');
         this.load(false);
       },
-      error: (err) => this.errorMessage = errorMessage(err, 'فشل في حذف سجل عمولة الإجازة')
+      error: (err) => this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.DELETE_VACATION_FAILED'))
     });
   }
 
@@ -188,25 +190,32 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.load(false);
   }
 
-  // ---------------------------------------------------------------- actions
+  // ──────── Shift Detail Modal ────────
 
-  select(shift: ShiftResponse): void {
+  openDetail(shift: ShiftResponse): void {
     this.selected = shift;
     this.showExcludeForm = false;
     this.excludeReason = '';
+    this.showDeductionExcludeForm = false;
+    this.deductionExcludeReason = '';
   }
 
-  closePanel(): void {
+  closeDetail(): void {
     this.selected = null;
     this.showExcludeForm = false;
+    this.excludeReason = '';
+    this.showDeductionExcludeForm = false;
+    this.deductionExcludeReason = '';
   }
 
-  exclude(): void {
-    if (!this.selected || !this.excludeReason.trim()) return;
-    this.applyExclusion(this.selected.id, true, this.excludeReason.trim());
+  // ──────── Shift Exclusion ────────
+
+  excludeCurrent(): void {
+    if (!this.selected) return;
+    this.applyExclusion(this.selected.id, true, this.excludeReason.trim() || null);
   }
 
-  include(): void {
+  restoreCurrent(): void {
     if (!this.selected) return;
     this.applyExclusion(this.selected.id, false, null);
   }
@@ -215,20 +224,52 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.clearMessages();
     this.shiftService.setExcluded(id, excluded, reason).subscribe({
       next: (shift) => {
-        this.successMessage = excluded ? 'تم استبعاد الشفت' : 'تم إرجاع الشفت للحساب';
+        this.successMessage = excluded
+          ? this.translationService.translate('SHIFTS.EXCLUDE_SHIFT')
+          : this.translationService.translate('SHIFTS.INCLUDE_SHIFT');
         this.selected = shift;
         this.showExcludeForm = false;
         this.excludeReason = '';
         this.load(false);
       },
-      error: (err) => { this.errorMessage = errorMessage(err, 'فشل في التحديث'); }
+      error: (err) => { this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.UPDATE_FAILED')); }
+    });
+  }
+
+  // ──────── Supplier Deduction Exclusion ────────
+
+  excludeDeduction(): void {
+    if (!this.selected || !this.deductionExcludeReason.trim()) return;
+    this.clearMessages();
+    this.shiftService.excludeDeduction(this.selected.id, this.deductionExcludeReason.trim()).subscribe({
+      next: (shift) => {
+        this.successMessage = this.translationService.translate('SHIFTS.EXCLUDE_DEDUCTION');
+        this.selected = shift;
+        this.showDeductionExcludeForm = false;
+        this.deductionExcludeReason = '';
+        this.load(false);
+      },
+      error: (err) => { this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.UPDATE_FAILED')); }
+    });
+  }
+
+  restoreDeduction(): void {
+    if (!this.selected) return;
+    this.clearMessages();
+    this.shiftService.restoreDeduction(this.selected.id).subscribe({
+      next: (shift) => {
+        this.successMessage = this.translationService.translate('SHIFTS.INCLUDE_DEDUCTION');
+        this.selected = shift;
+        this.load(false);
+      },
+      error: (err) => { this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.UPDATE_FAILED')); }
     });
   }
 
   /** Re-matches and re-prices the visible period — used after linking a supplier ID. */
   recalculate(): void {
     if (!this.from || !this.to) {
-      this.errorMessage = 'حدّد الفترة أولًا';
+      this.errorMessage = this.translationService.translate('SHIFTS.SET_PERIOD');
       return;
     }
     this.isRecalculating = true;
@@ -237,13 +278,15 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.shiftService.recalculate(this.from, this.to).subscribe({
       next: (result) => {
         this.isRecalculating = false;
-        this.successMessage =
-          `تمت إعادة حساب ${result.recalculated} شفت (${result.relinked} تم ربطها بكابتن)`;
+        this.successMessage = this.translationService.translate('SHIFTS.RECALC_RESULT', {
+          count: String(result.recalculated),
+          linked: String(result.relinked)
+        });
         this.load(false);
       },
       error: (err) => {
         this.isRecalculating = false;
-        this.errorMessage = errorMessage(err, 'فشل في إعادة الحساب');
+        this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.RECALC_FAILED'));
       }
     });
   }
@@ -256,11 +299,13 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.shiftService.exportWorkbook(this.buildFilter()).subscribe({
       next: (blob) => {
         this.isExporting = false;
-        downloadBlob(blob, `الشيفتات-${this.from || 'الكل'}.xlsx`);
+        const prefix = this.translationService.translate('SHIFTS.TITLE');
+        const filterName = this.from || this.translationService.translate('COMMON.ALL');
+        downloadBlob(blob, `${prefix}-${filterName}.xlsx`);
       },
       error: () => {
         this.isExporting = false;
-        this.errorMessage = 'فشل تحميل ملف الشيفتات';
+        this.errorMessage = this.translationService.translate('SHIFTS.EXPORT_FAILED');
       }
     });
   }
@@ -274,11 +319,13 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.shiftService.exportPdf(this.buildFilter()).subscribe({
       next: (blob) => {
         this.isExportingPdf = false;
-        downloadBlob(blob, `تقرير-الشيفتات-${this.from || 'الكل'}.pdf`);
+        const prefix = this.translationService.translate('SHIFTS.TITLE');
+        const filterName = this.from || this.translationService.translate('COMMON.ALL');
+        downloadBlob(blob, `${prefix}-${filterName}.pdf`);
       },
       error: () => {
         this.isExportingPdf = false;
-        this.errorMessage = 'فشل تحميل ملف PDF للشيفتات';
+        this.errorMessage = this.translationService.translate('SHIFTS.EXPORT_PDF_FAILED');
       }
     });
   }
@@ -295,12 +342,15 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     this.shiftService.importSupplierDeductions(file).subscribe({
       next: (res) => {
         this.isImportingDeductions = false;
-        this.successMessage = `تم استيراد ${res.matched} خصم مورد (${res.unmatched} غير مطابق)`;
+        this.successMessage = this.translationService.translate('SHIFTS.IMPORT_DEDUCTION_RESULT', {
+          matched: String(res.matched),
+          unmatched: String(res.unmatched)
+        });
         this.load(false);
       },
       error: (err) => {
         this.isImportingDeductions = false;
-        this.errorMessage = errorMessage(err, 'فشل في استيراد خصومات المورد');
+        this.errorMessage = errorMessage(err, this.translationService.translate('SHIFTS.IMPORT_DEDUCTION_FAILED'));
       }
     });
 
@@ -351,6 +401,15 @@ export class ShiftsComponent implements OnInit, OnDestroy {
     if (!iso) return '—';
     const date = new Date(iso);
     return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatAttendanceFlag(flag: string | null | undefined): string {
+    if (!flag) return '—';
+    const lower = flag.toLowerCase().trim();
+    if (lower === 'present' || lower === 'attended') return this.translationService.translate('SHIFTS.PRESENT');
+    if (lower === 'absent') return this.translationService.translate('SHIFTS.ABSENT');
+    if (lower === 'late') return this.translationService.translate('SHIFTS.LATE');
+    return flag;
   }
 
 }

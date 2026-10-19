@@ -6,6 +6,7 @@ import com.kamal.lc.captain.dto.CaptainRequest;
 import com.kamal.lc.captain.dto.CaptainResponse;
 import com.kamal.lc.captain.service.CaptainService;
 import com.kamal.lc.captain.service.MembersExportService;
+import com.kamal.lc.captain.service.MembersPdfExportService;
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class CaptainController {
 
     private final CaptainService captainService;
     private final MembersExportService membersExportService;
+    private final MembersPdfExportService membersPdfExportService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<CaptainResponse>>> list(
@@ -113,6 +115,18 @@ public class CaptainController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    /** Export captains as PDF with optional type filter. */
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @RequestParam(required = false) String type) {
+        byte[] bytes = membersPdfExportService.exportCaptainsPdf(type);
+        String filename = "captains-export.pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
                 .body(bytes);
     }
 }

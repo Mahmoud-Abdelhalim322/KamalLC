@@ -11,6 +11,7 @@ import com.kamal.lc.imports.entity.ImportBatchType;
 import com.kamal.lc.imports.entity.ImportRowIssue;
 import com.kamal.lc.imports.repository.ImportBatchRepository;
 import com.kamal.lc.imports.repository.ImportRowIssueRepository;
+import com.kamal.lc.staff.repository.StaffRepository;
 import com.kamal.lc.supplier.entity.Supplier;
 import com.kamal.lc.supplier.entity.SupplierIdAssignment;
 import com.kamal.lc.supplier.entity.SupplierIdSlot;
@@ -39,6 +40,7 @@ public class ImportService {
     private final ImportFileDetector fileDetector;
     private final ImportRowWriter rowWriter;
     private final CaptainRepository captainRepo;
+    private final StaffRepository staffRepo;
     private final SupplierRepository supplierRepo;
     private final SupplierIdSlotRepository slotRepo;
     private final SupplierIdAssignmentRepository assignmentRepo;
@@ -99,17 +101,21 @@ public class ImportService {
         Map<String, ExcelCaptainRow> firstRowPerNinjaId = new HashMap<>();
 
         for (ExcelCaptainRow row : rows) {
-            // Validate required fields
-            if (row.getKamalCode() == null || row.getKamalCode().isEmpty()) {
-                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_KAMAL_CODE", "كود كمال مفقود"));
+            // Validate required field: only kamalCode is mandatory
+            String rawCode = row.getKamalCode();
+            if (rawCode == null || rawCode.trim().isEmpty()) {
+                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_KAMAL_CODE", "الرقم الوظيفي مفقود"));
                 continue;
             }
-            if (row.getNinjaId() == null || row.getNinjaId().isEmpty()) {
-                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_NINJA_ID", "معرف الكابتن لدى المورد مفقود"));
-                continue;
-            }
-            if (row.getCaptainName() == null || row.getCaptainName().isEmpty()) {
-                issues.add(issue(row.getRowNumber(), "ERROR", "MISSING_NAME", "اسم الكابتن مفقود"));
+
+            String code = rawCode.trim().toUpperCase();
+            boolean isCaptain = code.startsWith("KSC") || code.startsWith("KSCFL");
+            boolean isWorker = code.startsWith("KSE");
+            boolean isManager = code.startsWith("KSM");
+
+            if (!isCaptain && !isWorker && !isManager) {
+                issues.add(issue(row.getRowNumber(), "ERROR", "INVALID_CODE_PREFIX",
+                        "الرقم الوظيفي " + code + " غير صالح. يجب أن يبدأ بـ KSC أو KSCFL (كابتن)، KSE (عمالة)، أو KSM (إداريين)"));
                 continue;
             }
 
@@ -118,36 +124,51 @@ public class ImportService {
                 issues.add(issue(row.getRowNumber(), "WARNING", "UNREADABLE_CELL", warning));
             }
 
-            ExcelCaptainRow firstUse = firstRowPerNinjaId.putIfAbsent(row.getNinjaId(), row);
-            if (firstUse != null && !firstUse.getKamalCode().equals(row.getKamalCode())) {
-                issues.add(issue(row.getRowNumber(), "WARNING", "DUPLICATE_NINJA_ID",
-                        "معرف المورد " + row.getNinjaId() + " مستخدم أيضًا في الصف " + firstUse.getRowNumber()
-                                + " لكابتن " + firstUse.getCaptainName()
-                                + " — سيبقى المعرف مربوطًا بالصف الأول فقط"));
+            // Identifier and Slot checks are only relevant for Captains when appId/ninjaId is provided
+            String externalId = row.getEffectiveIdentifier();
+            if (isCaptain && externalId != null && !externalId.isEmpty()) {
+                ExcelCaptainRow firstUse = firstRowPerNinjaId.putIfAbsent(externalId, row);
+                if (firstUse != null && !firstUse.getKamalCode().trim().equalsIgnoreCase(row.getKamalCode().trim())) {
+                    String firstCaptainName = firstUse.getCaptainName() != null && !firstUse.getCaptainName().isBlank()
+                            ? firstUse.getCaptainName() : firstUse.getKamalCode();
+                    issues.add(issue(row.getRowNumber(), "WARNING", "DUPLICATE_NINJA_ID",
+                            "معرف المورد " + externalId + " مستخدم أيضًا في الصف " + firstUse.getRowNumber()
+                                    + " لكابتن " + firstCaptainName
+                                    + " — سيبقى المعرف مربوطًا بالصف الأول فقط"));
+                }
+
+                if (firstUse == null && supplier != null) {
+                    if (slotRepo.existsByExternalIdAndSupplierId(externalId, supplier.getId())) {
+                        existingNinjaIds++;
+                        // Check if assigned to a different captain
+                        slotRepo.findByExternalIdAndSupplierId(externalId, supplier.getId()).ifPresent(slot -> {
+                            assignmentRepo.findBySupplierIdSlotIdAndValidToIsNull(slot.getId()).ifPresent(assignment -> {
+                                Captain assignedCaptain = assignment.getCaptain();
+                                if (!assignedCaptain.getKamalCode().equalsIgnoreCase(code)) {
+                                    issues.add(issue(row.getRowNumber(), "WARNING", "NINJA_ID_REASSIGNMENT",
+                                            "معرف المورد " + externalId + " مربوط حاليًا بكابتن " + assignedCaptain.getFullNameAr()));
+                                }
+                            });
+                        });
+                    } else {
+                        newNinjaIds++;
+                    }
+                }
             }
 
-            // Check captain
-            if (captainRepo.existsByKamalCode(row.getKamalCode())) {
-                existingCaptains++;
+            // Check existence
+            if (isCaptain) {
+                if (captainRepo.existsByKamalCode(code)) {
+                    existingCaptains++;
+                } else {
+                    newCaptains++;
+                }
             } else {
-                newCaptains++;
-            }
-
-            // Check ninja ID
-            if (slotRepo.existsByExternalIdAndSupplierId(row.getNinjaId(), supplier.getId())) {
-                existingNinjaIds++;
-                // Check if assigned to a different captain
-                slotRepo.findByExternalIdAndSupplierId(row.getNinjaId(), supplier.getId()).ifPresent(slot -> {
-                    assignmentRepo.findBySupplierIdSlotIdAndValidToIsNull(slot.getId()).ifPresent(assignment -> {
-                        Captain assignedCaptain = assignment.getCaptain();
-                        if (!assignedCaptain.getKamalCode().equals(row.getKamalCode())) {
-                            issues.add(issue(row.getRowNumber(), "WARNING", "NINJA_ID_REASSIGNMENT",
-                                    "معرف المورد " + row.getNinjaId() + " مربوط حاليًا بكابتن " + assignedCaptain.getFullNameAr()));
-                        }
-                    });
-                });
-            } else {
-                newNinjaIds++;
+                if (staffRepo.existsByStaffCode(code)) {
+                    existingCaptains++;
+                } else {
+                    newCaptains++;
+                }
             }
         }
 
@@ -213,19 +234,39 @@ public class ImportService {
                 : (batch.getSupplier() != null ? batch.getSupplier() : resolveSupplier(null));
 
         int imported = 0, skipped = 0;
+        int newSlots = 0, existingSlots = 0;
+        Set<String> processedExternalIds = new HashSet<>();
         List<ImportPreviewResponse.ImportIssue> issues = new ArrayList<>();
 
         for (ExcelCaptainRow row : rows) {
-            // Skip invalid rows
-            if (row.getKamalCode() == null || row.getKamalCode().isEmpty()
-                    || row.getNinjaId() == null || row.getNinjaId().isEmpty()
-                    || row.getCaptainName() == null || row.getCaptainName().isEmpty()) {
+            // Skip invalid rows: only kamalCode with valid prefix is required
+            String rawCode = row.getKamalCode();
+            if (rawCode == null || rawCode.trim().isEmpty()) {
+                skipped++;
+                continue;
+            }
+            String code = rawCode.trim().toUpperCase();
+            boolean isCaptain = code.startsWith("KSC") || code.startsWith("KSCFL");
+            boolean isWorker = code.startsWith("KSE");
+            boolean isManager = code.startsWith("KSM");
+            if (!isCaptain && !isWorker && !isManager) {
                 skipped++;
                 continue;
             }
 
             for (String warning : row.getWarnings()) {
                 issues.add(issue(row.getRowNumber(), "WARNING", "UNREADABLE_CELL", warning));
+            }
+
+            // Track slots if supplier and identifier are present
+            String externalId = row.getEffectiveIdentifier();
+            if (isCaptain && supplier != null && externalId != null && !externalId.isEmpty() && !processedExternalIds.contains(externalId)) {
+                processedExternalIds.add(externalId);
+                if (slotRepo.existsByExternalIdAndSupplierId(externalId, supplier.getId())) {
+                    existingSlots++;
+                } else {
+                    newSlots++;
+                }
             }
 
             // Each row is written in its own transaction, so one that hits a constraint is
@@ -256,8 +297,8 @@ public class ImportService {
                 .totalRows(rows.size())
                 .newCaptains(imported)
                 .existingCaptains(skipped)
-                .newNinjaIds(0)
-                .existingNinjaIds(0)
+                .newNinjaIds(newSlots)
+                .existingNinjaIds(existingSlots)
                 .issues(issues)
                 .build();
     }
@@ -268,8 +309,8 @@ public class ImportService {
                     .orElseThrow(() -> new BusinessException("NOT_FOUND", "المورد المحدد غير موجود"));
         }
         return supplierRepo.findByCode("NINJA")
-                .orElseGet(() -> supplierRepo.findAll().stream().findFirst()
-                        .orElseThrow(() -> new BusinessException("CONFIG_ERROR", "لم يتم العثور على أي مورد")));
+                .or(() -> supplierRepo.findAll().stream().findFirst())
+                .orElse(null);
     }
 
     /**

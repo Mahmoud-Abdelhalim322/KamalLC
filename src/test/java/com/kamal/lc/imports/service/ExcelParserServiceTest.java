@@ -96,25 +96,67 @@ class ExcelParserServiceTest {
     @Test
     void optionalColumnsMayBeAbsentEntirely() {
         MultipartFile file = sheet(
-                new String[]{"ID-KSLSC", "ID - NINJA", "اسم الكابتن"},
-                new String[]{"KSC0005", "5556667", "عمر ياسر"});
+                new String[]{"ID-KSLSC", "اسم الكابتن"},
+                new String[]{"KSC0005", "عمر ياسر"});
 
         ExcelCaptainRow row = parser.parse(file).get(0);
 
+        assertThat(row.getNinjaId()).isNull();
         assertThat(row.getPhone()).isNull();
         assertThat(row.getIqamaExpiry()).isNull();
         assertThat(row.getWarnings()).isEmpty();
     }
 
     @Test
+    void jobIdIsTheOnlyRequiredColumnAndAllOthersAreOptional() {
+        MultipartFile file = sheet(
+                new String[]{"الرقم الوظيفي"},
+                new String[]{"KSE0099"});
+
+        ExcelCaptainRow row = parser.parse(file).get(0);
+
+        assertThat(row.getKamalCode()).isEqualTo("KSE0099");
+        assertThat(row.getCaptainName()).isNull();
+        assertThat(row.getNinjaId()).isNull();
+        assertThat(row.getAppId()).isNull();
+    }
+
+    @Test
+    void readsAppIdColumn() {
+        MultipartFile file = sheet(
+                new String[]{"ID-KSLSC", "ID-APP"},
+                new String[]{"KSC0010", "APP-7788"});
+
+        ExcelCaptainRow row = parser.parse(file).get(0);
+
+        assertThat(row.getKamalCode()).isEqualTo("KSC0010");
+        assertThat(row.getAppId()).isEqualTo("APP-7788");
+    }
+
+    @Test
+    void parsesIdAppAndPopulatesEffectiveIdentifier() {
+        MultipartFile file = sheet(
+                new String[]{"الرقم الوظيفي", "معرف التطبيق\nID-APP", "اسم الكابتن"},
+                new String[]{"KSC0009", "987654.0", "فهد عبد العزيز"});
+
+        ExcelCaptainRow row = parser.parse(file).get(0);
+
+        assertThat(row.getKamalCode()).isEqualTo("KSC0009");
+        assertThat(row.getAppId()).isEqualTo("987654");
+        assertThat(row.getNinjaId()).isEqualTo("987654");
+        assertThat(row.getEffectiveIdentifier()).isEqualTo("987654");
+        assertThat(row.getCaptainName()).isEqualTo("فهد عبد العزيز");
+    }
+
+    @Test
     void rejectsFilesMissingARequiredColumn() {
         MultipartFile file = sheet(
-                new String[]{"ID-KSLSC", "اسم الكابتن"},
-                new String[]{"KSC0006", "ماجد فهد"});
+                new String[]{"اسم الكابتن", "الهاتف"},
+                new String[]{"محمد علي", "0501234567"});
 
         assertThatThrownBy(() -> parser.parse(file))
                 .isInstanceOf(ExcelParserService.ExcelParseException.class)
-                .hasMessageContaining("ID - NINJA");
+                .hasMessageContaining("الرقم الوظيفي");
     }
 
     // ---------- helpers ----------

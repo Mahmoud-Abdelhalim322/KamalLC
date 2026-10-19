@@ -58,6 +58,9 @@ public class ShiftResponse {
     private BigDecimal shiftMargin;
     private BigDecimal supplierDeduction;
     private String supplierDeductionReason;
+    private boolean supplierDeductionExcluded;
+    private BigDecimal supplierDeductionOriginal;
+    private String supplierDeductionExclusionReason;
 
     private String calcNote;
     private boolean excluded;

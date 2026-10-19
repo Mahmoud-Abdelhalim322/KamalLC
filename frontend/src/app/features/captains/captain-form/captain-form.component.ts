@@ -8,23 +8,25 @@ import {
 } from '../../../core/models/api.models';
 import { DocumentGalleryComponent } from '../../../shared/components/document-gallery/document-gallery.component';
 import { isoDate } from '../../../core/services/api.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
-/** Arabic labels for the document_type values defined in V3__create_captain_tables.sql. */
+/** Fallback labels for the document_type values defined in V3__create_captain_tables.sql. */
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  PERSONAL_PHOTO: 'صورة شخصية',
-  ID_CARD: 'بطاقة هوية',
-  IQAMA: 'إقامة',
-  PASSPORT: 'جواز سفر',
-  DRIVING_LICENCE: 'رخصة قيادة',
-  VEHICLE_REGISTRATION: 'استمارة مركبة',
-  CONTRACT: 'عقد عمل',
-  OTHER: 'أخرى'
+  PERSONAL_PHOTO: 'Personal Photo',
+  ID_CARD: 'ID Card',
+  IQAMA: 'Iqama',
+  PASSPORT: 'Passport',
+  DRIVING_LICENCE: 'Driving Licence',
+  VEHICLE_REGISTRATION: 'Vehicle Registration',
+  CONTRACT: 'Contract',
+  OTHER: 'Other'
 };
 
 @Component({
   selector: 'app-captain-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, DocumentGalleryComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, DocumentGalleryComponent, TranslatePipe],
   templateUrl: './captain-form.component.html',
   styleUrls: ['./captain-form.component.scss']
 })
@@ -50,7 +52,8 @@ export class CaptainFormComponent implements OnInit {
     private fb: FormBuilder,
     private http: HttpClient,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public translationService: TranslationService
   ) {}
 
   get isEditMode(): boolean {
@@ -79,8 +82,10 @@ export class CaptainFormComponent implements OnInit {
       // Iqama
       iqamaNumber: [''],
       iqamaOccupation: [''],
+      idExpiryDate: [''],
       iqamaExpiry: [''],
       iqamaExpiryRenewed: [''],
+      borderNumber: [''],
       iqamaStatus: [null],
       // Qiwa
       qiwaContractNumber: [''],
@@ -96,6 +101,7 @@ export class CaptainFormComponent implements OnInit {
       crNumber: [''],
       // Driving Licence
       drivingLicenceNo: [''],
+      licenceType: [''],
       licenceExpiry: [''],
       hasLicence: [false],
       licenceStatus: [null],
@@ -119,6 +125,8 @@ export class CaptainFormComponent implements OnInit {
       fuelAllowanceAmount: [null],
       callInternetAllowance: [null],
       rewardAllowance: [null],
+      salaryDeductions: [null],
+      netSalary: [null],
       // Vehicle
       usesOwnVehicle: [false],
       fuelAllowanceEligible: [false],
@@ -136,11 +144,21 @@ export class CaptainFormComponent implements OnInit {
       notes: ['']
     });
 
+    const salaryFields = [
+      'basicSalary', 'housingAllowance', 'transportationAllowance',
+      'fuelAllowanceAmount', 'callInternetAllowance', 'rewardAllowance', 'salaryDeductions'
+    ];
+    salaryFields.forEach(field => {
+      this.form.get(field)?.valueChanges.subscribe(() => {
+        this.updateNetSalary();
+      });
+    });
+
     this.captainId = this.route.snapshot.paramMap.get('id');
 
     if (this.isEditMode) {
       if (this.route.snapshot.queryParamMap.get('created') === '1') {
-        this.successMessage = 'تم إضافة الكابتن بنجاح — يمكنك الآن رفع مستنداته';
+        this.successMessage = this.translationService.translate('CAPTAIN_FORM.CREATED_SUCCESS');
       }
       this.loadCaptain();
     } else {
@@ -176,6 +194,21 @@ export class CaptainFormComponent implements OnInit {
       });
   }
 
+  private updateNetSalary(): void {
+    const basic = Number(this.form.get('basicSalary')?.value) || 0;
+    const housing = Number(this.form.get('housingAllowance')?.value) || 0;
+    const transport = Number(this.form.get('transportationAllowance')?.value) || 0;
+    const fuel = Number(this.form.get('fuelAllowanceAmount')?.value) || 0;
+    const comm = Number(this.form.get('callInternetAllowance')?.value) || 0;
+    const reward = Number(this.form.get('rewardAllowance')?.value) || 0;
+    const deductions = Number(this.form.get('salaryDeductions')?.value) || 0;
+    const gross = basic + housing + transport + fuel + comm + reward;
+    if (gross > 0 || deductions > 0) {
+      const net = Math.round((gross - deductions) * 100) / 100;
+      this.form.patchValue({ netSalary: net }, { emitEvent: false });
+    }
+  }
+
   private loadCaptain(): void {
     this.isLoading = true;
     this.http.get<ApiResponse<CaptainDetailResponse>>(`/api/captains/${this.captainId}`)
@@ -205,8 +238,10 @@ export class CaptainFormComponent implements OnInit {
               passportStatus: c.passportStatus ?? null,
               iqamaNumber: c.iqamaNumber ?? '',
               iqamaOccupation: c.iqamaOccupation ?? '',
+              idExpiryDate: c.idExpiryDate ?? '',
               iqamaExpiry: c.iqamaExpiry ?? '',
               iqamaExpiryRenewed: c.iqamaExpiryRenewed ?? '',
+              borderNumber: c.borderNumber ?? '',
               iqamaStatus: c.iqamaStatus ?? null,
               qiwaContractNumber: c.qiwaContractNumber ?? '',
               establishmentNumber: c.establishmentNumber ?? '',
@@ -218,6 +253,7 @@ export class CaptainFormComponent implements OnInit {
               affiliatedCompany: c.affiliatedCompany ?? '',
               crNumber: c.crNumber ?? '',
               drivingLicenceNo: c.drivingLicenceNo ?? '',
+              licenceType: c.licenceType ?? '',
               licenceExpiry: c.licenceExpiry ?? '',
               hasLicence: c.hasLicence ?? false,
               licenceStatus: c.licenceStatus ?? null,
@@ -237,6 +273,8 @@ export class CaptainFormComponent implements OnInit {
               fuelAllowanceAmount: c.fuelAllowanceAmount ?? null,
               callInternetAllowance: c.callInternetAllowance ?? null,
               rewardAllowance: c.rewardAllowance ?? null,
+              salaryDeductions: c.salaryDeductions ?? null,
+              netSalary: c.netSalary ?? null,
               usesOwnVehicle: c.usesOwnVehicle,
               fuelAllowanceEligible: c.fuelAllowanceEligible,
               workPhone: c.workPhone ?? '',
@@ -251,12 +289,12 @@ export class CaptainFormComponent implements OnInit {
               notes: c.notes ?? ''
             });
           } else {
-            this.errorMessage = 'فشل في تحميل بيانات الكابتن';
+            this.errorMessage = this.translationService.translate('CAPTAIN_FORM.LOAD_FAILED');
           }
         },
         error: () => {
           this.isLoading = false;
-          this.errorMessage = 'فشل في تحميل بيانات الكابتن';
+          this.errorMessage = this.translationService.translate('CAPTAIN_FORM.LOAD_FAILED');
         }
       });
   }
@@ -267,7 +305,7 @@ export class CaptainFormComponent implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorMessage = 'يرجى تعبئة الحقول المطلوبة بشكل صحيح';
+      this.errorMessage = this.translationService.translate('CAPTAIN_FORM.FILL_REQUIRED');
       return;
     }
 
@@ -282,14 +320,14 @@ export class CaptainFormComponent implements OnInit {
       next: (res) => {
         this.isSaving = false;
         if (!res.success || !res.data) {
-          this.errorMessage = res.message || 'فشل حفظ البيانات';
+          this.errorMessage = res.message || this.translationService.translate('CAPTAIN_FORM.SAVE_FAILED');
           return;
         }
 
         if (this.isEditMode) {
           this.kamalCode = res.data.kamalCode;
           this.documents = res.data.documents ?? [];
-          this.successMessage = res.message || 'تم حفظ البيانات بنجاح';
+          this.successMessage = res.message || this.translationService.translate('CAPTAIN_FORM.SAVE_SUCCESS');
         } else {
           // Documents can only be attached once the captain exists — continue in edit mode.
           this.router.navigate(['/captains', res.data.id, 'edit'], {
@@ -299,7 +337,7 @@ export class CaptainFormComponent implements OnInit {
       },
       error: (err) => {
         this.isSaving = false;
-        this.errorMessage = err?.error?.message || 'فشل حفظ البيانات';
+        this.errorMessage = err?.error?.message || this.translationService.translate('CAPTAIN_FORM.SAVE_FAILED');
       }
     });
   }
@@ -327,8 +365,10 @@ export class CaptainFormComponent implements OnInit {
       passportStatus: v.passportStatus || null,
       iqamaNumber: orNull(v.iqamaNumber),
       iqamaOccupation: orNull(v.iqamaOccupation),
+      idExpiryDate: orNull(v.idExpiryDate),
       iqamaExpiry: orNull(v.iqamaExpiry),
       iqamaExpiryRenewed: orNull(v.iqamaExpiryRenewed),
+      borderNumber: orNull(v.borderNumber),
       iqamaStatus: v.iqamaStatus || null,
       qiwaContractNumber: orNull(v.qiwaContractNumber),
       establishmentNumber: orNull(v.establishmentNumber),
@@ -340,6 +380,7 @@ export class CaptainFormComponent implements OnInit {
       affiliatedCompany: orNull(v.affiliatedCompany),
       crNumber: orNull(v.crNumber),
       drivingLicenceNo: orNull(v.drivingLicenceNo),
+      licenceType: orNull(v.licenceType),
       licenceExpiry: orNull(v.licenceExpiry),
       hasLicence: !!v.hasLicence,
       licenceStatus: v.licenceStatus || null,
@@ -359,6 +400,8 @@ export class CaptainFormComponent implements OnInit {
       fuelAllowanceAmount: v.fuelAllowanceAmount ?? null,
       callInternetAllowance: v.callInternetAllowance ?? null,
       rewardAllowance: v.rewardAllowance ?? null,
+      salaryDeductions: v.salaryDeductions ?? null,
+      netSalary: v.netSalary ?? null,
       usesOwnVehicle: !!v.usesOwnVehicle,
       fuelAllowanceEligible: !!v.fuelAllowanceEligible,
       workPhone: orNull(v.workPhone),
@@ -384,7 +427,7 @@ export class CaptainFormComponent implements OnInit {
 
   uploadDocument(): void {
     if (!this.selectedFile || !this.captainId) {
-      this.documentError = 'يرجى اختيار ملف أولاً';
+      this.documentError = this.translationService.translate('CAPTAIN_FORM.SELECT_FILE_FIRST');
       return;
     }
 
@@ -410,12 +453,12 @@ export class CaptainFormComponent implements OnInit {
             const input = document.getElementById('documentFile') as HTMLInputElement | null;
             if (input) { input.value = ''; }
           } else {
-            this.documentError = res.message || 'فشل رفع المستند';
+            this.documentError = res.message || this.translationService.translate('CAPTAIN_FORM.UPLOAD_FAILED');
           }
         },
         error: (err) => {
           this.isUploading = false;
-          this.documentError = err?.error?.message || 'فشل رفع المستند';
+          this.documentError = err?.error?.message || this.translationService.translate('CAPTAIN_FORM.UPLOAD_FAILED');
         }
       });
   }
@@ -428,7 +471,9 @@ export class CaptainFormComponent implements OnInit {
   // ---------- Display helpers ----------
 
   getDocTypeLabel(type: string): string {
-    return DOCUMENT_TYPE_LABELS[type] || type;
+    const key = 'DOC_TYPES.' + type;
+    const trans = this.translationService.translate(key);
+    return trans !== key ? trans : (DOCUMENT_TYPE_LABELS[type] || type);
   }
 
   isInvalid(field: string): boolean {

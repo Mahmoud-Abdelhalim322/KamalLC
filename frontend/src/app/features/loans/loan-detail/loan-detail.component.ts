@@ -6,11 +6,13 @@ import { LoanService } from '../../../core/services/loan.service';
 import { LoanResponse, LoanRequest } from '../../../core/models/api.models';
 import { errorMessage } from '../../../core/services/api.util';
 import { AuthService } from '../../../core/auth/auth.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-loan-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './loan-detail.component.html',
   styleUrls: ['./loan-detail.component.scss']
 })
@@ -20,6 +22,7 @@ export class LoanDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   public authService = inject(AuthService);
+  public i18n = inject(TranslationService);
 
   get canManage(): boolean {
     return this.authService.hasPermission('LOANS_MANAGE');
@@ -70,7 +73,7 @@ export class LoanDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMsg = errorMessage(err, 'فشل في تحميل بيانات السلف');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOANS.LOAD_FAILED'));
       }
     });
   }
@@ -98,7 +101,7 @@ export class LoanDetailComponent implements OnInit {
     this.loanService.create(request).subscribe({
       next: () => {
         this.isBusy = false;
-        this.successMsg = 'تم تسجيل السلفة بنجاح';
+        this.successMsg = this.i18n.get('LOAN_DETAIL.LOAN_SUCCESS');
         this.showNewLoanForm = false;
         this.newAmount = null;
         this.newMonthlyDeduction = null;
@@ -107,7 +110,7 @@ export class LoanDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMsg = errorMessage(err, 'فشل في تسجيل السلفة');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOAN_DETAIL.LOAN_FAILED'));
       }
     });
   }
@@ -135,13 +138,13 @@ export class LoanDetailComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.isBusy = false;
-        this.successMsg = 'تم تسجيل الدفعة';
+        this.successMsg = this.i18n.get('LOAN_DETAIL.PAYMENT_SUCCESS');
         this.cancelPayment();
         this.loadLoans();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMsg = errorMessage(err, 'فشل في تسجيل الدفعة');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOAN_DETAIL.PAYMENT_FAILED'));
       }
     });
   }
@@ -165,13 +168,13 @@ export class LoanDetailComponent implements OnInit {
     this.loanService.updateDeduction(this.editingDeduction.id, this.editDeductionValue).subscribe({
       next: () => {
         this.isBusy = false;
-        this.successMsg = 'تم تحديث مبلغ الخصم الشهري';
+        this.successMsg = this.i18n.get('LOAN_DETAIL.MONTHLY_UPDATE_SUCCESS');
         this.cancelEditDeduction();
         this.loadLoans();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMsg = errorMessage(err, 'فشل في التحديث');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOAN_DETAIL.MONTHLY_UPDATE_FAILED'));
       }
     });
   }
@@ -179,19 +182,19 @@ export class LoanDetailComponent implements OnInit {
   // ---- Cancel loan ----
 
   cancelLoan(loan: LoanResponse): void {
-    if (!confirm('هل أنت متأكد من إلغاء هذه السلفة؟')) return;
+    if (!confirm(this.i18n.get('LOAN_DETAIL.CANCEL_CONFIRM'))) return;
 
     this.isBusy = true;
     this.clearMessages();
     this.loanService.cancel(loan.id).subscribe({
       next: () => {
         this.isBusy = false;
-        this.successMsg = 'تم إلغاء السلفة';
+        this.successMsg = this.i18n.get('LOAN_DETAIL.CANCEL_SUCCESS');
         this.loadLoans();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMsg = errorMessage(err, 'فشل في إلغاء السلفة');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOAN_DETAIL.CANCEL_FAILED'));
       }
     });
   }
@@ -218,7 +221,12 @@ export class LoanDetailComponent implements OnInit {
   }
 
   statusLabel(status: string): string {
-    return { ACTIVE: 'نشطة', PAID_OFF: 'مسددة', CANCELLED: 'ملغاة' }[status] || status;
+    const map: Record<string, string> = {
+      ACTIVE: 'LOAN_DETAIL.STATUS_ACTIVE',
+      PAID_OFF: 'LOAN_DETAIL.STATUS_PAID_OFF',
+      CANCELLED: 'LOAN_DETAIL.STATUS_CANCELLED'
+    };
+    return map[status] ? this.i18n.get(map[status]) : status;
   }
 
   statusClass(status: string): string {
@@ -226,7 +234,22 @@ export class LoanDetailComponent implements OnInit {
   }
 
   memberTypeLabel(type: string): string {
-    return { CAPTAIN: 'كابتن', WORKER: 'عامل', MANAGER: 'إداري' }[type] || type;
+    const map: Record<string, string> = {
+      CAPTAIN: 'LOANS.TYPE_CAPTAIN',
+      WORKER: 'LOANS.TYPE_WORKER',
+      MANAGER: 'LOANS.TYPE_MANAGER'
+    };
+    return map[type] ? this.i18n.get(map[type]) : type;
+  }
+
+  paymentSourceLabel(p: any): string {
+    if (p.source === 'PAYROLL_DEDUCTION') {
+      return this.i18n.currentLang() === 'ar' ? 'خصم مسير' : 'Payroll Deduction';
+    }
+    if (p.source === 'MANUAL') {
+      return this.i18n.currentLang() === 'ar' ? 'يدوي' : 'Manual';
+    }
+    return p.sourceLabel || p.source;
   }
 
   money(value: number | null | undefined): string {

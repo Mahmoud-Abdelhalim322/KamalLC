@@ -125,8 +125,8 @@ class NinjaShiftParserTest {
         assertThat(result.lateDeduction()).isEqualByComparingTo("0");
         assertThat(result.extraOrders()).isEqualTo(2);
         assertThat(result.dailyIncentive()).isEqualByComparingTo("10");
-        assertThat(result.fuelAllowance()).isEqualByComparingTo("35");
-        assertThat(result.netShiftPay()).isEqualByComparingTo("102"); // 57 + 10 + 35
+        assertThat(result.fuelAllowance()).isEqualByComparingTo("0");
+        assertThat(result.netShiftPay()).isEqualByComparingTo("67"); // 57 + 10 + 0
     }
 
     @Test

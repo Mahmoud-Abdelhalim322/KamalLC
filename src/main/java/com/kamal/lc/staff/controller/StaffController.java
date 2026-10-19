@@ -5,12 +5,16 @@ import com.kamal.lc.common.dto.PageResponse;
 import com.kamal.lc.staff.dto.StaffDetailResponse;
 import com.kamal.lc.staff.dto.StaffRequest;
 import com.kamal.lc.staff.dto.StaffResponse;
+import com.kamal.lc.staff.service.StaffExportService;
+import com.kamal.lc.staff.service.StaffPdfExportService;
 import com.kamal.lc.staff.service.StaffService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +27,9 @@ import java.util.UUID;
 public class StaffController {
 
     private final StaffService staffService;
+    private final StaffExportService staffExportService;
+    private final StaffPdfExportService staffPdfExportService;
+
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<StaffResponse>>> list(
@@ -89,5 +96,29 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "تم حذف " + deleted + " موظف" + (skipped > 0 ? " — تم تخطي " + skipped + " لارتباطهم ببيانات" : ""),
                 java.util.Map.of("deleted", deleted, "skipped", skipped)));
+    }
+
+    /** Export staff as Excel with type filter (WORKER or MANAGER). */
+    @GetMapping("/export/excel")
+    public ResponseEntity<byte[]> exportExcel(@RequestParam String type) {
+        byte[] bytes = staffExportService.exportStaffExcel(type);
+        String label = "WORKER".equalsIgnoreCase(type) ? "workers" : "managers";
+        String filename = label + "-export.xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    /** Export staff as PDF with type filter (WORKER or MANAGER). */
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(@RequestParam String type) {
+        byte[] bytes = staffPdfExportService.exportStaffPdf(type);
+        String label = "WORKER".equalsIgnoreCase(type) ? "workers" : "managers";
+        String filename = label + "-export.pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(bytes);
     }
 }

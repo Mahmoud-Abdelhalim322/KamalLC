@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, PlanResponse, PlanRequest } from '../../../core/models/api.models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-plan-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './plan-management.component.html',
   styleUrl: './plan-management.component.scss'
 })
@@ -30,7 +32,7 @@ export class PlanManagementComponent implements OnInit {
     sortOrder: 1
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, public i18n: TranslationService) {}
 
   ngOnInit(): void {
     this.fetchPlans();
@@ -80,7 +82,7 @@ export class PlanManagementComponent implements OnInit {
 
   submitPlan(): void {
     if (!this.newPlan.nameAr || !this.newPlan.name || this.newPlan.monthlyPrice == null) {
-      this.showError('يرجى إدخال جميع البيانات المطلوبة للخطة');
+      this.showError(this.i18n.t('PLATFORM.FILL_REQUIRED'));
       return;
     }
 
@@ -93,14 +95,14 @@ export class PlanManagementComponent implements OnInit {
             if (res.success) {
               this.closeModal();
               this.fetchPlans();
-              this.showFeedback('تم تحديث الخطة بنجاح');
+              this.showFeedback(this.i18n.t('PLATFORM.PLAN_UPDATED'));
             } else {
-              this.showError(res.message || 'حدث خطأ أثناء تحديث الخطة');
+              this.showError(res.message || this.i18n.t('PLATFORM.PLAN_UPDATE_FAILED'));
             }
           },
           error: (err) => {
             this.submitting = false;
-            this.showError(err.error?.message || 'حدث خطأ أثناء تحديث الخطة');
+            this.showError(err.error?.message || this.i18n.t('PLATFORM.PLAN_UPDATE_FAILED'));
           }
         });
     } else {
@@ -111,31 +113,34 @@ export class PlanManagementComponent implements OnInit {
             if (res.success) {
               this.closeModal();
               this.fetchPlans();
-              this.showFeedback('تم إنشاء الخطة بنجاح');
+              this.showFeedback(this.i18n.t('PLATFORM.PLAN_CREATED'));
             } else {
-              this.showError(res.message || 'حدث خطأ أثناء إنشاء الخطة');
+              this.showError(res.message || this.i18n.t('PLATFORM.PLAN_CREATE_FAILED'));
             }
           },
           error: (err) => {
             this.submitting = false;
-            this.showError(err.error?.message || 'حدث خطأ أثناء إنشاء الخطة');
+            this.showError(err.error?.message || this.i18n.t('PLATFORM.PLAN_CREATE_FAILED'));
           }
         });
     }
   }
 
   deletePlan(plan: PlanResponse): void {
-    if (!confirm(`هل أنت تأكد من تعطيل الخطة "${plan.nameAr}"؟`)) return;
+    const planName = this.i18n.currentLang() === 'ar' ? (plan.nameAr || plan.name) : (plan.name || plan.nameAr);
+    const confirmMsg = this.i18n.t('PLATFORM.CONFIRM_DISABLE_PLAN', { name: planName });
+    if (!confirm(confirmMsg)) return;
+
     this.http.delete<ApiResponse<void>>(`/api/platform/plans/${plan.id}`)
       .subscribe({
         next: (res) => {
           if (res.success) {
             this.fetchPlans();
-            this.showFeedback('تم تعطيل الخطة بنجاح');
+            this.showFeedback(this.i18n.t('PLATFORM.PLAN_DISABLED'));
           }
         },
         error: (err) => {
-          this.showError(err.error?.message || 'حدث خطأ أثناء تعطيل الخطة');
+          this.showError(err.error?.message || this.i18n.t('PLATFORM.PLAN_DISABLE_FAILED'));
         }
       });
   }

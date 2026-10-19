@@ -16,8 +16,13 @@ public class CaptainResponse {
     private String kamalCode;
     private String captainType;
     private String fullNameAr;
+    private String fullNameEn;
     private String phone;
     private String nationality;
+    private String iqamaNumber;
+    private String borderNumber;
+    private String jobTitle;
+    private java.math.BigDecimal netSalary;
     private String status;
     private String currentNinjaId;
     private String joinDate;

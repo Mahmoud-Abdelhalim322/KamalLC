@@ -28,6 +28,8 @@ public enum Permission {
     SETTINGS_MANAGE("إدارة الإعدادات"),
     USERS_MANAGE("إدارة حسابات المستخدمين"),
     IMPORTS_MANAGE("استيراد البيانات"),
+    CHANGELOG_VIEW("عرض سجل التغييرات"),
+    CHANGELOG_EXPORT("تصدير سجل التغييرات"),
 
     // ---- Platform-level permissions (platform admin only) ----
     PLATFORM_TENANTS_MANAGE("إدارة الشركات"),

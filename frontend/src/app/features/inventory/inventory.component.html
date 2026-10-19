@@ -1,5 +1,5 @@
 <div class="page-container">
-  <h1 class="page-title"><span class="material-icons-round">inventory_2</span> مخزن الأغراض</h1>
+  <h1 class="page-title"><span class="material-icons-round">inventory_2</span> {{ 'INVENTORY.PAGE_TITLE' | translate }}</h1>
 
   <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
   <div class="alert alert-success" *ngIf="successMsg" (click)="dismissMsg()">{{ successMsg }}</div>
@@ -8,8 +8,8 @@
     <!-- Category Sidebar -->
     <aside class="category-sidebar">
       <div class="sidebar-header">
-        <h3>الفئات</h3>
-        <button class="icon-btn" title="إضافة فئة" (click)="openAddCategory()" *ngIf="canManage">
+        <h3>{{ 'INVENTORY.CATEGORIES' | translate }}</h3>
+        <button class="icon-btn" [title]="'INVENTORY.ADD_CATEGORY' | translate" (click)="openAddCategory()" *ngIf="canManage">
           <span class="material-icons-round">add_circle</span>
         </button>
       </div>
@@ -22,10 +22,10 @@
             </span>
             <div>
               <span class="cat-name">{{ cat.labelAr }}</span>
-              <span class="cat-count">{{ cat.itemCount }} عنصر</span>
+              <span class="cat-count">{{ cat.itemCount }} {{ 'INVENTORY.ITEMS_COUNT' | translate }}</span>
             </div>
           </div>
-          <button class="icon-btn danger small" *ngIf="!cat.systemDefined && canManage" (click)="deleteCategory(cat); $event.stopPropagation()">
+          <button class="icon-btn danger small" [title]="'INVENTORY.DELETE_CATEGORY' | translate" *ngIf="!cat.systemDefined && canManage" (click)="deleteCategory(cat); $event.stopPropagation()">
             <span class="material-icons-round">delete</span>
           </button>
         </div>
@@ -36,17 +36,17 @@
     <main class="items-area" *ngIf="selectedCategory">
       <div class="toolbar">
         <div class="search-group">
-          <input type="text" class="search-input" placeholder="بحث..."
+          <input type="text" class="search-input" [placeholder]="'INVENTORY.SEARCH_PLACEHOLDER' | translate"
                  [(ngModel)]="itemSearch" (keyup.enter)="searchItems()">
           <select class="filter-select" [(ngModel)]="itemStatusFilter" (change)="searchItems()">
-            <option value="">كل الحالات</option>
-            <option value="AVAILABLE">متاح</option>
-            <option value="ASSIGNED">مُسند</option>
-            <option value="INACTIVE">غير فعال</option>
+            <option value="">{{ 'INVENTORY.ALL_STATUSES' | translate }}</option>
+            <option value="AVAILABLE">{{ 'INVENTORY.STATUS_AVAILABLE' | translate }}</option>
+            <option value="ASSIGNED">{{ 'INVENTORY.STATUS_ASSIGNED' | translate }}</option>
+            <option value="INACTIVE">{{ 'INVENTORY.STATUS_INACTIVE' | translate }}</option>
           </select>
         </div>
         <button class="btn btn-primary" (click)="openAddItem()" *ngIf="canManage">
-          <span class="material-icons-round">add</span> إضافة عنصر
+          <span class="material-icons-round">add</span> {{ 'INVENTORY.ADD_ITEM' | translate }}
         </button>
       </div>
 
@@ -56,11 +56,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>الكود</th>
+              <th>{{ 'INVENTORY.COL_CODE' | translate }}</th>
               <th *ngFor="let ft of getFieldTemplates()">{{ ft.labelAr }}</th>
-              <th>الحالة</th>
-              <th>الكابتن</th>
-              <th>إجراءات</th>
+              <th>{{ 'INVENTORY.COL_STATUS' | translate }}</th>
+              <th>{{ 'INVENTORY.COL_CAPTAIN' | translate }}</th>
+              <th>{{ 'INVENTORY.COL_ACTIONS' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,70 +73,70 @@
                 <span class="text-muted" *ngIf="!item.currentCaptainName">—</span>
               </td>
               <td class="actions-cell">
-                <button class="icon-btn" title="تاريخ عهد" (click)="openItemHistory(item)">
+                <button class="icon-btn" [title]="'INVENTORY.ACTION_HISTORY' | translate" (click)="openItemHistory(item)">
                   <span class="material-icons-round">history</span>
                 </button>
-                <button class="icon-btn" title="إسناد" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE' && canManage">
+                <button class="icon-btn" [title]="'INVENTORY.ACTION_ASSIGN' | translate" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE' && canManage">
                   <span class="material-icons-round">person_add</span>
                 </button>
-                <button class="icon-btn" title="استرجاع" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED' && canManage">
+                <button class="icon-btn" [title]="'INVENTORY.ACTION_RETURN' | translate" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED' && canManage">
                   <span class="material-icons-round">assignment_return</span>
                 </button>
-                <button class="icon-btn" title="تعديل" (click)="openEditItem(item)" *ngIf="canManage">
+                <button class="icon-btn" [title]="'INVENTORY.ACTION_EDIT' | translate" (click)="openEditItem(item)" *ngIf="canManage">
                   <span class="material-icons-round">edit</span>
                 </button>
               </td>
             </tr>
             <tr *ngIf="items.length === 0 && !isLoading">
-              <td [attr.colspan]="getFieldTemplates().length + 4" class="empty-row">لا توجد عناصر</td>
+              <td [attr.colspan]="getFieldTemplates().length + 4" class="empty-row">{{ 'INVENTORY.NO_ITEMS' | translate }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="pagination" *ngIf="itemTotalPages > 1">
-        <button (click)="prevPage()" [disabled]="itemPage === 0">السابق</button>
+        <button (click)="prevPage()" [disabled]="itemPage === 0">{{ 'INVENTORY.PREV' | translate }}</button>
         <span>{{ itemPage + 1 }} / {{ itemTotalPages }}</span>
-        <button (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">التالي</button>
+        <button (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">{{ 'INVENTORY.NEXT' | translate }}</button>
       </div>
     </main>
 
     <main class="items-area empty-state" *ngIf="!selectedCategory">
       <span class="material-icons-round">inventory_2</span>
-      <p>اختر فئة من القائمة</p>
+      <p>{{ 'INVENTORY.SELECT_CATEGORY_PROMPT' | translate }}</p>
     </main>
   </div>
 
   <!-- ══════════════ CATEGORY DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showCategoryDialog" (click)="showCategoryDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>إضافة فئة جديدة</h2>
+      <h2>{{ 'INVENTORY.DIALOG_ADD_CAT_TITLE' | translate }}</h2>
       <div class="form-grid">
         <div class="form-group full-width">
-          <label>اسم الفئة *</label>
-          <input type="text" [(ngModel)]="catForm.labelAr" placeholder="مثال: راوتر">
+          <label>{{ 'INVENTORY.CAT_NAME_LABEL' | translate }} *</label>
+          <input type="text" [(ngModel)]="catForm.labelAr" [placeholder]="'INVENTORY.CAT_NAME_PLACEHOLDER' | translate">
         </div>
         <div class="form-group full-width">
-          <label>حقول الفئة</label>
+          <label>{{ 'INVENTORY.CAT_FIELDS_LABEL' | translate }}</label>
           <div class="field-templates">
             <div *ngFor="let ft of catForm.fieldTemplates; let i = index" class="field-row">
-              <input type="text" [(ngModel)]="ft.labelAr" placeholder="اسم الحقل">
+              <input type="text" [(ngModel)]="ft.labelAr" [placeholder]="'INVENTORY.FIELD_NAME_PLACEHOLDER' | translate">
               <label class="checkbox-label">
-                <input type="checkbox" [(ngModel)]="ft.required"> مطلوب
+                <input type="checkbox" [(ngModel)]="ft.required"> {{ 'INVENTORY.FIELD_REQUIRED' | translate }}
               </label>
               <button class="icon-btn danger small" (click)="removeFieldTemplate(i)">
                 <span class="material-icons-round">close</span>
               </button>
             </div>
             <button class="btn btn-secondary btn-sm" (click)="addFieldTemplate()">
-              <span class="material-icons-round">add</span> إضافة حقل
+              <span class="material-icons-round">add</span> {{ 'INVENTORY.ADD_FIELD' | translate }}
             </button>
           </div>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="saveCategory()">حفظ</button>
-        <button class="btn btn-secondary" (click)="showCategoryDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveCategory()">{{ 'INVENTORY.SAVE' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showCategoryDialog = false">{{ 'INVENTORY.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -144,7 +144,7 @@
   <!-- ══════════════ ITEM DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showItemDialog" (click)="showItemDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>{{ editingItemId ? 'تعديل عنصر' : 'إضافة عنصر جديد' }}</h2>
+      <h2>{{ (editingItemId ? 'INVENTORY.DIALOG_EDIT_ITEM_TITLE' : 'INVENTORY.DIALOG_ADD_ITEM_TITLE') | translate }}</h2>
       <div class="form-grid">
         <div class="form-group" *ngFor="let ft of getFieldTemplates()">
           <label>{{ ft.labelAr }} {{ ft.required ? '*' : '' }}</label>
@@ -152,7 +152,7 @@
           <!-- Dropdown for SIM card provider -->
           <ng-container *ngIf="selectedCategory?.name === 'SIM_CARD' && ft.fieldKey === 'sim_type'; else standardInput">
             <select [(ngModel)]="itemFields[ft.fieldKey]" class="filter-select" style="width: 100%;">
-              <option value="">اختر مشغل الشريحة...</option>
+              <option value="">{{ 'INVENTORY.SELECT_SIM_PROVIDER' | translate }}</option>
               <option *ngFor="let provider of saudiSimProviders" [value]="provider">{{ provider }}</option>
             </select>
           </ng-container>
@@ -162,13 +162,13 @@
           </ng-template>
         </div>
         <div class="form-group full-width">
-          <label>ملاحظات</label>
+          <label>{{ 'INVENTORY.NOTES' | translate }}</label>
           <textarea [(ngModel)]="itemNotes" rows="2"></textarea>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="saveItem()">حفظ</button>
-        <button class="btn btn-secondary" (click)="showItemDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveItem()">{{ 'INVENTORY.SAVE' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showItemDialog = false">{{ 'INVENTORY.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -176,21 +176,21 @@
   <!-- ══════════════ ASSIGN DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showAssignDialog" (click)="showAssignDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>إسناد عنصر</h2>
+      <h2>{{ 'INVENTORY.DIALOG_ASSIGN_TITLE' | translate }}</h2>
       <p class="dialog-subtitle">{{ assignItemLabel }}</p>
       <div class="form-group full-width">
-        <label>الكابتن *</label>
-        <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value)">
+        <label>{{ 'INVENTORY.CAPTAIN_LABEL' | translate }} *</label>
+        <input type="text" [placeholder]="'INVENTORY.SEARCH_CAPTAIN_PLACEHOLDER' | translate" (input)="searchCaptains($any($event.target).value)">
         <div class="dropdown-results" *ngIf="captainResults.length">
           <div *ngFor="let c of captainResults" class="dropdown-item" (click)="selectCaptain(c)">
             {{ c.fullNameAr }} ({{ c.kamalCode }})
           </div>
         </div>
-        <span class="selected-hint" *ngIf="assignCaptainId">✓ تم الاختيار</span>
+        <span class="selected-hint" *ngIf="assignCaptainId">{{ 'INVENTORY.SELECTED_HINT' | translate }}</span>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="submitAssign()">إسناد</button>
-        <button class="btn btn-secondary" (click)="showAssignDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="submitAssign()">{{ 'INVENTORY.ACTION_ASSIGN' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showAssignDialog = false">{{ 'INVENTORY.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -198,15 +198,15 @@
   <!-- ══════════════ ITEM CUSTODY HISTORY DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showHistoryDialog" (click)="showHistoryDialog = false">
     <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
-      <h2>تاريخ عهد — {{ historyItemLabel }}</h2>
+      <h2>{{ 'INVENTORY.DIALOG_HISTORY_TITLE' | translate }} — {{ historyItemLabel }}</h2>
       <table class="data-table">
         <thead>
           <tr>
-            <th>الكابتن / العضو</th>
-            <th>تاريخ الإسناد</th>
-            <th>تاريخ الاسترجاع</th>
-            <th>الحالة</th>
-            <th>بواسطة</th>
+            <th>{{ 'INVENTORY.COL_MEMBER' | translate }}</th>
+            <th>{{ 'INVENTORY.COL_ASSIGNED_DATE' | translate }}</th>
+            <th>{{ 'INVENTORY.COL_RETURNED_DATE' | translate }}</th>
+            <th>{{ 'INVENTORY.COL_STATUS' | translate }}</th>
+            <th>{{ 'INVENTORY.COL_BY' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -219,23 +219,23 @@
             <td>{{ r.returnedAt ? (r.returnedAt | date:'yyyy-MM-dd') : '—' }}</td>
             <td>
               <span class="status-badge" [class.active-badge]="r.status === 'ACTIVE'" [class.returned-badge]="r.status === 'RETURNED'">
-                {{ r.status === 'ACTIVE' ? 'نشط' : 'مُرجع' }}
+                {{ (r.status === 'ACTIVE' ? 'INVENTORY.STATUS_ACTIVE' : 'INVENTORY.STATUS_RETURNED') | translate }}
               </span>
             </td>
             <td>{{ r.assignedBy || '—' }}</td>
           </tr>
           <tr *ngIf="historyRecords.length === 0">
-            <td colspan="5" class="empty-row">لا يوجد سجل عهد لهذا العنصر</td>
+            <td colspan="5" class="empty-row">{{ 'INVENTORY.NO_HISTORY' | translate }}</td>
           </tr>
         </tbody>
       </table>
       <div class="pagination" *ngIf="historyTotalPages > 1">
-        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">السابق</button>
+        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">{{ 'INVENTORY.PREV' | translate }}</button>
         <span>{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
-        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">التالي</button>
+        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">{{ 'INVENTORY.NEXT' | translate }}</button>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-secondary" (click)="showHistoryDialog = false">إغلاق</button>
+        <button class="btn btn-secondary" (click)="showHistoryDialog = false">{{ 'INVENTORY.CLOSE' | translate }}</button>
       </div>
     </div>
   </div>

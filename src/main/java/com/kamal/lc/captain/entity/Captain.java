@@ -88,11 +88,17 @@ public class Captain implements TenantAware {
     @Column(name = "iqama_occupation", length = 255)
     private String iqamaOccupation;
 
+    @Column(name = "id_expiry_date")
+    private LocalDate idExpiryDate;
+
     @Column(name = "iqama_expiry")
     private LocalDate iqamaExpiry;
 
     @Column(name = "iqama_expiry_renewed")
     private LocalDate iqamaExpiryRenewed;
+
+    @Column(name = "border_number", length = 50)
+    private String borderNumber;
 
     @Column(name = "iqama_status", length = 50)
     private String iqamaStatus;
@@ -130,6 +136,9 @@ public class Captain implements TenantAware {
     // ---- Driving Licence ----
     @Column(name = "driving_licence_no", length = 50)
     private String drivingLicenceNo;
+
+    @Column(name = "licence_type", length = 50)
+    private String licenceType;
 
     @Column(name = "licence_expiry")
     private LocalDate licenceExpiry;
@@ -198,6 +207,14 @@ public class Captain implements TenantAware {
     @Column(name = "reward_allowance", precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal rewardAllowance = BigDecimal.ZERO;
+
+    @Column(name = "salary_deductions", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal salaryDeductions = BigDecimal.ZERO;
+
+    @Column(name = "net_salary", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal netSalary = BigDecimal.ZERO;
 
     // ---- Vehicle & Fuel Flags ----
     @Column(name = "uses_own_vehicle", nullable = false)

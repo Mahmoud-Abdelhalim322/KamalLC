@@ -43,7 +43,6 @@ export class PayrollComponent implements OnInit {
     return this.authService.hasPermission('PAYROLL_MANAGE');
   }
 
-  /** Mirrors the named types in CaptainAdjustment — each maps to a payroll-sheet column. */
   readonly adjustmentOptions: AdjustmentOption[] = [
     { type: 'HOUSING_ALLOWANCE', label: 'بدل سكن', kind: 'BONUS' },
     { type: 'REWARD', label: 'مكافأة', kind: 'BONUS' },
@@ -61,6 +60,32 @@ export class PayrollComponent implements OnInit {
     { type: 'LOAN', label: 'سلف', kind: 'DEDUCTION' },
     { type: 'OTHER_DEDUCTION', label: 'خصم آخر', kind: 'DEDUCTION' },
   ];
+
+  getAdjustmentLabel(type: AdjustmentType): string {
+    const isAr = this.translationService.currentLang() === 'ar';
+    const map: Record<AdjustmentType, { ar: string; en: string }> = {
+      'HOUSING_ALLOWANCE': { ar: 'بدل سكن', en: 'Housing Allowance' },
+      'REWARD': { ar: 'مكافأة', en: 'Reward' },
+      'FUEL_DIFFERENCE': { ar: 'فروقات البنزين', en: 'Fuel Difference' },
+      'OTHER_BONUS': { ar: 'إضافة أخرى', en: 'Other Bonus' },
+      'SUPPLIER_PENALTY': { ar: 'غرامات المورد', en: 'Supplier Penalty' },
+      'LOAN': { ar: 'سلف', en: 'Loan' },
+      'OTHER_DEDUCTION': { ar: 'خصم آخر', en: 'Other Deduction' },
+    };
+    return map[type] ? (isAr ? map[type].ar : map[type].en) : type;
+  }
+
+  getStaffAdjustmentLabel(type: StaffAdjustmentType): string {
+    const isAr = this.translationService.currentLang() === 'ar';
+    const map: Record<StaffAdjustmentType, { ar: string; en: string }> = {
+      'REWARD': { ar: 'مكافأة', en: 'Reward' },
+      'OTHER_BONUS': { ar: 'إضافة أخرى', en: 'Other Bonus' },
+      'SUPPLIER_PENALTY': { ar: 'غرامات المورد', en: 'Supplier Penalty' },
+      'LOAN': { ar: 'سلف', en: 'Loan' },
+      'OTHER_DEDUCTION': { ar: 'خصم آخر', en: 'Other Deduction' },
+    };
+    return map[type] ? (isAr ? map[type].ar : map[type].en) : type;
+  }
 
   runs: PayrollRunResponse[] = [];
   selectedRun: PayrollRunResponse | null = null;
@@ -155,7 +180,7 @@ export class PayrollComponent implements OnInit {
       },
       error: (err) => {
         this.isLoadingRuns = false;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل المسيرات');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في تحميل المسيرات' : 'Failed to load payroll runs');
       }
     });
   }
@@ -196,7 +221,7 @@ export class PayrollComponent implements OnInit {
       error: (err) => {
         this.isLoadingLines = false;
         this.lines = [];
-        this.errorMessage = errorMessage(err, 'فشل في تحميل أسطر المسير');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في تحميل أسطر المسير' : 'Failed to load payroll lines');
       }
     });
   }
@@ -218,7 +243,7 @@ export class PayrollComponent implements OnInit {
       error: (err) => {
         this.isLoadingLines = false;
         this.staffLines = [];
-        this.errorMessage = errorMessage(err, 'فشل في تحميل أسطر الموظفين');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في تحميل أسطر الموظفين' : 'Failed to load staff payroll lines');
       }
     });
   }
@@ -236,25 +261,18 @@ export class PayrollComponent implements OnInit {
     }).subscribe({
       next: (run) => {
         this.isGenerating = false;
-        this.successMessage = 'تم توليد المسير بنجاح';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تم توليد المسير بنجاح' : 'Payroll generated successfully';
         this.showGenerateForm = false;
         this.title = '';
         this.loadRuns(run.id);
       },
       error: (err) => {
         this.isGenerating = false;
-        this.errorMessage = errorMessage(err, 'فشل في توليد المسير');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في توليد المسير' : 'Failed to generate payroll');
       }
     });
   }
 
-  /**
-   * Rebuilds the selected draft from the shifts as they stand now.
-   *
-   * <p>A run is a snapshot taken at generation time, so one generated before its
-   * period's shifts were imported stays empty until it is rebuilt — without this the
-   * only way out was deleting the run and recreating it with the same dates.
-   */
   regenerate(): void {
     const run = this.selectedRun;
     if (!run || run.locked) return;
@@ -269,7 +287,7 @@ export class PayrollComponent implements OnInit {
     }).subscribe({
       next: (updated) => {
         this.isGenerating = false;
-        this.successMessage = 'تمت إعادة توليد المسير من البيانات المسجلة';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تمت إعادة توليد المسير من البيانات المسجلة' : 'Payroll regenerated from recorded data';
         if (this.activeTab === 'CAPTAIN') {
           this.loadLines(updated.id);
         } else {
@@ -279,7 +297,7 @@ export class PayrollComponent implements OnInit {
       },
       error: (err) => {
         this.isGenerating = false;
-        this.errorMessage = errorMessage(err, 'فشل في إعادة توليد المسير');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في إعادة توليد المسير' : 'Failed to regenerate payroll');
       }
     });
   }
@@ -289,13 +307,13 @@ export class PayrollComponent implements OnInit {
     this.confirmingApproval = false;
     this.runAction(
       this.payrollService.approve(this.selectedRun.id),
-      'تم اعتماد المسير — لن تتغير أرقامه بعد الآن'
+      this.translationService.currentLang() === 'ar' ? 'تم اعتماد المسير — لن تتغير أرقامه بعد الآن' : 'Payroll approved — figures locked'
     );
   }
 
   markPaid(): void {
     if (!this.selectedRun) return;
-    this.runAction(this.payrollService.markPaid(this.selectedRun.id), 'تم تسجيل المسير كمدفوع');
+    this.runAction(this.payrollService.markPaid(this.selectedRun.id), this.translationService.currentLang() === 'ar' ? 'تم تسجيل المسير كمدفوع' : 'Payroll marked as paid');
   }
 
   reopen(): void {
@@ -303,7 +321,7 @@ export class PayrollComponent implements OnInit {
     this.showReopenForm = false;
     this.runAction(
       this.payrollService.reopen(this.selectedRun.id, this.reopenReason.trim()),
-      'تم إعادة فتح المسير كمسودة'
+      this.translationService.currentLang() === 'ar' ? 'تم إعادة فتح المسير كمسودة' : 'Payroll reopened as draft'
     );
     this.reopenReason = '';
   }
@@ -317,7 +335,7 @@ export class PayrollComponent implements OnInit {
     this.payrollService.delete(this.selectedRun.id).subscribe({
       next: () => {
         this.isBusy = false;
-        this.successMessage = 'تم حذف المسير';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تم حذف المسير' : 'Payroll run deleted';
         this.selectedRun = null;
         this.lines = [];
         this.staffLines = [];
@@ -325,7 +343,7 @@ export class PayrollComponent implements OnInit {
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في حذف المسير');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في حذف المسير' : 'Failed to delete payroll run');
       }
     });
   }
@@ -342,7 +360,7 @@ export class PayrollComponent implements OnInit {
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في تنفيذ العملية');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في تنفيذ العملية' : 'Operation failed');
       }
     });
   }
@@ -351,17 +369,18 @@ export class PayrollComponent implements OnInit {
     if (!this.selectedRun) return;
     const run = this.selectedRun;
     const tab = this.activeTab;
+    const isAr = this.translationService.currentLang() === 'ar';
 
-    let filePrefix = 'مسير-رواتب-';
-    if (tab === 'WORKER') filePrefix = 'مسير-رواتب-العاملين-';
-    else if (tab === 'MANAGER') filePrefix = 'مسير-رواتب-الإداريين-';
-    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = 'مسير-رواتب-KSC-';
-    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = 'مسير-رواتب-KSCFL-';
+    let filePrefix = isAr ? 'مسير-رواتب-' : 'payroll-';
+    if (tab === 'WORKER') filePrefix = isAr ? 'مسير-رواتب-العاملين-' : 'payroll-workers-';
+    else if (tab === 'MANAGER') filePrefix = isAr ? 'مسير-رواتب-الإداريين-' : 'payroll-managers-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = isAr ? 'مسير-رواتب-KSC-' : 'payroll-KSC-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = isAr ? 'مسير-رواتب-KSCFL-' : 'payroll-KSCFL-';
 
     const captainType = tab === 'CAPTAIN' && this.captainTypeFilter ? this.captainTypeFilter : undefined;
     this.payrollService.exportWorkbook(run.id, tab === 'CAPTAIN' ? undefined : tab, captainType).subscribe({
       next: (blob) => downloadBlob(blob, `${filePrefix}${run.periodFrom}.xlsx`),
-      error: () => { this.errorMessage = 'فشل تحميل ملف المسير'; }
+      error: () => { this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل ملف المسير' : 'Failed to download payroll file'; }
     });
   }
 
@@ -371,12 +390,13 @@ export class PayrollComponent implements OnInit {
     if (!this.selectedRun) return;
     const run = this.selectedRun;
     const tab = this.activeTab;
+    const isAr = this.translationService.currentLang() === 'ar';
 
-    let filePrefix = 'مسير-رواتب-';
-    if (tab === 'WORKER') filePrefix = 'مسير-رواتب-العاملين-';
-    else if (tab === 'MANAGER') filePrefix = 'مسير-رواتب-الإداريين-';
-    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = 'مسير-رواتب-KSC-';
-    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = 'مسير-رواتب-KSCFL-';
+    let filePrefix = isAr ? 'مسير-رواتب-' : 'payroll-';
+    if (tab === 'WORKER') filePrefix = isAr ? 'مسير-رواتب-العاملين-' : 'payroll-workers-';
+    else if (tab === 'MANAGER') filePrefix = isAr ? 'مسير-رواتب-الإداريين-' : 'payroll-managers-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'EMPLOYEE') filePrefix = isAr ? 'مسير-رواتب-KSC-' : 'payroll-KSC-';
+    else if (tab === 'CAPTAIN' && this.captainTypeFilter === 'FREELANCE') filePrefix = isAr ? 'مسير-رواتب-KSCFL-' : 'payroll-KSCFL-';
 
     const captainType = tab === 'CAPTAIN' && this.captainTypeFilter ? this.captainTypeFilter : undefined;
     this.isExportingPdf = true;
@@ -387,24 +407,26 @@ export class PayrollComponent implements OnInit {
       },
       error: () => {
         this.isExportingPdf = false;
-        this.errorMessage = 'فشل تحميل ملف PDF للمسير';
+        this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل ملف PDF للمسير' : 'Failed to download payroll PDF';
       }
     });
   }
 
   exportPayslip(captainId: string, captainCode: string): void {
     if (!this.selectedRun) return;
+    const isAr = this.translationService.currentLang() === 'ar';
     this.payrollService.exportPayslip(this.selectedRun.id, captainId).subscribe({
-      next: (blob) => downloadBlob(blob, `مسير-فردي-${captainCode}.pdf`),
-      error: () => { this.errorMessage = 'فشل تحميل المسير الفردي'; }
+      next: (blob) => downloadBlob(blob, `${isAr ? 'مسير-فردي-' : 'payslip-'}${captainCode}.pdf`),
+      error: () => { this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل المسير الفردي' : 'Failed to download payslip'; }
     });
   }
 
   exportStaffPayslip(staffId: string, staffCode: string): void {
     if (!this.selectedRun) return;
+    const isAr = this.translationService.currentLang() === 'ar';
     this.payrollService.exportStaffPayslip(this.selectedRun.id, staffId).subscribe({
-      next: (blob) => downloadBlob(blob, `مسير-فردي-${staffCode}.pdf`),
-      error: () => { this.errorMessage = 'فشل تحميل المسير الفردي للموظف'; }
+      next: (blob) => downloadBlob(blob, `${isAr ? 'مسير-فردي-' : 'payslip-'}${staffCode}.pdf`),
+      error: () => { this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل المسير الفردي للموظف' : 'Failed to download staff payslip'; }
     });
   }
 
@@ -413,14 +435,15 @@ export class PayrollComponent implements OnInit {
   exportBulkPayslips(): void {
     if (!this.selectedRun) return;
     this.isExportingBulkPayslips = true;
+    const isAr = this.translationService.currentLang() === 'ar';
     this.payrollService.exportBulkPayslips(this.selectedRun.id).subscribe({
       next: (blob) => {
         this.isExportingBulkPayslips = false;
-        downloadBlob(blob, `مسيرات-فردية-مجمعة-${this.selectedRun?.periodFrom}.pdf`);
+        downloadBlob(blob, `${isAr ? 'مسيرات-فردية-مجمعة-' : 'bulk-payslips-'}${this.selectedRun?.periodFrom}.pdf`);
       },
       error: () => {
         this.isExportingBulkPayslips = false;
-        this.errorMessage = 'فشل تحميل المسيرات الفردية المجمعة';
+        this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل المسيرات الفردية المجمعة' : 'Failed to download bulk payslips';
       }
     });
   }
@@ -428,17 +451,18 @@ export class PayrollComponent implements OnInit {
   exportBulkStaffPayslips(staffType?: string): void {
     if (!this.selectedRun) return;
     this.isExportingBulkPayslips = true;
+    const isAr = this.translationService.currentLang() === 'ar';
     this.payrollService.exportBulkStaffPayslips(this.selectedRun.id, staffType).subscribe({
       next: (blob) => {
         this.isExportingBulkPayslips = false;
-        const prefix = staffType === 'WORKER' ? 'مسيرات-فردية-العاملين-'
-          : staffType === 'MANAGER' ? 'مسيرات-فردية-الإداريين-'
-            : 'مسيرات-فردية-الموظفين-';
+        const prefix = staffType === 'WORKER' ? (isAr ? 'مسيرات-فردية-العاملين-' : 'bulk-payslips-workers-')
+          : staffType === 'MANAGER' ? (isAr ? 'مسيرات-فردية-الإداريين-' : 'bulk-payslips-managers-')
+            : (isAr ? 'مسيرات-فردية-الموظفين-' : 'bulk-payslips-staff-');
         downloadBlob(blob, `${prefix}${this.selectedRun?.periodFrom}.pdf`);
       },
       error: () => {
         this.isExportingBulkPayslips = false;
-        this.errorMessage = 'فشل تحميل المسيرات الفردية المجمعة للموظفين';
+        this.errorMessage = this.translationService.currentLang() === 'ar' ? 'فشل تحميل المسيرات الفردية المجمعة للموظفين' : 'Failed to download bulk staff payslips';
       }
     });
   }
@@ -474,13 +498,13 @@ export class PayrollComponent implements OnInit {
       next: (line) => {
         this.isBusy = false;
         this.replaceLine(line);
-        this.successMessage = 'تمت إضافة البند';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تمت إضافة البند' : 'Adjustment added';
         this.cancelAdjustment();
         this.refreshRunTotals();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في إضافة البند');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في إضافة البند' : 'Failed to add adjustment');
       }
     });
   }
@@ -494,12 +518,12 @@ export class PayrollComponent implements OnInit {
       next: (line) => {
         this.isBusy = false;
         this.replaceLine(line);
-        this.successMessage = 'تم حذف البند';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تم حذف البند' : 'Adjustment deleted';
         this.refreshRunTotals();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في حذف البند');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في حذف البند' : 'Failed to delete adjustment');
       }
     });
   }
@@ -539,13 +563,13 @@ export class PayrollComponent implements OnInit {
       next: (line) => {
         this.isBusy = false;
         this.replaceStaffLine(line);
-        this.successMessage = 'تمت إضافة البند للموظف';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تمت إضافة البند للموظف' : 'Staff adjustment added';
         this.cancelStaffAdjustment();
         this.refreshRunTotals();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في إضافة البند');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في إضافة البند' : 'Failed to add adjustment');
       }
     });
   }
@@ -559,12 +583,12 @@ export class PayrollComponent implements OnInit {
       next: (line) => {
         this.isBusy = false;
         this.replaceStaffLine(line);
-        this.successMessage = 'تم حذف البند';
+        this.successMessage = this.translationService.currentLang() === 'ar' ? 'تم حذف البند' : 'Adjustment deleted';
         this.refreshRunTotals();
       },
       error: (err) => {
         this.isBusy = false;
-        this.errorMessage = errorMessage(err, 'فشل في حذف البند');
+        this.errorMessage = errorMessage(err, this.translationService.currentLang() === 'ar' ? 'فشل في حذف البند' : 'Failed to delete adjustment');
       }
     });
   }
@@ -602,7 +626,6 @@ export class PayrollComponent implements OnInit {
       deductions: acc.deductions + l.lateDeductions,
       supplierDeductions: acc.supplierDeductions + (l.supplierDeductions || 0),
       incentives: acc.incentives + l.dailyIncentives,
-      fuel: acc.fuel + l.fuelAllowances,
       car: acc.car + l.carAllowances,
       targetBonus: acc.targetBonus + l.targetBonus,
       extraOrderPay: acc.extraOrderPay + l.extraOrderPay,
@@ -614,7 +637,7 @@ export class PayrollComponent implements OnInit {
       revenue: acc.revenue + l.supplierRevenueTotal,
       margin: acc.margin + l.margin,
     }), {
-      shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, fuel: 0, car: 0,
+      shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, car: 0,
       targetBonus: 0, vacationCommission: 0, extraOrderPay: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -9,18 +9,20 @@ import {
   MaintenanceResponse, MaintenanceOpenRequest, MaintenanceCloseRequest
 } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
-
 import { AuthService } from '../../core/auth/auth.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-fleet',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './fleet.component.html',
   styleUrls: ['./fleet.component.scss']
 })
 export class FleetComponent implements OnInit {
   activeTab: 'vehicles' | 'assignments' | 'maintenance' = 'vehicles';
+  public i18n = inject(TranslationService);
 
   // Vehicles
   vehicles: VehicleResponse[] = [];
@@ -116,7 +118,7 @@ export class FleetComponent implements OnInit {
       page: this.vehiclePage, size: 15
     }).subscribe({
       next: p => { this.vehicles = p.content; this.vehicleTotalPages = p.totalPages; this.isLoading = false; },
-      error: e => { this.error = errorMessage(e, 'فشل تحميل السيارات'); this.isLoading = false; }
+      error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.LOAD_FAILED')); this.isLoading = false; }
     });
   }
 
@@ -150,23 +152,23 @@ export class FleetComponent implements OnInit {
 
   saveVehicle(): void {
     const req: any = { ...this.vForm };
-    if (!req.plateNumber) { this.error = 'رقم اللوحة مطلوب'; return; }
+    if (!req.plateNumber) { this.error = this.i18n.get('FLEET.PLATE_REQUIRED'); return; }
 
     const obs = this.editingVehicle
       ? this.fleetService.updateVehicle(this.editingVehicle.id, req)
       : this.fleetService.createVehicle(req);
 
     obs.subscribe({
-      next: () => { this.showVehicleDialog = false; this.successMsg = 'تم الحفظ بنجاح'; this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل حفظ السيارة')
+      next: () => { this.showVehicleDialog = false; this.successMsg = this.i18n.get('FLEET.SAVE_SUCCESS'); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.SAVE_FAILED'))
     });
   }
 
   deleteVehicle(v: VehicleResponse): void {
-    if (!confirm(`هل أنت متأكد من حذف ${v.plateNumber}؟`)) return;
+    if (!confirm(this.i18n.get('FLEET.CONFIRM_DELETE_VEHICLE', { plate: v.plateNumber }))) return;
     this.fleetService.deleteVehicle(v.id).subscribe({
-      next: () => { this.successMsg = 'تم الحذف'; this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل الحذف')
+      next: () => { this.successMsg = this.i18n.get('FLEET.DELETE_SUCCESS'); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.DELETE_FAILED'))
     });
   }
 
@@ -195,7 +197,7 @@ export class FleetComponent implements OnInit {
 
   submitAssign(): void {
     if (!this.aForm.captainId || !this.aForm.expectedReturnAt) {
-      this.error = 'الكابتن وموعد الإرجاع المتوقع مطلوبان'; return;
+      this.error = this.i18n.get('FLEET.CAPTAIN_AND_RETURN_REQUIRED'); return;
     }
     this.fleetService.assignVehicle(this.assignVehicleId, {
       captainId: this.aForm.captainId,
@@ -203,23 +205,23 @@ export class FleetComponent implements OnInit {
       nextCaptainId: this.aForm.nextCaptainId || null,
       notes: this.aForm.notes || null
     }).subscribe({
-      next: () => { this.showAssignDialog = false; this.successMsg = 'تم تسليم السيارة'; this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل التسليم')
+      next: () => { this.showAssignDialog = false; this.successMsg = this.i18n.get('FLEET.ASSIGN_SUCCESS'); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.ASSIGN_FAILED'))
     });
   }
 
   returnAssignment(a: VehicleAssignmentResponse): void {
-    if (!confirm('تأكيد استلام السيارة؟')) return;
+    if (!confirm(this.i18n.get('FLEET.CONFIRM_RETURN_VEHICLE'))) return;
     this.fleetService.returnVehicle(a.id).subscribe({
-      next: () => { this.successMsg = 'تم استلام السيارة'; this.loadAssignments(); this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل الاستلام')
+      next: () => { this.successMsg = this.i18n.get('FLEET.RETURN_SUCCESS'); this.loadAssignments(); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.RETURN_FAILED'))
     });
   }
 
   openHistory(v: VehicleResponse): void {
     this.fleetService.getVehicleHistory(v.id).subscribe({
       next: items => { this.historyItems = items; this.showHistoryDialog = true; },
-      error: e => this.error = errorMessage(e, 'فشل تحميل التاريخ')
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.HISTORY_LOAD_FAILED'))
     });
   }
 
@@ -232,7 +234,7 @@ export class FleetComponent implements OnInit {
       page: this.assignmentPage, size: 15
     }).subscribe({
       next: p => { this.assignments = p.content; this.assignmentTotalPages = p.totalPages; this.isLoading = false; },
-      error: e => { this.error = errorMessage(e, 'فشل تحميل التسليمات'); this.isLoading = false; }
+      error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.ASSIGNMENTS_LOAD_FAILED')); this.isLoading = false; }
     });
   }
 
@@ -245,7 +247,7 @@ export class FleetComponent implements OnInit {
       page: this.maintenancePage, size: 15
     }).subscribe({
       next: p => { this.maintenanceList = p.content; this.maintenanceTotalPages = p.totalPages; this.isLoading = false; },
-      error: e => { this.error = errorMessage(e, 'فشل تحميل أوامر الصيانة'); this.isLoading = false; }
+      error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.MAINTENANCE_LOAD_FAILED')); this.isLoading = false; }
     });
   }
 
@@ -284,8 +286,8 @@ export class FleetComponent implements OnInit {
   removePartFromOpen(index: number): void { this.mOpenForm.parts?.splice(index, 1); }
 
   submitOpenMaintenance(): void {
-    if (!this.mOpenForm.faultReason) { this.error = 'سبب العطل مطلوب'; return; }
-    if (this.mOpenForm.costBearer === 'CAPTAIN' && !this.mOpenForm.captainId) { this.error = 'الكابتن مطلوب إذا كان هو من يتحمل التكلفة'; return; }
+    if (!this.mOpenForm.faultReason) { this.error = this.i18n.get('FLEET.FAULT_REASON_REQUIRED'); return; }
+    if (this.mOpenForm.costBearer === 'CAPTAIN' && !this.mOpenForm.captainId) { this.error = this.i18n.get('FLEET.CAPTAIN_REQUIRED_FOR_COST'); return; }
 
     const obs = this.selectedMaintenanceId 
       ? this.fleetService.updateMaintenance(this.selectedMaintenanceId, this.mOpenForm)
@@ -294,11 +296,11 @@ export class FleetComponent implements OnInit {
     obs.subscribe({
       next: () => { 
         this.showMaintenanceOpenDialog = false; 
-        this.successMsg = this.selectedMaintenanceId ? 'تم التعديل بنجاح' : 'تم إدخال السيارة للصيانة'; 
+        this.successMsg = this.selectedMaintenanceId ? this.i18n.get('FLEET.MAINT_UPDATE_SUCCESS') : this.i18n.get('FLEET.MAINT_ENTERED_SUCCESS'); 
         this.loadVehicles(); 
         this.loadMaintenance(); 
       },
-      error: e => this.error = errorMessage(e, 'فشل العملية')
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.MAINT_FAILED'))
     });
   }
 
@@ -313,23 +315,23 @@ export class FleetComponent implements OnInit {
 
   submitCloseMaintenance(): void {
     this.fleetService.closeMaintenance(this.closingMaintenanceId, this.mCloseForm).subscribe({
-      next: () => { this.showMaintenanceCloseDialog = false; this.successMsg = 'تم تقفيل أمر الصيانة'; this.loadMaintenance(); this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل التقفيل')
+      next: () => { this.showMaintenanceCloseDialog = false; this.successMsg = this.i18n.get('FLEET.MAINT_CLOSED_SUCCESS'); this.loadMaintenance(); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.MAINT_CLOSE_FAILED'))
     });
   }
 
   cancelMaintenance(m: MaintenanceResponse): void {
-    if (!confirm('تأكيد إلغاء أمر الصيانة وإعادة السيارة للعمل؟')) return;
+    if (!confirm(this.i18n.get('FLEET.CONFIRM_CANCEL_MAINT'))) return;
     this.fleetService.cancelMaintenance(m.id).subscribe({
-      next: () => { this.successMsg = 'تم الإلغاء'; this.loadMaintenance(); this.loadVehicles(); },
-      error: e => this.error = errorMessage(e, 'فشل الإلغاء')
+      next: () => { this.successMsg = this.i18n.get('FLEET.MAINT_CANCELLED_SUCCESS'); this.loadMaintenance(); this.loadVehicles(); },
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.MAINT_CANCEL_FAILED'))
     });
   }
 
   openMaintenanceHistory(v: VehicleResponse): void {
     this.fleetService.getMaintenanceHistory(v.id).subscribe({
       next: items => { this.maintenanceHistoryItems = items; this.showMaintenanceHistoryDialog = true; },
-      error: e => this.error = errorMessage(e, 'فشل تحميل تاريخ الصيانة')
+      error: e => this.error = errorMessage(e, this.i18n.get('FLEET.HISTORY_LOAD_FAILED'))
     });
   }
 
@@ -346,15 +348,26 @@ export class FleetComponent implements OnInit {
   }
 
   statusLabel(s: string): string {
-    return { AVAILABLE: 'متاحة', ASSIGNED: 'مُسندة', MAINTENANCE: 'صيانة', DECOMMISSIONED: 'مُعطلة',
-             ACTIVE: 'نشط', RETURNED: 'مُرجعة', LATE: 'متأخر' }[s] || s;
+    const map: Record<string, string> = {
+      AVAILABLE: 'FLEET.STATUS_AVAILABLE',
+      ASSIGNED: 'FLEET.STATUS_ASSIGNED',
+      MAINTENANCE: 'FLEET.STATUS_MAINTENANCE',
+      DECOMMISSIONED: 'FLEET.STATUS_DECOMMISSIONED',
+      ACTIVE: 'FLEET.STATUS_ACTIVE',
+      RETURNED: 'FLEET.STATUS_RETURNED',
+      LATE: 'FLEET.STATUS_LATE',
+      IN_PROGRESS: 'FLEET.STATUS_IN_PROGRESS',
+      COMPLETED: 'FLEET.STATUS_COMPLETED',
+      CANCELLED: 'FLEET.STATUS_CANCELLED'
+    };
+    return map[s] ? this.i18n.get(map[s]) : s;
   }
 
   ownershipLabel(s: string): string {
-    if (s === 'RENTED') return 'مؤجرة';
-    if (s === 'LEASE_TO_OWN') return 'تمويلية';
-    if (s === 'OTHER') return 'أخرى (خاصة)';
-    return 'مملوكة';
+    if (s === 'RENTED') return this.i18n.get('FLEET.OWNERSHIP_RENTED');
+    if (s === 'LEASE_TO_OWN') return this.i18n.get('FLEET.OWNERSHIP_LEASE');
+    if (s === 'OTHER') return this.i18n.get('FLEET.OWNERSHIP_OTHER');
+    return this.i18n.get('FLEET.OWNERSHIP_OWNED');
   }
 
   dismissMsg(): void { this.error = ''; this.successMsg = ''; }
@@ -385,13 +398,13 @@ export class FleetComponent implements OnInit {
         this.isExportingExcel = false;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `الأسطول.xlsx`;
+        a.download = this.i18n.get('FLEET.EXPORT_FILENAME');
         a.click();
         URL.revokeObjectURL(a.href);
       },
       error: () => {
         this.isExportingExcel = false;
-        this.error = 'فشل في تصدير ملف الإكسل';
+        this.error = this.i18n.get('FLEET.EXPORT_FAILED');
       }
     });
   }

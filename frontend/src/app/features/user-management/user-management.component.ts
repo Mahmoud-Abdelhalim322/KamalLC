@@ -171,7 +171,8 @@ export class UserManagementComponent implements OnInit {
 
   deleteUser(user: UserResponse): void {
     if (this.isPrimaryAdmin(user)) return;
-    if (!confirm(`هل أنت متأكد من حذف حساب ${user.username}؟`)) return;
+    const confirmMsg = this.translationService.t('USER_MGMT.CONFIRM_DELETE_USER', { username: user.username });
+    if (!confirm(confirmMsg)) return;
     this.http.delete<ApiResponse<void>>(`/api/admin/users/${user.id}`)
       .subscribe(() => this.loadAll());
   }
@@ -218,7 +219,8 @@ export class UserManagementComponent implements OnInit {
 
   deleteRole(role: JobTitleResponse): void {
     if (role.systemDefined) return;
-    if (!confirm(`هل أنت متأكد من حذف وظيفة ${role.labelAr}؟`)) return;
+    const confirmMsg = this.translationService.t('USER_MGMT.CONFIRM_DELETE_ROLE', { label: role.labelAr });
+    if (!confirm(confirmMsg)) return;
     this.http.delete<ApiResponse<void>>(`/api/admin/job-titles/${role.id}`)
       .subscribe(() => this.loadAll());
   }

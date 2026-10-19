@@ -143,8 +143,13 @@ export interface CaptainResponse {
   kamalCode: string;
   captainType: string;
   fullNameAr: string;
+  fullNameEn?: string | null;
   phone: string | null;
   nationality: string | null;
+  iqamaNumber?: string | null;
+  borderNumber?: string | null;
+  jobTitle?: string | null;
+  netSalary?: number | null;
   status: string;
   currentNinjaId: string | null;
   joinDate: string | null;
@@ -176,8 +181,10 @@ export interface CaptainDetailResponse {
   // Iqama
   iqamaNumber: string | null;
   iqamaOccupation: string | null;
+  idExpiryDate: string | null;
   iqamaExpiry: string | null;
   iqamaExpiryRenewed: string | null;
+  borderNumber: string | null;
   iqamaStatus: string | null;
   // Qiwa
   qiwaContractNumber: string | null;
@@ -193,6 +200,7 @@ export interface CaptainDetailResponse {
   crNumber: string | null;
   // Driving Licence
   drivingLicenceNo: string | null;
+  licenceType: string | null;
   licenceExpiry: string | null;
   hasLicence: boolean;
   licenceStatus: string | null;
@@ -216,6 +224,8 @@ export interface CaptainDetailResponse {
   fuelAllowanceAmount: number | null;
   callInternetAllowance: number | null;
   rewardAllowance: number | null;
+  salaryDeductions: number | null;
+  netSalary: number | null;
   // Vehicle & Fuel flags
   usesOwnVehicle: boolean;
   fuelAllowanceEligible: boolean;
@@ -239,14 +249,14 @@ export interface CaptainDetailResponse {
 
 /** One tracked document: what it is, its number and date, and where it stands. */
 export interface DocumentStatusInfo {
-  kind: 'IQAMA' | 'WORK_PERMIT' | 'INSURANCE' | 'PASSPORT' | 'DRIVING_LICENCE';
+  kind: string;
   labelAr: string;
   number: string | null;
   expiry: string | null;
+  daysLeft: number | null;
   status: DocumentStatus;
   statusLabelAr: string;
-  /** Negative once the date has passed; null when no date is recorded. */
-  daysLeft: number | null;
+  type?: string;
 }
 
 /** Create/update payload. kamalCode is generated server-side and never sent. */
@@ -271,8 +281,10 @@ export interface CaptainRequest {
   // Iqama
   iqamaNumber: string | null;
   iqamaOccupation: string | null;
+  idExpiryDate: string | null;
   iqamaExpiry: string | null;
   iqamaExpiryRenewed: string | null;
+  borderNumber: string | null;
   iqamaStatus: string | null;
   // Qiwa
   qiwaContractNumber: string | null;
@@ -288,6 +300,7 @@ export interface CaptainRequest {
   crNumber: string | null;
   // Driving Licence
   drivingLicenceNo: string | null;
+  licenceType: string | null;
   licenceExpiry: string | null;
   hasLicence: boolean;
   licenceStatus: string | null;
@@ -311,6 +324,8 @@ export interface CaptainRequest {
   fuelAllowanceAmount: number | null;
   callInternetAllowance: number | null;
   rewardAllowance: number | null;
+  salaryDeductions: number | null;
+  netSalary: number | null;
   // Vehicle & Fuel flags
   usesOwnVehicle: boolean;
   fuelAllowanceEligible: boolean;
@@ -495,7 +510,7 @@ export interface CreateSupplierRequest {
   color: string;
 }
 
-/** Captain link fields are optional — an unlinked slot shows as "متاح". */
+/** Captain link fields are optional — an unlinked slot shows as "Available". */
 export interface SupplierIdSlotRequest {
   supplierId: string;
   externalId: string;
@@ -579,6 +594,10 @@ export interface ShiftResponse {
   supplierExtraRevenue: number;
   shiftMargin: number;
   supplierDeduction: number;
+  supplierDeductionReason: string | null;
+  supplierDeductionExcluded: boolean;
+  supplierDeductionOriginal: number | null;
+  supplierDeductionExclusionReason: string | null;
 
   calcNote: string | null;
   excluded: boolean;
@@ -1444,7 +1463,7 @@ export interface SupplierStatementResponse {
   adjustments: SupplierAdjustmentResponse[];
 }
 
-// ---------------------------------------------------------------- Loans (سُلف)
+// ---------------------------------------------------------------- Loans
 
 export interface MemberLoanSummaryResponse {
   memberId: string;

@@ -2,28 +2,28 @@
 
   <div class="page-header flex-between">
     <div>
-      <h1 class="page-title">الشيفتات</h1>
-      <p class="page-subtitle">كل شفت مستورد من المورد، وحساب مستحقات الكابتن عنه</p>
+      <h1 class="page-title">{{ 'SHIFTS.TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'SHIFTS.SUBTITLE' | translate }}</p>
     </div>
     <div class="flex-center gap-sm">
       <input type="file" #deductionFileInput style="display: none;" accept=".xlsx, .xls" (change)="onSupplierDeductionFileSelected($event)">
       <button class="btn btn-outline" (click)="deductionFileInput.click()" [disabled]="isImportingDeductions" *ngIf="canManage">
         <span class="material-icons-round" [class.spinning]="isImportingDeductions">upload_file</span>
-        استيراد خصومات المورد
+        {{ 'SHIFTS.IMPORT_DEDUCTIONS' | translate }}
       </button>
       <button class="btn btn-outline" (click)="export()"
               [disabled]="isExporting || isLoading || shifts.length === 0">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-        تصدير Excel
+        {{ 'COMMON.EXPORT_EXCEL' | translate }}
       </button>
       <button class="btn btn-outline" (click)="exportPdf()"
               [disabled]="isExportingPdf || isLoading || shifts.length === 0">
         <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span>
-        تصدير PDF
+        {{ 'COMMON.EXPORT_PDF' | translate }}
       </button>
       <button class="btn btn-outline" (click)="recalculate()" [disabled]="isRecalculating" *ngIf="canManage">
         <span class="material-icons-round" [class.spinning]="isRecalculating">refresh</span>
-        إعادة حساب الفترة
+        {{ 'SHIFTS.RECALCULATE' | translate }}
       </button>
     </div>
   </div>
@@ -39,25 +39,25 @@
   <!-- Filters -->
   <div class="toolbar">
     <div class="date-field">
-      <label>من</label>
+      <label>{{ 'SHIFTS.FILTER_FROM' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="from" (change)="load()">
     </div>
     <div class="date-field">
-      <label>إلى</label>
+      <label>{{ 'SHIFTS.FILTER_TO' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="to" (change)="load()">
     </div>
 
     <div class="date-field">
-      <label>المنطقة</label>
+      <label>{{ 'SHIFTS.FILTER_ZONE' | translate }}</label>
       <select class="form-input" [(ngModel)]="zoneName" (change)="load()">
-        <option value="">كل المناطق</option>
+        <option value="">{{ 'SHIFTS.ALL_ZONES' | translate }}</option>
         <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
       </select>
     </div>
 
     <div class="search-box">
       <span class="material-icons-round">search</span>
-      <input type="text" placeholder="ابحث برقم الشفت أو ID-APP أو الاسم"
+      <input type="text" [placeholder]="'SHIFTS.SEARCH_PLACEHOLDER' | translate"
              [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keyup.enter)="load()">
     </div>
   </div>
@@ -73,45 +73,45 @@
   <!-- Table -->
   <div class="loading-state" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جارٍ التحميل…</p>
+    <p>{{ 'SHIFTS.LOADING' | translate }}</p>
   </div>
 
   <div class="empty-state card" *ngIf="!isLoading && activeTab !== 'vacation-days' && shifts.length === 0">
     <span class="material-icons-round">event_busy</span>
-    <h3>لا توجد شيفتات في هذه الفترة</h3>
-    <p>ارفع ملف الشيفتات من صفحة استيراد البيانات لتظهر هنا.</p>
+    <h3>{{ 'SHIFTS.NO_SHIFTS' | translate }}</h3>
+    <p>{{ 'SHIFTS.NO_SHIFTS_HINT' | translate }}</p>
   </div>
 
   <div class="empty-state card" *ngIf="!isLoading && activeTab === 'vacation-days' && vacationCommissions.length === 0">
     <span class="material-icons-round">beach_access</span>
-    <h3>لا توجد سجلات لعمولة أوقات الإجازة في هذه الفترة</h3>
-    <p>استورد شيت عمولة الإجازة من صفحة الاستيرادات لتسجيل مبالغ الإجازة للكباتن.</p>
+    <h3>{{ 'SHIFTS.NO_VACATION' | translate }}</h3>
+    <p>{{ 'SHIFTS.NO_VACATION_HINT' | translate }}</p>
   </div>
 
   <!-- ======================================= VACATION COMMISSIONS TABLE -->
   <div class="table-wrap card" *ngIf="!isLoading && activeTab === 'vacation-days' && vacationCommissions.length > 0">
     <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; margin: 1rem; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <strong style="color: #2e7d32; font-size: 1.1rem;">إجمالي عمولة أوقات الإجازة في الفترة:</strong>
+        <strong style="color: #2e7d32; font-size: 1.1rem;">{{ 'SHIFTS.VACATION_TOTAL' | translate }}</strong>
         <span style="font-size: 1.25rem; font-weight: bold; margin-right: 0.5rem; color: #1b5e20;">
-          {{ totalVacationCommissionsAmount | number:'1.2-2' }} ر.س
+          {{ totalVacationCommissionsAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}
         </span>
       </div>
-      <span class="muted">{{ totalElements }} سجل</span>
+      <span class="muted">{{ totalElements }} {{ 'COMMON.RECORD' | translate }}</span>
     </div>
     <table class="data-table">
       <thead>
         <tr>
-          <th>رقم الشيفت (Days)</th>
-          <th>تاريخ الاستيراد</th>
-          <th>المورد</th>
-          <th>الكابتن</th>
-          <th>ID الكابتن</th>
-          <th>المنطقة</th>
-          <th>الوسم / FLAG</th>
-          <th>الملاحظة / NOTE</th>
-          <th>المبلغ</th>
-          <th *ngIf="canManage">إجراءات</th>
+          <th>{{ 'SHIFTS.VACATION_COL_DAYS_CODE' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_IMPORT_DATE' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_SUPPLIER' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_CAPTAIN' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_CAPTAIN_ID' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_ZONE' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_FLAG' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_NOTE' | translate }}</th>
+          <th>{{ 'SHIFTS.VACATION_COL_AMOUNT' | translate }}</th>
+          <th *ngIf="canManage">{{ 'COMMON.ACTIONS' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -128,7 +128,7 @@
               {{ vc.captainName }}
             </div>
             <span class="unlinked" *ngIf="!vc.captainName">
-              <span class="material-icons-round">link_off</span> غير مربوط
+              <span class="material-icons-round">link_off</span> {{ 'SHIFTS.TAB_UNMATCHED' | translate }}
             </span>
           </td>
           <td class="mono">{{ vc.externalCaptainId }}</td>
@@ -136,10 +136,10 @@
           <td><span class="chip chip-required" *ngIf="vc.flag">{{ vc.flag }}</span></td>
           <td>{{ vc.note || '—' }}</td>
           <td class="strong" style="color: #2e7d32; font-size: 1.05rem;">
-            +{{ vc.amount | number:'1.2-2' }} ر.س
+            +{{ vc.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}
           </td>
           <td *ngIf="canManage">
-            <button class="btn btn-sm btn-outline btn-danger" (click)="deleteVacationCommission(vc.id)" title="حذف">
+            <button class="btn btn-sm btn-outline btn-danger" (click)="deleteVacationCommission(vc.id)" [title]="'COMMON.DELETE' | translate">
               <span class="material-icons-round">delete</span>
             </button>
           </td>
@@ -153,27 +153,27 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>التاريخ</th>
-          <th>الكابتن</th>
+          <th>{{ 'SHIFTS.COL_DATE' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_CAPTAIN' | translate }}</th>
           <th>ID-APP</th>
-          <th>المنطقة</th>
-          <th>الحالة</th>
-          <th>الساعات</th>
-          <th>الطلبات</th>
-          <th>الانشغال</th>
-          <th>اليومية</th>
-          <th>خصم تأخير</th>
-          <th>حافز</th>
-          <th>بنزين</th>
-          <th>سيارة</th>
-          <th>صافي الشفت</th>
-          <th>إيراد المورد</th>
-          <th>خصم المورد</th>
+          <th>{{ 'SHIFTS.VACATION_COL_ZONE' | translate }}</th>
+          <th>{{ 'COMMON.STATUS' | translate }}</th>
+          <th>{{ 'ORDERS.COL_HOURS' | translate }}</th>
+          <th>{{ 'ORDERS.TAB_ORDERS' | translate }}</th>
+          <th>{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_DAILY' | translate }}</th>
+          <th>{{ 'ORDERS.COL_LATE_DEDUCTION' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_BONUS' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_FUEL' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_CAR' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_NET_SHIFT' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_SUPPLIER_REV' | translate }}</th>
+          <th>{{ 'SHIFTS.COL_SUPPLIER_DED' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let shift of shifts" class="clickable-row" [ngClass]="rowClass(shift)"
-            [class.selected]="selected?.id === shift.id" (click)="select(shift)">
+            [class.selected]="selected?.id === shift.id" (click)="openDetail(shift)">
           <td class="nowrap">{{ shift.shiftDate }}</td>
           <td>
             <div class="name-cell" *ngIf="shift.captainName">
@@ -181,15 +181,15 @@
               {{ shift.captainName }}
             </div>
             <span class="unlinked" *ngIf="!shift.captainName">
-              <span class="material-icons-round">link_off</span> غير مربوط
+              <span class="material-icons-round">link_off</span> {{ 'SHIFTS.TAB_UNMATCHED' | translate }}
             </span>
           </td>
           <td class="mono">{{ shift.ninjaCaptainId }}</td>
           <td class="nowrap">{{ shift.zoneName || '—' }}</td>
           <td>
-            <span class="badge badge-danger" *ngIf="shift.excluded">مستبعد</span>
-            <span class="badge badge-warning" *ngIf="!shift.excluded && !shift.attended">غياب</span>
-            <span class="badge badge-success" *ngIf="!shift.excluded && shift.attended">حضور</span>
+            <span class="badge badge-danger" *ngIf="shift.excluded">{{ 'SHIFTS.TAB_EXCLUDED' | translate }}</span>
+            <span class="badge badge-warning" *ngIf="!shift.excluded && !shift.attended">{{ 'SHIFTS.TAB_ABSENT' | translate }}</span>
+            <span class="badge badge-success" *ngIf="!shift.excluded && shift.attended">{{ 'SHIFTS.TAB_ATTENDED' | translate }}</span>
           </td>
           <td>{{ num(shift.workingHours) }}</td>
           <td>{{ shift.totalDelivered ?? '—' }}</td>
@@ -216,7 +216,7 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="5">إجمالي الصفحة ({{ shifts.length }} شفت)</td>
+          <td colspan="5">{{ 'COMMON.TOTAL' | translate }} ({{ shifts.length }})</td>
           <td>{{ num(pageTotals.hours) }}</td>
           <td>{{ pageTotals.orders }}</td>
           <td></td>
@@ -238,28 +238,28 @@
   <!-- Pagination -->
   <div class="pagination" *ngIf="!isLoading && totalPages > 1">
     <button class="btn btn-sm btn-outline" [disabled]="page === 0" (click)="goToPage(page - 1)">
-      <span class="material-icons-round">chevron_right</span> السابق
+      <span class="material-icons-round">chevron_right</span> {{ 'COMMON.PREVIOUS' | translate }}
     </button>
-    <span class="page-info">صفحة {{ page + 1 }} من {{ totalPages }} — {{ totalElements }} شفت</span>
+    <span class="page-info">{{ 'COMMON.PAGE' | translate }} {{ page + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }} — {{ totalElements }}</span>
     <button class="btn btn-sm btn-outline" [disabled]="page + 1 >= totalPages" (click)="goToPage(page + 1)">
-      التالي <span class="material-icons-round">chevron_left</span>
+      {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round">chevron_left</span>
     </button>
   </div>
 
   <!-- Detail panel -->
-  <div class="panel-backdrop" *ngIf="selected" (click)="closePanel()"></div>
+  <div class="panel-backdrop" *ngIf="selected" (click)="closeDetail()"></div>
   <aside class="detail-panel" *ngIf="selected">
     <header class="panel-header">
       <div class="header-info">
         <div class="header-top">
-          <h2>شفت {{ selected.externalShiftId || selected.id }}</h2>
-          <span class="badge badge-danger" *ngIf="selected.excluded">مستبعد</span>
-          <span class="badge badge-warning" *ngIf="!selected.excluded && !selected.attended">غياب</span>
-          <span class="badge badge-success" *ngIf="!selected.excluded && selected.attended">حضور</span>
+          <h2>{{ 'SHIFTS.SHIFT_SINGLE' | translate }} {{ selected.externalShiftId || selected.id }}</h2>
+          <span class="badge badge-danger" *ngIf="selected.excluded">{{ 'SHIFTS.TAB_EXCLUDED' | translate }}</span>
+          <span class="badge badge-warning" *ngIf="!selected.excluded && !selected.attended">{{ 'SHIFTS.TAB_ABSENT' | translate }}</span>
+          <span class="badge badge-success" *ngIf="!selected.excluded && selected.attended">{{ 'SHIFTS.TAB_ATTENDED' | translate }}</span>
         </div>
-        <p class="header-sub">{{ selected.shiftDate }} — {{ selected.zoneName || selected.shiftName || 'غير محدد' }}</p>
+        <p class="header-sub">{{ selected.shiftDate }} — {{ selected.zoneName || selected.shiftName || '—' }}</p>
       </div>
-      <button class="icon-btn" (click)="closePanel()" title="إغلاق">
+      <button class="icon-btn" (click)="closeDetail()" [title]="'COMMON.CLOSE' | translate">
         <span class="material-icons-round">close</span>
       </button>
     </header>
@@ -269,13 +269,13 @@
       <section class="panel-section">
         <div class="section-title">
           <span class="material-icons-round">person</span>
-          <h3>بيانات الكابتن</h3>
+          <h3>{{ 'SHIFTS.COL_CAPTAIN' | translate }}</h3>
         </div>
         <div class="kv-grid">
-          <div class="kv"><span>الاسم</span><b class="val-name">{{ selected.captainName || 'غير مربوط' }}</b></div>
+          <div class="kv"><span>{{ 'CAPTAINS.COL_NAME' | translate }}</span><b class="val-name">{{ selected.captainName || ('SHIFTS.TAB_UNMATCHED' | translate) }}</b></div>
           <div class="kv"><span>ID-KSLSC</span><b class="code-cell">{{ selected.captainCode || '—' }}</b></div>
           <div class="kv"><span>ID-APP</span><b class="mono">{{ selected.ninjaCaptainId }}</b></div>
-          <div class="kv"><span>الاسم لدى المورد</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
+          <div class="kv"><span>{{ 'CAPTAIN_DETAIL.CAPTAIN_NAME_AT_SUPPLIER' | translate }}</span><b>{{ selected.ninjaCaptainName || '—' }}</b></div>
         </div>
       </section>
 
@@ -283,33 +283,33 @@
       <section class="panel-section">
         <div class="section-title">
           <span class="material-icons-round">payments</span>
-          <h3>حساب المستحق</h3>
+          <h3>{{ 'SHIFTS.SECTION_PAYMENT' | translate }}</h3>
         </div>
         <div class="calc-note" *ngIf="selected.calcNote">
           <span class="material-icons-round">info</span>
           <span>{{ selected.calcNote }}</span>
         </div>
         <div class="kv-grid">
-          <div class="kv"><span>اليومية</span><b>{{ money(selected.dailyWage) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.DAILY_WAGE' | translate }}</span><b>{{ money(selected.dailyWage) }}</b></div>
           <div class="kv negative" *ngIf="selected.lateDeduction > 0">
-            <span>خصم التأخير</span><b>−{{ money(selected.lateDeduction) }}</b>
+            <span>{{ 'ORDERS.COL_LATE_DEDUCTION' | translate }}</span><b>−{{ money(selected.lateDeduction) }}</b>
           </div>
           <div class="kv negative" *ngIf="selected.supplierDeduction > 0">
-            <span>خصم المورد</span><b>−{{ money(selected.supplierDeduction) }}</b>
+            <span>{{ 'SHIFTS.SUPPLIER_DEDUCTION' | translate }}</span><b>−{{ money(selected.supplierDeduction) }}</b>
           </div>
           <div class="kv positive" *ngIf="selected.dailyIncentive > 0">
-            <span>حافز {{ selected.extraOrders || 0 }} طلب إضافي</span><b>+{{ money(selected.dailyIncentive) }}</b>
+            <span>{{ 'SHIFTS.INCENTIVE_EXTRA' | translate:{ count: selected.extraOrders || 0 } }}</span><b>+{{ money(selected.dailyIncentive) }}</b>
           </div>
           <div class="kv positive" *ngIf="selected.fuelAllowance > 0">
-            <span>بدل البنزين</span><b>+{{ money(selected.fuelAllowance) }}</b>
+            <span>{{ 'SHIFTS.FUEL_ALLOWANCE' | translate }}</span><b>+{{ money(selected.fuelAllowance) }}</b>
           </div>
           <div class="kv positive" *ngIf="selected.carAllowance > 0">
-            <span>بدل السيارة</span><b>+{{ money(selected.carAllowance) }}</b>
+            <span>{{ 'SHIFTS.CAR_ALLOWANCE' | translate }}</span><b>+{{ money(selected.carAllowance) }}</b>
           </div>
         </div>
         <div class="total-card">
-          <span class="total-label">صافي الشفت المستحق</span>
-          <span class="total-value">{{ money(selected.netShiftPay) }} <small>ريال</small></span>
+          <span class="total-label">{{ 'SHIFTS.NET_SHIFT_DUE' | translate }}</span>
+          <span class="total-value">{{ money(selected.netShiftPay) }} <small>{{ 'COMMON.SAR' | translate }}</small></span>
         </div>
       </section>
 
@@ -317,21 +317,21 @@
       <section class="panel-section">
         <div class="section-title">
           <span class="material-icons-round">analytics</span>
-          <h3>أرقام ومؤشرات المورد</h3>
+          <h3>{{ 'SHIFTS.SECTION_METRICS' | translate }}</h3>
         </div>
         <div class="kv-grid columns-2">
-          <div class="kv"><span>ساعات العمل</span><b>{{ num(selected.workingHours) }}</b></div>
-          <div class="kv"><span>الطلبات</span><b>{{ selected.totalDelivered ?? '—' }}</b></div>
-          <div class="kv"><span>حالة الحضور</span><b>{{ selected.attendanceFlag || '—' }}</b></div>
-          <div class="kv"><span>بداية الشفت</span><b>{{ time(selected.scheduledStart) }}</b></div>
-          <div class="kv"><span>تسجيل الدخول</span><b>{{ time(selected.actualCheckin) }}</b></div>
-          <div class="kv"><span>دقائق التأخير</span><b>{{ num(selected.delayMinutes) }} دقيقة</b></div>
-          <div class="kv"><span>نسبة الانشغال</span><b>{{ percent(selected.busyUtilization) }}</b></div>
-          <div class="kv"><span>التسليم في الوقت</span><b>{{ percent(selected.deliveryOntime) }}</b></div>
-          <div class="kv"><span>معدل الطلبات/ساعة</span><b>{{ num(selected.hourlyUtr) }}</b></div>
-          <div class="kv"><span>وقت الانشغال</span><b>{{ num(selected.busyTime) }}</b></div>
-          <div class="kv"><span>وقت الفراغ</span><b>{{ num(selected.freeTime) }}</b></div>
-          <div class="kv"><span>خارج النطاق</span><b>{{ num(selected.awayFromZone) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.WORKING_HOURS' | translate }}</span><b>{{ num(selected.workingHours) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.ORDERS_COUNT' | translate }}</span><b>{{ selected.totalDelivered ?? '—' }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.ATTENDANCE' | translate }}</span><b>{{ formatAttendanceFlag(selected.attendanceFlag) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.SHIFT_START' | translate }}</span><b>{{ time(selected.scheduledStart) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.CHECK_IN' | translate }}</span><b>{{ time(selected.actualCheckin) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.DELAY' | translate }}</span><b>{{ num(selected.delayMinutes) }} {{ 'SHIFTS.DELAY_MINUTES' | translate }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.BUSY_UTILIZATION' | translate }}</span><b>{{ percent(selected.busyUtilization) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.DELIVERY_ON_TIME' | translate }}</span><b>{{ percent(selected.deliveryOntime) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.ORDERS_PER_HOUR' | translate }}</span><b>{{ num(selected.hourlyUtr) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.BUSY_TIME' | translate }}</span><b>{{ num(selected.busyTime) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.FREE_TIME' | translate }}</span><b>{{ num(selected.freeTime) }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.AWAY_FROM_ZONE' | translate }}</span><b>{{ num(selected.awayFromZone) }}</b></div>
         </div>
       </section>
 
@@ -339,55 +339,108 @@
       <section class="panel-section">
         <div class="section-title">
           <span class="material-icons-round">trending_up</span>
-          <h3>الربحية والهامش</h3>
+          <h3>{{ 'SHIFTS.SECTION_PROFITABILITY' | translate }}</h3>
         </div>
         <div class="kv-grid">
           <div class="kv">
-            <span>حقّق شروط المورد</span>
+            <span>{{ 'SHIFTS.QUALIFIES_FULL_RATE' | translate }}</span>
             <span class="badge" [class.badge-success]="selected.qualifiesFullRate" [class.badge-danger]="!selected.qualifiesFullRate">
-              {{ selected.qualifiesFullRate ? 'نعم' : 'لا' }}
+              {{ selected.qualifiesFullRate ? ('COMMON.YES' | translate) : ('COMMON.NO' | translate) }}
             </span>
           </div>
-          <div class="kv"><span>إيراد الشفت</span><b>{{ money(selected.supplierRevenue) }} ريال</b></div>
-          <div class="kv"><span>إيراد الطلبات الإضافية</span><b>{{ money(selected.supplierExtraRevenue) }} ريال</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.SHIFT_REVENUE' | translate }}</span><b>{{ money(selected.supplierRevenue) }} {{ 'COMMON.SAR' | translate }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.EXTRA_ORDER_REVENUE' | translate }}</span><b>{{ money(selected.supplierExtraRevenue) }} {{ 'COMMON.SAR' | translate }}</b></div>
         </div>
         <div class="total-card margin-card">
-          <span class="total-label">هامش الشفت</span>
-          <span class="total-value">{{ money(selected.shiftMargin) }} <small>ريال</small></span>
+          <span class="total-label">{{ 'SHIFTS.SHIFT_MARGIN' | translate }}</span>
+          <span class="total-value">{{ money(selected.shiftMargin) }} <small>{{ 'COMMON.SAR' | translate }}</small></span>
         </div>
+      </section>
+
+      <!-- Section 4.5: Supplier Deduction Management -->
+      <section class="panel-section" *ngIf="canManage && (selected.supplierDeduction > 0 || selected.supplierDeductionExcluded)">
+        <div class="section-title">
+          <span class="material-icons-round">money_off</span>
+          <h3>{{ 'SHIFTS.SECTION_SUPPLIER_DEDUCTION' | translate }}</h3>
+        </div>
+
+        <div class="kv-grid">
+          <div class="kv">
+            <span>{{ 'SHIFTS.DEDUCTION_AMOUNT' | translate }}</span>
+            <b [class.negative]="selected.supplierDeduction > 0">
+              {{ selected.supplierDeduction > 0 ? '−' + money(selected.supplierDeduction) : '0.00' }} {{ 'COMMON.SAR' | translate }}
+            </b>
+          </div>
+          <div class="kv" *ngIf="selected.supplierDeductionReason">
+            <span>{{ 'SHIFTS.DEDUCTION_REASON' | translate }}</span>
+            <b>{{ selected.supplierDeductionReason }}</b>
+          </div>
+        </div>
+
+        <!-- Already excluded: show info + restore button -->
+        <div class="excluded-note deduction-excluded-note" *ngIf="selected.supplierDeductionExcluded">
+          <span class="material-icons-round">money_off</span>
+          <div>
+            <b>{{ 'SHIFTS.DEDUCTION_EXCLUDED_TITLE' | translate }}</b>
+            <p>{{ 'SHIFTS.ORIGINAL_AMOUNT' | translate }} {{ money(selected.supplierDeductionOriginal) }} {{ 'COMMON.SAR' | translate }}</p>
+            <p *ngIf="selected.supplierDeductionExclusionReason">{{ 'SHIFTS.REASON_LABEL' | translate }} {{ selected.supplierDeductionExclusionReason }}</p>
+          </div>
+        </div>
+
+        <button class="btn btn-outline btn-sm w-full" *ngIf="selected.supplierDeductionExcluded" (click)="restoreDeduction()">
+          <span class="material-icons-round">undo</span> {{ 'SHIFTS.RESTORE_SUPPLIER_DEDUCTION' | translate }}
+        </button>
+
+        <!-- Not excluded: show exclude button + form -->
+        <ng-container *ngIf="!selected.supplierDeductionExcluded && selected.supplierDeduction > 0">
+          <button class="btn btn-outline btn-sm btn-warning-outline w-full" *ngIf="!showDeductionExcludeForm" (click)="showDeductionExcludeForm = true">
+            <span class="material-icons-round">money_off</span> {{ 'SHIFTS.EXCLUDE_SUPPLIER_DEDUCTION_BTN' | translate }}
+          </button>
+          <div class="exclude-form" *ngIf="showDeductionExcludeForm">
+            <label class="form-label">{{ 'SHIFTS.EXCLUSION_REASON' | translate }}</label>
+            <input type="text" class="form-input" [(ngModel)]="deductionExcludeReason"
+                   [placeholder]="'SHIFTS.EXCLUSION_DEDUCTION_PLACEHOLDER' | translate">
+            <div class="form-actions">
+              <button class="btn btn-warning btn-sm" [disabled]="!deductionExcludeReason.trim()" (click)="excludeDeduction()">
+                {{ 'SHIFTS.CONFIRM_EXCLUSION' | translate }}
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="showDeductionExcludeForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
+            </div>
+          </div>
+        </ng-container>
       </section>
 
       <!-- Section 5: Exclusion -->
       <section class="panel-section" *ngIf="canManage">
         <div class="section-title">
           <span class="material-icons-round">block</span>
-          <h3>إدارة الاستبعاد</h3>
+          <h3>{{ 'SHIFTS.SECTION_EXCLUSION' | translate }}</h3>
         </div>
-        <div class="excluded-note" *ngIf="selected.excluded">
+        <div class="excluded-banner" *ngIf="selected.excluded">
           <span class="material-icons-round">block</span>
           <div>
-            <b>هذا الشفت مستبعد من الحساب</b>
-            <p>{{ selected.exclusionReason || 'بدون سبب محدد' }}</p>
+            <b>{{ 'SHIFTS.SHIFT_EXCLUDED_NOTICE' | translate }}</b>
+            <p>{{ selected.exclusionReason || ('SHIFTS.NO_REASON' | translate) }}</p>
           </div>
         </div>
 
-        <button class="btn btn-outline btn-sm w-full" *ngIf="selected.excluded" (click)="include()">
-          <span class="material-icons-round">undo</span> إرجاع الشفت للحساب
+        <button class="btn btn-outline btn-sm w-full" *ngIf="selected.excluded" (click)="restoreCurrent()">
+          <span class="material-icons-round">undo</span> {{ 'SHIFTS.INCLUDE_SHIFT' | translate }}
         </button>
 
         <ng-container *ngIf="!selected.excluded">
           <button class="btn btn-outline btn-sm btn-danger-outline w-full" *ngIf="!showExcludeForm" (click)="showExcludeForm = true">
-            <span class="material-icons-round">block</span> استبعاد هذا الشفت
+            <span class="material-icons-round">block</span> {{ 'SHIFTS.EXCLUDE_SHIFT' | translate }}
           </button>
           <div class="exclude-form" *ngIf="showExcludeForm">
-            <label class="form-label">سبب الاستبعاد (مطلوب)</label>
+            <label class="form-label">{{ 'SHIFTS.EXCLUSION_REASON' | translate }}</label>
             <input type="text" class="form-input" [(ngModel)]="excludeReason"
-                   placeholder="مثال: خطأ في بيانات المورد">
+                   [placeholder]="'SHIFTS.EXCLUSION_PLACEHOLDER' | translate">
             <div class="form-actions">
-              <button class="btn btn-danger btn-sm" [disabled]="!excludeReason.trim()" (click)="exclude()">
-                تأكيد الاستبعاد
+              <button class="btn btn-danger btn-sm" [disabled]="!excludeReason.trim()" (click)="excludeCurrent()">
+                {{ 'SHIFTS.CONFIRM_EXCLUSION' | translate }}
               </button>
-              <button class="btn btn-outline btn-sm" (click)="showExcludeForm = false">إلغاء</button>
+              <button class="btn btn-outline btn-sm" (click)="showExcludeForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
             </div>
           </div>
         </ng-container>
@@ -395,4 +448,3 @@
     </div>
   </aside>
 </div>
-

@@ -10,6 +10,8 @@ import {
 } from '../../core/models/api.models';
 import { ImportService } from '../../core/services/import.service';
 import { downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 /**
  * Four import domains: captain roster, supplier shift export, supplier deductions, and vacation commission.
@@ -19,7 +21,7 @@ type ImportTab = 'captains' | 'reports' | 'deductions' | 'vacation-commission';
 @Component({
   selector: 'app-imports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './imports.component.html',
   styleUrls: ['./imports.component.scss']
 })
@@ -28,6 +30,7 @@ export class ImportsComponent implements OnInit {
   private importService = inject(ImportService);
   private http = inject(HttpClient);
   private router = inject(Router);
+  public i18n = inject(TranslationService);
 
   activeTab: ImportTab = 'captains';
 
@@ -39,12 +42,64 @@ export class ImportsComponent implements OnInit {
 
   // ------------------------------------------------- expected sheet layouts
 
-  /** Mirrors TEMPLATE_HEADERS in ExcelTemplateService — the layout the parser expects. */
-  readonly captainRequiredColumns = ['ID-KSLSC', 'اسم الكابتن'];
+  /** Mirrors TEMPLATE_HEADERS in ExcelTemplateService — the bilingual layout. Only Job ID is required. */
+  readonly captainRequiredColumns = [
+    'الرقم الوظيفي / Job ID'
+  ];
   readonly captainOptionalColumns = [
-    'ID - NINJA', 'الهاتف', 'الجنسية', 'تاريخ الميلاد', 'البريد الالكتروني',
-    'رقم الإقامة', 'انتهاء الإقامة', 'رقم الجواز', 'انتهاء الجواز',
-    'رقم الرخصة', 'انتهاء الرخصة'
+    'معرف التطبيق / ID-APP',
+    'الاسم / Name (Ar)',
+    'Name (En)',
+    'الجنس / Gender',
+    'الجنسية / Nationality',
+    'تاريخ الميلاد / Date of birth',
+    'جوال / Phone no',
+    'مدينة / City',
+    'عنوان السكن / Home Address',
+    'بريد الكتروني / Email',
+    'رقم الجواز / Passport No',
+    'تاريخ الاصدار / Issue Date',
+    'تاريخ الانتهاء / Expir Date',
+    'حالة الجواز / Passport status',
+    'رقم الهوية / الاقامة / Identity / residence no',
+    'تاريخ انتهاء الهوية / ID Expiry Date',
+    'تاريخ انتهاء الاقامة / Expir Date',
+    'تاريخ الانتهاء بعد التجديد / Expiry date after renewal',
+    'رقم الحدود / Border no',
+    'المهنة في الاقامة / Occupation on residence',
+    'حالة الاقامة / Residence status',
+    'رقم عقد قوى / Contract no',
+    'رقم المنشأة / Establishment ID',
+    'تاريخ بداية العقد / Contract Start Date',
+    'تاريخ نهاية العقد / Contract Expir Date',
+    'حالة العقد / Contract status',
+    'تاريخ انتهاء رخصة العمل / Work Permit Expir Date',
+    'حالة رخصة العمل / Work Permit status',
+    'الشركة التابع لها / Affiliated company',
+    'رقم السجل التجاري / CR no',
+    'رقم التأمين / Insurance no',
+    'فئة التأمين / Insurance category',
+    'تاريخ اصدار التأمين / Insurance Issue Date',
+    'تاريخ انتهاء التأمين / Insurance Expir Date',
+    'حالة التأمين / Insurance status',
+    'شركة التأمين الطبي / Medical Insurance company',
+    'يحمل رخصة قيادة / Has Driving License',
+    'نوع الرخصة / License Type',
+    'رقم رخصة القيادة / Driving license no',
+    'تاريخ انتهاء الرخصة / Expir Date',
+    'حالة الرخصة / License status',
+    'فصيلة الدم / Blood type',
+    'اسم البنك / Bank Name',
+    'رقم الحساب البنكي / Bank account no',
+    'الراتب الاساسي / Basic salary',
+    'بدل سكن / Housing Allowance',
+    'بدل مواصلات / Transport Allowance',
+    'بدل محروقات / Fuel Allow',
+    'بدل اتصال / Call Allow',
+    'مكافأة / Reward',
+    'خصومات / Deduction',
+    'صافي الراتب / Net Salry',
+    'فترة التجربة / Trial Period'
   ];
 
   /** Mirrors NinjaShiftParser's column map — the headers Ninja ships in its export. */
@@ -133,6 +188,9 @@ export class ImportsComponent implements OnInit {
   onSupplierChange(supplierId: string): void {
     this.selectedSupplierId = supplierId;
     localStorage.setItem('selectedImportSupplierId', supplierId);
+    if (this.selectedFile && (this.captainPreview || this.shiftPreview || this.deductionPreview || this.vacationCommissionPreview)) {
+      this.uploadPreview();
+    }
   }
 
   get selectedSupplier(): SupplierResponse | undefined {
@@ -184,7 +242,7 @@ export class ImportsComponent implements OnInit {
 
   handleFile(file: File): void {
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      this.errorMessage = 'يرجى رفع ملف Excel (.xlsx أو .xls)';
+      this.errorMessage = this.i18n.currentLang() === 'ar' ? 'يرجى رفع ملف Excel (.xlsx أو .xls)' : 'Please upload an Excel file (.xlsx or .xls)';
       return;
     }
     this.clearMessages();
@@ -250,7 +308,7 @@ export class ImportsComponent implements OnInit {
     // Keep the file only when it can be re-sent to the other tab.
     this.misroutedFile = errorCode(err) === 'WRONG_IMPORT_TYPE' ? file : null;
     this.selectedFile = null;
-    this.errorMessage = errorMessage(err, 'فشل في تحليل الملف');
+    this.errorMessage = errorMessage(err, this.i18n.get('IMPORTS.IMPORT_FAILED'));
   }
 
   // ----------------------------------------------------------------- commit
@@ -276,7 +334,9 @@ export class ImportsComponent implements OnInit {
         next: (result) => {
           this.finishCommit();
           this.captainResult = result;
-          this.successMessage = `تم استيراد ${result.newCaptains} كابتن بنجاح للمورد ${this.selectedSupplier?.name || ''}`;
+          this.successMessage = this.i18n.currentLang() === 'ar'
+            ? `تم استيراد ${result.newCaptains} كابتن بنجاح للمورد ${this.selectedSupplier?.name || ''}`
+            : `Successfully imported ${result.newCaptains} captains for supplier ${this.selectedSupplier?.name || ''}`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -285,7 +345,9 @@ export class ImportsComponent implements OnInit {
         next: (result) => {
           this.finishCommit();
           this.shiftResult = result;
-          this.successMessage = `تم استيراد ${result.committedRows} شفت بنجاح للمورد ${this.selectedSupplier?.name || ''}`;
+          this.successMessage = this.i18n.currentLang() === 'ar'
+            ? `تم استيراد ${result.committedRows} شفت بنجاح للمورد ${this.selectedSupplier?.name || ''}`
+            : `Successfully imported ${result.committedRows} shifts for supplier ${this.selectedSupplier?.name || ''}`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -294,7 +356,9 @@ export class ImportsComponent implements OnInit {
         next: (result) => {
           this.finishCommit();
           this.deductionResult = result;
-          this.successMessage = `تم تطبيق خصومات المورد على ${result.matchedRows} شيفت بنجاح`;
+          this.successMessage = this.i18n.currentLang() === 'ar'
+            ? `تم تطبيق خصومات المورد على ${result.matchedRows} شيفت بنجاح`
+            : `Successfully applied supplier deductions to ${result.matchedRows} shifts`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -303,7 +367,9 @@ export class ImportsComponent implements OnInit {
         next: (result) => {
           this.finishCommit();
           this.vacationCommissionResult = result;
-          this.successMessage = `تم استيراد عمولة أوقات الإجازة لـ ${result.matchedRows} كابتن بنجاح`;
+          this.successMessage = this.i18n.currentLang() === 'ar'
+            ? `تم استيراد عمولة أوقات الإجازة لـ ${result.matchedRows} كابتن بنجاح`
+            : `Successfully imported vacation commissions for ${result.matchedRows} captains`;
         },
         error: (err) => this.failCommit(err)
       });
@@ -322,7 +388,7 @@ export class ImportsComponent implements OnInit {
 
   private failCommit(err: unknown): void {
     this.isCommitting = false;
-    this.errorMessage = errorMessage(err, 'فشل في تأكيد الاستيراد');
+    this.errorMessage = errorMessage(err, this.i18n.currentLang() === 'ar' ? 'فشل في تأكيد الاستيراد' : 'Failed to confirm import');
   }
 
   cancelImport(): void {
@@ -349,7 +415,7 @@ export class ImportsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoadingHistory = false;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل سجل الاستيراد');
+        this.errorMessage = errorMessage(err, this.i18n.currentLang() === 'ar' ? 'فشل في تحميل سجل الاستيراد' : 'Failed to load import history');
       }
     });
   }
@@ -386,18 +452,19 @@ export class ImportsComponent implements OnInit {
 
     request.subscribe({
       next: (blob) => downloadBlob(blob, fileName),
-      error: () => { this.errorMessage = 'فشل تحميل ملف القالب'; }
+      error: () => { this.errorMessage = this.i18n.currentLang() === 'ar' ? 'فشل تحميل ملف القالب' : 'Failed to download template file'; }
     });
   }
 
   getScopeLabel(scope: string): string {
-    const map: Record<string, string> = {
-      'NINJA_ID': 'ID نينجا',
-      'KSLSC_ID': 'كود KSLSC',
-      'PHONE_OR_NATIONAL_ID': 'الهاتف/الهوية',
-      'UNMATCHED': 'غير مطابق'
+    const isAr = this.i18n.currentLang() === 'ar';
+    const map: Record<string, { ar: string; en: string }> = {
+      'NINJA_ID': { ar: 'ID نينجا', en: 'Ninja ID' },
+      'KSLSC_ID': { ar: 'كود KSLSC', en: 'KSLSC Code' },
+      'PHONE_OR_NATIONAL_ID': { ar: 'الهاتف/الهوية', en: 'Phone / ID' },
+      'UNMATCHED': { ar: 'غير مطابق', en: 'Unmatched' }
     };
-    return map[scope] || scope;
+    return map[scope] ? (isAr ? map[scope].ar : map[scope].en) : scope;
   }
 
   // ----------------------------------------------------------- issue splits
@@ -448,13 +515,14 @@ export class ImportsComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      'PREVIEW': 'معاينة',
-      'COMMITTED': 'تم التأكيد',
-      'CANCELLED': 'ملغي',
-      'FAILED': 'فشل'
+    const isAr = this.i18n.currentLang() === 'ar';
+    const map: Record<string, { ar: string; en: string }> = {
+      'PREVIEW': { ar: 'معاينة', en: 'Preview' },
+      'COMMITTED': { ar: 'تم التأكيد', en: 'Committed' },
+      'CANCELLED': { ar: 'ملغي', en: 'Cancelled' },
+      'FAILED': { ar: 'فشل', en: 'Failed' }
     };
-    return map[status] || status;
+    return map[status] ? (isAr ? map[status].ar : map[status].en) : status;
   }
 
   getStatusClass(status: string): string {
@@ -469,7 +537,8 @@ export class ImportsComponent implements OnInit {
 
   formatDate(dateStr: string): string {
     try {
-      return new Date(dateStr).toLocaleDateString('ar-SA', {
+      const locale = this.i18n.currentLang() === 'ar' ? 'ar-SA' : 'en-US';
+      return new Date(dateStr).toLocaleDateString(locale, {
         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
     } catch {

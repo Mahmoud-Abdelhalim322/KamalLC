@@ -138,7 +138,7 @@ export class AuthService {
 
   getDisplayName(): string {
     const user = this.getUser();
-    return user?.displayName || user?.username || 'مدير';
+    return user?.displayName || user?.username || 'Admin';
   }
 
   private setSession(loginResponse: LoginResponse): void {

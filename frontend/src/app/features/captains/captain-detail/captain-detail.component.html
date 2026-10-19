@@ -2,14 +2,14 @@
   <!-- Loading -->
   <div class="loading-container" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جاري تحميل البيانات...</p>
+    <p>{{ 'CAPTAIN_DETAIL.LOADING' | translate }}</p>
   </div>
 
   <!-- Error -->
   <div class="error-state" *ngIf="!isLoading && errorMessage">
     <span class="material-icons-round">error_outline</span>
     <p>{{ errorMessage }}</p>
-    <a routerLink="/captains" class="btn btn-outline">العودة للقائمة</a>
+    <a routerLink="/captains" class="btn btn-outline">{{ 'CAPTAIN_DETAIL.BACK_TO_LIST_LINK' | translate }}</a>
   </div>
 
   <ng-container *ngIf="captain && !isLoading">
@@ -17,7 +17,7 @@
     <div class="detail-header">
       <a routerLink="/captains" class="back-link">
         <span class="material-icons-round">arrow_forward</span>
-        العودة للكباتن
+        {{ 'CAPTAIN_DETAIL.BACK_TO_LIST' | translate }}
       </a>
 
       <div class="header-content">
@@ -40,11 +40,11 @@
         <div class="header-actions">
           <a class="btn btn-primary" [routerLink]="['/captains', captain.id, 'edit']">
             <span class="material-icons-round">edit</span>
-            تعديل البيانات
+            {{ 'CAPTAIN_DETAIL.EDIT_DATA' | translate }}
           </a>
           <button class="btn btn-danger" (click)="deleteCaptain()">
             <span class="material-icons-round">delete_outline</span>
-            حذف الكابتن
+            {{ 'CAPTAIN_DETAIL.DELETE_CAPTAIN' | translate }}
           </button>
         </div>
       </div>
@@ -65,27 +65,27 @@
       <div class="info-card">
         <h3 class="card-title">
           <span class="material-icons-round">person</span>
-          المعلومات الأساسية
+          {{ 'CAPTAIN_DETAIL.BASIC_INFO' | translate }}
         </h3>
         <div class="info-rows">
           <div class="info-row">
-            <span class="info-label">الاسم بالعربي</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.NAME_AR' | translate }}</span>
             <span class="info-value">{{ captain.fullNameAr }}</span>
           </div>
           <div class="info-row" *ngIf="captain.fullNameEn">
-            <span class="info-label">الاسم بالإنجليزي</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.NAME_EN' | translate }}</span>
             <span class="info-value">{{ captain.fullNameEn }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">الجنسية</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.NATIONALITY' | translate }}</span>
             <span class="info-value">{{ captain.nationality || '—' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">تاريخ الميلاد</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.DATE_OF_BIRTH' | translate }}</span>
             <span class="info-value">{{ captain.dateOfBirth || '—' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">تاريخ الانضمام</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.JOIN_DATE' | translate }}</span>
             <span class="info-value">{{ captain.joinDate || '—' }}</span>
           </div>
         </div>
@@ -94,49 +94,204 @@
       <div class="info-card">
         <h3 class="card-title">
           <span class="material-icons-round">contact_phone</span>
-          بيانات التواصل
+          {{ 'CAPTAIN_DETAIL.CONTACT_INFO' | translate }}
         </h3>
         <div class="info-rows">
           <div class="info-row">
-            <span class="info-label">رقم الهاتف</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.PHONE' | translate }}</span>
             <span class="info-value">{{ captain.phone || '—' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">البريد الإلكتروني</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.EMAIL' | translate }}</span>
             <span class="info-value">{{ captain.email || '—' }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Driven by documentStatuses, so a document added to the tracked set appears here
-           without this template having to name it. -->
+      <!-- Driven by documentStatuses -->
       <div class="info-card">
         <h3 class="card-title">
           <span class="material-icons-round">badge</span>
-          الوثائق الرسمية
+          {{ 'CAPTAIN_DETAIL.OFFICIAL_DOCS' | translate }}
         </h3>
         <div class="info-rows doc-rows">
           <div class="doc-row" *ngFor="let doc of captain.documentStatuses">
             <div class="doc-head">
-              <span class="info-label">{{ doc.labelAr }}</span>
-              <span class="status-badge" [class]="docStatusClass(doc)">{{ doc.statusLabelAr }}</span>
+              <span class="info-label">{{ getDocLabel(doc) }}</span>
+              <span class="status-badge" [class]="docStatusClass(doc)">{{ getDocStatusLabel(doc) }}</span>
             </div>
             <div class="doc-meta">
               <span class="doc-number" *ngIf="doc.number" dir="ltr">{{ doc.number }}</span>
-              <span class="doc-expiry">{{ doc.expiry || 'لا يوجد تاريخ مسجل' }}</span>
+              <span class="doc-expiry">{{ doc.expiry || ('CAPTAIN_DETAIL.NO_DATE_RECORDED' | translate) }}</span>
               <span class="doc-days" *ngIf="doc.daysLeft !== null">{{ daysLeftLabel(doc) }}</span>
             </div>
           </div>
 
           <p class="no-data" *ngIf="captain.documentStatuses.length === 0">
-            لا تُتابع وثائق الكابتن غير النشط
+            {{ 'CAPTAIN_DETAIL.INACTIVE_NO_DOCS' | translate }}
           </p>
         </div>
 
         <div class="info-rows" *ngIf="captain.insuranceCompany">
           <div class="info-row">
-            <span class="info-label">شركة التأمين الطبي</span>
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.INSURANCE_COMPANY' | translate }}</span>
             <span class="info-value">{{ captain.insuranceCompany }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Iqama & Residence Card -->
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">contact_page</span>
+          {{ 'CAPTAIN_DETAIL.SECTION_IQAMA' | translate }}
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">{{ 'CAPTAIN_FORM.IQAMA_NUMBER' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.iqamaNumber || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">{{ 'CAPTAIN_FORM.IQAMA_OCCUPATION' | translate }}</span>
+            <span class="info-value">{{ captain.iqamaOccupation || '—' }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.idExpiryDate">
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.ID_EXPIRY_DATE' | translate }}</span>
+            <span class="info-value">{{ captain.idExpiryDate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.iqamaExpiry">
+            <span class="info-label">{{ 'CAPTAIN_FORM.IQAMA_EXPIRY' | translate }}</span>
+            <span class="info-value">{{ captain.iqamaExpiry }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.iqamaExpiryRenewed">
+            <span class="info-label">{{ 'CAPTAIN_FORM.IQAMA_EXPIRY_RENEWED' | translate }}</span>
+            <span class="info-value">{{ captain.iqamaExpiryRenewed }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.borderNumber">
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.BORDER_NUMBER' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.borderNumber }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.iqamaStatus">
+            <span class="info-label">{{ 'CAPTAIN_FORM.IQAMA_STATUS' | translate }}</span>
+            <span class="info-value">{{ captain.iqamaStatus }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Driving Licence & Insurance Card -->
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">directions_car</span>
+          {{ 'CAPTAIN_DETAIL.SECTION_LICENCE' | translate }}
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">{{ 'CAPTAIN_FORM.LICENCE_NUMBER' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.drivingLicenceNo || '—' }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.licenceType">
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.LICENCE_TYPE' | translate }}</span>
+            <span class="info-value">{{ captain.licenceType }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.licenceExpiry">
+            <span class="info-label">{{ 'CAPTAIN_FORM.LICENCE_EXPIRY' | translate }}</span>
+            <span class="info-value">{{ captain.licenceExpiry }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.licenceStatus">
+            <span class="info-label">{{ 'CAPTAIN_FORM.LICENCE_STATUS' | translate }}</span>
+            <span class="info-value">{{ captain.licenceStatus }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.bloodType">
+            <span class="info-label">{{ 'CAPTAIN_FORM.BLOOD_TYPE' | translate }}</span>
+            <span class="info-value">{{ captain.bloodType }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job & Employment Details Card -->
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">work</span>
+          {{ 'CAPTAIN_DETAIL.SECTION_JOB' | translate }}
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">{{ 'CAPTAIN_FORM.JOB_TITLE' | translate }}</span>
+            <span class="info-value">{{ captain.jobTitle || '—' }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.department">
+            <span class="info-label">{{ 'CAPTAIN_FORM.DEPARTMENT' | translate }}</span>
+            <span class="info-value">{{ captain.department }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.section">
+            <span class="info-label">{{ 'CAPTAIN_FORM.SECTION' | translate }}</span>
+            <span class="info-value">{{ captain.section }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.workLocation">
+            <span class="info-label">{{ 'CAPTAIN_FORM.WORK_LOCATION' | translate }}</span>
+            <span class="info-value">{{ captain.workLocation }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.affiliatedCompany">
+            <span class="info-label">{{ 'CAPTAIN_FORM.AFFILIATED_COMPANY' | translate }}</span>
+            <span class="info-value">{{ captain.affiliatedCompany }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.crNumber">
+            <span class="info-label">{{ 'CAPTAIN_FORM.CR_NUMBER' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.crNumber }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.qiwaContractNumber">
+            <span class="info-label">{{ 'CAPTAIN_FORM.QIWA_NUMBER' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.qiwaContractNumber }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary & Allowances Card -->
+      <div class="info-card">
+        <h3 class="card-title">
+          <span class="material-icons-round">payments</span>
+          {{ 'CAPTAIN_DETAIL.SECTION_SALARY' | translate }}
+        </h3>
+        <div class="info-rows">
+          <div class="info-row" *ngIf="captain.basicSalary != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.BASIC_SALARY' | translate }}</span>
+            <span class="info-value">{{ captain.basicSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.housingAllowance != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.HOUSING_ALLOWANCE' | translate }}</span>
+            <span class="info-value">{{ captain.housingAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.transportationAllowance != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.TRANSPORT_ALLOWANCE' | translate }}</span>
+            <span class="info-value">{{ captain.transportationAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.fuelAllowanceAmount != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.FUEL_ALLOWANCE' | translate }}</span>
+            <span class="info-value">{{ captain.fuelAllowanceAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.callInternetAllowance != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.COMM_ALLOWANCE' | translate }}</span>
+            <span class="info-value">{{ captain.callInternetAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.rewardAllowance != null">
+            <span class="info-label">{{ 'CAPTAIN_FORM.REWARD' | translate }}</span>
+            <span class="info-value">{{ captain.rewardAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.salaryDeductions != null">
+            <span class="info-label">{{ 'CAPTAIN_DETAIL.SALARY_DEDUCTIONS' | translate }}</span>
+            <span class="info-value" style="color: var(--danger, #dc2626); font-weight: 600;">-{{ captain.salaryDeductions | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.netSalary != null">
+            <span class="info-label" style="font-weight: 700;">{{ 'CAPTAIN_DETAIL.NET_SALARY' | translate }}</span>
+            <span class="info-value" style="color: var(--success, #16a34a); font-weight: 700; font-size: 1.05rem;">{{ captain.netSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.bankName">
+            <span class="info-label">{{ 'CAPTAIN_FORM.BANK_NAME' | translate }}</span>
+            <span class="info-value">{{ captain.bankName }}</span>
+          </div>
+          <div class="info-row" *ngIf="captain.bankAccountNumber">
+            <span class="info-label">{{ 'CAPTAIN_FORM.BANK_ACCOUNT' | translate }}</span>
+            <span class="info-value" dir="ltr">{{ captain.bankAccountNumber }}</span>
           </div>
         </div>
       </div>
@@ -147,11 +302,11 @@
       <div class="section-head">
         <h2 class="section-title">
           <span class="material-icons-round">link</span>
-          معرفات الموردين
+          {{ 'CAPTAIN_DETAIL.SUPPLIER_IDS' | translate }}
         </h2>
         <button class="btn btn-outline btn-sm" (click)="openLinkModal()">
           <span class="material-icons-round">add_link</span>
-          ربط معرف
+          {{ 'CAPTAIN_DETAIL.LINK_ID' | translate }}
         </button>
       </div>
 
@@ -159,10 +314,10 @@
 
       <div class="empty-section" *ngIf="captain.supplierIds.length === 0">
         <span class="material-icons-round">link_off</span>
-        <p>لا يوجد معرفات مربوطة</p>
+        <p>{{ 'CAPTAIN_DETAIL.NO_LINKED_IDS' | translate }}</p>
         <button class="btn btn-outline btn-sm" (click)="openLinkModal()">
           <span class="material-icons-round">add_link</span>
-          ربط معرف
+          {{ 'CAPTAIN_DETAIL.LINK_ID' | translate }}
         </button>
       </div>
 
@@ -173,14 +328,14 @@
             <span class="supplier-tag">{{ sid.supplierName }}</span>
           </div>
           <div class="id-card-meta">
-            <span>من: {{ sid.validFrom }}</span>
-            <span *ngIf="sid.validTo">إلى: {{ sid.validTo }}</span>
-            <span class="active-tag" *ngIf="!sid.validTo">نشط</span>
+            <span>{{ 'COMMON.FROM' | translate }}: {{ sid.validFrom }}</span>
+            <span *ngIf="sid.validTo">{{ 'COMMON.TO' | translate }}: {{ sid.validTo }}</span>
+            <span class="active-tag" *ngIf="!sid.validTo">{{ 'CAPTAINS.STATUS_ACTIVE' | translate }}</span>
           </div>
           <!-- Only the open assignment can be ended; closed ones are history. -->
           <button class="unlink-btn" *ngIf="!sid.validTo" (click)="unlinkSlot(sid)">
             <span class="material-icons-round">link_off</span>
-            فك الربط
+            {{ 'CAPTAIN_DETAIL.UNLINK' | translate }}
           </button>
         </div>
       </div>
@@ -190,16 +345,16 @@
     <div class="section">
       <h2 class="section-title">
         <span class="material-icons-round">folder</span>
-        المستندات
+        {{ 'CAPTAIN_DETAIL.DOCUMENTS' | translate }}
         <span class="count-chip" *ngIf="captain.documents.length > 0">{{ captain.documents.length }}</span>
       </h2>
 
       <div class="empty-section" *ngIf="captain.documents.length === 0">
         <span class="material-icons-round">folder_off</span>
-        <p>لا يوجد مستندات مرفوعة</p>
+        <p>{{ 'CAPTAIN_DETAIL.NO_DOCUMENTS' | translate }}</p>
         <a class="btn btn-outline btn-sm" [routerLink]="['/captains', captain.id, 'edit']">
           <span class="material-icons-round">upload_file</span>
-          رفع مستند
+          {{ 'CAPTAIN_DETAIL.UPLOAD_DOCUMENT' | translate }}
         </a>
       </div>
 
@@ -211,7 +366,7 @@
     <div class="section" *ngIf="captain.notes">
       <h2 class="section-title">
         <span class="material-icons-round">notes</span>
-        ملاحظات
+        {{ 'CAPTAIN_DETAIL.NOTES_TITLE' | translate }}
       </h2>
       <div class="notes-box">{{ captain.notes }}</div>
     </div>
@@ -222,7 +377,7 @@
         <div class="modal-header">
           <h2>
             <span class="material-icons-round">add_link</span>
-            ربط معرف بـ {{ captain.fullNameAr }}
+            {{ 'CAPTAIN_DETAIL.LINK_ID_TO' | translate:{ name: captain.fullNameAr } }}
           </h2>
           <button class="modal-close" (click)="closeLinkModal()">
             <span class="material-icons-round">close</span>
@@ -231,18 +386,18 @@
 
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">المورد</label>
+            <label class="form-label">{{ 'CAPTAIN_DETAIL.SUPPLIER' | translate }}</label>
             <select class="form-input" [(ngModel)]="linkSupplierId" (change)="onLinkSupplierChange()">
-              <option value="">كل الموردين</option>
+              <option value="">{{ 'CAPTAIN_DETAIL.ALL_SUPPLIERS' | translate }}</option>
               <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} ({{ s.code }})</option>
             </select>
           </div>
 
           <div class="form-group slot-picker">
-            <label class="form-label">المعرف المتاح *</label>
+            <label class="form-label">{{ 'CAPTAIN_DETAIL.AVAILABLE_ID' | translate }}</label>
             <input class="form-input" [ngModel]="slotQuery"
                    (ngModelChange)="onSlotQueryChange($event)"
-                   placeholder="ابحث برقم المعرف..." dir="ltr">
+                   [placeholder]="'CAPTAIN_DETAIL.SEARCH_BY_ID' | translate" dir="ltr">
 
             <div class="picker-results" *ngIf="slotResults.length > 0">
               <button class="picker-item" *ngFor="let s of slotResults" (click)="selectSlot(s)">
@@ -253,34 +408,34 @@
               </button>
             </div>
 
-            <p class="field-hint" *ngIf="isSearchingSlots">جاري البحث...</p>
+            <p class="field-hint" *ngIf="isSearchingSlots">{{ 'CAPTAIN_DETAIL.SEARCHING' | translate }}</p>
             <p class="field-hint" *ngIf="!isSearchingSlots && slotResults.length === 0 && !selectedSlot">
-              لا يوجد معرفات متاحة — أضف معرفاً جديداً من صفحة سجل المعرفات
+              {{ 'CAPTAIN_DETAIL.NO_AVAILABLE_IDS' | translate }}
             </p>
             <p class="field-hint selected-hint" *ngIf="selectedSlot">
               <span class="material-icons-round">check_circle</span>
-              تم اختيار {{ selectedSlot.externalId }} ({{ selectedSlot.supplierName }})
+              {{ 'CAPTAIN_DETAIL.ID_SELECTED' | translate:{ id: selectedSlot.externalId, supplier: selectedSlot.supplierName } }}
             </p>
           </div>
 
           <div class="form-group">
-            <label class="form-label">تاريخ بدء التخصيص</label>
+            <label class="form-label">{{ 'CAPTAIN_DETAIL.ASSIGNMENT_START' | translate }}</label>
             <input class="form-input" type="date" [(ngModel)]="linkValidFrom">
           </div>
 
           <div class="form-group">
-            <label class="form-label">اسم الكابتن لدى المورد</label>
-            <input class="form-input" [(ngModel)]="linkSideName" placeholder="اختياري">
+            <label class="form-label">{{ 'CAPTAIN_DETAIL.CAPTAIN_NAME_AT_SUPPLIER' | translate }}</label>
+            <input class="form-input" [(ngModel)]="linkSideName" [placeholder]="'COMMON.OPTIONAL' | translate">
           </div>
 
           <p class="form-error" *ngIf="linkError">{{ linkError }}</p>
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline" (click)="closeLinkModal()">إلغاء</button>
+          <button class="btn btn-outline" (click)="closeLinkModal()">{{ 'COMMON.CANCEL' | translate }}</button>
           <button class="btn btn-primary" (click)="linkSlot()" [disabled]="isLinking || !selectedSlot">
             <span class="spinner spinner-sm" *ngIf="isLinking"></span>
-            ربط المعرف
+            {{ 'CAPTAIN_DETAIL.LINK_THE_ID' | translate }}
           </button>
         </div>
       </div>

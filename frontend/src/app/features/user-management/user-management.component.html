@@ -1,46 +1,46 @@
 <div class="page-container">
   <div class="page-header">
-    <h1>إدارة المستخدمين</h1>
+    <h1>{{ 'USER_MGMT.TITLE' | translate }}</h1>
   </div>
 
   <!-- Tabs -->
   <div class="tab-bar">
     <button class="tab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
-      <span class="material-icons-round">people</span> حسابات المستخدمين
+      <span class="material-icons-round">people</span> {{ 'USER_MGMT.TAB_USERS' | translate }}
     </button>
     <button class="tab" [class.active]="activeTab === 'roles'" (click)="activeTab = 'roles'">
-      <span class="material-icons-round">admin_panel_settings</span> الوظائف والصلاحيات
+      <span class="material-icons-round">admin_panel_settings</span> {{ 'USER_MGMT.TAB_ROLES' | translate }}
     </button>
     <button class="tab" [class.active]="activeTab === 'allocations'" (click)="activeTab = 'allocations'">
-      <span class="material-icons-round">assignment_ind</span> توزيع صلاحيات الكباتن
+      <span class="material-icons-round">assignment_ind</span> {{ 'USER_MGMT.TAB_ALLOCATIONS' | translate }}
     </button>
   </div>
 
   <!-- Users Tab -->
   <div *ngIf="activeTab === 'users'" class="tab-content">
     <div class="section-header">
-      <h2>حسابات المستخدمين</h2>
+      <h2>{{ 'USER_MGMT.USERS_TITLE' | translate }}</h2>
       <button class="btn btn-primary" (click)="openUserModal()">
-        <span class="material-icons-round">person_add</span> إنشاء حساب
+        <span class="material-icons-round">person_add</span> {{ 'USER_MGMT.CREATE_ACCOUNT' | translate }}
       </button>
     </div>
 
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner"></div>
-      <span>جاري التحميل...</span>
+      <span>{{ 'USER_MGMT.LOADING' | translate }}</span>
     </div>
 
     <div class="table-container" *ngIf="!isLoading">
       <table class="data-table">
         <thead>
           <tr>
-            <th>اسم المستخدم</th>
-            <th>الاسم المعروض</th>
-            <th>الدور</th>
-            <th>الوظيفة</th>
-            <th>الموظف المرتبط</th>
-            <th>الحالة</th>
-            <th>الإجراءات</th>
+            <th>{{ 'USER_MGMT.COL_USERNAME' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_DISPLAY_NAME' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_ROLE' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_JOB_TITLE' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_LINKED_STAFF' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_STATUS' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -49,29 +49,29 @@
             <td>{{ u.displayName || '—' }}</td>
             <td>
               <span class="role-badge" [class.super-admin]="isPrimaryAdmin(u)">
-                {{ isPrimaryAdmin(u) ? 'مدير الشركة الرئيسي' : 'إداري' }}
+                {{ (isPrimaryAdmin(u) ? 'USER_MGMT.ROLE_PRIMARY_ADMIN' : 'USER_MGMT.ROLE_ADMIN_STAFF') | translate }}
               </span>
             </td>
             <td>{{ u.jobTitleLabel || '—' }}</td>
             <td>{{ u.staffName ? u.staffCode + ' - ' + u.staffName : '—' }}</td>
             <td>
               <span class="status-badge" [class.status-active]="u.active" [class.status-inactive]="!u.active">
-                {{ u.active ? 'نشط' : 'معطل' }}
+                {{ (u.active ? 'USER_MGMT.STATUS_ACTIVE' : 'USER_MGMT.STATUS_INACTIVE') | translate }}
               </span>
             </td>
             <td>
               <div class="action-btns" *ngIf="!isPrimaryAdmin(u)">
-                <button class="icon-btn" (click)="openEditUserModal(u)" title="تعديل الحساب">
+                <button class="icon-btn" (click)="openEditUserModal(u)" [title]="'USER_MGMT.EDIT_ACCOUNT' | translate">
                   <span class="material-icons-round">edit</span>
                 </button>
-                <button class="icon-btn" (click)="toggleUserActive(u)" [title]="u.active ? 'تعطيل' : 'تفعيل'">
+                <button class="icon-btn" (click)="toggleUserActive(u)" [title]="(u.active ? 'USER_MGMT.DEACTIVATE' : 'USER_MGMT.ACTIVATE') | translate">
                   <span class="material-icons-round">{{ u.active ? 'block' : 'check_circle' }}</span>
                 </button>
-                <button class="icon-btn danger" (click)="deleteUser(u)" title="حذف">
+                <button class="icon-btn danger" (click)="deleteUser(u)" [title]="'USER_MGMT.DELETE' | translate">
                   <span class="material-icons-round">delete</span>
                 </button>
               </div>
-              <span *ngIf="isPrimaryAdmin(u)" class="no-action-badge">حساب محمي</span>
+              <span *ngIf="isPrimaryAdmin(u)" class="no-action-badge">{{ 'USER_MGMT.PROTECTED_ACCOUNT' | translate }}</span>
             </td>
           </tr>
 
@@ -83,9 +83,9 @@
   <!-- Roles Tab -->
   <div *ngIf="activeTab === 'roles'" class="tab-content">
     <div class="section-header">
-      <h2>الوظائف والصلاحيات</h2>
+      <h2>{{ 'USER_MGMT.ROLES_TITLE' | translate }}</h2>
       <button class="btn btn-primary" (click)="openRoleModal()">
-        <span class="material-icons-round">add</span> إضافة وظيفة
+        <span class="material-icons-round">add</span> {{ 'USER_MGMT.ADD_ROLE' | translate }}
       </button>
     </div>
 
@@ -99,13 +99,13 @@
           <span *ngFor="let p of role.permissions" class="perm-chip">
             {{ getPermLabel(p) }}
           </span>
-          <span *ngIf="role.permissions.length === 0" class="no-perms">لا توجد صلاحيات</span>
+          <span *ngIf="role.permissions.length === 0" class="no-perms">{{ 'USER_MGMT.NO_PERMS' | translate }}</span>
         </div>
         <div class="role-actions">
-          <button class="icon-btn" (click)="openRoleModal(role)" title="تعديل">
+          <button class="icon-btn" (click)="openRoleModal(role)" [title]="'USER_MGMT.EDIT_ACCOUNT' | translate">
             <span class="material-icons-round">edit</span>
           </button>
-          <button class="icon-btn danger" (click)="deleteRole(role)" title="حذف"
+          <button class="icon-btn danger" (click)="deleteRole(role)" [title]="'USER_MGMT.DELETE' | translate"
                   *ngIf="!role.systemDefined">
             <span class="material-icons-round">delete</span>
           </button>
@@ -117,36 +117,36 @@
   <!-- Create User Modal -->
   <div class="modal-backdrop" *ngIf="showUserModal" (click)="showUserModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
-      <h2 class="modal-title">إنشاء حساب مستخدم</h2>
+      <h2 class="modal-title">{{ 'USER_MGMT.MODAL_CREATE_TITLE' | translate }}</h2>
       <div class="form-group">
-        <label>اسم المستخدم</label>
+        <label>{{ 'USER_MGMT.USERNAME' | translate }}</label>
         <input type="text" [(ngModel)]="newUser.username" placeholder="admin2" dir="ltr">
       </div>
       <div class="form-group">
-        <label>كلمة المرور</label>
+        <label>{{ 'USER_MGMT.PASSWORD' | translate }}</label>
         <input type="password" [(ngModel)]="newUser.password" dir="ltr">
       </div>
       <div class="form-group">
-        <label>الاسم المعروض</label>
+        <label>{{ 'USER_MGMT.DISPLAY_NAME' | translate }}</label>
         <input type="text" [(ngModel)]="newUser.displayName">
       </div>
       <div class="form-group">
-        <label>الوظيفة</label>
+        <label>{{ 'USER_MGMT.JOB_TITLE' | translate }}</label>
         <select [(ngModel)]="newUser.jobTitleId">
-          <option [ngValue]="null">— بدون وظيفة —</option>
+          <option [ngValue]="null">{{ 'USER_MGMT.NO_JOB_TITLE' | translate }}</option>
           <option *ngFor="let jt of jobTitles" [ngValue]="jt.id">{{ jt.labelAr }}</option>
         </select>
       </div>
       <div class="form-group">
-        <label>ربط بموظف (اختياري)</label>
+        <label>{{ 'USER_MGMT.LINK_STAFF_OPTIONAL' | translate }}</label>
         <select [(ngModel)]="newUser.staffId">
-          <option [ngValue]="null">— بدون ربط —</option>
+          <option [ngValue]="null">{{ 'USER_MGMT.NO_LINK' | translate }}</option>
           <option *ngFor="let s of managerStaff" [ngValue]="s.id">{{ s.staffCode }} - {{ s.fullNameAr }}</option>
         </select>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="showUserModal = false">إلغاء</button>
-        <button class="btn btn-primary" (click)="createUser()">إنشاء</button>
+        <button class="btn btn-secondary" (click)="showUserModal = false">{{ 'USER_MGMT.CANCEL' | translate }}</button>
+        <button class="btn btn-primary" (click)="createUser()">{{ 'USER_MGMT.CREATE' | translate }}</button>
       </div>
     </div>
   </div>
@@ -154,41 +154,41 @@
   <!-- Edit User Modal -->
   <div class="modal-backdrop" *ngIf="showEditUserModal" (click)="showEditUserModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
-      <h2 class="modal-title">تعديل حساب المستخدم: {{ editingUsername }}</h2>
+      <h2 class="modal-title">{{ 'USER_MGMT.MODAL_EDIT_TITLE' | translate:{ username: editingUsername } }}</h2>
       <div class="form-group">
-        <label>الاسم المعروض</label>
-        <input type="text" [(ngModel)]="editUser.displayName" placeholder="الاسم المعروض">
+        <label>{{ 'USER_MGMT.DISPLAY_NAME' | translate }}</label>
+        <input type="text" [(ngModel)]="editUser.displayName" [placeholder]="'USER_MGMT.DISPLAY_NAME' | translate">
       </div>
       <div class="form-group">
-        <label>الوظيفة (الدور الوظيفي)</label>
+        <label>{{ 'USER_MGMT.JOB_TITLE_ROLE' | translate }}</label>
         <select [(ngModel)]="editUser.jobTitleId">
-          <option [ngValue]="null">— بدون وظيفة —</option>
+          <option [ngValue]="null">{{ 'USER_MGMT.NO_JOB_TITLE' | translate }}</option>
           <option *ngFor="let jt of jobTitles" [ngValue]="jt.id">{{ jt.labelAr }}</option>
         </select>
       </div>
       <div class="form-group">
-        <label>ربط بموظف / إداري</label>
+        <label>{{ 'USER_MGMT.LINK_STAFF' | translate }}</label>
         <select [(ngModel)]="editUser.staffId">
-          <option [ngValue]="null">— بدون ربط —</option>
+          <option [ngValue]="null">{{ 'USER_MGMT.NO_LINK' | translate }}</option>
           <option *ngFor="let s of managerStaff" [ngValue]="s.id">{{ s.staffCode }} - {{ s.fullNameAr }}</option>
         </select>
       </div>
       <div class="form-group">
-        <label>تغيير كلمة المرور (اختياري)</label>
-        <input type="password" [(ngModel)]="editUser.password" placeholder="اتركه فارغاً للحفاظ على كلمة المرور الحالية" dir="ltr">
+        <label>{{ 'USER_MGMT.CHANGE_PASSWORD_OPTIONAL' | translate }}</label>
+        <input type="password" [(ngModel)]="editUser.password" [placeholder]="'USER_MGMT.PASSWORD_HINT' | translate" dir="ltr">
       </div>
       <div class="form-group">
-        <label>حالة الحساب</label>
+        <label>{{ 'USER_MGMT.ACCOUNT_STATUS' | translate }}</label>
         <select [(ngModel)]="editUser.active">
-          <option [ngValue]="true">نشط</option>
-          <option [ngValue]="false">معطل</option>
+          <option [ngValue]="true">{{ 'USER_MGMT.STATUS_ACTIVE' | translate }}</option>
+          <option [ngValue]="false">{{ 'USER_MGMT.STATUS_INACTIVE' | translate }}</option>
         </select>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="showEditUserModal = false">إلغاء</button>
+        <button class="btn btn-secondary" (click)="showEditUserModal = false">{{ 'USER_MGMT.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="saveUserChanges()" [disabled]="isSavingUser">
-          <span *ngIf="!isSavingUser">حفظ التعديلات</span>
-          <span *ngIf="isSavingUser">جاري الحفظ...</span>
+          <span *ngIf="!isSavingUser">{{ 'USER_MGMT.SAVE_CHANGES' | translate }}</span>
+          <span *ngIf="isSavingUser">{{ 'USER_MGMT.SAVING' | translate }}</span>
         </button>
       </div>
     </div>
@@ -197,20 +197,20 @@
   <!-- Create/Edit Role Modal -->
   <div class="modal-backdrop" *ngIf="showRoleModal" (click)="showRoleModal = false">
     <div class="modal modal-lg" (click)="$event.stopPropagation()">
-      <h2 class="modal-title">{{ editingRoleId ? 'تعديل وظيفة' : 'إضافة وظيفة جديدة' }}</h2>
+      <h2 class="modal-title">{{ (editingRoleId ? 'USER_MGMT.EDIT_ROLE_TITLE' : 'USER_MGMT.ADD_ROLE_TITLE') | translate }}</h2>
       <div class="form-row">
         <div class="form-group">
-          <label>الاسم الإنجليزي (مفتاح)</label>
+          <label>{{ 'USER_MGMT.ENGLISH_NAME_KEY' | translate }}</label>
           <input type="text" [(ngModel)]="newRole.name" placeholder="OPERATIONS_MANAGER" dir="ltr"
                  [disabled]="!!editingRoleId">
         </div>
         <div class="form-group">
-          <label>الاسم بالعربي</label>
-          <input type="text" [(ngModel)]="newRole.labelAr" placeholder="مدير العمليات">
+          <label>{{ 'USER_MGMT.ARABIC_NAME' | translate }}</label>
+          <input type="text" [(ngModel)]="newRole.labelAr" [placeholder]="'USER_MGMT.ARABIC_NAME_PH' | translate">
         </div>
       </div>
 
-      <h3 class="perms-title">الصلاحيات</h3>
+      <h3 class="perms-title">{{ 'USER_MGMT.PERMISSIONS' | translate }}</h3>
       <div class="perms-grid">
         <label *ngFor="let p of allPermissions" class="perm-checkbox"
                [class.checked]="hasPermission(p.name)">
@@ -222,8 +222,8 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="showRoleModal = false">إلغاء</button>
-        <button class="btn btn-primary" (click)="saveRole()">حفظ</button>
+        <button class="btn btn-secondary" (click)="showRoleModal = false">{{ 'USER_MGMT.CANCEL' | translate }}</button>
+        <button class="btn btn-primary" (click)="saveRole()">{{ 'USER_MGMT.SAVE' | translate }}</button>
       </div>
     </div>
   </div>
@@ -232,8 +232,8 @@
   <div *ngIf="activeTab === 'allocations'" class="tab-content">
     <div class="section-header">
       <div>
-        <h2>توزيع الكباتن على الإداريين</h2>
-        <p class="section-subtitle">حدد الكباتن المخصصين لكل إداري لحصر بيانات وحركات الكباتن التابعين له فقط</p>
+        <h2>{{ 'USER_MGMT.ALLOCATIONS_TITLE' | translate }}</h2>
+        <p class="section-subtitle">{{ 'USER_MGMT.ALLOCATIONS_SUBTITLE' | translate }}</p>
       </div>
     </div>
 
@@ -241,35 +241,35 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>اسم المستخدم</th>
-            <th>الاسم المعروض</th>
-            <th>الدور</th>
-            <th>نطاق البيانات الحالي</th>
-            <th>الكباتن التابعين</th>
-            <th>الإجراءات</th>
+            <th>{{ 'USER_MGMT.COL_USERNAME' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_DISPLAY_NAME' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_ROLE' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_DATA_SCOPE' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_ASSIGNED_CAPTAINS' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of allocations" class="table-row">
             <td class="code-cell">{{ item.username }}</td>
             <td>{{ item.displayName || '—' }}</td>
-            <td><span class="role-badge" [class.super-admin]="isPrimaryAdmin(item)">{{ isPrimaryAdmin(item) ? 'مدير الشركة الرئيسي' : item.role }}</span></td>
+            <td><span class="role-badge" [class.super-admin]="isPrimaryAdmin(item)">{{ isPrimaryAdmin(item) ? ('USER_MGMT.ROLE_PRIMARY_ADMIN' | translate) : item.role }}</span></td>
             <td>
               <span class="scope-pill" [class.scope-all]="item.dataScope === 'ALL_CAPTAINS'" [class.scope-restricted]="item.dataScope === 'ASSIGNED_ONLY'">
                 <span class="material-icons-round font-icon">{{ item.dataScope === 'ALL_CAPTAINS' ? 'public' : 'lock' }}</span>
-                {{ item.dataScope === 'ALL_CAPTAINS' ? 'شامل (جميع الكباتن)' : 'مخصص للإداري' }}
+                {{ (item.dataScope === 'ALL_CAPTAINS' ? 'USER_MGMT.SCOPE_ALL_LABEL' : 'USER_MGMT.SCOPE_ASSIGNED_LABEL') | translate }}
               </span>
             </td>
             <td>
               <span class="count-badge" [class.has-captains]="item.assignedCaptainCount > 0">
-                {{ item.dataScope === 'ALL_CAPTAINS' ? 'جميع الكباتن' : (item.assignedCaptainCount + ' كابتن') }}
+                {{ item.dataScope === 'ALL_CAPTAINS' ? ('USER_MGMT.ALL_CAPTAINS' | translate) : (item.assignedCaptainCount + ' ' + ('USER_MGMT.CAPTAINS_COUNT' | translate)) }}
               </span>
             </td>
             <td>
               <button *ngIf="!isPrimaryAdmin(item)" class="btn btn-sm btn-outline-primary" (click)="openAllocationModal(item.userId)">
-                <span class="material-icons-round">edit_attributes</span> تخصيص الكباتن
+                <span class="material-icons-round">edit_attributes</span> {{ 'USER_MGMT.MANAGE_ALLOCATION_BTN' | translate }}
               </button>
-              <span *ngIf="isPrimaryAdmin(item)" class="no-action-badge">نطاق شامل دائِم</span>
+              <span *ngIf="isPrimaryAdmin(item)" class="no-action-badge">{{ 'USER_MGMT.PERMANENT_FULL_SCOPE' | translate }}</span>
             </td>
           </tr>
 
@@ -283,7 +283,7 @@
     <div class="modal modal-lg allocation-modal" (click)="$event.stopPropagation()" *ngIf="selectedAllocationUser">
       <div class="modal-header-custom">
         <div class="user-modal-title">
-          <h2>تخصيص الكباتن للإداري: {{ selectedAllocationUser.displayName || selectedAllocationUser.username }}</h2>
+          <h2>{{ 'USER_MGMT.ALLOCATION_MODAL_TITLE' | translate:{ name: selectedAllocationUser.displayName || selectedAllocationUser.username } }}</h2>
           <span class="username-sub font-mono">({{ selectedAllocationUser.username }})</span>
         </div>
         <button class="close-btn" (click)="showAllocationModal = false">&times;</button>
@@ -295,8 +295,8 @@
           <div class="radio-content">
             <span class="material-icons-round radio-icon">public</span>
             <div>
-              <strong>نطاق شامل (جميع البيانات)</strong>
-              <p>يستطيع الإداري رؤية ومتابعة جميع الكباتن في الشركة بدون أي تقييد.</p>
+              <strong>{{ 'USER_MGMT.SCOPE_ALL_TITLE' | translate }}</strong>
+              <p>{{ 'USER_MGMT.SCOPE_ALL_DESC' | translate }}</p>
             </div>
           </div>
         </label>
@@ -306,8 +306,8 @@
           <div class="radio-content">
             <span class="material-icons-round radio-icon">lock</span>
             <div>
-              <strong>نطاق مخصص (تحديد كباتن معينين)</strong>
-              <p>تظهر للإداري فقط بيانات وتقارير الكباتن المحددين له أدناه.</p>
+              <strong>{{ 'USER_MGMT.SCOPE_ASSIGNED_TITLE' | translate }}</strong>
+              <p>{{ 'USER_MGMT.SCOPE_ASSIGNED_DESC' | translate }}</p>
             </div>
           </div>
         </label>
@@ -318,12 +318,12 @@
         <div class="picker-toolbar">
           <div class="search-box">
             <span class="material-icons-round search-icon">search</span>
-            <input type="text" [(ngModel)]="allocationSearchQuery" placeholder="بحث باسم الكابتن أو ID-KSLSC أو الجوال...">
+            <input type="text" [(ngModel)]="allocationSearchQuery" [placeholder]="'USER_MGMT.SEARCH_CAPTAINS_PLACEHOLDER' | translate">
           </div>
           <div class="picker-quick-actions">
-            <button class="btn btn-sm btn-light" (click)="selectAllFilteredCaptains()">تحديد الكل</button>
-            <button class="btn btn-sm btn-light" (click)="deselectAllCaptains()">إلغاء تحديد الكل</button>
-            <span class="selection-counter">تم تحديد <strong>{{ selectedCaptainIdsSet.size }}</strong> من <strong>{{ getAllCaptainsForModal().length }}</strong> كابتن</span>
+            <button class="btn btn-sm btn-light" (click)="selectAllFilteredCaptains()">{{ 'USER_MGMT.SELECT_ALL' | translate }}</button>
+            <button class="btn btn-sm btn-light" (click)="deselectAllCaptains()">{{ 'USER_MGMT.DESELECT_ALL' | translate }}</button>
+            <span class="selection-counter">{{ 'USER_MGMT.SELECTION_COUNTER' | translate:{ selected: selectedCaptainIdsSet.size, total: getAllCaptainsForModal().length } }}</span>
           </div>
         </div>
 
@@ -339,11 +339,11 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="showAllocationModal = false">إلغاء</button>
+        <button class="btn btn-secondary" (click)="showAllocationModal = false">{{ 'USER_MGMT.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="saveAllocation()" [disabled]="isSavingAllocation">
           <span class="material-icons-round" *ngIf="!isSavingAllocation">save</span>
-          <span *ngIf="isSavingAllocation">جاري الحفظ...</span>
-          <span *ngIf="!isSavingAllocation">حفظ التوزيع</span>
+          <span *ngIf="isSavingAllocation">{{ 'USER_MGMT.SAVING' | translate }}</span>
+          <span *ngIf="!isSavingAllocation">{{ 'USER_MGMT.SAVE_ALLOCATION' | translate }}</span>
         </button>
       </div>
     </div>

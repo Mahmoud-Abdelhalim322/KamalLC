@@ -2,8 +2,8 @@
 
   <!-- Header -->
   <div class="page-header">
-    <h1 class="page-title">إيراد الموردين والتسويات المالية</h1>
-    <p class="page-subtitle">تتبع إيرادات الموردين والطلبات وإدارة حركات الخصم والإضافة والبنود المالية</p>
+    <h1 class="page-title">{{ 'SUPPLIER_REVENUE.TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'SUPPLIER_REVENUE.SUBTITLE' | translate }}</p>
   </div>
 
   <!-- Alerts -->
@@ -22,35 +22,35 @@
   <!-- Toolbar & Filters -->
   <div class="toolbar">
     <div class="date-field">
-      <label>من</label>
+      <label>{{ 'SUPPLIER_REVENUE.FILTER_FROM' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="fromDate" (change)="onDateChange()" />
     </div>
 
     <div class="date-field">
-      <label>إلى</label>
+      <label>{{ 'SUPPLIER_REVENUE.FILTER_TO' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="toDate" (change)="onDateChange()" />
     </div>
 
     <div class="filter-tabs">
       <button class="filter-tab" [class.active]="activePreset === 'current-month'" (click)="setPreset('current-month')">
-        الشهر الحالي
+        {{ 'SUPPLIER_REVENUE.CURRENT_MONTH' | translate }}
       </button>
       <button class="filter-tab" [class.active]="activePreset === 'last-month'" (click)="setPreset('last-month')">
-        الشهر السابق
+        {{ 'SUPPLIER_REVENUE.LAST_MONTH' | translate }}
       </button>
       <button class="filter-tab" [class.active]="activePreset === 'last-30'" (click)="setPreset('last-30')">
-        آخر 30 يوم
+        {{ 'SUPPLIER_REVENUE.LAST_30_DAYS' | translate }}
       </button>
     </div>
 
     <div class="header-actions">
       <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-        <span>تصدير Excel</span>
+        <span>{{ 'SUPPLIER_REVENUE.EXPORT_EXCEL' | translate }}</span>
       </button>
       <button class="btn btn-primary" (click)="openAddAdjustmentModal()">
         <span class="material-icons-round">add_circle</span>
-        <span>إضافة خصم / إضافة بند</span>
+        <span>{{ 'SUPPLIER_REVENUE.ADD_ADJUSTMENT' | translate }}</span>
       </button>
     </div>
   </div>
@@ -58,7 +58,7 @@
   <!-- Loading State -->
   <div class="loading-state" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جارٍ تحميل إيرادات الموردين والتسويات…</p>
+    <p>{{ 'SUPPLIER_REVENUE.LOADING' | translate }}</p>
   </div>
 
   <!-- Content -->
@@ -67,25 +67,25 @@
     <!-- KPI Grid Row -->
     <div class="kpi-row">
       <div class="kpi">
-        <span class="kpi-label">إجمالي الإيرادات الأساسية</span>
-        <b class="kpi-value">{{ summary.grossRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_GROSS' | translate }}</span>
+        <b class="kpi-value">{{ summary.grossRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
       </div>
 
       <div class="kpi">
-        <span class="kpi-label">إجمالي الطلبات المنفذة</span>
-        <b class="kpi-value">{{ summary.totalOrders | number }} <small>طلب</small></b>
+        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_ORDERS' | translate }}</span>
+        <b class="kpi-value">{{ summary.totalOrders | number }} <small>{{ 'SUPPLIER_REVENUE.ORDERS_UNIT' | translate }}</small></b>
       </div>
 
       <div class="kpi" [class.good]="summary.netAdjustments > 0" [class.bad]="summary.netAdjustments < 0">
-        <span class="kpi-label">صافي التسويات (إضافة/خصم)</span>
+        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_ADJUSTMENTS' | translate }}</span>
         <b class="kpi-value">
-          {{ summary.netAdjustments > 0 ? '+' : '' }}{{ summary.netAdjustments | number:'1.2-2' }} <small>ر.س</small>
+          {{ summary.netAdjustments > 0 ? '+' : '' }}{{ summary.netAdjustments | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small>
         </b>
       </div>
 
       <div class="kpi accent">
-        <span class="kpi-label">صافي الإيراد المستحق</span>
-        <b class="kpi-value">{{ summary.netRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_REVENUE' | translate }}</span>
+        <b class="kpi-value">{{ summary.netRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
       </div>
     </div>
 
@@ -94,24 +94,24 @@
       <div class="card-title-bar">
         <h2 class="card-title-text">
           <span class="material-icons-round">table_chart</span>
-          ملخص إيرادات الموردين ({{ summary.totalSuppliers }})
+          {{ 'SUPPLIER_REVENUE.SUMMARY_TITLE' | translate:{ count: summary.totalSuppliers } }}
         </h2>
       </div>
 
       <table class="data-table">
         <thead>
           <tr>
-            <th>المورد</th>
-            <th>الكود</th>
-            <th>الشيفتات</th>
-            <th>الطلبات</th>
-            <th>ساعات العمل</th>
-            <th>الإيراد الأساسي</th>
-            <th>الإيراد الإضافي</th>
-            <th>الإضافات (+)</th>
-            <th>الخصومات (-)</th>
-            <th>صافي الإيراد</th>
-            <th class="text-center">الإجراءات</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_SUPPLIER' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_CODE' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_SHIFTS' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_ORDERS' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_HOURS' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_BASE_REV' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_EXTRA_REV' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_ADDITIONS' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_DEDUCTIONS' | translate }}</th>
+            <th>{{ 'SUPPLIER_REVENUE.COL_NET_REV' | translate }}</th>
+            <th class="text-center">{{ 'SUPPLIER_REVENUE.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -125,25 +125,25 @@
             <td><span class="code-cell">{{ row.supplierCode }}</span></td>
             <td class="strong">{{ row.totalShifts }}</td>
             <td class="strong">{{ row.totalDelivered | number }}</td>
-            <td>{{ row.workingHours | number:'1.2-2' }} س</td>
-            <td>{{ row.baseRevenue | number:'1.2-2' }} ر.س</td>
-            <td>{{ row.extraRevenue | number:'1.2-2' }} ر.س</td>
+            <td>{{ row.workingHours | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.HOURS_UNIT' | translate }}</td>
+            <td>{{ row.baseRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
+            <td>{{ row.extraRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
             <td><span class="positive">+{{ row.additionsTotal | number:'1.2-2' }}</span></td>
             <td><span class="negative">-{{ row.deductionsTotal | number:'1.2-2' }}</span></td>
-            <td class="net">{{ row.netRevenue | number:'1.2-2' }} ر.س</td>
+            <td class="net">{{ row.netRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
             <td class="text-center">
               <div class="action-buttons">
-                <button class="btn btn-outline btn-sm" title="عرض كشف الحساب التفصيلي" (click)="openStatement(row)" [disabled]="!row.supplierId">
-                  <span class="material-icons-round">receipt_long</span> كشف حساب
+                <button class="btn btn-outline btn-sm" [title]="'SUPPLIER_REVENUE.STATEMENT_TOOLTIP' | translate" (click)="openStatement(row)" [disabled]="!row.supplierId">
+                  <span class="material-icons-round">receipt_long</span> {{ 'SUPPLIER_REVENUE.STATEMENT' | translate }}
                 </button>
-                <button class="btn btn-outline btn-sm btn-warn" title="إضافة خصم أو إضافة" (click)="openAddAdjustmentModal(row)" [disabled]="!row.supplierId">
-                  <span class="material-icons-round">add_moderator</span> تسوية
+                <button class="btn btn-outline btn-sm btn-warn" [title]="'SUPPLIER_REVENUE.ADJUSTMENT_TOOLTIP' | translate" (click)="openAddAdjustmentModal(row)" [disabled]="!row.supplierId">
+                  <span class="material-icons-round">add_moderator</span> {{ 'SUPPLIER_REVENUE.ADJUSTMENT' | translate }}
                 </button>
               </div>
             </td>
           </tr>
           <tr *ngIf="summary.rows.length === 0">
-            <td colspan="11" class="empty-state">لا توجد بيانات إيرادات للموردين في الفترة المحددة</td>
+            <td colspan="11" class="empty-state">{{ 'SUPPLIER_REVENUE.NO_DATA' | translate }}</td>
           </tr>
         </tbody>
       </table>
@@ -157,7 +157,7 @@
       <div class="modal-header">
         <h3 class="modal-title">
           <span class="material-icons-round">add_moderator</span>
-          إضافة خصم أو إضافة بند للمورد
+          {{ 'SUPPLIER_REVENUE.MODAL_ADJ_TITLE' | translate }}
         </h3>
         <button class="icon-btn" (click)="closeAdjustmentModal()">&times;</button>
       </div>
@@ -166,9 +166,9 @@
         <form (ngSubmit)="saveAdjustment()">
 
           <div class="form-group">
-            <label class="form-label">اختر المورد <span class="required">*</span></label>
+            <label class="form-label">{{ 'SUPPLIER_REVENUE.CHOOSE_SUPPLIER' | translate }} <span class="required">*</span></label>
             <select [(ngModel)]="adjSupplierId" name="adjSupplierId" class="form-input" required>
-              <option value="" disabled>-- اختر المورد --</option>
+              <option value="" disabled>{{ 'SUPPLIER_REVENUE.CHOOSE_SUPPLIER_PLACEHOLDER' | translate }}</option>
               <option *ngFor="let s of summary?.rows" [value]="s.supplierId" [disabled]="!s.supplierId">
                 {{ s.supplierName }} ({{ s.supplierCode }})
               </option>
@@ -176,57 +176,57 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">نوع الحركة <span class="required">*</span></label>
+            <label class="form-label">{{ 'SUPPLIER_REVENUE.TRANSACTION_TYPE' | translate }} <span class="required">*</span></label>
             <div class="type-selector">
               <label class="radio-chip deduction" [class.selected]="adjType === 'DEDUCTION'">
                 <input type="radio" [(ngModel)]="adjType" name="adjType" value="DEDUCTION" />
                 <span class="material-icons-round">remove_circle</span>
-                <span>خصم من المورد (-)</span>
+                <span>{{ 'SUPPLIER_REVENUE.DEDUCTION_FROM_SUPPLIER' | translate }}</span>
               </label>
 
               <label class="radio-chip addition" [class.selected]="adjType === 'ADDITION'">
                 <input type="radio" [(ngModel)]="adjType" name="adjType" value="ADDITION" />
                 <span class="material-icons-round">add_circle</span>
-                <span>إضافة للمورد (+)</span>
+                <span>{{ 'SUPPLIER_REVENUE.ADDITION_TO_SUPPLIER' | translate }}</span>
               </label>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">بند التسوية <span class="required">*</span></label>
+            <label class="form-label">{{ 'SUPPLIER_REVENUE.ADJ_ITEM' | translate }} <span class="required">*</span></label>
             <select [(ngModel)]="adjCategory" name="adjCategory" class="form-input" required>
-              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-              <option value="أخرى">بند آخر (مخصص)...</option>
+              <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.key | translate }}</option>
+              <option value="أخرى">{{ 'SUPPLIER_REVENUE.OTHER_CUSTOM' | translate }}</option>
             </select>
           </div>
 
           <div class="form-group" *ngIf="adjCategory === 'أخرى'">
-            <label class="form-label">اكتب اسم البند المخصص <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="customCategory" name="customCategory" class="form-input" placeholder="مثال: خصم فروقات جودة..." required />
+            <label class="form-label">{{ 'SUPPLIER_REVENUE.CUSTOM_ITEM_NAME' | translate }} <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="customCategory" name="customCategory" class="form-input" [placeholder]="'SUPPLIER_REVENUE.CUSTOM_ITEM_PLACEHOLDER' | translate" required />
           </div>
 
           <div class="form-row">
             <div class="form-group col">
-              <label class="form-label">المبلغ (ريال) <span class="required">*</span></label>
+              <label class="form-label">{{ 'SUPPLIER_REVENUE.AMOUNT_SAR' | translate }} <span class="required">*</span></label>
               <input type="number" step="0.01" min="0.01" [(ngModel)]="adjAmount" name="adjAmount" class="form-input" placeholder="0.00" required />
             </div>
 
             <div class="form-group col">
-              <label class="form-label">تاريخ الحركة <span class="required">*</span></label>
+              <label class="form-label">{{ 'SUPPLIER_REVENUE.TRANSACTION_DATE' | translate }} <span class="required">*</span></label>
               <input type="date" [(ngModel)]="adjDate" name="adjDate" class="form-input" required />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">السبب / الملاحظات (تفاصيل الخطأ أو التسوية)</label>
-            <textarea [(ngModel)]="adjNotes" name="adjNotes" class="form-input" rows="3" placeholder="اكتب تفاصيل سبب الخصم أو الإضافة..."></textarea>
+            <label class="form-label">{{ 'SUPPLIER_REVENUE.REASON_NOTES' | translate }}</label>
+            <textarea [(ngModel)]="adjNotes" name="adjNotes" class="form-input" rows="3" [placeholder]="'SUPPLIER_REVENUE.NOTES_PLACEHOLDER' | translate"></textarea>
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline" (click)="closeAdjustmentModal()">إلغاء</button>
+            <button type="button" class="btn btn-outline" (click)="closeAdjustmentModal()">{{ 'SUPPLIER_REVENUE.CANCEL' | translate }}</button>
             <button type="submit" class="btn btn-primary" [disabled]="isSavingAdjustment">
               <span class="material-icons-round">save</span>
-              <span>{{ isSavingAdjustment ? 'جاري الحفظ...' : 'حفظ الحركة' }}</span>
+              <span>{{ (isSavingAdjustment ? 'SUPPLIER_REVENUE.SAVING' : 'SUPPLIER_REVENUE.SAVE_TRANSACTION') | translate }}</span>
             </button>
           </div>
 
@@ -242,8 +242,8 @@
         <div class="statement-header-info">
           <span class="supplier-badge large" [style.background-color]="selectedSupplier?.color || '#1B5E20'"></span>
           <div>
-            <h3 class="modal-title">كشف حساب المورد التفصيلي: {{ selectedSupplier?.supplierName }}</h3>
-            <span class="statement-subtitle">الفترة من {{ fromDate }} إلى {{ toDate }}</span>
+            <h3 class="modal-title">{{ 'SUPPLIER_REVENUE.STATEMENT_MODAL_TITLE' | translate:{ name: selectedSupplier?.supplierName } }}</h3>
+            <span class="statement-subtitle">{{ 'SUPPLIER_REVENUE.STATEMENT_PERIOD' | translate:{ from: fromDate, to: toDate } }}</span>
           </div>
         </div>
         <button class="icon-btn" (click)="closeStatementModal()">&times;</button>
@@ -252,7 +252,7 @@
       <div class="modal-body statement-body">
         <div class="loading-state" *ngIf="isLoadingStatement">
           <div class="spinner"></div>
-          <p>جارٍ تحميل كشف الحساب التفصيلي…</p>
+          <p>{{ 'SUPPLIER_REVENUE.LOADING_STATEMENT' | translate }}</p>
         </div>
 
         <ng-container *ngIf="!isLoadingStatement && statement">
@@ -260,24 +260,24 @@
           <!-- Mini KPIs -->
           <div class="kpi-row mini-kpis">
             <div class="kpi">
-              <span class="kpi-label">إجمالي الطلبات</span>
-              <b class="kpi-value">{{ statement.totalOrders | number }} <small>طلب</small></b>
+              <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_TOTAL_ORDERS' | translate }}</span>
+              <b class="kpi-value">{{ statement.totalOrders | number }} <small>{{ 'SUPPLIER_REVENUE.ORDERS_UNIT' | translate }}</small></b>
             </div>
             <div class="kpi">
-              <span class="kpi-label">الإيراد الأساسي</span>
-              <b class="kpi-value">{{ statement.baseRevenue + statement.extraRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+              <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_BASE_REV' | translate }}</span>
+              <b class="kpi-value">{{ statement.baseRevenue + statement.extraRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
             </div>
             <div class="kpi good">
-              <span class="kpi-label">إجمالي الإضافات</span>
-              <b class="kpi-value">+{{ statement.additionsTotal | number:'1.2-2' }} <small>ر.س</small></b>
+              <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_TOTAL_ADDITIONS' | translate }}</span>
+              <b class="kpi-value">+{{ statement.additionsTotal | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
             </div>
             <div class="kpi bad">
-              <span class="kpi-label">إجمالي الخصومات</span>
-              <b class="kpi-value">-{{ statement.deductionsTotal | number:'1.2-2' }} <small>ر.س</small></b>
+              <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_TOTAL_DEDUCTIONS' | translate }}</span>
+              <b class="kpi-value">-{{ statement.deductionsTotal | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
             </div>
             <div class="kpi accent">
-              <span class="kpi-label">الصافي النهائي</span>
-              <b class="kpi-value">{{ statement.netRevenue | number:'1.2-2' }} <small>ر.س</small></b>
+              <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_FINAL_NET' | translate }}</span>
+              <b class="kpi-value">{{ statement.netRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
             </div>
           </div>
 
@@ -286,10 +286,10 @@
             <div class="section-header">
               <h4>
                 <span class="material-icons-round">tune</span>
-                سجل الخصومات والتسويات الماليّة المطبقة ({{ statement.adjustments.length }})
+                {{ 'SUPPLIER_REVENUE.ADJUSTMENTS_LOG' | translate:{ count: statement.adjustments.length } }}
               </h4>
               <button class="btn btn-primary btn-sm" (click)="openAddAdjustmentModal(selectedSupplier!)">
-                <span class="material-icons-round">add</span> إضافة تسوية
+                <span class="material-icons-round">add</span> {{ 'SUPPLIER_REVENUE.ADD_ADJUSTMENT_BTN' | translate }}
               </button>
             </div>
 
@@ -297,13 +297,13 @@
               <table class="data-table compact">
                 <thead>
                   <tr>
-                    <th>التاريخ</th>
-                    <th>نوع الحركة</th>
-                    <th>بند التسوية</th>
-                    <th>المبلغ</th>
-                    <th>الملاحظات / السبب</th>
-                    <th>بواسطة</th>
-                    <th class="text-center">إجراء</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_DATE' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_TYPE' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_ITEM' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_AMOUNT' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_NOTES' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_CREATED_BY' | translate }}</th>
+                    <th class="text-center">{{ 'SUPPLIER_REVENUE.COL_ACTION' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -311,25 +311,25 @@
                     <td>{{ adj.adjustmentDate }}</td>
                     <td>
                       <span class="badge" [class.badge-success]="adj.type === 'ADDITION'" [class.badge-danger]="adj.type === 'DEDUCTION'">
-                        {{ adj.type === 'ADDITION' ? 'إضافة (+)' : 'خصم (-)' }}
+                        {{ (adj.type === 'ADDITION' ? 'SUPPLIER_REVENUE.ADDITION_BADGE' : 'SUPPLIER_REVENUE.DEDUCTION_BADGE') | translate }}
                       </span>
                     </td>
-                    <td class="strong">{{ adj.category }}</td>
+                    <td class="strong">{{ getCategoryLabel(adj.category) }}</td>
                     <td>
                       <span [class.positive]="adj.type === 'ADDITION'" [class.negative]="adj.type === 'DEDUCTION'">
-                        {{ adj.type === 'ADDITION' ? '+' : '-' }}{{ adj.amount | number:'1.2-2' }} ر.س
+                        {{ adj.type === 'ADDITION' ? '+' : '-' }}{{ adj.amount | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}
                       </span>
                     </td>
                     <td class="muted">{{ adj.notes || '-' }}</td>
                     <td>{{ adj.createdBy }}</td>
                     <td class="text-center">
-                      <button class="btn-icon danger-icon" title="حذف التسوية" (click)="deleteAdjustment(adj)">
+                      <button class="btn-icon danger-icon" [title]="'SUPPLIER_REVENUE.DELETE_ADJUSTMENT_TOOLTIP' | translate" (click)="deleteAdjustment(adj)">
                         <span class="material-icons-round">delete</span>
                       </button>
                     </td>
                   </tr>
                   <tr *ngIf="statement.adjustments.length === 0">
-                    <td colspan="7" class="empty-state">لا توجد تسويات مالية أو خصومات مسجلة لهذا المورد في هذه الفترة</td>
+                    <td colspan="7" class="empty-state">{{ 'SUPPLIER_REVENUE.NO_ADJUSTMENTS' | translate }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -341,7 +341,7 @@
             <div class="section-header">
               <h4>
                 <span class="material-icons-round">event_note</span>
-                سجل الشيفتات والطلبات المنجزة ({{ statement.shifts.length }})
+                {{ 'SUPPLIER_REVENUE.SHIFTS_LOG' | translate:{ count: statement.shifts.length } }}
               </h4>
             </div>
 
@@ -349,13 +349,13 @@
               <table class="data-table compact">
                 <thead>
                   <tr>
-                    <th>تاريخ الشيفت</th>
-                    <th>معرف الشيفت</th>
-                    <th>الكابتن</th>
-                    <th>المنطقة</th>
-                    <th>الطلبات</th>
-                    <th>ساعات العمل</th>
-                    <th>إيراد الشيفت</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_SHIFT_DATE' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_SHIFT_ID' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_CAPTAIN' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_ZONE' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_ORDERS' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_HOURS' | translate }}</th>
+                    <th>{{ 'SUPPLIER_REVENUE.COL_SHIFT_REV' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -365,8 +365,8 @@
                     <td class="name">{{ s.captainName }}</td>
                     <td>{{ s.zoneName || '-' }}</td>
                     <td class="strong">{{ s.totalDelivered }}</td>
-                    <td>{{ s.workingHours | number:'1.2-2' }} س</td>
-                    <td class="net">{{ s.supplierRevenue + s.supplierExtraRevenue | number:'1.2-2' }} ر.س</td>
+                    <td>{{ s.workingHours | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.HOURS_UNIT' | translate }}</td>
+                    <td class="net">{{ s.supplierRevenue + s.supplierExtraRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -379,3 +379,4 @@
   </div>
 
 </div>
+

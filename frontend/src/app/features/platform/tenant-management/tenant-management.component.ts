@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, TenantResponse, CreateTenantRequest, UpdateTenantRequest, PlanResponse } from '../../../core/models/api.models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-tenant-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './tenant-management.component.html',
   styleUrl: './tenant-management.component.scss'
 })
@@ -55,7 +57,7 @@ export class TenantManagementComponent implements OnInit {
     confirmPassword: ''
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, public i18n: TranslationService) {}
 
   ngOnInit(): void {
     this.fetchTenants();
@@ -98,12 +100,12 @@ export class TenantManagementComponent implements OnInit {
           if (res.success) {
             this.closeCreateModal();
             this.fetchTenants();
-            this.showFeedback('تم إنشاء حساب الشركة بنجاح');
+            this.showFeedback(this.i18n.t('PLATFORM.TENANT_CREATED_SUCCESS'));
           }
         },
         error: (err) => {
           this.submitting = false;
-          this.showError(err.error?.message || 'حدث خطأ أثناء إنشاء الشركة');
+          this.showError(err.error?.message || this.i18n.t('PLATFORM.CREATE_FAILED'));
         }
       });
   }
@@ -138,12 +140,12 @@ export class TenantManagementComponent implements OnInit {
           if (res.success) {
             this.closeEditModal();
             this.fetchTenants();
-            this.showFeedback('تم تحديث بيانات الشركة بنجاح');
+            this.showFeedback(this.i18n.t('PLATFORM.TENANT_UPDATED_SUCCESS'));
           }
         },
         error: (err) => {
           this.submitting = false;
-          this.showError(err.error?.message || 'حدث خطأ أثناء تحديث بيانات الشركة');
+          this.showError(err.error?.message || this.i18n.t('PLATFORM.UPDATE_FAILED'));
         }
       });
   }
@@ -162,11 +164,11 @@ export class TenantManagementComponent implements OnInit {
   submitChangePassword(): void {
     if (!this.selectedTenant) return;
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      this.showError('كلمتا المرور غير متطابقتين');
+      this.showError(this.i18n.t('PLATFORM.PWD_MISMATCH'));
       return;
     }
     if (this.passwordForm.newPassword.length < 4) {
-      this.showError('كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+      this.showError(this.i18n.t('PLATFORM.PWD_MIN_LENGTH'));
       return;
     }
 
@@ -178,12 +180,12 @@ export class TenantManagementComponent implements OnInit {
         this.submitting = false;
         if (res.success) {
           this.closePasswordModal();
-          this.showFeedback('تم تغيير كلمة المرور لمدير الشركة بنجاح');
+          this.showFeedback(this.i18n.t('PLATFORM.PWD_CHANGED_SUCCESS'));
         }
       },
       error: (err) => {
         this.submitting = false;
-        this.showError(err.error?.message || 'حدث خطأ أثناء تغيير كلمة المرور');
+        this.showError(err.error?.message || this.i18n.t('PLATFORM.PWD_CHANGE_FAILED'));
       }
     });
   }
@@ -194,16 +196,27 @@ export class TenantManagementComponent implements OnInit {
       .subscribe(res => {
         if (res.success) {
           this.fetchTenants();
-          this.showFeedback(newStatus === 'ACTIVE' ? 'تم تفعيل الشركة' : 'تم تعطيل الشركة');
+          this.showFeedback(newStatus === 'ACTIVE' ? this.i18n.t('PLATFORM.TENANT_ACTIVATED') : this.i18n.t('PLATFORM.TENANT_SUSPENDED_MSG'));
         }
       });
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'ACTIVE': return 'نشط';
-      case 'SUSPENDED': return 'معطل';
-      case 'TRIAL': return 'تجريبي';
+      case 'ACTIVE': return this.i18n.t('PLATFORM.STATUS_ACTIVE');
+      case 'SUSPENDED': return this.i18n.t('PLATFORM.STATUS_SUSPENDED');
+      case 'TRIAL': return this.i18n.t('PLATFORM.STATUS_TRIAL');
+      default: return status;
+    }
+  }
+
+  getSubscriptionStatusLabel(status: string | null): string {
+    if (!status) return this.i18n.t('PLATFORM.UNREGISTERED');
+    switch (status) {
+      case 'ACTIVE': return this.i18n.t('PLATFORM.STATUS_ACTIVE');
+      case 'EXPIRED': return this.i18n.t('PLATFORM.STATUS_EXPIRED');
+      case 'SUSPENDED': return this.i18n.t('PLATFORM.STATUS_SUSPENDED');
+      case 'TRIAL': return this.i18n.t('PLATFORM.STATUS_TRIAL');
       default: return status;
     }
   }

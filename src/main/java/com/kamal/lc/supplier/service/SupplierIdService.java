@@ -2,6 +2,7 @@ package com.kamal.lc.supplier.service;
 
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
+import com.kamal.lc.changelog.service.ChangeLogWriter;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.supplier.dto.SupplierIdSlotRequest;
 import com.kamal.lc.supplier.dto.SupplierIdSlotResponse;
@@ -34,6 +35,7 @@ public class SupplierIdService {
     private final SupplierIdSlotRepository slotRepo;
     private final SupplierIdAssignmentRepository assignmentRepo;
     private final CaptainRepository captainRepo;
+    private final ChangeLogWriter changeLogWriter;
 
     public List<SupplierResponse> getAllSuppliers() {
         return supplierRepo.findAll().stream().map(s -> SupplierResponse.builder()
@@ -242,6 +244,12 @@ public class SupplierIdService {
                 .reason(blankToNull(reason))
                 .build());
 
+        // Log LINK action
+        changeLogWriter.logAction("SUPPLIER_ID", slotId,
+                slot.getExternalId() + " (" + slot.getSupplier().getName() + ")",
+                "LINK", null, captain.getFullNameAr() + " (" + captain.getKamalCode() + ")",
+                reason, "نظام");
+
         return toSlotResponse(slot);
     }
 
@@ -260,11 +268,18 @@ public class SupplierIdService {
                     "تاريخ الفك يجب ألا يسبق تاريخ بدء التخصيص (" + current.getValidFrom() + ")");
         }
 
+        String previousCaptain = current.getCaptain().getFullNameAr() + " (" + current.getCaptain().getKamalCode() + ")";
         current.setValidTo(to);
         if (reason != null && !reason.isBlank()) {
             current.setReason(reason.trim());
         }
         assignmentRepo.save(current);
+
+        // Log UNLINK action
+        changeLogWriter.logAction("SUPPLIER_ID", slotId,
+                slot.getExternalId() + " (" + slot.getSupplier().getName() + ")",
+                "UNLINK", previousCaptain, null,
+                reason, "نظام");
 
         return toSlotResponse(slot);
     }

@@ -73,6 +73,20 @@ export class ShiftService {
       .pipe(map(unwrap));
   }
 
+  /** Exclude a supplier deduction — zeroes the value and requires a reason. */
+  excludeDeduction(id: string, reason: string): Observable<ShiftResponse> {
+    return this.http
+      .patch<ApiResponse<ShiftResponse>>(`${this.base}/${id}/exclude-deduction`, { reason })
+      .pipe(map(unwrap));
+  }
+
+  /** Restore a previously excluded supplier deduction to its original value. */
+  restoreDeduction(id: string): Observable<ShiftResponse> {
+    return this.http
+      .patch<ApiResponse<ShiftResponse>>(`${this.base}/${id}/restore-deduction`, {})
+      .pipe(map(unwrap));
+  }
+
   getVacationCommissions(params: { from?: string; to?: string; supplierId?: string; search?: string; page?: number; size?: number }): Observable<PageResponse<import('../models/api.models').VacationCommissionResponse>> {
     let httpParams = new HttpParams();
     if (params.from) httpParams = httpParams.set('from', params.from);

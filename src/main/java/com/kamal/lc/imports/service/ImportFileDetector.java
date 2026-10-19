@@ -36,12 +36,38 @@ public class ImportFileDetector {
      */
     private static final int MIN_MATCHES = 3;
 
+    /**
+     * Header fields uniquely characteristic of a captain roster and never present in
+     * supplier reports, shifts, or deduction files.
+     */
+    private static final java.util.Set<String> DISTINCT_CAPTAIN_FIELDS = java.util.Set.of(
+            "nationality", "gender", "dateOfBirth", "homeAddress", "email",
+            "passportNumber", "passportIssueDate", "passportExpiry", "passportStatus",
+            "iqamaOccupation", "idExpiryDate", "iqamaExpiry", "iqamaExpiryRenewed",
+            "borderNumber", "iqamaStatus", "establishmentNumber",
+            "qiwaContractNumber", "qiwaContractStart", "qiwaContractEnd", "qiwaContractStatus",
+            "workPermitExpiry", "workPermitStatus",
+            "insuranceCompany", "insuranceNumber", "insuranceCategory", "insuranceIssueDate",
+            "insuranceExpiry", "insuranceStatus", "crNumber", "affiliatedCompany",
+            "drivingLicenceNo", "licenceType", "licenceExpiry", "bloodType",
+            "bankName", "bankAccountNumber", "jobTitle", "joinDate",
+            "basicSalary", "housingAllowance", "transportationAllowance", "netSalary", "appId"
+    );
+
     public Optional<ImportBatchType> detect(MultipartFile file) {
         try (InputStream is = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(is)) {
 
             Sheet sheet = workbook.getSheetAt(0);
             if (sheet == null) return Optional.empty();
+
+            java.util.Map<String, Integer> captainHeaders = ExcelCellSupport.detectHeaders(sheet, ExcelParserService.columnMap());
+            int captains = captainHeaders.size();
+            int shifts = ExcelCellSupport.detectHeaders(sheet, NinjaShiftParser.columnMap()).size();
+
+            if (isCaptainRoster(captainHeaders)) {
+                return Optional.of(ImportBatchType.CAPTAINS);
+            }
 
             if (isVacationCommission(sheet)) {
                 return Optional.of(ImportBatchType.VACATION_COMMISSION);
@@ -51,9 +77,6 @@ public class ImportFileDetector {
                 return Optional.of(ImportBatchType.SUPPLIER_DEDUCTIONS);
             }
 
-            int captains = ExcelCellSupport.detectHeaders(sheet, ExcelParserService.columnMap()).size();
-            int shifts = ExcelCellSupport.detectHeaders(sheet, NinjaShiftParser.columnMap()).size();
-
             if (shifts >= MIN_MATCHES && shifts > captains) return Optional.of(ImportBatchType.SHIFTS);
             if (captains >= MIN_MATCHES && captains > shifts) return Optional.of(ImportBatchType.CAPTAINS);
             return Optional.empty();
@@ -62,6 +85,18 @@ public class ImportFileDetector {
             log.debug("Could not classify '{}': {}", file.getOriginalFilename(), e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private boolean isCaptainRoster(java.util.Map<String, Integer> captainHeaders) {
+        if (captainHeaders.size() >= 5) {
+            return true;
+        }
+        for (String field : captainHeaders.keySet()) {
+            if (DISTINCT_CAPTAIN_FIELDS.contains(field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isVacationCommission(Sheet sheet) {

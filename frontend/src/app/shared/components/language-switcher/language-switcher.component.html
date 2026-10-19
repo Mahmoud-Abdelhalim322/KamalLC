@@ -4,7 +4,7 @@
   <!-- DROPDOWN MODE -->
   <ng-container *ngIf="mode === 'dropdown'">
     <button type="button" class="lang-trigger-btn" (click)="toggleDropdown($event)"
-            [title]="translationService.currentLang() === 'ar' ? 'تغيير اللغة' : 'Change Language'">
+            [title]="'HEADER.CHANGE_LANGUAGE' | translate">
       <span class="lang-flag">{{ currentOption.flag }}</span>
       <span class="lang-name">{{ currentOption.nativeName }}</span>
       <span class="material-icons-round lang-chevron">{{ isOpen ? 'expand_less' : 'expand_more' }}</span>
@@ -14,7 +14,7 @@
     <div class="lang-dropdown-menu animate-fade-in" *ngIf="isOpen">
       <div class="lang-menu-header">
         <span class="material-icons-round">translate</span>
-        <span>{{ translationService.currentLang() === 'ar' ? 'اختر اللغة' : 'Select Language' }}</span>
+        <span>{{ 'HEADER.SELECT_LANGUAGE' | translate }}</span>
       </div>
 
       <div class="lang-options-list">
@@ -39,9 +39,9 @@
   <!-- COMPACT / TOGGLE PILL MODE -->
   <ng-container *ngIf="mode === 'compact' || mode === 'toggle'">
     <button type="button" class="lang-pill-btn" (click)="toggleQuick()"
-            [title]="translationService.currentLang() === 'ar' ? 'Switch to English' : 'التحويل للعربية'">
+            [title]="(translationService.currentLang() === 'ar' ? 'HEADER.SWITCH_TO_EN' : 'HEADER.SWITCH_TO_AR') | translate">
       <span class="lang-flag">{{ currentOption.flag }}</span>
-      <span class="lang-code-tag">{{ translationService.currentLang() === 'ar' ? 'EN' : 'عربي' }}</span>
+      <span class="lang-code-tag">{{ (translationService.currentLang() === 'ar' ? 'HEADER.LANG_CODE_EN' : 'HEADER.LANG_CODE_AR') | translate }}</span>
       <span class="material-icons-round swap-icon">swap_horiz</span>
     </button>
   </ng-container>

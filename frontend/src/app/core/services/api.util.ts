@@ -8,7 +8,7 @@ import { ApiResponse } from '../models/api.models';
  */
 export function unwrap<T>(response: ApiResponse<T>): T {
   if (!response.success || response.data == null) {
-    throw new ApiError(response.message ?? 'فشلت العملية', response.errorCode);
+    throw new ApiError(response.message ?? 'Operation failed', response.errorCode);
   }
   return response.data;
 }

@@ -1,19 +1,19 @@
 <div class="page-container">
   <div class="page-header">
-    <h1 class="page-title">الإعدادات</h1>
-    <p class="page-subtitle">تخصيص قواعد التشغيل ومظهر المنظومة للشركة</p>
+    <h1 class="page-title">{{ 'SETTINGS.TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'SETTINGS.SUBTITLE' | translate }}</p>
   </div>
 
   <!-- Tabs Bar -->
   <div class="settings-nav-tabs">
     <button class="tab-btn" [class.active]="activeTab === 'OPERATIONAL'" (click)="setTab('OPERATIONAL')">
       <span class="material-icons-round">tune</span>
-      <span>إعدادات التشغيل</span>
+      <span>{{ 'SETTINGS.TAB_OPERATIONAL' | translate }}</span>
     </button>
 
     <button class="tab-btn" [class.active]="activeTab === 'APPEARANCE'" (click)="setTab('APPEARANCE')">
       <span class="material-icons-round">palette</span>
-      <span>إعدادات المظهر</span>
+      <span>{{ 'SETTINGS.TAB_APPEARANCE' | translate }}</span>
     </button>
   </div>
 
@@ -31,26 +31,23 @@
   <div *ngIf="activeTab === 'OPERATIONAL'">
     <div class="info-banner">
       <span class="material-icons-round">history_toggle_off</span>
-      <p>
-        كل إعداد مؤرَّخ: عند التعديل يُقفل السعر القديم ويبدأ الجديد من التاريخ الذي تحدده،
-        فلا تتغيّر الشيفتات التي تم تسعيرها سابقًا ولا المسيرات المعتمدة.
-      </p>
+      <p>{{ 'SETTINGS.INFO_BANNER' | translate }}</p>
     </div>
 
     <div class="loading-state" *ngIf="isLoadingSettings">
       <div class="spinner"></div>
-      <p>جارٍ تحميل الإعدادات…</p>
+      <p>{{ 'SETTINGS.LOADING' | translate }}</p>
     </div>
 
     <div class="empty-state card" *ngIf="!isLoadingSettings && groupKeys.length === 0">
       <span class="material-icons-round">tune</span>
-      <p>لا توجد إعدادات مسجّلة</p>
+      <p>{{ 'SETTINGS.EMPTY' | translate }}</p>
     </div>
 
     <div class="settings-group card" *ngFor="let group of groupKeys">
       <div class="group-header">
         <span class="material-icons-round">{{ groupIcon(group) }}</span>
-        <h2>{{ groupLabel(group) }}</h2>
+        <h2>{{ ('SETTINGS.GROUP_' + group) | translate }}</h2>
       </div>
 
       <div class="setting-row" *ngFor="let setting of settings[group]">
@@ -58,25 +55,25 @@
         <!-- Display -->
         <div class="setting-main" *ngIf="!isEditing(setting)">
           <div class="setting-label">
-            <b>{{ setting.labelAr || setting.settingKey }}</b>
+            <b>{{ getSettingLabel(setting) }}</b>
             <code>{{ setting.settingKey }}</code>
           </div>
 
           <div class="setting-value">
             <span class="value">{{ displayValue(setting) }}</span>
             <span class="unit" *ngIf="unitOf(setting)">{{ unitOf(setting) }}</span>
-            <span class="badge badge-info" *ngIf="isScheduled(setting)">مجدول</span>
+            <span class="badge badge-info" *ngIf="isScheduled(setting)">{{ 'SETTINGS.SCHEDULED' | translate }}</span>
           </div>
 
-          <div class="setting-meta">ساري من {{ setting.effectiveFrom }}</div>
+          <div class="setting-meta">{{ 'SETTINGS.EFFECTIVE_FROM_META' | translate:{ date: setting.effectiveFrom } }}</div>
 
           <div class="setting-actions">
             <button class="btn btn-outline btn-sm" (click)="startEdit(setting)">
-              <span class="material-icons-round">edit</span> تعديل
+              <span class="material-icons-round">edit</span> {{ 'SETTINGS.EDIT' | translate }}
             </button>
             <button class="btn btn-outline btn-sm" (click)="toggleHistory(setting)">
               <span class="material-icons-round">history</span>
-              {{ historyKey === setting.settingKey ? 'إخفاء' : 'السجل' }}
+              {{ (historyKey === setting.settingKey ? 'SETTINGS.HIDE_HISTORY' : 'SETTINGS.HISTORY') | translate }}
             </button>
           </div>
         </div>
@@ -84,39 +81,39 @@
         <!-- Edit -->
         <div class="setting-edit" *ngIf="isEditing(setting) && edit">
           <div class="edit-title">
-            <b>{{ setting.labelAr || setting.settingKey }}</b>
-            <span class="muted">القيمة الحالية: {{ displayValue(setting) }} {{ unitOf(setting) }}</span>
+            <b>{{ getSettingLabel(setting) }}</b>
+            <span class="muted">{{ 'SETTINGS.CURRENT_VALUE' | translate }}: {{ displayValue(setting) }} {{ unitOf(setting) }}</span>
           </div>
 
           <div class="edit-fields">
             <div class="form-group">
-              <label class="form-label">القيمة الجديدة</label>
+              <label class="form-label">{{ 'SETTINGS.NEW_VALUE' | translate }}</label>
               <select class="form-input" *ngIf="isFlag(setting)" [(ngModel)]="edit.value">
-                <option value="true">مفعّل</option>
-                <option value="false">غير مفعّل</option>
+                <option value="true">{{ 'SETTINGS.ENABLED' | translate }}</option>
+                <option value="false">{{ 'SETTINGS.DISABLED' | translate }}</option>
               </select>
               <input type="text" class="form-input" *ngIf="!isFlag(setting)"
                      [(ngModel)]="edit.value" (keyup.enter)="save()">
             </div>
             <div class="form-group">
-              <label class="form-label">يبدأ العمل بها من</label>
+              <label class="form-label">{{ 'SETTINGS.EFFECTIVE_FROM' | translate }}</label>
               <input type="date" class="form-input" [(ngModel)]="edit.effectiveFrom">
             </div>
           </div>
 
           <p class="edit-hint">
             <span class="material-icons-round">info</span>
-            سيُعاد تسعير الشيفتات من هذا التاريخ فصاعدًا عند إعادة الحساب من شاشة الشيفتات.
+            {{ 'SETTINGS.EDIT_HINT' | translate }}
           </p>
 
           <div class="form-actions">
             <button class="btn btn-primary btn-sm" (click)="save()"
                     [disabled]="isSaving || !edit.value.trim()">
               <span class="spinner-sm" *ngIf="isSaving"></span>
-              {{ isSaving ? 'جارٍ الحفظ…' : 'حفظ' }}
+              {{ (isSaving ? 'SETTINGS.SAVING' : 'SETTINGS.SAVE') | translate }}
             </button>
             <button class="btn btn-outline btn-sm" (click)="cancelEdit()" [disabled]="isSaving">
-              تراجع
+              {{ 'SETTINGS.CANCEL' | translate }}
             </button>
           </div>
         </div>
@@ -124,16 +121,16 @@
         <!-- History -->
         <div class="setting-history" *ngIf="historyKey === setting.settingKey">
           <div class="loading-inline" *ngIf="isLoadingHistory">
-            <div class="spinner-sm"></div> جارٍ تحميل السجل…
+            <div class="spinner-sm"></div> {{ 'SETTINGS.LOADING_HISTORY' | translate }}
           </div>
 
           <table class="data-table" *ngIf="!isLoadingHistory && history.length">
             <thead>
               <tr>
-                <th>القيمة</th>
-                <th>من</th>
-                <th>إلى</th>
-                <th>الحالة</th>
+                <th>{{ 'SETTINGS.COL_VALUE' | translate }}</th>
+                <th>{{ 'SETTINGS.COL_FROM' | translate }}</th>
+                <th>{{ 'SETTINGS.COL_TO' | translate }}</th>
+                <th>{{ 'SETTINGS.COL_STATUS' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -142,16 +139,16 @@
                 <td>{{ row.effectiveFrom }}</td>
                 <td>{{ formatDate(row.effectiveTo) }}</td>
                 <td>
-                  <span class="badge badge-info" *ngIf="isScheduled(row)">مجدول</span>
+                  <span class="badge badge-info" *ngIf="isScheduled(row)">{{ 'SETTINGS.SCHEDULED' | translate }}</span>
                   <span class="badge badge-success"
-                        *ngIf="isCurrent(row) && !isScheduled(row)">ساري</span>
-                  <span class="badge" *ngIf="!isCurrent(row)">منتهٍ</span>
+                        *ngIf="isCurrent(row) && !isScheduled(row)">{{ 'SETTINGS.STATUS_CURRENT' | translate }}</span>
+                  <span class="badge" *ngIf="!isCurrent(row)">{{ 'SETTINGS.STATUS_EXPIRED' | translate }}</span>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <p class="muted" *ngIf="!isLoadingHistory && !history.length">لا يوجد سجل لهذا الإعداد</p>
+          <p class="muted" *ngIf="!isLoadingHistory && !history.length">{{ 'SETTINGS.NO_HISTORY' | translate }}</p>
         </div>
       </div>
     </div>
@@ -166,8 +163,8 @@
         <div class="card-header">
           <span class="material-icons-round icon-badge">brush</span>
           <div>
-            <h2>تخصيص مظهر وشعار الشركة</h2>
-            <p class="muted">قم بتخصيص اللوجو، الألوان، والنص الظاهر للنظام لمنشأتك</p>
+            <h2>{{ 'SETTINGS.APPEARANCE_TITLE' | translate }}</h2>
+            <p class="muted">{{ 'SETTINGS.APPEARANCE_DESC' | translate }}</p>
           </div>
         </div>
 
@@ -175,25 +172,25 @@
         <div class="control-section">
           <label class="section-label">
             <span class="material-icons-round">image</span>
-            شعار الشركة (اللوجو)
+            {{ 'SETTINGS.LOGO_TITLE' | translate }}
           </label>
           <div class="logo-upload-box">
             <div class="logo-preview-wrapper">
-              <img [src]="logoPreviewUrl || appearanceForm.logoUrl" alt="شعار الشركة" class="logo-preview-img">
+              <img [src]="logoPreviewUrl || appearanceForm.logoUrl" alt="Logo" class="logo-preview-img">
             </div>
             <div class="logo-upload-controls">
               <input type="file" #fileInput (change)="onLogoSelected($event)" accept="image/*" class="file-input-hidden">
               <button class="btn btn-outline btn-sm" (click)="fileInput.click()">
                 <span class="material-icons-round">upload_file</span>
-                اختر صورة شعار جديدة
+                {{ 'SETTINGS.CHOOSE_LOGO' | translate }}
               </button>
 
               <button class="btn btn-primary btn-sm" *ngIf="selectedLogoFile" (click)="uploadLogo()" [disabled]="isUploadingLogo">
                 <span class="spinner-sm" *ngIf="isUploadingLogo"></span>
-                {{ isUploadingLogo ? 'جاري الرفع…' : 'رفع وحفظ الشعار' }}
+                {{ (isUploadingLogo ? 'SETTINGS.UPLOADING_LOGO' : 'SETTINGS.UPLOAD_LOGO') | translate }}
               </button>
 
-              <p class="file-name-tag" *ngIf="selectedLogoFile">المحددة: {{ selectedLogoFile.name }}</p>
+              <p class="file-name-tag" *ngIf="selectedLogoFile">{{ 'SETTINGS.SELECTED_FILE' | translate:{ name: selectedLogoFile.name } }}</p>
             </div>
           </div>
         </div>
@@ -204,14 +201,14 @@
         <div class="control-section">
           <label class="section-label">
             <span class="material-icons-round">palette</span>
-            ألوان الهيكل (السايدبار والتوب بار)
+            {{ 'SETTINGS.COLORS_TITLE' | translate }}
           </label>
 
           <div class="color-inputs-grid">
             <!-- Sidebar Color -->
             <div class="color-picker-card">
               <div class="color-picker-header">
-                <label>لون السايدبار ( القائمة الجانبية )</label>
+                <label>{{ 'SETTINGS.SIDEBAR_BG' | translate }}</label>
                 <div class="color-sample" [style.background]="appearanceForm.sidebarBg"></div>
               </div>
               <div class="color-picker-controls">
@@ -223,7 +220,7 @@
             <!-- Topbar Color -->
             <div class="color-picker-card">
               <div class="color-picker-header">
-                <label>لون التوب بار ( الشريط العلوي )</label>
+                <label>{{ 'SETTINGS.TOPBAR_BG' | translate }}</label>
                 <div class="color-sample" [style.background]="appearanceForm.topbarBg"></div>
               </div>
               <div class="color-picker-controls">
@@ -235,12 +232,24 @@
             <!-- Sidebar Active Page Color -->
             <div class="color-picker-card">
               <div class="color-picker-header">
-                <label>لون تحديد الصفحة في السايدبار</label>
+                <label>{{ 'SETTINGS.SIDEBAR_ACTIVE_BG' | translate }}</label>
                 <div class="color-sample" [style.background]="appearanceForm.sidebarActiveBg"></div>
               </div>
               <div class="color-picker-controls">
                 <input type="color" [(ngModel)]="appearanceForm.sidebarActiveBg" (ngModelChange)="onLiveColorChange()" class="color-input">
                 <input type="text" [(ngModel)]="appearanceForm.sidebarActiveBg" (ngModelChange)="onLiveColorChange()" class="form-input hex-input" placeholder="#D98E04">
+              </div>
+            </div>
+
+            <!-- Sidebar Font Color -->
+            <div class="color-picker-card">
+              <div class="color-picker-header">
+                <label>{{ 'SETTINGS.SIDEBAR_TEXT_COLOR' | translate }}</label>
+                <div class="color-sample" [style.background]="appearanceForm.sidebarTextColor"></div>
+              </div>
+              <div class="color-picker-controls">
+                <input type="color" [(ngModel)]="appearanceForm.sidebarTextColor" (ngModelChange)="onLiveColorChange()" class="color-input">
+                <input type="text" [(ngModel)]="appearanceForm.sidebarTextColor" (ngModelChange)="onLiveColorChange()" class="form-input hex-input" placeholder="#000000">
               </div>
             </div>
           </div>
@@ -252,10 +261,10 @@
         <div class="control-section">
           <label class="section-label">
             <span class="material-icons-round">subtitles</span>
-            اسم الشركة / النص الظاهر
+            {{ 'SETTINGS.BRAND_TITLE' | translate }}
           </label>
-          <input type="text" [(ngModel)]="appearanceForm.brandText" (ngModelChange)="onLiveColorChange()" class="form-input brand-input" placeholder="أدخل اسم الشركة الرسمي…">
-          <span class="field-hint">يظهر هذا النص في منتصف الشريط العلوي والسايدبار للتعريف بالمنشأة</span>
+          <input type="text" [(ngModel)]="appearanceForm.brandText" (ngModelChange)="onLiveColorChange()" class="form-input brand-input" [placeholder]="'SETTINGS.BRAND_PLACEHOLDER' | translate">
+          <span class="field-hint">{{ 'SETTINGS.BRAND_HINT' | translate }}</span>
         </div>
 
         <hr class="divider">
@@ -265,12 +274,12 @@
           <button class="btn btn-primary" (click)="saveAppearance()" [disabled]="isSavingAppearance">
             <span class="spinner-sm" *ngIf="isSavingAppearance"></span>
             <span class="material-icons-round" *ngIf="!isSavingAppearance">save</span>
-            {{ isSavingAppearance ? 'جارٍ حفظ المظهر…' : 'حفظ إعدادات المظهر' }}
+            {{ (isSavingAppearance ? 'SETTINGS.SAVING_APPEARANCE' : 'SETTINGS.SAVE_APPEARANCE') | translate }}
           </button>
 
           <button class="btn btn-outline" (click)="resetAppearanceToDefault()" [disabled]="isSavingAppearance">
             <span class="material-icons-round">restart_alt</span>
-            إعادة المظهر للافتراضي
+            {{ 'SETTINGS.RESET_DEFAULT' | translate }}
           </button>
         </div>
       </div>
@@ -279,7 +288,7 @@
       <div class="appearance-preview-card card">
         <div class="preview-header-bar">
           <span class="material-icons-round">visibility</span>
-          <h3>معاينة مظهر النظام الحي (Live Preview)</h3>
+          <h3>{{ 'SETTINGS.PREVIEW_TITLE' | translate }}</h3>
         </div>
 
         <div class="mockup-frame">
@@ -288,7 +297,7 @@
               <span class="material-icons-round mockup-icon">menu</span>
             </div>
             <div class="mockup-brand-badge">
-              {{ appearanceForm.brandText || 'اسم الشركة' }}
+              {{ appearanceForm.brandText || ('SETTINGS.MOCK_COMPANY' | translate) }}
             </div>
             <div class="mockup-header-left">
               <span class="material-icons-round mockup-icon">notifications</span>
@@ -297,7 +306,7 @@
           </div>
 
           <div class="mockup-body">
-            <div class="mockup-sidebar" [style.background]="appearanceForm.sidebarBg">
+            <div class="mockup-sidebar" [style.background]="appearanceForm.sidebarBg" [style.color]="appearanceForm.sidebarTextColor">
               <div class="mockup-logo-area">
                 <img [src]="logoPreviewUrl || appearanceForm.logoUrl" alt="Logo Mockup" class="mockup-logo-img">
               </div>
@@ -305,23 +314,23 @@
               <div class="mockup-nav">
                 <div class="mockup-nav-item active" [style.background]="appearanceForm.sidebarActiveBg">
                   <span class="material-icons-round mockup-nav-icon">dashboard</span>
-                  <span class="mockup-nav-text">لوحة التحكم</span>
+                  <span class="mockup-nav-text">{{ 'SETTINGS.NAV_DASHBOARD' | translate }}</span>
                 </div>
                 <div class="mockup-nav-item">
                   <span class="material-icons-round mockup-nav-icon">shopping_bag</span>
-                  <span class="mockup-nav-text">الطلبات</span>
+                  <span class="mockup-nav-text">{{ 'SETTINGS.NAV_ORDERS' | translate }}</span>
                 </div>
                 <div class="mockup-nav-item">
                   <span class="material-icons-round mockup-nav-icon">local_shipping</span>
-                  <span class="mockup-nav-text">الكباتن</span>
+                  <span class="mockup-nav-text">{{ 'SETTINGS.NAV_CAPTAINS' | translate }}</span>
                 </div>
                 <div class="mockup-nav-item">
                   <span class="material-icons-round mockup-nav-icon">payments</span>
-                  <span class="mockup-nav-text">الرواتب</span>
+                  <span class="mockup-nav-text">{{ 'SETTINGS.NAV_PAYROLL' | translate }}</span>
                 </div>
                 <div class="mockup-nav-item">
                   <span class="material-icons-round mockup-nav-icon">settings</span>
-                  <span class="mockup-nav-text">الإعدادات</span>
+                  <span class="mockup-nav-text">{{ 'SETTINGS.NAV_SETTINGS' | translate }}</span>
                 </div>
               </div>
             </div>

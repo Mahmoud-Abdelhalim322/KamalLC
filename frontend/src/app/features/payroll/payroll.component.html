@@ -2,11 +2,11 @@
 
   <div class="page-header flex-between">
     <div>
-      <h1 class="page-title">المرتبات</h1>
-      <p class="page-subtitle">توليد مسير الشهر من الشيفتات المسجلة، ثم اعتماده وقفله</p>
+      <h1 class="page-title">{{ 'PAYROLL.TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'PAYROLL.SUBTITLE' | translate }}</p>
     </div>
     <button class="btn btn-new-payroll" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
-      <span class="material-icons-round">add</span> مسير جديد
+      <span class="material-icons-round">add</span> {{ 'PAYROLL.NEW_PAYROLL' | translate }}
     </button>
   </div>
 
@@ -21,30 +21,29 @@
 
   <!-- Generate -->
   <div class="card generate-form" *ngIf="showGenerateForm && canManage">
-    <h3>توليد مسير رواتب</h3>
+    <h3>{{ 'PAYROLL.GENERATE_TITLE' | translate }}</h3>
     <p class="hint">
-      يجمع المسير كل شفتات الفترة لكل كابتن ويطبّق قواعد الرواتب السارية في نهاية الفترة.
-      إعادة التوليد على مسودة تستبدل أسطرها.
+      {{ 'PAYROLL.GENERATE_HINT' | translate }}
     </p>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">من تاريخ</label>
+        <label class="form-label">{{ 'PAYROLL.FROM_DATE' | translate }}</label>
         <input type="date" class="form-input" [(ngModel)]="periodFrom">
       </div>
       <div class="form-group">
-        <label class="form-label">إلى تاريخ</label>
+        <label class="form-label">{{ 'PAYROLL.TO_DATE' | translate }}</label>
         <input type="date" class="form-input" [(ngModel)]="periodTo">
       </div>
       <div class="form-group grow">
-        <label class="form-label">اسم المسير (اختياري)</label>
-        <input type="text" class="form-input" [(ngModel)]="title" placeholder="مسير رواتب يوليو 2026">
+        <label class="form-label">{{ 'PAYROLL.RUN_NAME_OPTIONAL' | translate }}</label>
+        <input type="text" class="form-input" [(ngModel)]="title" [placeholder]="'PAYROLL.RUN_NAME_PLACEHOLDER' | translate">
       </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" (click)="generate()" [disabled]="isGenerating">
-        {{ isGenerating ? 'جارٍ التوليد…' : 'توليد' }}
+        {{ isGenerating ? ('PAYROLL.GENERATING_BTN' | translate) : ('PAYROLL.GENERATE_BTN' | translate) }}
       </button>
-      <button class="btn btn-outline" (click)="showGenerateForm = false">إلغاء</button>
+      <button class="btn btn-outline" (click)="showGenerateForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
     </div>
   </div>
 
@@ -52,11 +51,11 @@
 
     <!-- Runs list -->
     <aside class="runs-list">
-      <h3 class="side-title">المسيرات</h3>
+      <h3 class="side-title">{{ 'PAYROLL.RUNS_LIST_TITLE' | translate }}</h3>
       <div class="loading-inline" *ngIf="isLoadingRuns">
         <div class="spinner spinner-sm"></div>
       </div>
-      <p class="side-empty" *ngIf="!isLoadingRuns && runs.length === 0">لا توجد مسيرات بعد</p>
+      <p class="side-empty" *ngIf="!isLoadingRuns && runs.length === 0">{{ 'PAYROLL.NO_RUNS_YET' | translate }}</p>
 
       <button *ngFor="let run of runs" class="run-item" [class.active]="selectedRun?.id === run.id"
         (click)="selectRun(run)">
@@ -65,7 +64,7 @@
           <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
         </div>
         <span class="run-item-period">{{ run.periodFrom }} → {{ run.periodTo }}</span>
-        <span class="run-item-meta">{{ run.captainCount }} كابتن — صافي {{ money(run.totalNet) }} ريال</span>
+        <span class="run-item-meta">{{ run.captainCount }} {{ 'PAYROLL.CAPTAIN_UNIT' | translate }} — {{ 'PAYROLL.NET_PREFIX' | translate }} {{ money(run.totalNet) }} {{ 'COMMON.SAR' | translate }}</span>
       </button>
     </aside>
 
@@ -75,13 +74,13 @@
       <div class="run-header card">
         <div class="run-header-top">
           <div>
-            <h2>{{ run.title || 'مسير رواتب' }}</h2>
+            <h2>{{ run.title || ('PAYROLL.DEFAULT_RUN_TITLE' | translate) }}</h2>
             <p>
               {{ run.periodFrom }} → {{ run.periodTo }}
               <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
             </p>
             <p class="run-trail" *ngIf="run.approvedBy">
-              اعتمده {{ run.approvedBy }} — {{ run.approvedAt | date:'yyyy-MM-dd HH:mm' }}
+              {{ 'PAYROLL.APPROVED_BY' | translate:{ user: run.approvedBy } }} — {{ run.approvedAt | date:'yyyy-MM-dd HH:mm' }}
             </p>
           </div>
 
@@ -96,41 +95,39 @@
 
             <button class="btn btn-outline btn-sm" (click)="exportBulkPayslips()" [disabled]="isExportingBulkPayslips"
               *ngIf="activeTab === 'CAPTAIN'">
-              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات
-              الفردية
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> {{ 'PAYROLL.PRINT_INDIVIDUAL' | translate }}
             </button>
 
             <button class="btn btn-outline btn-sm" (click)="exportBulkStaffPayslips(activeTab)"
               [disabled]="isExportingBulkPayslips" *ngIf="activeTab === 'WORKER' || activeTab === 'MANAGER'">
-              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> طباعة المسيرات
-              الفردية
+              <span class="material-icons-round" [class.spinning]="isExportingBulkPayslips">print</span> {{ 'PAYROLL.PRINT_INDIVIDUAL' | translate }}
             </button>
 
             <ng-container *ngIf="!run.locked">
               <button class="btn btn-outline btn-sm" (click)="regenerate()" [disabled]="isBusy || isGenerating"
-                title="يعيد بناء أسطر المسير من الشيفتات المسجلة حاليًا">
+                [title]="'PAYROLL.REGENERATE_TOOLTIP' | translate">
                 <span class="material-icons-round">refresh</span>
-                {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد' }}
+                {{ isGenerating ? ('PAYROLL.GENERATING_BTN' | translate) : ('PAYROLL.REGENERATE' | translate) }}
               </button>
               <button class="btn btn-primary btn-sm" *ngIf="!confirmingApproval" (click)="confirmingApproval = true"
                 [disabled]="isBusy || lines.length === 0">
-                <span class="material-icons-round">lock</span> اعتماد وقفل
+                <span class="material-icons-round">lock</span> {{ 'PAYROLL.APPROVE_LOCK' | translate }}
               </button>
               <button class="btn btn-danger btn-sm" *ngIf="!confirmingDelete" (click)="confirmingDelete = true"
                 [disabled]="isBusy">
-                حذف
+                {{ 'COMMON.DELETE' | translate }}
               </button>
             </ng-container>
 
             <ng-container *ngIf="run.status === 'APPROVED'">
               <button class="btn btn-primary btn-sm" (click)="markPaid()" [disabled]="isBusy">
-                <span class="material-icons-round">payments</span> تسجيل كمدفوع
+                <span class="material-icons-round">payments</span> {{ 'PAYROLL.MARK_PAID' | translate }}
               </button>
             </ng-container>
 
             <button class="btn btn-outline btn-sm" *ngIf="run.locked && !showReopenForm"
               (click)="showReopenForm = true">
-              <span class="material-icons-round">lock_open</span> إعادة فتح
+              <span class="material-icons-round">lock_open</span> {{ 'PAYROLL.REOPEN' | translate }}
             </button>
           </div>
         </div>
@@ -139,14 +136,11 @@
         <div class="confirm-box" *ngIf="confirmingApproval">
           <span class="material-icons-round">warning</span>
           <div>
-            <b>تأكيد الاعتماد</b>
-            <p>
-              بعد الاعتماد تُقفل أرقام هذا المسير نهائيًا: لن يغيّرها تعديل الإعدادات ولا إعادة
-              استيراد شيفتات الفترة. هل تريد المتابعة؟
-            </p>
+            <b>{{ 'PAYROLL.CONFIRM_APPROVAL_TITLE' | translate }}</b>
+            <p>{{ 'PAYROLL.CONFIRM_APPROVAL_DESC' | translate }}</p>
             <div class="form-actions">
-              <button class="btn btn-primary btn-sm" (click)="approve()">نعم، اعتمد واقفل</button>
-              <button class="btn btn-outline btn-sm" (click)="confirmingApproval = false">تراجع</button>
+              <button class="btn btn-primary btn-sm" (click)="approve()">{{ 'PAYROLL.CONFIRM_APPROVAL_BTN' | translate }}</button>
+              <button class="btn btn-outline btn-sm" (click)="confirmingApproval = false">{{ 'PAYROLL.UNDO' | translate }}</button>
             </div>
           </div>
         </div>
@@ -155,16 +149,13 @@
         <div class="confirm-box confirm-box-danger" *ngIf="confirmingDelete">
           <span class="material-icons-round">delete_forever</span>
           <div>
-            <b>تأكيد الحذف</b>
-            <p>
-              سيُحذف المسير بكل أسطره وبنوده المضافة نهائيًا، ولا يمكن التراجع عن ذلك.
-              يمكنك توليده من جديد لاحقًا من بيانات الشيفتات.
-            </p>
+            <b>{{ 'PAYROLL.CONFIRM_DELETE_TITLE' | translate }}</b>
+            <p>{{ 'PAYROLL.CONFIRM_DELETE_DESC' | translate }}</p>
             <div class="form-actions">
               <button class="btn btn-danger btn-sm" (click)="deleteRun()" [disabled]="isBusy">
-                نعم، احذف المسير
+                {{ 'PAYROLL.CONFIRM_DELETE_BTN' | translate }}
               </button>
-              <button class="btn btn-outline btn-sm" (click)="confirmingDelete = false">تراجع</button>
+              <button class="btn btn-outline btn-sm" (click)="confirmingDelete = false">{{ 'PAYROLL.UNDO' | translate }}</button>
             </div>
           </div>
         </div>
@@ -173,14 +164,14 @@
         <div class="confirm-box" *ngIf="showReopenForm">
           <span class="material-icons-round">lock_open</span>
           <div>
-            <b>إعادة فتح المسير</b>
-            <p>سيُسجَّل السبب في ملاحظات المسير مع اسمك وتاريخ الفتح.</p>
-            <input type="text" class="form-input" [(ngModel)]="reopenReason" placeholder="سبب إعادة الفتح">
+            <b>{{ 'PAYROLL.REOPEN_TITLE' | translate }}</b>
+            <p>{{ 'PAYROLL.REOPEN_DESC' | translate }}</p>
+            <input type="text" class="form-input" [(ngModel)]="reopenReason" [placeholder]="'PAYROLL.REOPEN_REASON_PLACEHOLDER' | translate">
             <div class="form-actions">
               <button class="btn btn-primary btn-sm" [disabled]="!reopenReason.trim()" (click)="reopen()">
-                إعادة الفتح
+                {{ 'PAYROLL.REOPEN_BTN' | translate }}
               </button>
-              <button class="btn btn-outline btn-sm" (click)="showReopenForm = false">إلغاء</button>
+              <button class="btn btn-outline btn-sm" (click)="showReopenForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
             </div>
           </div>
         </div>
@@ -193,15 +184,15 @@
         <div class="tabs-bar">
           <div class="tabs-group">
             <button class="tab-btn" [class.active]="activeTab === 'CAPTAIN'"
-              (click)="switchTab('CAPTAIN')">الكباتن</button>
+              (click)="switchTab('CAPTAIN')">{{ 'PAYROLL.TAB_CAPTAINS' | translate }}</button>
             <button class="tab-btn" [class.active]="activeTab === 'WORKER'"
-              (click)="switchTab('WORKER')">العاملين</button>
+              (click)="switchTab('WORKER')">{{ 'PAYROLL.TAB_WORKERS' | translate }}</button>
             <button class="tab-btn" [class.active]="activeTab === 'MANAGER'"
-              (click)="switchTab('MANAGER')">الإداريين</button>
+              (click)="switchTab('MANAGER')">{{ 'PAYROLL.TAB_MANAGERS' | translate }}</button>
           </div>
           <div class="sub-filters" *ngIf="activeTab === 'CAPTAIN'">
             <button class="sub-filter-btn" [class.active]="captainTypeFilter === ''"
-              (click)="setCaptainTypeFilter('')">الكل</button>
+              (click)="setCaptainTypeFilter('')">{{ 'COMMON.ALL' | translate }}</button>
             <button class="sub-filter-btn" [class.active]="captainTypeFilter === 'EMPLOYEE'"
               (click)="setCaptainTypeFilter('EMPLOYEE')">KSC</button>
             <button class="sub-filter-btn" [class.active]="captainTypeFilter === 'FREELANCE'"
@@ -209,38 +200,38 @@
           </div>
           <div class="search-box">
             <span class="material-icons-round">search</span>
-            <input type="text" placeholder="بحث بالاسم، الكود، أو ID-APP..." [(ngModel)]="searchQuery">
+            <input type="text" [placeholder]="'PAYROLL.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery">
           </div>
         </div>
 
         <!-- Summary -->
         <div class="summary-grid" *ngIf="activeTab === 'CAPTAIN'">
           <div class="summary-tile">
-            <span>عدد الكباتن</span><b>{{ run.captainCount }}</b>
+            <span>{{ 'PAYROLL.CAPTAINS_COUNT' | translate }}</span><b>{{ run.captainCount }}</b>
           </div>
           <div class="summary-tile">
-            <span>إجمالي المرتب</span><b>{{ money(run.totalGross) }}</b>
+            <span>{{ 'PAYROLL.TOTAL_GROSS' | translate }}</span><b>{{ money(run.totalGross) }}</b>
           </div>
           <div class="summary-tile accent">
-            <span>صافي المرتبات</span><b>{{ money(run.totalNet) }}</b>
+            <span>{{ 'PAYROLL.TOTAL_NET' | translate }}</span><b>{{ money(run.totalNet) }}</b>
           </div>
           <div class="summary-tile">
-            <span>إيراد المورد</span><b>{{ money(run.totalSupplierRevenue) }}</b>
+            <span>{{ 'PAYROLL.SUPPLIER_REVENUE' | translate }}</span><b>{{ money(run.totalSupplierRevenue) }}</b>
           </div>
           <div class="summary-tile" [class.good]="run.totalMargin > 0" [class.bad]="run.totalMargin < 0">
-            <span>الهامش</span><b>{{ money(run.totalMargin) }}</b>
+            <span>{{ 'PAYROLL.MARGIN' | translate }}</span><b>{{ money(run.totalMargin) }}</b>
           </div>
         </div>
 
         <div class="summary-grid" *ngIf="activeTab !== 'CAPTAIN'">
           <div class="summary-tile">
-            <span>عدد الموظفين</span><b>{{ run.staffCount }}</b>
+            <span>{{ 'PAYROLL.STAFF_COUNT' | translate }}</span><b>{{ run.staffCount }}</b>
           </div>
           <div class="summary-tile">
-            <span>إجمالي المرتب</span><b>{{ money(run.totalStaffGross) }}</b>
+            <span>{{ 'PAYROLL.TOTAL_GROSS' | translate }}</span><b>{{ money(run.totalStaffGross) }}</b>
           </div>
           <div class="summary-tile accent">
-            <span>صافي المرتبات</span><b>{{ money(run.totalStaffNet) }}</b>
+            <span>{{ 'PAYROLL.TOTAL_NET' | translate }}</span><b>{{ money(run.totalStaffNet) }}</b>
           </div>
         </div>
       </div>
@@ -248,32 +239,26 @@
       <!-- Lines -->
       <div class="loading-state" *ngIf="isLoadingLines">
         <div class="spinner"></div>
-        <p>جارٍ التحميل…</p>
+        <p>{{ 'COMMON.LOADING' | translate }}</p>
       </div>
 
       <div class="empty-state card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length === 0">
         <span class="material-icons-round">receipt_long</span>
-        <h3>لا توجد أسطر في هذا المسير</h3>
-        <p>
-          المسير يُبنى من الشيفتات الموجودة وقت توليده. إن كنت استوردت ملف المورد بعد إنشائه،
-          اضغط «إعادة توليد» أعلاه ليُبنى من جديد. وإن كانت النتيجة فارغة بعدها،
-          فلا توجد شيفتات مسجلة لهذه الفترة.
-        </p>
+        <h3>{{ 'PAYROLL.EMPTY_CAPTAINS' | translate }}</h3>
+        <p>{{ 'PAYROLL.EMPTY_CAPTAINS_HINT' | translate }}</p>
         <button class="btn btn-primary btn-sm" *ngIf="!run.locked" (click)="regenerate()" [disabled]="isGenerating">
           <span class="material-icons-round">refresh</span>
-          {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد المسير' }}
+          {{ isGenerating ? ('PAYROLL.GENERATING_BTN' | translate) : ('PAYROLL.REGENERATE' | translate) }}
         </button>
       </div>
 
       <div class="empty-state card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length === 0">
         <span class="material-icons-round">receipt_long</span>
-        <h3>لا توجد أسطر للموظفين في هذا المسير</h3>
-        <p>
-          يتم جلب الموظفين النشطين أثناء توليد المسير.
-        </p>
+        <h3>{{ 'PAYROLL.EMPTY_STAFF' | translate }}</h3>
+        <p>{{ 'PAYROLL.EMPTY_STAFF_HINT' | translate }}</p>
         <button class="btn btn-primary btn-sm" *ngIf="!run.locked" (click)="regenerate()" [disabled]="isGenerating">
           <span class="material-icons-round">refresh</span>
-          {{ isGenerating ? 'جارٍ التوليد…' : 'إعادة توليد المسير' }}
+          {{ isGenerating ? ('PAYROLL.GENERATING_BTN' | translate) : ('PAYROLL.REGENERATE' | translate) }}
         </button>
       </div>
 
@@ -281,28 +266,27 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>الكابتن</th>
-              <th>النوع</th>
-              <th>الشفتات</th>
-              <th>الغياب</th>
-              <th>الطلبات</th>
-              <th>الساعات</th>
-              <th>الانشغال</th>
-              <th>مجموع الدخل</th>
-              <th>خصم تأخير</th>
-              <th>خصم المورد</th>
-              <th>حوافز يومية</th>
-              <th>بدل بنزين</th>
-              <th>بدل سيارة</th>
-              <th>تحقيق الهدف</th>
-              <th>بعد الهدف</th>
-              <th>عمولة الإجازة</th>
-              <th>مجموع الراتب</th>
-              <th>السلف</th>
-              <th>بنود يدوية</th>
-              <th>صافي الراتب</th>
-              <th>الهامش</th>
+              <th>{{ 'PAYROLL.COL_CODE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_CAPTAIN' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_TYPE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_SHIFTS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_ABSENCE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_ORDERS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_HOURS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_BUSY_RATE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_BASE_PAY' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_LATE_DED' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_SUPPLIER_DED' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_DAILY_BONUS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_CAR_ALLOWANCE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_TARGET_BONUS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_EXTRA_ORDER_PAY' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_VACATION_COMM' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_GROSS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_LOANS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_ADJUSTMENTS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_NET' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_MARGIN' | translate }}</th>
               <th></th>
             </tr>
           </thead>
@@ -330,14 +314,13 @@
                   {{ line.supplierDeductions > 0 ? '−' + money(line.supplierDeductions) : '—' }}
                 </td>
                 <td [class.positive]="line.dailyIncentives > 0">{{ money(line.dailyIncentives) }}</td>
-                <td [class.positive]="line.fuelAllowances > 0">{{ money(line.fuelAllowances) }}</td>
                 <td [class.positive]="line.carAllowances > 0">{{ money(line.carAllowances) }}</td>
                 <td [class.positive]="line.targetBonus > 0">{{ money(line.targetBonus) }}</td>
                 <td [class.positive]="line.extraOrderPay > 0">{{ money(line.extraOrderPay) }}</td>
                 <td [class.positive]="line.vacationCommission > 0">{{ line.vacationCommission > 0 ? '+' +
                   money(line.vacationCommission) : '—' }}</td>
                 <td class="strong">{{ money(line.gross) }}</td>
-                <td [class.negative]="(line.activeLoanBalance || 0) > 0" title="المتبقي من السلف النشطة">
+                <td [class.negative]="(line.activeLoanBalance || 0) > 0" [title]="'PAYROLL.COL_LOANS' | translate">
                   {{ (line.activeLoanBalance || 0) > 0 ? money(line.activeLoanBalance) : '—' }}
                 </td>
                 <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
@@ -348,11 +331,11 @@
                   {{ money(line.margin) }}
                 </td>
                 <td>
-                  <button class="icon-btn" title="طباعة المسير الفردي"
+                  <button class="icon-btn" [title]="'PAYROLL.PRINT_INDIVIDUAL' | translate"
                     (click)="exportPayslip(line.captainId, line.captainCode)">
                     <span class="material-icons-round">print</span>
                   </button>
-                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي" (click)="openAdjustment(line)">
+                  <button class="icon-btn" *ngIf="!run.locked" [title]="'COMMON.ADD' | translate" (click)="openAdjustment(line)">
                     <span class="material-icons-round">add_circle_outline</span>
                   </button>
                 </td>
@@ -361,7 +344,7 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="18" class="adjustment-label">
+                <td colspan="17" class="adjustment-label">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
                     [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
@@ -376,7 +359,7 @@
                 <td colspan="2"></td>
                 <td>
                   <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeAdjustment(adj.id)"
-                    title="حذف البند">
+                    [title]="'COMMON.DELETE' | translate">
                     <span class="material-icons-round">delete_outline</span>
                   </button>
                 </td>
@@ -385,7 +368,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3">المجموع</td>
+              <td colspan="3">{{ 'PAYROLL.TOTAL_ROW' | translate }}</td>
               <td>{{ totals.shifts }}</td>
               <td></td>
               <td>{{ totals.orders }}</td>
@@ -397,7 +380,6 @@
                 {{ totals.supplierDeductions > 0 ? '−' + money(totals.supplierDeductions) : '—' }}
               </td>
               <td>{{ money(totals.incentives) }}</td>
-              <td>{{ money(totals.fuel) }}</td>
               <td>{{ money(totals.car) }}</td>
               <td>{{ money(totals.targetBonus) }}</td>
               <td>{{ money(totals.extraOrderPay) }}</td>
@@ -417,16 +399,16 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>الاسم</th>
-              <th>الوظيفة</th>
-              <th>الراتب الأساسي</th>
-              <th>بدل سكن</th>
-              <th>بدلات أخرى</th>
-              <th>الإجمالي</th>
-              <th>السلف</th>
-              <th>بنود يدوية</th>
-              <th>صافي الراتب</th>
+              <th>{{ 'PAYROLL.COL_CODE' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_NAME' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_JOB' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_BASIC' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_HOUSING' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_OTHER_ALLOWANCES' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_GROSS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_LOANS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_ADJUSTMENTS' | translate }}</th>
+              <th>{{ 'PAYROLL.COL_NET' | translate }}</th>
               <th></th>
             </tr>
           </thead>
@@ -440,7 +422,7 @@
                 <td>{{ money(line.housingAllowance) }}</td>
                 <td>{{ money(line.otherAllowances) }}</td>
                 <td class="strong">{{ money(line.gross) }}</td>
-                <td [class.negative]="(line.activeLoanBalance || 0) > 0" title="المتبقي من السلف النشطة">
+                <td [class.negative]="(line.activeLoanBalance || 0) > 0" [title]="'PAYROLL.COL_LOANS' | translate">
                   {{ (line.activeLoanBalance || 0) > 0 ? money(line.activeLoanBalance) : '—' }}
                 </td>
                 <td [class.positive]="line.adjustmentsTotal > 0" [class.negative]="line.adjustmentsTotal < 0">
@@ -448,11 +430,11 @@
                 </td>
                 <td class="net">{{ money(line.net) }}</td>
                 <td>
-                  <button class="icon-btn" title="طباعة المسير الفردي"
+                  <button class="icon-btn" [title]="'PAYROLL.PRINT_INDIVIDUAL' | translate"
                     (click)="exportStaffPayslip(line.staffId, line.staffCode)">
                     <span class="material-icons-round">print</span>
                   </button>
-                  <button class="icon-btn" *ngIf="!run.locked" title="إضافة بند يدوي"
+                  <button class="icon-btn" *ngIf="!run.locked" [title]="'COMMON.ADD' | translate"
                     (click)="openStaffAdjustment(line)">
                     <span class="material-icons-round">add_circle_outline</span>
                   </button>
@@ -476,7 +458,7 @@
                 <td></td>
                 <td>
                   <button class="icon-btn danger" *ngIf="!run.locked" (click)="removeStaffAdjustment(adj.id)"
-                    title="حذف البند">
+                    [title]="'COMMON.DELETE' | translate">
                     <span class="material-icons-round">delete_outline</span>
                   </button>
                 </td>
@@ -489,101 +471,105 @@
 
     <div class="empty-state card no-selection" *ngIf="!selectedRun && !isLoadingRuns">
       <span class="material-icons-round">payments</span>
-      <h3>لم يتم اختيار مسير</h3>
-      <p>أنشئ مسيرًا جديدًا للشهر الحالي لتبدأ محاسبة الكباتن.</p>
+      <h3>{{ 'PAYROLL.NO_RUN_SELECTED' | translate }}</h3>
+      <p>{{ 'PAYROLL.NO_RUN_SELECTED_HINT' | translate }}</p>
     </div>
   </div>
 
   <!-- Adjustment modal -->
   <div class="modal-backdrop" *ngIf="adjustmentForCaptain" (click)="cancelAdjustment()"></div>
   <div class="modal" *ngIf="adjustmentForCaptain as line">
-    <h3>بند يدوي — {{ line.captainName }}</h3>
-    <p class="hint">البنود اليدوية تُطبَّق على فترة المسير وتظهر في عمودها الخاص عند التصدير.</p>
+    <h3>{{ 'PAYROLL.ADJUSTMENT_TITLE' | translate:{ name: line.captainName } }}</h3>
+    <p class="hint">{{ 'PAYROLL.ADJUSTMENT_HINT' | translate }}</p>
 
     <div class="active-loan-banner" *ngIf="line.activeLoanBalance != null">
       <span class="material-icons-round">account_balance_wallet</span>
-      <span>المتبقي من السلف النشطة: <b>{{ money(line.activeLoanBalance) }} ريال</b></span>
+      <span>{{ 'PAYROLL.ACTIVE_LOAN_REMAINING' | translate:{ amount: money(line.activeLoanBalance) } }}</span>
     </div>
 
     <div class="form-group">
-      <label class="form-label">النوع</label>
+      <label class="form-label">{{ 'PAYROLL.ADJUSTMENT_TYPE' | translate }}</label>
       <select class="form-input" [(ngModel)]="adjustmentType">
-        <optgroup label="إضافات">
-          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{ opt.label
-            }}</option>
+        <optgroup [label]="'PAYROLL.ADDITIONS_GROUP' | translate">
+          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">
+            {{ getAdjustmentLabel(opt.type) }}
+          </option>
         </optgroup>
-        <optgroup label="خصومات">
-          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{
-            opt.label }}</option>
+        <optgroup [label]="'PAYROLL.DEDUCTIONS_GROUP' | translate">
+          <option *ngFor="let opt of adjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">
+            {{ getAdjustmentLabel(opt.type) }}
+          </option>
         </optgroup>
       </select>
       <p class="hint loan-notice" *ngIf="adjustmentType === 'LOAN'">
         <span class="material-icons-round">sync</span>
-        خصم السلفة اليدوي سيتم تسجيله وتخفيضه تلقائياً من رصيد السلفة الفعلية للميمبر.
+        {{ 'PAYROLL.LOAN_NOTICE' | translate }}
       </p>
     </div>
 
     <div class="form-group">
-      <label class="form-label">المبلغ (ريال)</label>
+      <label class="form-label">{{ 'PAYROLL.AMOUNT_SAR' | translate }}</label>
       <input type="number" class="form-input" [(ngModel)]="adjustmentAmount" min="0" step="1"
-        placeholder="أدخل مبلغًا موجبًا — النوع يحدد الإضافة أو الخصم">
+        [placeholder]="'PAYROLL.AMOUNT_PLACEHOLDER' | translate">
     </div>
 
     <div class="form-group">
-      <label class="form-label">السبب (اختياري)</label>
+      <label class="form-label">{{ 'PAYROLL.REASON_OPTIONAL' | translate }}</label>
       <input type="text" class="form-input" [(ngModel)]="adjustmentReason">
     </div>
 
     <div class="form-actions">
       <button class="btn btn-primary" [disabled]="!adjustmentAmount || adjustmentAmount <= 0 || isBusy"
-        (click)="saveAdjustment()">حفظ</button>
-      <button class="btn btn-outline" (click)="cancelAdjustment()">إلغاء</button>
+        (click)="saveAdjustment()">{{ 'COMMON.SAVE' | translate }}</button>
+      <button class="btn btn-outline" (click)="cancelAdjustment()">{{ 'COMMON.CANCEL' | translate }}</button>
     </div>
   </div>
 
   <!-- Staff Adjustment modal -->
   <div class="modal-backdrop" *ngIf="staffAdjustmentFor" (click)="cancelStaffAdjustment()"></div>
   <div class="modal" *ngIf="staffAdjustmentFor as line">
-    <h3>بند يدوي — {{ line.staffName }}</h3>
+    <h3>{{ 'PAYROLL.ADJUSTMENT_TITLE' | translate:{ name: line.staffName } }}</h3>
 
     <div class="active-loan-banner" *ngIf="line.activeLoanBalance != null">
       <span class="material-icons-round">account_balance_wallet</span>
-      <span>المتبقي من السلف النشطة: <b>{{ money(line.activeLoanBalance) }} ريال</b></span>
+      <span>{{ 'PAYROLL.ACTIVE_LOAN_REMAINING' | translate:{ amount: money(line.activeLoanBalance) } }}</span>
     </div>
 
     <div class="form-group">
-      <label class="form-label">النوع</label>
+      <label class="form-label">{{ 'PAYROLL.ADJUSTMENT_TYPE' | translate }}</label>
       <select class="form-input" [(ngModel)]="staffAdjustmentType">
-        <optgroup label="إضافات">
-          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">{{
-            opt.label }}</option>
+        <optgroup [label]="'PAYROLL.ADDITIONS_GROUP' | translate">
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'BONUS'">
+            {{ getStaffAdjustmentLabel(opt.type) }}
+          </option>
         </optgroup>
-        <optgroup label="خصومات">
-          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">{{
-            opt.label }}</option>
+        <optgroup [label]="'PAYROLL.DEDUCTIONS_GROUP' | translate">
+          <option *ngFor="let opt of staffAdjustmentOptions" [value]="opt.type" [hidden]="opt.kind !== 'DEDUCTION'">
+            {{ getStaffAdjustmentLabel(opt.type) }}
+          </option>
         </optgroup>
       </select>
       <p class="hint loan-notice" *ngIf="staffAdjustmentType === 'LOAN'">
         <span class="material-icons-round">sync</span>
-        خصم السلفة اليدوي سيتم تسجيله وتخفيضه تلقائياً من رصيد السلفة الفعلية للموظف.
+        {{ 'PAYROLL.LOAN_NOTICE' | translate }}
       </p>
     </div>
 
     <div class="form-group">
-      <label class="form-label">المبلغ (ريال)</label>
+      <label class="form-label">{{ 'PAYROLL.AMOUNT_SAR' | translate }}</label>
       <input type="number" class="form-input" [(ngModel)]="staffAdjustmentAmount" min="0" step="1"
-        placeholder="أدخل مبلغًا موجبًا">
+        [placeholder]="'PAYROLL.AMOUNT_PLACEHOLDER' | translate">
     </div>
 
     <div class="form-group">
-      <label class="form-label">السبب (اختياري)</label>
+      <label class="form-label">{{ 'PAYROLL.REASON_OPTIONAL' | translate }}</label>
       <input type="text" class="form-input" [(ngModel)]="staffAdjustmentReason">
     </div>
 
     <div class="form-actions">
       <button class="btn btn-primary" [disabled]="!staffAdjustmentAmount || staffAdjustmentAmount <= 0 || isBusy"
-        (click)="saveStaffAdjustment()">حفظ</button>
-      <button class="btn btn-outline" (click)="cancelStaffAdjustment()">إلغاء</button>
+        (click)="saveStaffAdjustment()">{{ 'COMMON.SAVE' | translate }}</button>
+      <button class="btn btn-outline" (click)="cancelStaffAdjustment()">{{ 'COMMON.CANCEL' | translate }}</button>
     </div>
   </div>
 </div>

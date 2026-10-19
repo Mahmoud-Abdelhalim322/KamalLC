@@ -2,8 +2,8 @@
 
   <div class="page-header flex-between">
     <div>
-      <h1 class="page-title">إدارة السُلف</h1>
-      <p class="page-subtitle">عرض وإدارة سلف جميع الأعضاء (كباتن، عاملين، إداريين)</p>
+      <h1 class="page-title">{{ 'LOANS.TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'LOANS.SUBTITLE' | translate }}</p>
     </div>
   </div>
 
@@ -18,28 +18,28 @@
       <span class="material-icons-round card-icon">people</span>
       <div class="card-body">
         <span class="card-value">{{ filteredMembers.length }}</span>
-        <span class="card-label">إجمالي الأعضاء</span>
+        <span class="card-label">{{ 'LOANS.TOTAL_MEMBERS' | translate }}</span>
       </div>
     </div>
     <div class="summary-card">
       <span class="material-icons-round card-icon accent">account_balance_wallet</span>
       <div class="card-body">
         <span class="card-value">{{ membersWithLoans }}</span>
-        <span class="card-label">أعضاء لديهم سلف</span>
+        <span class="card-label">{{ 'LOANS.MEMBERS_WITH_LOANS' | translate }}</span>
       </div>
     </div>
     <div class="summary-card">
       <span class="material-icons-round card-icon warn">receipt_long</span>
       <div class="card-body">
         <span class="card-value">{{ totals.activeLoanCount }}</span>
-        <span class="card-label">سلف نشطة</span>
+        <span class="card-label">{{ 'LOANS.ACTIVE_LOANS' | translate }}</span>
       </div>
     </div>
     <div class="summary-card">
       <span class="material-icons-round card-icon danger">trending_down</span>
       <div class="card-body">
         <span class="card-value">{{ money(totals.totalRemaining) }}</span>
-        <span class="card-label">إجمالي المتبقي</span>
+        <span class="card-label">{{ 'LOANS.TOTAL_REMAINING' | translate }}</span>
       </div>
     </div>
   </div>
@@ -47,25 +47,25 @@
   <!-- Filters -->
   <div class="filter-bar">
     <div class="filter-group">
-      <label class="filter-label">النوع:</label>
+      <label class="filter-label">{{ 'LOANS.TYPE_FILTER' | translate }}</label>
       <div class="btn-group">
-        <button class="btn btn-tab" [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">الكل</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'CAPTAIN'" (click)="typeFilter = 'CAPTAIN'; applyFilters()">كابتن</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'WORKER'" (click)="typeFilter = 'WORKER'; applyFilters()">عامل</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'MANAGER'" (click)="typeFilter = 'MANAGER'; applyFilters()">إداري</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">{{ 'COMMON.ALL' | translate }}</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'CAPTAIN'" (click)="typeFilter = 'CAPTAIN'; applyFilters()">{{ 'LOANS.TYPE_CAPTAIN' | translate }}</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'WORKER'" (click)="typeFilter = 'WORKER'; applyFilters()">{{ 'LOANS.TYPE_WORKER' | translate }}</button>
+        <button class="btn btn-tab" [class.active]="typeFilter === 'MANAGER'" (click)="typeFilter = 'MANAGER'; applyFilters()">{{ 'LOANS.TYPE_MANAGER' | translate }}</button>
       </div>
     </div>
     <div class="filter-group search-group">
       <span class="material-icons-round search-icon">search</span>
       <input type="text" class="form-input search-input" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
-             placeholder="بحث بالاسم أو الكود...">
+             [placeholder]="'LOANS.SEARCH_PLACEHOLDER' | translate">
     </div>
   </div>
 
   <!-- Loading -->
   <div class="loading-section" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جارٍ تحميل البيانات...</p>
+    <p>{{ 'COMMON.LOADING_DATA' | translate }}</p>
   </div>
 
   <!-- Table -->
@@ -74,13 +74,13 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>الكود</th>
-            <th>الاسم</th>
-            <th>النوع</th>
-            <th>الهاتف</th>
-            <th class="num">عدد السلف النشطة</th>
-            <th class="num">إجمالي المبلغ الأصلي</th>
-            <th class="num">إجمالي المتبقي</th>
+            <th>{{ 'LOANS.COL_CODE' | translate }}</th>
+            <th>{{ 'LOANS.COL_NAME' | translate }}</th>
+            <th>{{ 'LOANS.COL_TYPE' | translate }}</th>
+            <th>{{ 'LOANS.COL_PHONE' | translate }}</th>
+            <th class="num">{{ 'LOANS.COL_ACTIVE_LOANS' | translate }}</th>
+            <th class="num">{{ 'LOANS.COL_ORIGINAL_AMOUNT' | translate }}</th>
+            <th class="num">{{ 'LOANS.COL_REMAINING' | translate }}</th>
             <th></th>
           </tr>
         </thead>
@@ -92,7 +92,7 @@
               <span class="member-name">{{ member.memberName }}</span>
               <span class="member-name-en" *ngIf="member.memberNameEn">{{ member.memberNameEn }}</span>
             </td>
-            <td><span class="type-badge" [attr.data-type]="member.memberType">{{ member.memberTypeLabel }}</span></td>
+            <td><span class="type-badge" [attr.data-type]="member.memberType">{{ memberTypeLabel(member.memberType) }}</span></td>
             <td class="phone-cell">{{ member.phone || '—' }}</td>
             <td class="num">
               <span class="loan-count" *ngIf="member.activeLoanCount > 0">{{ member.activeLoanCount }}</span>
@@ -105,7 +105,7 @@
               </span>
             </td>
             <td>
-              <button class="btn btn-icon btn-sm" title="عرض التفاصيل">
+              <button class="btn btn-icon btn-sm" [title]="'LOAN_DETAIL.VIEW_DETAILS' | translate">
                 <span class="material-icons-round">chevron_left</span>
               </button>
             </td>
@@ -113,7 +113,7 @@
         </tbody>
         <tfoot *ngIf="filteredMembers.length > 0">
           <tr class="totals-row">
-            <td colspan="4">المجموع</td>
+            <td colspan="4">{{ 'LOANS.TOTAL_ROW' | translate }}</td>
             <td class="num">{{ totals.activeLoanCount }}</td>
             <td class="num">{{ money(totals.totalOriginal) }}</td>
             <td class="num">{{ money(totals.totalRemaining) }}</td>
@@ -124,7 +124,7 @@
     </div>
     <p class="empty-state" *ngIf="filteredMembers.length === 0">
       <span class="material-icons-round">info</span>
-      لا توجد نتائج مطابقة للبحث
+      {{ 'LOANS.NO_RESULTS' | translate }}
     </p>
   </div>
 

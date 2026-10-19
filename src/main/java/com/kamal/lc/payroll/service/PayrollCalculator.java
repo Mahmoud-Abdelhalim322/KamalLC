@@ -53,7 +53,8 @@ public class PayrollCalculator {
         BigDecimal lateDeductions = money(nz(input.lateDeductions()));
         BigDecimal supplierDeductions = money(nz(input.supplierDeductions()));
         BigDecimal dailyIncentives = money(nz(input.dailyIncentives()));
-        BigDecimal fuelAllowances = money(nz(input.fuelAllowances()));
+        // Fuel allowance disabled — managed via manual FUEL_DIFFERENCE adjustments
+        BigDecimal fuelAllowances = zero();
         BigDecimal carAllowances = money(nz(input.carAllowances()));
         BigDecimal vacationCommission = money(nz(input.vacationCommission()));
 
@@ -73,7 +74,6 @@ public class PayrollCalculator {
                 .subtract(lateDeductions)
                 .subtract(supplierDeductions)
                 .add(dailyIncentives)
-                .add(fuelAllowances)
                 .add(carAllowances)
                 .add(targetBonus)
                 .add(extraOrderPay)

@@ -1,8 +1,8 @@
 <div class="reports-page">
 
   <div class="page-header">
-    <h1 class="page-title">التقارير</h1>
-    <p class="page-subtitle">أداء الكباتن والربحية على أي فترة، محسوبة من الشيفتات المسجلة</p>
+    <h1 class="page-title">{{ 'REPORTS.TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'REPORTS.SUBTITLE' | translate }}</p>
   </div>
 
   <div class="alert alert-danger" *ngIf="errorMessage">
@@ -12,30 +12,30 @@
   <!-- Period + tabs -->
   <div class="toolbar">
     <div class="date-field">
-      <label>من</label>
+      <label>{{ 'REPORTS.FILTER_FROM' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="from" (change)="onPeriodChange()">
     </div>
     <div class="date-field">
-      <label>إلى</label>
+      <label>{{ 'REPORTS.FILTER_TO' | translate }}</label>
       <input type="date" class="form-input" [(ngModel)]="to" (change)="onPeriodChange()">
     </div>
 
     <div class="filter-tabs">
       <button class="filter-tab" [class.active]="activeTab === 'team'" (click)="setTab('team')">
-        <span class="material-icons-round">groups</span> مقارنة الفريق
+        <span class="material-icons-round">groups</span> {{ 'REPORTS.TAB_TEAM' | translate }}
       </button>
       <button class="filter-tab" [class.active]="activeTab === 'individual'" (click)="setTab('individual')">
-        <span class="material-icons-round">person</span> أداء فردي
+        <span class="material-icons-round">person</span> {{ 'REPORTS.TAB_INDIVIDUAL' | translate }}
       </button>
       <button class="filter-tab" [class.active]="activeTab === 'profitability'" (click)="setTab('profitability')">
-        <span class="material-icons-round">trending_up</span> الربحية
+        <span class="material-icons-round">trending_up</span> {{ 'REPORTS.TAB_PROFITABILITY' | translate }}
       </button>
     </div>
   </div>
 
   <div class="loading-state" *ngIf="isLoadingTeam">
     <div class="spinner"></div>
-    <p>جارٍ التحميل…</p>
+    <p>{{ 'REPORTS.LOADING' | translate }}</p>
   </div>
 
   <!-- ==================================================== TEAM -->
@@ -43,27 +43,27 @@
 
     <div class="kpi-row">
       <div class="kpi">
-        <span class="kpi-label">الكباتن</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_CAPTAINS' | translate }}</span>
         <b class="kpi-value">{{ report.totals.captains }}</b>
       </div>
       <div class="kpi">
-        <span class="kpi-label">شفتات الحضور</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_ATTENDED_SHIFTS' | translate }}</span>
         <b class="kpi-value">{{ report.totals.attendedShifts }}</b>
       </div>
       <div class="kpi warn" *ngIf="report.totals.absentShifts > 0">
-        <span class="kpi-label">أيام الغياب</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_ABSENT_DAYS' | translate }}</span>
         <b class="kpi-value">{{ report.totals.absentShifts }}</b>
       </div>
       <div class="kpi">
-        <span class="kpi-label">إجمالي الطلبات</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_TOTAL_ORDERS' | translate }}</span>
         <b class="kpi-value">{{ report.totals.totalOrders }}</b>
       </div>
       <div class="kpi good">
-        <span class="kpi-label">حقّقوا الهدف</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_REACHED_TARGET' | translate }}</span>
         <b class="kpi-value">{{ report.totals.captainsAtTarget }}</b>
       </div>
       <div class="kpi accent">
-        <span class="kpi-label">صافي المرتبات</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_NET_PAYROLL' | translate }}</span>
         <b class="kpi-value">{{ money(report.totals.net) }}</b>
       </div>
     </div>
@@ -73,41 +73,41 @@
       <div class="nudge-head">
         <span class="material-icons-round">bolt</span>
         <div>
-          <b>{{ nearTargetRows.length }} كابتن على بُعد خطوات من هدف الشهر</b>
-          <p>الفارق بين عدم تحقيق الهدف وتحقيقه هو مكافأة كاملة — هؤلاء أولى بالمتابعة.</p>
+          <b>{{ 'REPORTS.NUDGE_TITLE' | translate:{ count: nearTargetRows.length } }}</b>
+          <p>{{ 'REPORTS.NUDGE_DESC' | translate }}</p>
         </div>
       </div>
       <div class="nudge-list">
         <button *ngFor="let row of nearTargetRows" class="nudge-item" (click)="openCaptain(row)">
           <b>{{ row.captainName }}</b>
-          <span>يحتاج {{ row.ordersToTarget }} طلب</span>
+          <span>{{ 'REPORTS.NEEDS_ORDERS' | translate:{ count: row.ordersToTarget } }}</span>
         </button>
       </div>
     </div>
 
     <div class="empty-state card" *ngIf="report.rows.length === 0">
       <span class="material-icons-round">query_stats</span>
-      <h3>لا توجد بيانات في هذه الفترة</h3>
-      <p>استورد ملف الشيفتات من صفحة استيراد البيانات لتظهر التقارير.</p>
+      <h3>{{ 'REPORTS.NO_DATA_TITLE' | translate }}</h3>
+      <p>{{ 'REPORTS.NO_DATA_DESC' | translate }}</p>
     </div>
 
     <div class="table-wrap card" *ngIf="report.rows.length > 0">
       <table class="data-table">
         <thead>
           <tr>
-            <th>الكود</th>
-            <th>الكابتن</th>
-            <th>النوع</th>
-            <th class="sortable" (click)="sortBy('attendedShifts')">الشفتات</th>
-            <th class="sortable" (click)="sortBy('attendanceRate')">الالتزام</th>
-            <th class="sortable" (click)="sortBy('totalOrders')">الطلبات</th>
-            <th class="sortable" (click)="sortBy('avgOrdersPerShift')">طلب/شفت</th>
-            <th class="sortable" (click)="sortBy('totalHours')">الساعات</th>
-            <th class="sortable" (click)="sortBy('avgBusyUtilization')">الانشغال</th>
-            <th class="sortable" (click)="sortBy('avgHourlyUtr')">UTR</th>
-            <th class="sortable" (click)="sortBy('lateDeductions')">خصم تأخير</th>
-            <th>الهدف</th>
-            <th class="sortable" (click)="sortBy('net')">صافي الراتب</th>
+            <th>{{ 'REPORTS.COL_CODE' | translate }}</th>
+            <th>{{ 'REPORTS.COL_CAPTAIN' | translate }}</th>
+            <th>{{ 'REPORTS.COL_TYPE' | translate }}</th>
+            <th class="sortable" (click)="sortBy('attendedShifts')">{{ 'REPORTS.COL_SHIFTS' | translate }}</th>
+            <th class="sortable" (click)="sortBy('attendanceRate')">{{ 'REPORTS.COL_COMMITMENT' | translate }}</th>
+            <th class="sortable" (click)="sortBy('totalOrders')">{{ 'REPORTS.COL_ORDERS' | translate }}</th>
+            <th class="sortable" (click)="sortBy('avgOrdersPerShift')">{{ 'REPORTS.COL_AVG_ORDERS' | translate }}</th>
+            <th class="sortable" (click)="sortBy('totalHours')">{{ 'REPORTS.COL_HOURS' | translate }}</th>
+            <th class="sortable" (click)="sortBy('avgBusyUtilization')">{{ 'REPORTS.COL_BUSY' | translate }}</th>
+            <th class="sortable" (click)="sortBy('avgHourlyUtr')">{{ 'REPORTS.COL_UTR' | translate }}</th>
+            <th class="sortable" (click)="sortBy('lateDeductions')">{{ 'REPORTS.COL_LATE_DED' | translate }}</th>
+            <th>{{ 'REPORTS.COL_TARGET' | translate }}</th>
+            <th class="sortable" (click)="sortBy('net')">{{ 'REPORTS.COL_NET' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -136,9 +136,9 @@
               {{ row.lateDeductions > 0 ? '−' + money(row.lateDeductions) : '—' }}
             </td>
             <td>
-              <span class="badge badge-success" *ngIf="row.targetAchieved">محقّق</span>
+              <span class="badge badge-success" *ngIf="row.targetAchieved">{{ 'REPORTS.TARGET_ACHIEVED' | translate }}</span>
               <span class="badge badge-warning" *ngIf="!row.targetAchieved">
-                باقي {{ row.ordersToTarget }}
+                {{ 'REPORTS.TARGET_REMAINING' | translate:{ count: row.ordersToTarget } }}
               </span>
             </td>
             <td class="net">{{ money(row.net) }}</td>
@@ -146,7 +146,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3">المجموع</td>
+            <td colspan="3">{{ 'REPORTS.TOTAL' | translate }}</td>
             <td>{{ report.totals.attendedShifts }}</td>
             <td></td>
             <td>{{ report.totals.totalOrders }}</td>
@@ -166,37 +166,36 @@
 
     <div class="kpi-row">
       <div class="kpi">
-        <span class="kpi-label">إيراد المورد</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_SUPPLIER_REVENUE' | translate }}</span>
         <b class="kpi-value">{{ money(report.totals.supplierRevenueTotal) }}</b>
       </div>
       <div class="kpi">
-        <span class="kpi-label">تكلفة الكباتن</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_CAPTAIN_COST' | translate }}</span>
         <b class="kpi-value">{{ money(report.totals.net) }}</b>
       </div>
       <div class="kpi" [class.good]="report.totals.margin > 0" [class.bad]="report.totals.margin < 0">
-        <span class="kpi-label">صافي الهامش</span>
+        <span class="kpi-label">{{ 'REPORTS.KPI_NET_MARGIN' | translate }}</span>
         <b class="kpi-value">{{ money(report.totals.margin) }}</b>
       </div>
     </div>
 
     <p class="section-note">
-      الإيراد محسوب من قواعد المورد لكل شفت (الشفت المحقق بسعر ثابت، وغير المحقق بسعر الطلب)،
-      والتكلفة هي صافي مستحق الكابتن بعد البنود اليدوية.
+      {{ 'REPORTS.PROFITABILITY_NOTE' | translate }}
     </p>
 
     <div class="table-wrap card" *ngIf="report.rows.length > 0">
       <table class="data-table">
         <thead>
           <tr>
-            <th>الكود</th>
-            <th>الكابتن</th>
-            <th>النوع</th>
-            <th>الشفتات</th>
-            <th>الطلبات</th>
-            <th>إيراد المورد</th>
-            <th>تكلفة الكابتن</th>
-            <th>الهامش</th>
-            <th>الهامش/شفت</th>
+            <th>{{ 'REPORTS.COL_CODE' | translate }}</th>
+            <th>{{ 'REPORTS.COL_CAPTAIN' | translate }}</th>
+            <th>{{ 'REPORTS.COL_TYPE' | translate }}</th>
+            <th>{{ 'REPORTS.COL_SHIFTS' | translate }}</th>
+            <th>{{ 'REPORTS.COL_ORDERS' | translate }}</th>
+            <th>{{ 'REPORTS.KPI_SUPPLIER_REVENUE' | translate }}</th>
+            <th>{{ 'REPORTS.KPI_CAPTAIN_COST' | translate }}</th>
+            <th>{{ 'REPORTS.COL_MARGIN' | translate }}</th>
+            <th>{{ 'REPORTS.COL_MARGIN_PER_SHIFT' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -223,7 +222,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="5">المجموع</td>
+            <td colspan="5">{{ 'REPORTS.TOTAL' | translate }}</td>
             <td>{{ money(report.totals.supplierRevenueTotal) }}</td>
             <td>{{ money(report.totals.net) }}</td>
             <td class="strong">{{ money(report.totals.margin) }}</td>
@@ -238,25 +237,25 @@
   <ng-container *ngIf="activeTab === 'individual'">
 
     <div class="card picker-card">
-      <label class="form-label">اختر الكابتن</label>
+      <label class="form-label">{{ 'REPORTS.SELECT_CAPTAIN' | translate }}</label>
       <select class="form-input" [(ngModel)]="selectedCaptainId" (change)="loadCaptainReport()">
-        <option value="">— اختر كابتن —</option>
+        <option value="">{{ 'REPORTS.CHOOSE_CAPTAIN_PLACEHOLDER' | translate }}</option>
         <option *ngFor="let row of teamReport?.rows" [value]="row.captainId">
           {{ row.captainCode }} — {{ row.captainName }}
         </option>
       </select>
-      <p class="hint">القائمة تعرض الكباتن الذين لهم شيفتات في الفترة المختارة.</p>
+      <p class="hint">{{ 'REPORTS.PICKER_HINT' | translate }}</p>
     </div>
 
     <div class="loading-state" *ngIf="isLoadingCaptain">
       <div class="spinner"></div>
-      <p>جارٍ التحميل…</p>
+      <p>{{ 'REPORTS.LOADING' | translate }}</p>
     </div>
 
     <div class="empty-state card" *ngIf="!isLoadingCaptain && !captainReport && selectedCaptainId === ''">
       <span class="material-icons-round">person_search</span>
-      <h3>لم يتم اختيار كابتن</h3>
-      <p>اختر كابتنًا من القائمة لعرض تقرير أدائه التفصيلي.</p>
+      <h3>{{ 'REPORTS.NO_CAPTAIN_SELECTED' | translate }}</h3>
+      <p>{{ 'REPORTS.NO_CAPTAIN_HINT' | translate }}</p>
     </div>
 
     <ng-container *ngIf="!isLoadingCaptain && captainReport as rep">
@@ -272,18 +271,18 @@
                 [class.badge-freelance]="rep.captainType === 'FREELANCE'">
                 {{ typeLabel(rep.captainType) }}
               </span>
-              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">سيارته الخاصة</span>
-              <span class="badge badge-info" *ngIf="rep.fuelAllowanceEligible">مستحق بدل بنزين</span>
-              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">مستحق بدل سيارة</span>
+              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">{{ 'REPORTS.OWN_VEHICLE' | translate }}</span>
+              <span class="badge badge-info" *ngIf="rep.fuelAllowanceEligible">{{ 'REPORTS.FUEL_ELIGIBLE' | translate }}</span>
+              <span class="badge badge-info" *ngIf="rep.usesOwnVehicle">{{ 'REPORTS.CAR_ALLOWANCE_ELIGIBLE' | translate }}</span>
             </p>
-            <p class="ids" *ngIf="rep.supplierExternalIds">معرفات المورد: {{ rep.supplierExternalIds }}</p>
+            <p class="ids" *ngIf="rep.supplierExternalIds">{{ 'REPORTS.SUPPLIER_IDS' | translate:{ ids: rep.supplierExternalIds } }}</p>
           </div>
         </div>
         <div class="captain-head-actions">
           <span class="period">{{ rep.periodFrom }} → {{ rep.periodTo }}</span>
           <button class="btn btn-outline" (click)="exportCaptainReport()" [disabled]="isExporting">
             <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-            تصدير Excel
+            {{ 'REPORTS.EXPORT_EXCEL' | translate }}
           </button>
         </div>
       </div>
@@ -292,14 +291,12 @@
       <div class="card target-card">
         <div class="target-head">
           <div>
-            <b>هدف الشهر</b>
+            <b>{{ 'REPORTS.TARGET_TITLE' | translate }}</b>
             <p *ngIf="rep.ordersToTarget > 0">
-              {{ rep.totalOrders }} من {{ rep.monthlyOrderTarget }} طلب —
-              باقٍ <b class="highlight">{{ rep.ordersToTarget }}</b> طلب على المكافأة
+              {{ 'REPORTS.TARGET_PENDING' | translate:{ current: rep.totalOrders, target: rep.monthlyOrderTarget, left: rep.ordersToTarget } }}
             </p>
             <p *ngIf="rep.ordersToTarget === 0">
-              تحقّق الهدف — كل طلب إضافي يساوي الآن
-              <b class="highlight">{{ money(rep.nextOrderValue) }}</b> ريال
+              {{ 'REPORTS.TARGET_DONE' | translate:{ value: money(rep.nextOrderValue) } }}
             </p>
           </div>
           <span class="target-pct">{{ percent(rep.targetProgress) }}</span>
@@ -313,72 +310,72 @@
       <!-- KPIs -->
       <div class="kpi-row">
         <div class="kpi">
-          <span class="kpi-label">شفتات الحضور</span>
+          <span class="kpi-label">{{ 'REPORTS.KPI_ATTENDED_SHIFTS' | translate }}</span>
           <b class="kpi-value">{{ rep.attendedShifts }}</b>
-          <small>من {{ rep.totalShifts }} شفت</small>
+          <small>{{ 'REPORTS.OF_TOTAL_SHIFTS' | translate:{ count: rep.totalShifts } }}</small>
         </div>
         <div class="kpi" [class.warn]="rep.absentShifts > 0">
-          <span class="kpi-label">الغياب</span>
+          <span class="kpi-label">{{ 'REPORTS.ABSENCE_KPI' | translate }}</span>
           <b class="kpi-value">{{ rep.absentShifts }}</b>
-          <small>التزام {{ percent(rep.attendanceRate) }}</small>
+          <small>{{ 'REPORTS.COMMITMENT_SUB' | translate:{ rate: percent(rep.attendanceRate) } }}</small>
         </div>
         <div class="kpi">
-          <span class="kpi-label">الطلبات</span>
+          <span class="kpi-label">{{ 'REPORTS.COL_ORDERS' | translate }}</span>
           <b class="kpi-value">{{ rep.totalOrders }}</b>
           <small [ngClass]="compare(rep.avgOrdersPerShift, rep.teamAvgOrdersPerShift)">
-            {{ num(rep.avgOrdersPerShift, 1) }} طلب/شفت (الفريق {{ num(rep.teamAvgOrdersPerShift, 1) }})
+            {{ 'REPORTS.TEAM_AVG_SUB' | translate:{ val: num(rep.avgOrdersPerShift, 1), teamVal: num(rep.teamAvgOrdersPerShift, 1) } }}
           </small>
         </div>
         <div class="kpi">
-          <span class="kpi-label">الساعات</span>
+          <span class="kpi-label">{{ 'REPORTS.COL_HOURS' | translate }}</span>
           <b class="kpi-value">{{ num(rep.totalHours, 1) }}</b>
-          <small>{{ num(rep.avgHoursPerShift, 1) }} ساعة/شفت</small>
+          <small>{{ 'REPORTS.HOURS_PER_SHIFT_SUB' | translate:{ val: num(rep.avgHoursPerShift, 1) } }}</small>
         </div>
         <div class="kpi">
-          <span class="kpi-label">نسبة الانشغال</span>
+          <span class="kpi-label">{{ 'REPORTS.COL_BUSY' | translate }}</span>
           <b class="kpi-value">{{ percent(rep.avgBusyUtilization) }}</b>
           <small [ngClass]="compare(rep.avgBusyUtilization, rep.teamAvgBusyUtilization)">
-            الفريق {{ percent(rep.teamAvgBusyUtilization) }}
+            {{ 'REPORTS.TEAM_BUSY_SUB' | translate:{ val: percent(rep.teamAvgBusyUtilization) } }}
           </small>
         </div>
         <div class="kpi">
-          <span class="kpi-label">التسليم في الوقت</span>
+          <span class="kpi-label">{{ 'REPORTS.ONTIME_DELIVERY' | translate }}</span>
           <b class="kpi-value">{{ percent(rep.avgDeliveryOntime) }}</b>
-          <small>UTR {{ num(rep.avgHourlyUtr, 2) }}</small>
+          <small>{{ 'REPORTS.COL_UTR' | translate }} {{ num(rep.avgHourlyUtr, 2) }}</small>
         </div>
       </div>
 
       <div class="two-col">
         <!-- Pay breakdown -->
         <div class="card">
-          <h3 class="card-title">تفصيل المستحق</h3>
-          <div class="kv"><span>مجموع الدخل ({{ rep.attendedShifts }} شفت)</span><b>{{ money(rep.basePay) }}</b></div>
-          <div class="kv negative"><span>خصم التأخير</span><b>−{{ money(rep.lateDeductions) }}</b></div>
-          <div class="kv positive"><span>الحوافز اليومية</span><b>+{{ money(rep.dailyIncentives) }}</b></div>
-          <div class="kv positive"><span>بدل البنزين</span><b>+{{ money(rep.fuelAllowances) }}</b></div>
-          <div class="kv positive"><span>بدل السيارة</span><b>+{{ money(rep.carAllowances) }}</b></div>
-          <div class="kv positive"><span>مكافأة تحقيق الهدف</span><b>+{{ money(rep.targetBonus) }}</b></div>
-          <div class="kv positive"><span>طلبات بعد الهدف</span><b>+{{ money(rep.extraOrderPay) }}</b></div>
-          <div class="kv subtotal"><span>مجموع الراتب</span><b>{{ money(rep.gross) }}</b></div>
+          <h3 class="card-title">{{ 'REPORTS.PAY_BREAKDOWN_TITLE' | translate }}</h3>
+          <div class="kv"><span>{{ 'REPORTS.BASE_INCOME' | translate:{ count: rep.attendedShifts } }}</span><b>{{ money(rep.basePay) }}</b></div>
+          <div class="kv negative"><span>{{ 'REPORTS.LATE_DEDUCTION' | translate }}</span><b>−{{ money(rep.lateDeductions) }}</b></div>
+          <div class="kv positive"><span>{{ 'REPORTS.DAILY_INCENTIVES' | translate }}</span><b>+{{ money(rep.dailyIncentives) }}</b></div>
+          <div class="kv positive"><span>{{ 'REPORTS.FUEL_ALLOWANCE' | translate }}</span><b>+{{ money(rep.fuelAllowances) }}</b></div>
+          <div class="kv positive"><span>{{ 'REPORTS.CAR_ALLOWANCE' | translate }}</span><b>+{{ money(rep.carAllowances) }}</b></div>
+          <div class="kv positive"><span>{{ 'REPORTS.TARGET_BONUS' | translate }}</span><b>+{{ money(rep.targetBonus) }}</b></div>
+          <div class="kv positive"><span>{{ 'REPORTS.EXTRA_ORDER_PAY' | translate }}</span><b>+{{ money(rep.extraOrderPay) }}</b></div>
+          <div class="kv subtotal"><span>{{ 'REPORTS.GROSS_SALARY' | translate }}</span><b>{{ money(rep.gross) }}</b></div>
           <div class="kv" [class.positive]="rep.adjustmentsTotal > 0" [class.negative]="rep.adjustmentsTotal < 0">
-            <span>البنود اليدوية</span><b>{{ money(rep.adjustmentsTotal) }}</b>
+            <span>{{ 'REPORTS.MANUAL_ITEMS' | translate }}</span><b>{{ money(rep.adjustmentsTotal) }}</b>
           </div>
-          <div class="kv total"><span>صافي الراتب</span><b>{{ money(rep.net) }} ريال</b></div>
+          <div class="kv total"><span>{{ 'REPORTS.NET_SALARY' | translate }}</span><b>{{ money(rep.net) }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</b></div>
           <p class="hint">
-            هذه أرقام تقديرية بالأسعار السارية — المسير المعتمد هو المرجع لما صُرف فعلًا.
+            {{ 'REPORTS.PAY_DISCLAIMER' | translate }}
           </p>
         </div>
 
         <!-- Deduction breakdown + profitability -->
         <div class="stack">
           <div class="card" *ngIf="rep.deductionBreakdown.length > 0">
-            <h3 class="card-title">أين ذهبت الخصومات</h3>
+            <h3 class="card-title">{{ 'REPORTS.WHERE_DEDUCTIONS_WENT' | translate }}</h3>
             <table class="data-table compact">
               <thead>
                 <tr>
-                  <th>قيمة الخصم</th>
-                  <th>عدد الشفتات</th>
-                  <th>الإجمالي</th>
+                  <th>{{ 'REPORTS.COL_DED_VALUE' | translate }}</th>
+                  <th>{{ 'REPORTS.COL_SHIFT_COUNT' | translate }}</th>
+                  <th>{{ 'REPORTS.COL_DED_TOTAL' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -392,17 +389,17 @@
           </div>
 
           <div class="card">
-            <h3 class="card-title">الربحية</h3>
-            <div class="kv"><span>إيراد المورد</span><b>{{ money(rep.supplierRevenueTotal) }}</b></div>
-            <div class="kv"><span>تكلفة الكابتن</span><b>{{ money(rep.net) }}</b></div>
-            <div class="kv total"><span>الهامش</span><b>{{ money(rep.margin) }} ريال</b></div>
+            <h3 class="card-title">{{ 'REPORTS.PROFITABILITY_TITLE' | translate }}</h3>
+            <div class="kv"><span>{{ 'REPORTS.SUPPLIER_REV_LABEL' | translate }}</span><b>{{ money(rep.supplierRevenueTotal) }}</b></div>
+            <div class="kv"><span>{{ 'REPORTS.CAPTAIN_COST_LABEL' | translate }}</span><b>{{ money(rep.net) }}</b></div>
+            <div class="kv total"><span>{{ 'REPORTS.MARGIN_LABEL' | translate }}</span><b>{{ money(rep.margin) }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</b></div>
           </div>
         </div>
       </div>
 
       <!-- Daily chart -->
       <div class="card" *ngIf="rep.daily.length > 0">
-        <h3 class="card-title">الأداء اليومي</h3>
+        <h3 class="card-title">{{ 'REPORTS.DAILY_PERF_TITLE' | translate }}</h3>
         <div class="chart">
           <div class="chart-col" *ngFor="let point of rep.daily" [title]="point.date">
             <div class="bars">
@@ -413,31 +410,31 @@
               <div class="bar hours" [style.height]="barHeight(point.hours, 'hours')"></div>
             </div>
             <span class="chart-label">{{ point.date.slice(8) }}</span>
-            <span class="chart-flag" *ngIf="!point.attended">غياب</span>
+            <span class="chart-flag" *ngIf="!point.attended">{{ 'REPORTS.STATUS_ABSENT' | translate }}</span>
           </div>
         </div>
         <div class="chart-legend">
-          <span><i class="swatch orders"></i> الطلبات</span>
-          <span><i class="swatch hours"></i> الساعات</span>
-          <span><i class="swatch absent"></i> غياب</span>
+          <span><i class="swatch orders"></i> {{ 'REPORTS.LEGEND_ORDERS' | translate }}</span>
+          <span><i class="swatch hours"></i> {{ 'REPORTS.LEGEND_HOURS' | translate }}</span>
+          <span><i class="swatch absent"></i> {{ 'REPORTS.LEGEND_ABSENT' | translate }}</span>
         </div>
       </div>
 
       <!-- Shift list -->
       <div class="table-wrap card" *ngIf="rep.daily.length > 0">
-        <h3 class="card-title">شيفتات الفترة</h3>
+        <h3 class="card-title">{{ 'REPORTS.PERIOD_SHIFTS' | translate }}</h3>
         <table class="data-table">
           <thead>
             <tr>
-              <th>التاريخ</th>
-              <th>المنطقة</th>
-              <th>الحالة</th>
-              <th>الساعات</th>
-              <th>الطلبات</th>
-              <th>الانشغال</th>
-              <th>UTR</th>
-              <th>خصم</th>
-              <th>صافي الشفت</th>
+              <th>{{ 'REPORTS.COL_SHIFT_DATE' | translate }}</th>
+              <th>{{ 'REPORTS.COL_ZONE' | translate }}</th>
+              <th>{{ 'REPORTS.COL_STATUS' | translate }}</th>
+              <th>{{ 'REPORTS.COL_HOURS' | translate }}</th>
+              <th>{{ 'REPORTS.COL_ORDERS' | translate }}</th>
+              <th>{{ 'REPORTS.COL_BUSY' | translate }}</th>
+              <th>{{ 'REPORTS.COL_UTR' | translate }}</th>
+              <th>{{ 'REPORTS.COL_LATE_DED' | translate }}</th>
+              <th>{{ 'REPORTS.COL_NET_SHIFT' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -445,8 +442,8 @@
               <td>{{ point.date }}</td>
               <td>{{ point.zoneName || '—' }}</td>
               <td>
-                <span class="badge badge-success" *ngIf="point.attended">حضور</span>
-                <span class="badge badge-warning" *ngIf="!point.attended">غياب</span>
+                <span class="badge badge-success" *ngIf="point.attended">{{ 'REPORTS.STATUS_PRESENT' | translate }}</span>
+                <span class="badge badge-warning" *ngIf="!point.attended">{{ 'REPORTS.STATUS_ABSENT' | translate }}</span>
               </td>
               <td>{{ num(point.hours) }}</td>
               <td>{{ point.orders ?? '—' }}</td>

@@ -9,16 +9,19 @@ import {
 } from '../../core/models/api.models';
 import { SupplierRevenueService } from '../../core/services/supplier-revenue.service';
 import { downloadBlob, errorMessage } from '../../core/services/api.util';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-supplier-revenue',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './supplier-revenue.component.html',
   styleUrls: ['./supplier-revenue.component.scss']
 })
 export class SupplierRevenueComponent implements OnInit {
   private revenueService = inject(SupplierRevenueService);
+  public i18n = inject(TranslationService);
 
   // Filter State
   fromDate = '';
@@ -41,12 +44,12 @@ export class SupplierRevenueComponent implements OnInit {
 
   // Categories list for adjustment
   categories = [
-    'خطأ في حساب الطلبات',
-    'تعديل تسعيرة / عمولة',
-    'تعويض شيفتات',
-    'غرامة تشغيلية',
-    'مكافأة تشغيلية',
-    'تسوية إدارية/يدوية'
+    { key: 'SUPPLIER_REVENUE.CAT_ORDER_CALC_ERROR', value: 'خطأ في حساب الطلبات' },
+    { key: 'SUPPLIER_REVENUE.CAT_PRICING_ADJUSTMENT', value: 'تعديل تسعيرة / عمولة' },
+    { key: 'SUPPLIER_REVENUE.CAT_SHIFT_COMPENSATION', value: 'تعويض شيفتات' },
+    { key: 'SUPPLIER_REVENUE.CAT_OPERATIONAL_FINE', value: 'غرامة تشغيلية' },
+    { key: 'SUPPLIER_REVENUE.CAT_OPERATIONAL_BONUS', value: 'مكافأة تشغيلية' },
+    { key: 'SUPPLIER_REVENUE.CAT_ADMIN_SETTLEMENT', value: 'تسوية إدارية/يدوية' }
   ];
 
   // Form State
@@ -61,6 +64,11 @@ export class SupplierRevenueComponent implements OnInit {
 
   ngOnInit(): void {
     this.setPreset('current-month');
+  }
+
+  getCategoryLabel(category: string): string {
+    const found = this.categories.find(c => c.value === category);
+    return found ? this.i18n.get(found.key) : category;
   }
 
   setPreset(preset: 'current-month' | 'last-month' | 'last-30'): void {
@@ -102,12 +110,12 @@ export class SupplierRevenueComponent implements OnInit {
         if (res.success && res.data) {
           this.summary = res.data;
         } else {
-          this.errorMessage = res.message || 'فشل تحميل بيانات الإيرادات';
+          this.errorMessage = res.message || this.i18n.get('SUPPLIER_REVENUE.LOAD_FAILED');
         }
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = errorMessage(err, 'فشل الاتصال بالخادم');
+        this.errorMessage = errorMessage(err, this.i18n.get('SUPPLIER_REVENUE.SERVER_ERROR'));
       }
     });
   }
@@ -124,12 +132,12 @@ export class SupplierRevenueComponent implements OnInit {
         if (res.success && res.data) {
           this.statement = res.data;
         } else {
-          this.errorMessage = res.message || 'فشل تحميل كشف الحساب';
+          this.errorMessage = res.message || this.i18n.get('SUPPLIER_REVENUE.LOAD_STATEMENT_FAILED');
         }
       },
       error: (err) => {
         this.isLoadingStatement = false;
-        this.errorMessage = errorMessage(err, 'فشل تحميل كشف الحساب');
+        this.errorMessage = errorMessage(err, this.i18n.get('SUPPLIER_REVENUE.LOAD_STATEMENT_FAILED'));
       }
     });
   }
@@ -156,17 +164,17 @@ export class SupplierRevenueComponent implements OnInit {
 
   saveAdjustment(): void {
     if (!this.adjSupplierId) {
-      this.errorMessage = 'يرجى اختيار المورد';
+      this.errorMessage = this.i18n.get('SUPPLIER_REVENUE.SELECT_SUPPLIER_REQ');
       return;
     }
     if (!this.adjAmount || this.adjAmount <= 0) {
-      this.errorMessage = 'يرجى إدخال مبلغ صحيح أكبر من 0';
+      this.errorMessage = this.i18n.get('SUPPLIER_REVENUE.VALID_AMOUNT_REQ');
       return;
     }
 
     const category = this.adjCategory === 'أخرى' ? this.customCategory.trim() : this.adjCategory;
     if (!category) {
-      this.errorMessage = 'يرجى تحديد بند التسوية';
+      this.errorMessage = this.i18n.get('SUPPLIER_REVENUE.SPECIFY_CATEGORY_REQ');
       return;
     }
 
@@ -184,40 +192,44 @@ export class SupplierRevenueComponent implements OnInit {
       next: (res) => {
         this.isSavingAdjustment = false;
         if (res.success) {
-          this.successMessage = 'تمت إضافة التسوية المالية بنجاح';
+          this.successMessage = this.i18n.get('SUPPLIER_REVENUE.ADJUSTMENT_SAVED');
           this.closeAdjustmentModal();
           this.loadData();
           if (this.showStatementModal && this.selectedSupplier?.supplierId === this.adjSupplierId) {
             this.openStatement(this.selectedSupplier);
           }
         } else {
-          this.errorMessage = res.message || 'فشل حفظ التسوية';
+          this.errorMessage = res.message || this.i18n.get('SUPPLIER_REVENUE.SAVE_ADJUSTMENT_FAILED');
         }
       },
       error: (err) => {
         this.isSavingAdjustment = false;
-        this.errorMessage = errorMessage(err, 'فشل حفظ التسوية المالية');
+        this.errorMessage = errorMessage(err, this.i18n.get('SUPPLIER_REVENUE.SAVE_ADJUSTMENT_FAILED'));
       }
     });
   }
 
   deleteAdjustment(adj: SupplierAdjustmentResponse): void {
-    if (!confirm(`هل أنت تأكد من حذف تسوية "${adj.category}" بمبلغ ${adj.amount} ريال؟`)) return;
+    const confirmMsg = this.i18n.get('SUPPLIER_REVENUE.CONFIRM_DELETE_ADJUSTMENT', {
+      category: this.getCategoryLabel(adj.category),
+      amount: adj.amount
+    });
+    if (!confirm(confirmMsg)) return;
 
     this.revenueService.deleteAdjustment(adj.id).subscribe({
       next: (res) => {
         if (res.success) {
-          this.successMessage = 'تم حذف التسوية بنجاح';
+          this.successMessage = this.i18n.get('SUPPLIER_REVENUE.ADJUSTMENT_DELETED');
           this.loadData();
           if (this.selectedSupplier) {
             this.openStatement(this.selectedSupplier);
           }
         } else {
-          this.errorMessage = res.message || 'فشل حذف التسوية';
+          this.errorMessage = res.message || this.i18n.get('SUPPLIER_REVENUE.DELETE_ADJUSTMENT_FAILED');
         }
       },
       error: (err) => {
-        this.errorMessage = errorMessage(err, 'فشل حذف التسوية');
+        this.errorMessage = errorMessage(err, this.i18n.get('SUPPLIER_REVENUE.DELETE_ADJUSTMENT_FAILED'));
       }
     });
   }
@@ -230,11 +242,15 @@ export class SupplierRevenueComponent implements OnInit {
     this.revenueService.exportExcel(this.fromDate, this.toDate).subscribe({
       next: (blob) => {
         this.isExporting = false;
-        downloadBlob(blob, `إيرادات-الموردين-${this.fromDate}-إلى-${this.toDate}.xlsx`);
+        const filename = this.i18n.get('SUPPLIER_REVENUE.EXPORT_FILE_NAME', {
+          from: this.fromDate,
+          to: this.toDate
+        });
+        downloadBlob(blob, filename);
       },
       error: (err) => {
         this.isExporting = false;
-        this.errorMessage = errorMessage(err, 'فشل تصدير التقرير');
+        this.errorMessage = errorMessage(err, this.i18n.get('SUPPLIER_REVENUE.EXPORT_FAILED'));
       }
     });
   }

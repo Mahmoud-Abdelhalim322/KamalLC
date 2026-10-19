@@ -1,5 +1,6 @@
 package com.kamal.lc.fleet.service;
 
+import com.kamal.lc.changelog.service.ChangeLogWriter;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.fleet.dto.*;
 import com.kamal.lc.fleet.entity.Vehicle;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -50,6 +52,30 @@ public class FleetService {
     // Sub-services
     private final VehicleAssignmentService assignmentService;
     private final VehicleMaintenanceService maintenanceService;
+    private final ChangeLogWriter changeLogWriter;
+
+    /** Arabic labels for vehicle fields — used by the changelog writer. */
+    private static final Map<String, String> VEHICLE_FIELD_LABELS = Map.ofEntries(
+            Map.entry("plateNumber", "رقم اللوحة"),
+            Map.entry("ownershipType", "نوع الملكية"),
+            Map.entry("rentalAgentCode", "كود وكيل التأجير"),
+            Map.entry("brand", "الماركة"),
+            Map.entry("model", "الموديل"),
+            Map.entry("year", "سنة الصنع"),
+            Map.entry("color", "اللون"),
+            Map.entry("odometer", "عداد المسافة"),
+            Map.entry("status", "الحالة"),
+            Map.entry("rentalAgentName", "اسم وكيل التأجير"),
+            Map.entry("rentalStartDate", "بداية عقد التأجير"),
+            Map.entry("rentalEndDate", "نهاية عقد التأجير"),
+            Map.entry("registrationNumber", "رقم الاستمارة"),
+            Map.entry("vin", "رقم الهيكل"),
+            Map.entry("registrationExpiryDate", "تاريخ انتهاء الاستمارة"),
+            Map.entry("operatingCardNumber", "رقم بطاقة التشغيل"),
+            Map.entry("insuranceCompany", "شركة التأمين"),
+            Map.entry("inspectionExpiryDate", "تاريخ انتهاء الفحص"),
+            Map.entry("notes", "ملاحظات")
+    );
 
     // ──────────────────────────── Vehicle CRUD ────────────────────────────
 
@@ -93,6 +119,9 @@ public class FleetService {
             throw new BusinessException("DUPLICATE_PLATE", "رقم اللوحة مسجل بالفعل");
         }
 
+        // Snapshot before update
+        Map<String, Object> before = ChangeLogWriter.snapshot(v, VEHICLE_FIELD_LABELS);
+
         // Regenerate vehicle code if ownership type or agent code changed
         String newOwnership = req.getOwnershipType() != null ? req.getOwnershipType() : v.getOwnershipType();
         String newAgentCode = req.getRentalAgentCode();
@@ -124,7 +153,16 @@ public class FleetService {
         v.setInsuranceCompany(req.getInsuranceCompany());
         v.setInspectionExpiryDate(req.getInspectionExpiryDate());
         v.setNotes(req.getNotes());
-        return toResponse(vehicleRepo.save(v));
+
+        Vehicle saved = vehicleRepo.save(v);
+
+        // Log changes
+        Map<String, Object> after = ChangeLogWriter.snapshot(saved, VEHICLE_FIELD_LABELS);
+        String label = saved.getPlateNumber() + (saved.getVehicleCode() != null ? " (" + saved.getVehicleCode() + ")" : "");
+        changeLogWriter.logFieldChanges("VEHICLE", saved.getId(), label,
+                before, after, VEHICLE_FIELD_LABELS, "نظام");
+
+        return toResponse(saved);
     }
 
     public void deleteVehicle(UUID id) {

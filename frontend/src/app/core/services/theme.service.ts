@@ -7,6 +7,7 @@ export interface ThemeSettings {
   sidebarBg: string;
   topbarBg: string;
   sidebarActiveBg: string;
+  sidebarTextColor: string;
   brandText: string;
 }
 
@@ -15,7 +16,8 @@ export const DEFAULT_THEME: ThemeSettings = {
   sidebarBg: '#F5B000',
   topbarBg: '#F5B000',
   sidebarActiveBg: '#D98E04',
-  brandText: 'شركة كمال بن خلف السلمي للخدمات اللوجستية',
+  sidebarTextColor: '#000000',
+  brandText: 'Kamal Bin Khalaf Al-Sulami Logistics Co.',
 };
 
 @Injectable({
@@ -28,10 +30,11 @@ export class ThemeService {
   sidebarBg = signal<string>(DEFAULT_THEME.sidebarBg);
   topbarBg = signal<string>(DEFAULT_THEME.topbarBg);
   sidebarActiveBg = signal<string>(DEFAULT_THEME.sidebarActiveBg);
+  sidebarTextColor = signal<string>(DEFAULT_THEME.sidebarTextColor);
   brandText = signal<string>(DEFAULT_THEME.brandText);
 
   constructor() {
-    this.applyCssVariables(this.sidebarBg(), this.topbarBg(), this.sidebarActiveBg());
+    this.applyCssVariables(this.sidebarBg(), this.topbarBg(), this.sidebarActiveBg(), this.sidebarTextColor());
   }
 
   /** Fetch active appearance settings and apply to root CSS and signals */
@@ -53,6 +56,7 @@ export class ThemeService {
     let sBg = DEFAULT_THEME.sidebarBg;
     let tBg = DEFAULT_THEME.topbarBg;
     let saBg = DEFAULT_THEME.sidebarActiveBg;
+    let sTextColor = DEFAULT_THEME.sidebarTextColor;
     let brand = DEFAULT_THEME.brandText;
 
     for (const setting of appearance) {
@@ -64,12 +68,14 @@ export class ThemeService {
         tBg = setting.value;
       } else if (setting.settingKey === 'THEME_SIDEBAR_ACTIVE_BG' && setting.value) {
         saBg = setting.value;
+      } else if (setting.settingKey === 'THEME_SIDEBAR_TEXT_COLOR' && setting.value) {
+        sTextColor = setting.value;
       } else if (setting.settingKey === 'THEME_BRAND_TEXT' && setting.value) {
         brand = setting.value;
       }
     }
 
-    this.updateTheme({ logoUrl: logo, sidebarBg: sBg, topbarBg: tBg, sidebarActiveBg: saBg, brandText: brand });
+    this.updateTheme({ logoUrl: logo, sidebarBg: sBg, topbarBg: tBg, sidebarActiveBg: saBg, sidebarTextColor: sTextColor, brandText: brand });
   }
 
   /** Live update signals and root CSS properties */
@@ -78,16 +84,18 @@ export class ThemeService {
     if (theme.sidebarBg !== undefined) this.sidebarBg.set(theme.sidebarBg);
     if (theme.topbarBg !== undefined) this.topbarBg.set(theme.topbarBg);
     if (theme.sidebarActiveBg !== undefined) this.sidebarActiveBg.set(theme.sidebarActiveBg);
+    if (theme.sidebarTextColor !== undefined) this.sidebarTextColor.set(theme.sidebarTextColor);
     if (theme.brandText !== undefined) this.brandText.set(theme.brandText);
 
-    this.applyCssVariables(this.sidebarBg(), this.topbarBg(), this.sidebarActiveBg());
+    this.applyCssVariables(this.sidebarBg(), this.topbarBg(), this.sidebarActiveBg(), this.sidebarTextColor());
   }
 
-  private applyCssVariables(sidebarColor: string, topbarColor: string, activeColor: string): void {
+  private applyCssVariables(sidebarColor: string, topbarColor: string, activeColor: string, textColor: string): void {
     if (typeof document !== 'undefined' && document.documentElement) {
       document.documentElement.style.setProperty('--bg-sidebar', sidebarColor);
       document.documentElement.style.setProperty('--bg-header', topbarColor);
       document.documentElement.style.setProperty('--bg-sidebar-active', activeColor);
+      document.documentElement.style.setProperty('--text-sidebar', textColor);
     }
   }
 }

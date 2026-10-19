@@ -35,7 +35,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 })
 export class TranslationService {
   private readonly STORAGE_KEY = 'kamalres_lang';
-  private readonly DEFAULT_LANG: Language = 'ar';
+  private readonly DEFAULT_LANG: Language = 'en';
 
   private readonly translationsMap: Record<Language, any> = {
     ar: AR_TRANSLATIONS,
@@ -153,8 +153,18 @@ export class TranslationService {
     return text;
   }
 
+  /** Convenient shorthand for translate */
+  t(key: string, params?: Record<string, any>): string {
+    return this.translate(key, params);
+  }
+
   /** Instant alias for translate */
   instant(key: string, params?: Record<string, any>): string {
+    return this.translate(key, params);
+  }
+
+  /** Get alias for translate */
+  get(key: string, params?: Record<string, any>): string {
     return this.translate(key, params);
   }
 

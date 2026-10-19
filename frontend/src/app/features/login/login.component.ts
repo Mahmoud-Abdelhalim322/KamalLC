@@ -31,9 +31,7 @@ export class LoginComponent {
 
   onSubmit(): void {
     if (!this.username || !this.password) {
-      this.errorMessage = this.translationService.currentLang() === 'ar'
-        ? 'يرجى إدخال اسم المستخدم وكلمة المرور'
-        : 'Please enter your username and password';
+      this.errorMessage = this.translationService.translate('AUTH.ENTER_CREDENTIALS');
       return;
     }
 

@@ -3,12 +3,12 @@
   <!-- Header -->
   <div class="page-header flex-between">
     <div>
-      <h1 class="page-title">خطط الاشتراك</h1>
-      <p class="page-subtitle">تحديد أسعار ومواصفات الخطط وتحديث بيانات الخطط الحالية</p>
+      <h1 class="page-title">{{ 'PLATFORM.PLANS_TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'PLATFORM.PLANS_SUBTITLE' | translate }}</p>
     </div>
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-icons-round">add</span>
-      <span>إضافة خطة جديدة</span>
+      <span>{{ 'PLATFORM.ADD_PLAN' | translate }}</span>
     </button>
   </div>
 
@@ -30,36 +30,36 @@
           <span class="material-icons-round">workspace_premium</span>
         </div>
         <div class="plan-actions">
-          <button class="btn-icon-sm btn-edit" (click)="openEditModal(plan)" title="تعديل الخطة">
+          <button class="btn-icon-sm btn-edit" (click)="openEditModal(plan)" [title]="'PLATFORM.EDIT_PLAN_TITLE' | translate">
             <span class="material-icons-round">edit</span>
           </button>
-          <button class="btn-icon-sm btn-delete" (click)="deletePlan(plan)" title="تعطيل الخطة" *ngIf="plan.active">
+          <button class="btn-icon-sm btn-delete" (click)="deletePlan(plan)" [title]="'PLATFORM.DISABLE_PLAN_TITLE' | translate" *ngIf="plan.active">
             <span class="material-icons-round">block</span>
           </button>
         </div>
       </div>
 
       <div class="plan-header">
-        <h3>{{ plan.nameAr }}</h3>
-        <span class="plan-en">{{ plan.name }}</span>
+        <h3>{{ i18n.currentLang() === 'ar' ? (plan.nameAr || plan.name) : (plan.name || plan.nameAr) }}</h3>
+        <span class="plan-en">{{ i18n.currentLang() === 'ar' ? plan.name : plan.nameAr }}</span>
       </div>
 
       <div class="plan-pricing">
         <div class="price-wrap">
           <span class="price">{{ plan.monthlyPrice | number:'1.0-2' }}</span>
-          <span class="currency">ر.س / شهرياً</span>
+          <span class="currency">{{ 'PLATFORM.PER_MONTH' | translate }}</span>
         </div>
         <div class="yearly" *ngIf="plan.yearlyPrice">
           <span class="material-icons-round icon-discount">stars</span>
-          <span>{{ plan.yearlyPrice | number:'1.0-2' }} ر.س سنوي الكترونياً</span>
+          <span>{{ 'PLATFORM.PER_YEAR' | translate:{ price: (plan.yearlyPrice | number:'1.0-2') } }}</span>
         </div>
       </div>
 
-      <p class="description">{{ plan.descriptionAr || plan.description }}</p>
+      <p class="description">{{ (i18n.currentLang() === 'ar' ? (plan.descriptionAr || plan.description) : (plan.description || plan.descriptionAr)) }}</p>
 
       <div class="no-quota-badge">
         <span class="material-icons-round">auto_awesome</span>
-        <span>وصول كامل لكافة المميزات وبدون أي حدود على عدد الكباتن والمستخدمين</span>
+        <span>{{ 'PLATFORM.ALL_FEATURES' | translate }}</span>
       </div>
     </div>
   </div>
@@ -70,7 +70,7 @@
       <div class="modal-header">
         <h2>
           <span class="material-icons-round">assignment</span>
-          <span>{{ editingPlanId ? 'تعديل خطة الاشتراك' : 'إضافة خطة اشتراك جديدة' }}</span>
+          <span>{{ (editingPlanId ? 'PLATFORM.MODAL_EDIT_PLAN' : 'PLATFORM.MODAL_CREATE_PLAN') | translate }}</span>
         </h2>
         <button class="btn-close" (click)="closeModal()">
           <span class="material-icons-round">close</span>
@@ -80,33 +80,33 @@
       <form (ngSubmit)="submitPlan()">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">الاسم بالعربية *</label>
-            <input type="text" [(ngModel)]="newPlan.nameAr" name="nameAr" required class="form-input" placeholder="مثال: الخطة الذهبية" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_NAME_AR' | translate }}</label>
+            <input type="text" [(ngModel)]="newPlan.nameAr" name="nameAr" required class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_NAME_AR' | translate" />
           </div>
           <div class="form-group">
-            <label class="form-label">الاسم بالإنجليزية *</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_NAME_EN' | translate }}</label>
             <input type="text" [(ngModel)]="newPlan.name" name="name" required class="form-input" placeholder="Gold Plan" />
           </div>
           <div class="form-group">
-            <label class="form-label">السعر الشهري (ر.س) *</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_MONTHLY_PRICE' | translate }}</label>
             <input type="number" [(ngModel)]="newPlan.monthlyPrice" name="monthlyPrice" required class="form-input" placeholder="1000" />
           </div>
           <div class="form-group">
-            <label class="form-label">السعر السنوي (ر.س)</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_YEARLY_PRICE' | translate }}</label>
             <input type="number" [(ngModel)]="newPlan.yearlyPrice" name="yearlyPrice" class="form-input" placeholder="10000" />
           </div>
           <div class="form-group">
-            <label class="form-label">الوصف بالعربية</label>
-            <textarea [(ngModel)]="newPlan.descriptionAr" name="descriptionAr" rows="3" class="form-input" placeholder="وصف مميزات الخطة..."></textarea>
+            <label class="form-label">{{ 'PLATFORM.LABEL_DESC_AR' | translate }}</label>
+            <textarea [(ngModel)]="newPlan.descriptionAr" name="descriptionAr" rows="3" class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_DESC_AR' | translate"></textarea>
           </div>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-outline" (click)="closeModal()">إلغاء</button>
+          <button type="button" class="btn btn-outline" (click)="closeModal()">{{ 'COMMON.CANCEL' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <span class="material-icons-round" *ngIf="!submitting">save</span>
             <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
-            <span>{{ submitting ? 'جاري الحفظ...' : (editingPlanId ? 'تحديث الخطة' : 'حفظ الخطة') }}</span>
+            <span>{{ submitting ? ('COMMON.SAVING' | translate) : ((editingPlanId ? 'PLATFORM.BTN_UPDATE_PLAN' : 'PLATFORM.BTN_SAVE_PLAN') | translate) }}</span>
           </button>
         </div>
       </form>

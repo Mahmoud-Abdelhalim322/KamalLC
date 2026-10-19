@@ -6,11 +6,12 @@ import { HttpClient } from '@angular/common/http';
 import { ApiResponse, DocumentAlertFilter, DocumentStatus, PageResponse, StaffResponse } from '../../core/models/api.models';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { TranslationService, TranslatePipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-managers',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
   templateUrl: './managers.component.html',
   styleUrls: ['./managers.component.scss']
 })
@@ -28,7 +29,8 @@ export class ManagersComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
-    public authService: AuthService
+    public authService: AuthService,
+    private translationService: TranslationService
   ) {}
 
   get canManage(): boolean {
@@ -88,7 +90,7 @@ export class ManagersComponent implements OnInit {
 
   deleteStaff(s: StaffResponse, event: Event): void {
     event.stopPropagation();
-    if (!confirm(`هل أنت متأكد من حذف الإداري "${s.fullNameAr}" (كود: ${s.staffCode}) نهائياً؟`)) {
+    if (!confirm(this.translationService.translate('MANAGERS.CONFIRM_DELETE', { name: s.fullNameAr, code: s.staffCode }))) {
       return;
     }
 
@@ -97,11 +99,11 @@ export class ManagersComponent implements OnInit {
         if (res.success) {
           this.load();
         } else {
-          alert(res.message || 'فشل حذف الإداري');
+          alert(res.message || this.translationService.translate('MANAGERS.DELETE_FAILED'));
         }
       },
       error: (err) => {
-        alert(err?.error?.message || 'فشل حذف الإداري');
+        alert(err?.error?.message || this.translationService.translate('MANAGERS.DELETE_FAILED'));
       }
     });
   }
@@ -121,8 +123,8 @@ export class ManagersComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = { 'ACTIVE': 'نشط', 'INACTIVE': 'غير نشط', 'TERMINATED': 'منتهي' };
-    return map[status] || status;
+    const key = 'DOC_STATUS.' + (status === 'ACTIVE' ? 'VALID' : status === 'INACTIVE' ? 'EXPIRING' : 'EXPIRED');
+    return this.translationService.translate(key);
   }
 
   getStatusClass(status: string): string {
@@ -134,9 +136,9 @@ export class ManagersComponent implements OnInit {
     if (!s.documentAlert) return '—';
     const map: Record<DocumentStatus, string> = {
       'VALID': '—',
-      'EXPIRING': 'على وشك الانتهاء',
-      'EXPIRED': 'منتهى',
-      'MISSING': 'غير مسجل'
+      'EXPIRING': this.translationService.translate('DOC_STATUS.EXPIRING'),
+      'EXPIRED': this.translationService.translate('DOC_STATUS.EXPIRED'),
+      'MISSING': this.translationService.translate('DOC_STATUS.MISSING')
     };
     const label = map[s.documentAlert] ?? '—';
     return s.documentAlertCount && s.documentAlertCount > 1 ? `${label} (${s.documentAlertCount})` : label;
@@ -151,5 +153,44 @@ export class ManagersComponent implements OnInit {
       'MISSING': 'doc-missing'
     };
     return map[s.documentAlert] ?? 'no-data';
+  }
+
+  // ── Export ──
+
+  isExporting = false;
+  isExportingPdf = false;
+
+  exportExcel(): void {
+    this.isExporting = true;
+    this.http.get('/api/staff/export/excel', { params: { type: 'MANAGER' }, responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.isExporting = false;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'managers.xlsx';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.isExporting = false;
+      }
+    });
+  }
+
+  exportPdf(): void {
+    this.isExportingPdf = true;
+    this.http.get('/api/staff/export/pdf', { params: { type: 'MANAGER' }, responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.isExportingPdf = false;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'managers.pdf';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.isExportingPdf = false;
+      }
+    });
   }
 }

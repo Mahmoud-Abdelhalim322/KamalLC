@@ -2,7 +2,7 @@
   <div class="page-header">
     <h1 class="page-title">{{ 'CAPTAINS.TITLE' | translate }}</h1>
     <p class="page-subtitle">
-      {{ (translationService.currentLang() === 'ar' ? 'إدارة بيانات الكباتن والسائقين — ' : 'Manage delivery captains & drivers — ') + totalElements + (translationService.currentLang() === 'ar' ? ' كابتن' : ' Captains') }}
+      {{ 'CAPTAINS.MANAGE_SUBTITLE' | translate }} {{ totalElements }} {{ 'CAPTAINS.CAPTAIN_UNIT' | translate }}
     </p>
   </div>
 
@@ -22,14 +22,18 @@
         <span class="dot freelance"></span> KSCFL
       </button>
       <button class="filter-tab" [class.active]="!!alertFilter" (click)="toggleAlertFilter()">
-        <span class="material-icons-round tab-icon">notification_important</span> {{ translationService.currentLang() === 'ar' ? 'لديه إنذار' : 'Has Alert' }}
+        <span class="material-icons-round tab-icon">notification_important</span> {{ 'CAPTAINS.HAS_ALERT' | translate }}
       </button>
     </div>
 
     <div class="toolbar-actions">
       <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-        تصدير Excel
+        {{ 'COMMON.EXPORT_EXCEL' | translate }}
+      </button>
+      <button class="btn btn-outline" (click)="exportPdf()" [disabled]="isExportingPdf">
+        <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span>
+        {{ 'COMMON.EXPORT_PDF' | translate }}
       </button>
       <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
         <span class="material-icons-round">person_add</span>
@@ -47,8 +51,8 @@
   <!-- Empty State -->
   <div class="empty-state" *ngIf="!isLoading && captains.length === 0">
     <span class="material-icons-round">people_outline</span>
-    <h3>{{ translationService.currentLang() === 'ar' ? 'لا يوجد كباتن' : 'No captains found' }}</h3>
-    <p>{{ translationService.currentLang() === 'ar' ? 'أضف كابتن يدوياً أو قم باستيراد ملف Excel' : 'Add a captain manually or import an Excel sheet' }}</p>
+    <h3>{{ 'CAPTAINS.NO_CAPTAINS' | translate }}</h3>
+    <p>{{ 'CAPTAINS.NO_CAPTAINS_HINT' | translate }}</p>
     <div class="empty-actions">
       <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
         <span class="material-icons-round">person_add</span>
@@ -64,10 +68,10 @@
   <!-- Captains Table -->
   <div class="table-wrap" *ngIf="!isLoading && captains.length > 0">
     <div class="bulk-actions" *ngIf="selectedIds.size > 0 && canManage">
-      <span class="selected-count">{{ selectedIds.size }} {{ translationService.currentLang() === 'ar' ? 'محدد' : 'selected' }}</span>
+      <span class="selected-count">{{ selectedIds.size }} {{ 'COMMON.SELECTED' | translate }}</span>
       <button class="btn btn-danger btn-sm" (click)="deleteSelected()">
         <span class="material-icons-round">delete_sweep</span>
-        {{ translationService.currentLang() === 'ar' ? 'حذف المحدد' : 'Delete Selected' }}
+        {{ 'COMMON.DELETE_SELECTED' | translate }}
       </button>
     </div>
     <table class="data-table">
@@ -78,10 +82,14 @@
           </th>
           <th>{{ 'CAPTAINS.COL_CODE' | translate }}</th>
           <th>{{ 'CAPTAINS.COL_NAME' | translate }}</th>
+          <th>{{ 'CAPTAINS.COL_NAME_EN' | translate }}</th>
           <th>{{ 'CAPTAINS.COL_CONTRACT_TYPE' | translate }}</th>
-          <th>{{ translationService.currentLang() === 'ar' ? 'ID-APP' : 'ID-APP' }}</th>
+          <th>{{ 'CAPTAINS.COL_APP_ID' | translate }}</th>
           <th>{{ 'CAPTAINS.COL_PHONE' | translate }}</th>
-          <th>{{ translationService.currentLang() === 'ar' ? 'الجنسية' : 'Nationality' }}</th>
+          <th>{{ 'CAPTAINS.COL_NATIONALITY' | translate }}</th>
+          <th>{{ 'CAPTAINS.COL_BORDER_NO' | translate }}</th>
+          <th>{{ 'CAPTAINS.COL_JOB_TITLE' | translate }}</th>
+          <th>{{ 'CAPTAINS.COL_NET_SALARY' | translate }}</th>
           <th>{{ 'CAPTAINS.COL_DOC_STATUS' | translate }}</th>
           <th>{{ 'CAPTAINS.COL_STATUS' | translate }}</th>
           <th></th>
@@ -98,6 +106,7 @@
             <div class="captain-avatar">{{ captain.fullNameAr ? captain.fullNameAr.charAt(0) : 'C' }}</div>
             {{ captain.fullNameAr }}
           </td>
+          <td class="ltr-cell">{{ captain.fullNameEn || '—' }}</td>
           <td>
             <span class="type-badge" [class]="getTypeClass(captain.captainType)">
               {{ getTypeLabel(captain.captainType) }}
@@ -109,6 +118,12 @@
           </td>
           <td class="ltr-cell">{{ captain.phone }}</td>
           <td>{{ captain.nationality || '—' }}</td>
+          <td class="ltr-cell">{{ captain.borderNumber || '—' }}</td>
+          <td>{{ captain.jobTitle || '—' }}</td>
+          <td>
+            <span *ngIf="captain.netSalary != null">{{ captain.netSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="no-data" *ngIf="captain.netSalary == null">—</span>
+          </td>
           <td>
             <span class="badge" [class]="documentAlertClass(captain)">
               {{ documentAlertLabel(captain) }}
@@ -132,11 +147,11 @@
     <div class="pagination" *ngIf="totalPages > 1">
       <button class="btn btn-sm btn-outline" [disabled]="currentPage === 0" (click)="prevPage()">
         <span class="material-icons-round">chevron_right</span>
-        {{ translationService.currentLang() === 'ar' ? 'السابق' : 'Previous' }}
+        {{ 'COMMON.PREVIOUS' | translate }}
       </button>
       <span class="page-info">{{ 'COMMON.PAGE' | translate }} {{ currentPage + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }}</span>
       <button class="btn btn-sm btn-outline" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">
-        {{ translationService.currentLang() === 'ar' ? 'التالي' : 'Next' }}
+        {{ 'COMMON.NEXT' | translate }}
         <span class="material-icons-round">chevron_left</span>
       </button>
     </div>

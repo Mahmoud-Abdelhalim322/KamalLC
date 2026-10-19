@@ -11,393 +11,393 @@
 
   <div class="loading-state" *ngIf="isLoading">
     <div class="spinner"></div>
-    <span>جاري التحميل...</span>
+    <span>{{ 'COMMON.LOADING' | translate }}</span>
   </div>
 
   <form *ngIf="!isLoading" (ngSubmit)="save()" class="staff-form">
 
-    <!-- البيانات الشخصية -->
+    <!-- Personal Data -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">person</span>
-        البيانات الشخصية
+        {{ 'STAFF_FORM.SECTION_PERSONAL' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group required">
-          <label>الاسم بالعربي</label>
+          <label>{{ 'STAFF_FORM.NAME_AR' | translate }}</label>
           <input type="text" [(ngModel)]="form.fullNameAr" name="fullNameAr" required>
         </div>
         <div class="form-group">
-          <label>الاسم بالإنجليزي</label>
+          <label>{{ 'STAFF_FORM.NAME_EN' | translate }}</label>
           <input type="text" [(ngModel)]="form.fullNameEn" name="fullNameEn">
         </div>
         <div class="form-group">
-          <label>الجنس</label>
+          <label>{{ 'STAFF_FORM.GENDER' | translate }}</label>
           <select [(ngModel)]="form.gender" name="gender">
             <option [ngValue]="null">—</option>
-            <option value="ذكر">ذكر</option>
-            <option value="أنثى">أنثى</option>
+            <option value="ذكر">{{ 'COMMON.MALE' | translate }}</option>
+            <option value="أنثى">{{ 'COMMON.FEMALE' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>الجنسية</label>
+          <label>{{ 'STAFF_FORM.NATIONALITY' | translate }}</label>
           <input type="text" [(ngModel)]="form.nationality" name="nationality">
         </div>
         <div class="form-group">
-          <label>تاريخ الميلاد</label>
+          <label>{{ 'STAFF_FORM.DATE_OF_BIRTH' | translate }}</label>
           <input type="date" [(ngModel)]="form.dateOfBirth" name="dateOfBirth">
         </div>
         <div class="form-group">
-          <label>فصيلة الدم</label>
+          <label>{{ 'STAFF_FORM.BLOOD_TYPE' | translate }}</label>
           <select [(ngModel)]="form.bloodType" name="bloodType">
             <option [ngValue]="null">—</option>
             <option *ngFor="let bt of ['A+','A-','B+','B-','O+','O-','AB+','AB-']" [value]="bt">{{ bt }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>الهاتف</label>
+          <label>{{ 'STAFF_FORM.PHONE' | translate }}</label>
           <input type="text" [(ngModel)]="form.phone" name="phone" dir="ltr">
         </div>
         <div class="form-group">
-          <label>البريد الإلكتروني</label>
+          <label>{{ 'STAFF_FORM.EMAIL' | translate }}</label>
           <input type="email" [(ngModel)]="form.email" name="email" dir="ltr">
         </div>
         <div class="form-group">
-          <label>مقر الإقامة</label>
+          <label>{{ 'STAFF_FORM.PLACE_OF_RESIDENCE' | translate }}</label>
           <input type="text" [(ngModel)]="form.placeOfResidence" name="placeOfResidence">
         </div>
         <div class="form-group">
-          <label>العنوان</label>
+          <label>{{ 'STAFF_FORM.HOME_ADDRESS' | translate }}</label>
           <input type="text" [(ngModel)]="form.homeAddress" name="homeAddress">
         </div>
         <div class="form-group">
-          <label>المسمى الوظيفي</label>
+          <label>{{ 'STAFF_FORM.JOB_TITLE' | translate }}</label>
           <input type="text" [(ngModel)]="form.jobTitle" name="jobTitle">
         </div>
       </div>
     </div>
 
-    <!-- الجواز -->
+    <!-- Passport -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">card_travel</span>
-        بيانات الجواز
+        {{ 'STAFF_FORM.SECTION_PASSPORT' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>رقم الجواز</label>
+          <label>{{ 'STAFF_FORM.PASSPORT_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.passportNumber" name="passportNumber">
         </div>
         <div class="form-group">
-          <label>تاريخ إصدار الجواز</label>
+          <label>{{ 'STAFF_FORM.PASSPORT_ISSUE_DATE' | translate }}</label>
           <input type="date" [(ngModel)]="form.passportIssueDate" name="passportIssueDate">
         </div>
         <div class="form-group">
-          <label>تاريخ انتهاء الجواز</label>
+          <label>{{ 'STAFF_FORM.PASSPORT_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="form.passportExpiry" name="passportExpiry">
         </div>
         <div class="form-group">
-          <label>حالة الجواز</label>
+          <label>{{ 'STAFF_FORM.PASSPORT_STATUS' | translate }}</label>
           <select [(ngModel)]="form.passportStatus" name="passportStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- الإقامة -->
+    <!-- Iqama -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">badge</span>
-        بيانات الإقامة
+        {{ 'STAFF_FORM.SECTION_IQAMA' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>رقم الإقامة</label>
+          <label>{{ 'STAFF_FORM.IQAMA_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.iqamaNumber" name="iqamaNumber">
         </div>
         <div class="form-group">
-          <label>المهنة في الإقامة</label>
+          <label>{{ 'STAFF_FORM.IQAMA_OCCUPATION' | translate }}</label>
           <input type="text" [(ngModel)]="form.iqamaOccupation" name="iqamaOccupation">
         </div>
         <div class="form-group">
-          <label>تاريخ انتهاء الإقامة</label>
+          <label>{{ 'STAFF_FORM.IQAMA_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="form.iqamaExpiry" name="iqamaExpiry">
         </div>
         <div class="form-group">
-          <label>تاريخ التجديد</label>
+          <label>{{ 'STAFF_FORM.IQAMA_RENEWAL' | translate }}</label>
           <input type="date" [(ngModel)]="form.iqamaExpiryRenewed" name="iqamaExpiryRenewed">
         </div>
         <div class="form-group">
-          <label>حالة الإقامة</label>
+          <label>{{ 'STAFF_FORM.IQAMA_STATUS' | translate }}</label>
           <select [(ngModel)]="form.iqamaStatus" name="iqamaStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- عقد قوى -->
+    <!-- Qiwa Contract -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">description</span>
-        بيانات عقد قوى
+        {{ 'STAFF_FORM.SECTION_QIWA' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>رقم عقد قوى</label>
+          <label>{{ 'STAFF_FORM.QIWA_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.qiwaContractNumber" name="qiwaContractNumber">
         </div>
         <div class="form-group">
-          <label>رقم المنشأة</label>
+          <label>{{ 'STAFF_FORM.ESTABLISHMENT_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.establishmentNumber" name="establishmentNumber">
         </div>
         <div class="form-group">
-          <label>بداية العقد</label>
+          <label>{{ 'STAFF_FORM.CONTRACT_START' | translate }}</label>
           <input type="date" [(ngModel)]="form.qiwaContractStart" name="qiwaContractStart">
         </div>
         <div class="form-group">
-          <label>نهاية العقد</label>
+          <label>{{ 'STAFF_FORM.CONTRACT_END' | translate }}</label>
           <input type="date" [(ngModel)]="form.qiwaContractEnd" name="qiwaContractEnd">
         </div>
         <div class="form-group">
-          <label>حالة العقد</label>
+          <label>{{ 'STAFF_FORM.CONTRACT_STATUS' | translate }}</label>
           <select [(ngModel)]="form.qiwaContractStatus" name="qiwaContractStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>تصريح العمل - انتهاء</label>
+          <label>{{ 'STAFF_FORM.WORK_PERMIT_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="form.workPermitExpiry" name="workPermitExpiry">
         </div>
         <div class="form-group">
-          <label>حالة تصريح العمل</label>
+          <label>{{ 'STAFF_FORM.WORK_PERMIT_STATUS' | translate }}</label>
           <select [(ngModel)]="form.workPermitStatus" name="workPermitStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>الشركة المنتسب لها</label>
+          <label>{{ 'STAFF_FORM.AFFILIATED_COMPANY' | translate }}</label>
           <input type="text" [(ngModel)]="form.affiliatedCompany" name="affiliatedCompany">
         </div>
         <div class="form-group">
-          <label>رقم السجل التجاري</label>
+          <label>{{ 'STAFF_FORM.CR_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.crNumber" name="crNumber">
         </div>
       </div>
     </div>
 
-    <!-- التأمين -->
+    <!-- Insurance -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">health_and_safety</span>
-        بيانات التأمين
+        {{ 'STAFF_FORM.SECTION_INSURANCE' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>رقم التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="form.insuranceNumber" name="insuranceNumber">
         </div>
         <div class="form-group">
-          <label>فئة التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_CATEGORY' | translate }}</label>
           <input type="text" [(ngModel)]="form.insuranceCategory" name="insuranceCategory">
         </div>
         <div class="form-group">
-          <label>تاريخ إصدار التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_ISSUE_DATE' | translate }}</label>
           <input type="date" [(ngModel)]="form.insuranceIssueDate" name="insuranceIssueDate">
         </div>
         <div class="form-group">
-          <label>تاريخ انتهاء التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="form.insuranceExpiry" name="insuranceExpiry">
         </div>
         <div class="form-group">
-          <label>شركة التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_COMPANY' | translate }}</label>
           <input type="text" [(ngModel)]="form.insuranceCompany" name="insuranceCompany">
         </div>
         <div class="form-group">
-          <label>حالة التأمين</label>
+          <label>{{ 'STAFF_FORM.INSURANCE_STATUS' | translate }}</label>
           <select [(ngModel)]="form.insuranceStatus" name="insuranceStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- الرخصة والبنك -->
+    <!-- Licence & Bank -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">account_balance</span>
-        بيانات الرخصة والبنك
+        {{ 'STAFF_FORM.SECTION_LICENCE_BANK' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>يملك رخصة قيادة</label>
+          <label>{{ 'STAFF_FORM.HAS_LICENCE' | translate }}</label>
           <select [(ngModel)]="form.hasLicence" name="hasLicence">
-            <option [ngValue]="true">نعم</option>
-            <option [ngValue]="false">لا</option>
+            <option [ngValue]="true">{{ 'COMMON.YES' | translate }}</option>
+            <option [ngValue]="false">{{ 'COMMON.NO' | translate }}</option>
           </select>
         </div>
         <div class="form-group" *ngIf="form.hasLicence">
-          <label>تاريخ انتهاء الرخصة</label>
+          <label>{{ 'STAFF_FORM.LICENCE_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="form.licenceExpiry" name="licenceExpiry">
         </div>
         <div class="form-group" *ngIf="form.hasLicence">
-          <label>حالة الرخصة</label>
+          <label>{{ 'STAFF_FORM.LICENCE_STATUS' | translate }}</label>
           <select [(ngModel)]="form.licenceStatus" name="licenceStatus">
             <option [ngValue]="null">—</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option value="ساري">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="منتهي">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>اسم البنك</label>
+          <label>{{ 'STAFF_FORM.BANK_NAME' | translate }}</label>
           <input type="text" [(ngModel)]="form.bankName" name="bankName">
         </div>
         <div class="form-group">
-          <label>رقم الحساب البنكي</label>
+          <label>{{ 'STAFF_FORM.BANK_ACCOUNT' | translate }}</label>
           <input type="text" [(ngModel)]="form.bankAccountNumber" name="bankAccountNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label>فترة التجربة (أيام)</label>
+          <label>{{ 'STAFF_FORM.TRIAL_PERIOD' | translate }}</label>
           <input type="number" [(ngModel)]="form.trialPeriodDays" name="trialPeriodDays">
         </div>
       </div>
     </div>
 
-    <!-- الراتب -->
+    <!-- Salary -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">payments</span>
-        بيانات الراتب والبدلات
+        {{ 'STAFF_FORM.SECTION_SALARY' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>الراتب الأساسي</label>
+          <label>{{ 'STAFF_FORM.BASIC_SALARY' | translate }}</label>
           <input type="number" [(ngModel)]="form.basicSalary" name="basicSalary" step="0.01">
         </div>
         <div class="form-group">
-          <label>بدل السكن</label>
+          <label>{{ 'STAFF_FORM.HOUSING_ALLOWANCE' | translate }}</label>
           <input type="number" [(ngModel)]="form.housingAllowance" name="housingAllowance" step="0.01">
         </div>
         <div class="form-group">
-          <label>بدل النقل</label>
+          <label>{{ 'STAFF_FORM.TRANSPORT_ALLOWANCE' | translate }}</label>
           <input type="number" [(ngModel)]="form.transportationAllowance" name="transportationAllowance" step="0.01">
         </div>
         <div class="form-group">
-          <label>بدل محروقات</label>
+          <label>{{ 'STAFF_FORM.FUEL_ALLOWANCE' | translate }}</label>
           <input type="number" [(ngModel)]="form.fuelAllowanceAmount" name="fuelAllowanceAmount" step="0.01">
         </div>
         <div class="form-group">
-          <label>بدل اتصالات</label>
+          <label>{{ 'STAFF_FORM.COMM_ALLOWANCE' | translate }}</label>
           <input type="number" [(ngModel)]="form.callInternetAllowance" name="callInternetAllowance" step="0.01">
         </div>
         <div class="form-group">
-          <label>مكافأة</label>
+          <label>{{ 'STAFF_FORM.REWARD' | translate }}</label>
           <input type="number" [(ngModel)]="form.rewardAllowance" name="rewardAllowance" step="0.01">
         </div>
         <div class="form-group">
-          <label>بدلات أخرى</label>
+          <label>{{ 'STAFF_FORM.OTHER_ALLOWANCES' | translate }}</label>
           <input type="number" [(ngModel)]="form.otherAllowances" name="otherAllowances" step="0.01">
         </div>
       </div>
     </div>
 
-    <!-- حالة التوظيف -->
+    <!-- Employment Status -->
     <div class="form-section">
       <h2 class="section-title">
         <span class="material-icons-round">work</span>
-        حالة التوظيف
+        {{ 'STAFF_FORM.SECTION_EMPLOYMENT' | translate }}
       </h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>الحالة</label>
+          <label>{{ 'STAFF_FORM.STATUS' | translate }}</label>
           <select [(ngModel)]="form.status" name="status">
-            <option value="ACTIVE">ساري</option>
-            <option value="INACTIVE">علي وشك الانتهاء</option>
-            <option value="TERMINATED">منتهي</option>
+            <option value="ACTIVE">{{ 'DOC_STATUS.VALID' | translate }}</option>
+            <option value="INACTIVE">{{ 'DOC_STATUS.EXPIRING' | translate }}</option>
+            <option value="TERMINATED">{{ 'DOC_STATUS.EXPIRED' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>تاريخ الالتحاق</label>
+          <label>{{ 'STAFF_FORM.JOIN_DATE' | translate }}</label>
           <input type="date" [(ngModel)]="form.joinDate" name="joinDate">
         </div>
         <div class="form-group">
-          <label>تاريخ المغادرة</label>
+          <label>{{ 'STAFF_FORM.LEAVE_DATE' | translate }}</label>
           <input type="date" [(ngModel)]="form.leaveDate" name="leaveDate">
         </div>
       </div>
       <div class="form-group full-width">
-        <label>ملاحظات</label>
+        <label>{{ 'COMMON.NOTES' | translate }}</label>
         <textarea [(ngModel)]="form.notes" name="notes" rows="3"></textarea>
       </div>
     </div>
 
     <!-- Actions -->
     <div class="form-actions">
-      <a [routerLink]="backRoute" class="btn btn-secondary">إلغاء</a>
+      <a [routerLink]="backRoute" class="btn btn-secondary">{{ 'COMMON.CANCEL' | translate }}</a>
       <button type="submit" class="btn btn-primary" [disabled]="isSaving">
         <span class="material-icons-round" *ngIf="!isSaving">save</span>
         <div class="spinner-small" *ngIf="isSaving"></div>
-        {{ isEdit ? 'حفظ التعديلات' : 'إضافة' }}
+        {{ isEdit ? ('STAFF_FORM.SAVE_EDIT' | translate) : ('STAFF_FORM.SAVE_ADD' | translate) }}
       </button>
     </div>
 
   </form>
 
-  <!-- المستندات (في حالة التعديل فقط) -->
+  <!-- Documents (edit mode only) -->
   <div class="form-section" *ngIf="isEdit && !isLoading" style="margin-top: 2rem;">
     <h2 class="section-title">
       <span class="material-icons-round">folder_shared</span>
-      مستندات الموظف
+      {{ 'STAFF_FORM.EMPLOYEE_DOCUMENTS' | translate }}
     </h2>
 
     <div class="upload-row" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem;">
       <div class="form-group" style="flex: 1; min-width: 180px;">
-        <label>نوع المستند</label>
+        <label>{{ 'STAFF_FORM.DOC_TYPE' | translate }}</label>
         <select [(ngModel)]="selectedDocType" name="selectedDocType">
           <option *ngFor="let t of documentTypes" [value]="t">{{ getDocTypeLabel(t) }}</option>
         </select>
       </div>
 
       <div class="form-group" style="flex: 2; min-width: 240px;">
-        <label>الملف (صورة أو PDF)</label>
+        <label>{{ 'STAFF_FORM.DOC_FILE' | translate }}</label>
         <input id="staffDocumentFile" type="file"
                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                (change)="onFileSelected($event)">
       </div>
 
       <div class="form-group" style="flex: 2; min-width: 200px;">
-        <label>ملاحظة</label>
-        <input type="text" [(ngModel)]="documentNote" name="documentNote" placeholder="اختياري">
+        <label>{{ 'STAFF_FORM.DOC_NOTE' | translate }}</label>
+        <input type="text" [(ngModel)]="documentNote" name="documentNote" [placeholder]="'COMMON.OPTIONAL' | translate">
       </div>
 
       <button type="button" class="btn btn-primary" (click)="uploadDocument()" [disabled]="isUploading || !selectedFile">
         <span class="material-icons-round" *ngIf="!isUploading">upload_file</span>
         <div class="spinner-small" *ngIf="isUploading"></div>
-        {{ isUploading ? 'جاري الرفع...' : 'رفع' }}
+        {{ isUploading ? ('COMMON.UPLOADING' | translate) : ('STAFF_FORM.UPLOAD_BTN' | translate) }}
       </button>
     </div>
 
     <p class="form-error" *ngIf="documentError" style="color: var(--danger, #e53935); font-size: 0.875rem; margin-bottom: 1rem;">{{ documentError }}</p>
 
     <div class="empty-docs" *ngIf="documents.length === 0" style="text-align: center; color: var(--text-muted, #888); padding: 1rem;">
-      <p>لا توجد مستندات مرفوعة بعد</p>
+      <p>{{ 'STAFF_FORM.NO_DOCS_YET' | translate }}</p>
     </div>
 
     <app-document-gallery *ngIf="documents.length > 0"

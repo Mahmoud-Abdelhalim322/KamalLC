@@ -58,7 +58,10 @@ class ExcelTemplateServiceTest {
 
         assertThat(new ExcelParserService().parse(file))
                 .singleElement()
-                .satisfies(row -> assertThat(row.getCaptainName()).isEqualTo("محمد أحمد"));
+                .satisfies(row -> {
+                    assertThat(row.getCaptainName()).isEqualTo("محمد أحمد");
+                    assertThat(row.getAppId()).isEqualTo("1001");
+                });
     }
 
     @Test

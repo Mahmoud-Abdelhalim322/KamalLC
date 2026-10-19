@@ -12,6 +12,7 @@ import com.kamal.lc.captain.expiry.DocumentKind;
 import com.kamal.lc.captain.expiry.DocumentStatus;
 import com.kamal.lc.captain.repository.CaptainDocumentRepository;
 import com.kamal.lc.captain.repository.CaptainRepository;
+import com.kamal.lc.changelog.service.ChangeLogWriter;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.supplier.entity.SupplierIdAssignment;
 import com.kamal.lc.supplier.repository.SupplierIdAssignmentRepository;
@@ -42,6 +43,41 @@ public class CaptainService {
     private final com.kamal.lc.auth.service.CaptainAllocationService allocationService;
     private final com.kamal.lc.payroll.repository.PayrollLineRepository payrollLineRepo;
     private final com.kamal.lc.loan.repository.LoanRepository loanRepo;
+    private final ChangeLogWriter changeLogWriter;
+
+    /** Arabic labels for captain fields — used by the changelog writer. */
+    private static final Map<String, String> CAPTAIN_FIELD_LABELS = Map.ofEntries(
+            Map.entry("fullNameAr", "الاسم بالعربي"),
+            Map.entry("fullNameEn", "الاسم بالإنجليزي"),
+            Map.entry("captainType", "نوع الكابتن"),
+            Map.entry("gender", "الجنس"),
+            Map.entry("nationality", "الجنسية"),
+            Map.entry("phone", "رقم الهاتف"),
+            Map.entry("email", "البريد الإلكتروني"),
+            Map.entry("status", "الحالة"),
+            Map.entry("passportNumber", "رقم الجواز"),
+            Map.entry("passportExpiry", "انتهاء الجواز"),
+            Map.entry("passportStatus", "حالة الجواز"),
+            Map.entry("iqamaNumber", "رقم الإقامة"),
+            Map.entry("iqamaExpiry", "انتهاء الإقامة"),
+            Map.entry("iqamaStatus", "حالة الإقامة"),
+            Map.entry("qiwaContractStatus", "حالة عقد قوى"),
+            Map.entry("workPermitExpiry", "انتهاء تصريح العمل"),
+            Map.entry("workPermitStatus", "حالة تصريح العمل"),
+            Map.entry("licenceStatus", "حالة رخصة القيادة"),
+            Map.entry("insuranceStatus", "حالة التأمين"),
+            Map.entry("basicSalary", "الراتب الأساسي"),
+            Map.entry("housingAllowance", "بدل السكن"),
+            Map.entry("transportationAllowance", "بدل المواصلات"),
+            Map.entry("usesOwnVehicle", "يستخدم سيارته"),
+            Map.entry("bankAccountNumber", "رقم الحساب البنكي"),
+            Map.entry("bankName", "اسم البنك"),
+            Map.entry("borderNumber", "رقم الحدود"),
+            Map.entry("idExpiryDate", "انتهاء الهوية"),
+            Map.entry("licenceType", "نوع الرخصة"),
+            Map.entry("salaryDeductions", "الخصومات"),
+            Map.entry("netSalary", "صافي الراتب")
+    );
 
     /** Creates a captain; the kamal code is generated here and never taken from the client. */
     @Transactional
@@ -60,9 +96,18 @@ public class CaptainService {
         Captain captain = captainRepo.findById(id)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "الكابتن غير موجود"));
 
+        // Snapshot before update
+        Map<String, Object> before = ChangeLogWriter.snapshot(captain, CAPTAIN_FIELD_LABELS);
+
         captain.setCaptainType(normalizeType(request.getCaptainType()));
         applyRequest(captain, request);
         captainRepo.save(captain);
+
+        // Log changes
+        Map<String, Object> after = ChangeLogWriter.snapshot(captain, CAPTAIN_FIELD_LABELS);
+        String label = captain.getFullNameAr() + " (" + captain.getKamalCode() + ")";
+        changeLogWriter.logFieldChanges("CAPTAIN", captain.getId(), label,
+                before, after, CAPTAIN_FIELD_LABELS, "نظام");
 
         return getCaptainDetail(id);
     }
@@ -140,8 +185,10 @@ public class CaptainService {
         // Iqama
         captain.setIqamaNumber(blankToNull(r.getIqamaNumber()));
         captain.setIqamaOccupation(blankToNull(r.getIqamaOccupation()));
+        captain.setIdExpiryDate(r.getIdExpiryDate());
         captain.setIqamaExpiry(r.getIqamaExpiry());
         captain.setIqamaExpiryRenewed(r.getIqamaExpiryRenewed());
+        captain.setBorderNumber(blankToNull(r.getBorderNumber()));
         captain.setIqamaStatus(blankToNull(r.getIqamaStatus()));
 
         // Qiwa
@@ -161,6 +208,7 @@ public class CaptainService {
 
         // Driving Licence
         captain.setDrivingLicenceNo(blankToNull(r.getDrivingLicenceNo()));
+        captain.setLicenceType(blankToNull(r.getLicenceType()));
         captain.setLicenceExpiry(r.getLicenceExpiry());
         captain.setHasLicence(r.isHasLicence());
         captain.setLicenceStatus(blankToNull(r.getLicenceStatus()));
@@ -188,6 +236,19 @@ public class CaptainService {
         captain.setFuelAllowanceAmount(r.getFuelAllowanceAmount() != null ? r.getFuelAllowanceAmount() : java.math.BigDecimal.ZERO);
         captain.setCallInternetAllowance(r.getCallInternetAllowance() != null ? r.getCallInternetAllowance() : java.math.BigDecimal.ZERO);
         captain.setRewardAllowance(r.getRewardAllowance() != null ? r.getRewardAllowance() : java.math.BigDecimal.ZERO);
+        captain.setSalaryDeductions(r.getSalaryDeductions() != null ? r.getSalaryDeductions() : java.math.BigDecimal.ZERO);
+
+        if (r.getNetSalary() != null) {
+            captain.setNetSalary(r.getNetSalary());
+        } else {
+            java.math.BigDecimal gross = captain.getBasicSalary()
+                    .add(captain.getHousingAllowance())
+                    .add(captain.getTransportationAllowance())
+                    .add(captain.getFuelAllowanceAmount())
+                    .add(captain.getCallInternetAllowance())
+                    .add(captain.getRewardAllowance());
+            captain.setNetSalary(gross.subtract(captain.getSalaryDeductions()));
+        }
 
         // Vehicle & Fuel flags
         captain.setUsesOwnVehicle(r.isUsesOwnVehicle());
@@ -347,8 +408,10 @@ public class CaptainService {
                 // Iqama
                 .iqamaNumber(captain.getIqamaNumber())
                 .iqamaOccupation(captain.getIqamaOccupation())
+                .idExpiryDate(captain.getIdExpiryDate() != null ? captain.getIdExpiryDate().toString() : null)
                 .iqamaExpiry(captain.getIqamaExpiry() != null ? captain.getIqamaExpiry().toString() : null)
                 .iqamaExpiryRenewed(captain.getIqamaExpiryRenewed() != null ? captain.getIqamaExpiryRenewed().toString() : null)
+                .borderNumber(captain.getBorderNumber())
                 .iqamaStatus(captain.getIqamaStatus())
                 // Qiwa
                 .qiwaContractNumber(captain.getQiwaContractNumber())
@@ -364,6 +427,7 @@ public class CaptainService {
                 .crNumber(captain.getCrNumber())
                 // Driving Licence
                 .drivingLicenceNo(captain.getDrivingLicenceNo())
+                .licenceType(captain.getLicenceType())
                 .licenceExpiry(captain.getLicenceExpiry() != null ? captain.getLicenceExpiry().toString() : null)
                 .hasLicence(captain.isHasLicence())
                 .licenceStatus(captain.getLicenceStatus())
@@ -387,6 +451,8 @@ public class CaptainService {
                 .fuelAllowanceAmount(captain.getFuelAllowanceAmount())
                 .callInternetAllowance(captain.getCallInternetAllowance())
                 .rewardAllowance(captain.getRewardAllowance())
+                .salaryDeductions(captain.getSalaryDeductions())
+                .netSalary(captain.getNetSalary())
                 // Vehicle flags
                 .usesOwnVehicle(captain.isUsesOwnVehicle())
                 .fuelAllowanceEligible(captain.isFuelAllowanceEligible())
@@ -443,8 +509,13 @@ public class CaptainService {
                 .kamalCode(c.getKamalCode())
                 .captainType(c.getCaptainType())
                 .fullNameAr(c.getFullNameAr())
+                .fullNameEn(c.getFullNameEn())
                 .phone(c.getPhone())
                 .nationality(c.getNationality())
+                .iqamaNumber(c.getIqamaNumber())
+                .borderNumber(c.getBorderNumber())
+                .jobTitle(c.getJobTitle())
+                .netSalary(c.getNetSalary())
                 .status(c.getStatus())
                 .currentNinjaId(currentNinjaId)
                 .joinDate(c.getJoinDate() != null ? c.getJoinDate().toString() : null)

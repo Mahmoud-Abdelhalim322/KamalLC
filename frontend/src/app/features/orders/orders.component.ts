@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { OrdersDashboardResponse, OrdersCaptainRow } from '../../core/models/api.models';
 import { ReportService } from '../../core/services/report.service';
 import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 type CaptainTypeFilter = 'ALL' | 'EMPLOYEE' | 'FREELANCE';
 type DisplayMode = 'ORDERS' | 'PERFORMANCE' | 'HOURS';
@@ -18,13 +20,14 @@ interface ColorRange {
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss']
 })
 export class OrdersComponent implements OnInit {
 
   private reportService = inject(ReportService);
+  public i18n = inject(TranslationService);
 
   from = '';
   to = '';
@@ -69,7 +72,7 @@ export class OrdersComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         this.data = null;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل لوحة تحكم تحقيق الطلبات');
+        this.errorMessage = errorMessage(err, this.i18n.get('ORDERS.LOAD_FAILED'));
       }
     });
   }
@@ -91,15 +94,16 @@ export class OrdersComponent implements OnInit {
     if (!this.from || !this.to) return;
     this.isExporting = true;
     this.errorMessage = '';
+    const isAr = this.i18n.currentLang() === 'ar';
 
     this.reportService.exportOrdersDashboard(this.from, this.to, this.captainType).subscribe({
       next: (blob) => {
         this.isExporting = false;
-        downloadBlob(blob, `تحقيق-الطلبات-${this.from}.xlsx`);
+        downloadBlob(blob, `${isAr ? 'تحقيق-الطلبات-' : 'orders-achievement-'}${this.from}.xlsx`);
       },
       error: (err) => {
         this.isExporting = false;
-        this.errorMessage = 'فشل في تصدير ملف الإكسل';
+        this.errorMessage = this.i18n.get('ORDERS.EXPORT_FAILED');
       }
     });
   }
@@ -234,12 +238,19 @@ export class OrdersComponent implements OnInit {
     return parts.length === 3 ? parseInt(parts[2], 10) : 0;
   }
 
-  /** Short Arabic day name for headers */
-  getDayNameAr(dateStr: string): string {
+  /** Short day name for headers (Arabic or English) */
+  getDayName(dateStr: string): string {
     const d = new Date(dateStr);
     const day = d.getDay();
-    const days = ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'];
-    return days[day] || '';
+    const isAr = this.i18n.currentLang() === 'ar';
+    const daysAr = ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'];
+    const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return (isAr ? daysAr[day] : daysEn[day]) || '';
+  }
+
+  /** Backward compatibility */
+  getDayNameAr(dateStr: string): string {
+    return this.getDayName(dateStr);
   }
 
   /** Sum of all shift orders for a day */

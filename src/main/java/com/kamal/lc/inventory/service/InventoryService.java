@@ -2,6 +2,7 @@ package com.kamal.lc.inventory.service;
 
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
+import com.kamal.lc.changelog.service.ChangeLogWriter;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.custody.service.CustodyService;
 import com.kamal.lc.inventory.dto.*;
@@ -41,6 +42,7 @@ public class InventoryService {
     private final CustodyService custodyService;
     private final CustodyRepository custodyRepo;
     private final TenantRepository tenantRepo;
+    private final ChangeLogWriter changeLogWriter;
 
     // ──────────────────────────── Categories ────────────────────────────
 
@@ -179,6 +181,11 @@ public class InventoryService {
     public AssetItemResponse updateItem(UUID id, AssetItemRequest req) {
         AssetItem item = findItemOrThrow(id);
 
+        // Capture old field values for changelog
+        String oldNotes = item.getNotes();
+        Map<String, String> oldFields = item.getFields().stream()
+                .collect(Collectors.toMap(AssetItemField::getFieldKey, AssetItemField::getFieldValue));
+
         if (req.getNotes() != null) item.setNotes(req.getNotes());
 
         if (req.getFields() != null) {
@@ -193,7 +200,25 @@ public class InventoryService {
             }
         }
 
-        return toItemResponse(itemRepo.save(item));
+        AssetItem saved = itemRepo.save(item);
+
+        // Log field-level changes
+        String label = buildItemLabel(saved);
+        if (req.getNotes() != null && !java.util.Objects.equals(oldNotes, req.getNotes())) {
+            changeLogWriter.logAction("ASSET_ITEM", saved.getId(), label,
+                    "UPDATE", oldNotes, req.getNotes(), null, currentUser());
+        }
+        if (req.getFields() != null) {
+            for (Map.Entry<String, String> entry : req.getFields().entrySet()) {
+                String oldVal = oldFields.get(entry.getKey());
+                if (!java.util.Objects.equals(oldVal, entry.getValue())) {
+                    changeLogWriter.logAction("ASSET_ITEM", saved.getId(), label,
+                            "UPDATE", oldVal, entry.getValue(), null, currentUser());
+                }
+            }
+        }
+
+        return toItemResponse(saved);
     }
 
     public AssetItemResponse updateStatus(UUID id, String status) {
@@ -201,8 +226,14 @@ public class InventoryService {
         if ("ASSIGNED".equals(item.getStatus()) && !"ASSIGNED".equals(status)) {
             throw new BusinessException("ASSIGNED_ITEM", "لا يمكن تغيير حالة عنصر مُسند لكابتن — يجب استرجاعه أولاً");
         }
+        String oldStatus = item.getStatus();
         item.setStatus(status);
-        return toItemResponse(itemRepo.save(item));
+        AssetItem saved = itemRepo.save(item);
+
+        changeLogWriter.logAction("ASSET_ITEM", saved.getId(), buildItemLabel(saved),
+                "UPDATE", oldStatus, status, null, currentUser());
+
+        return toItemResponse(saved);
     }
 
     // ──────────────────────────── Assign / Return ────────────────────────────
@@ -222,6 +253,10 @@ public class InventoryService {
         custodyService.recordAssignment(captain, item.getCategory().getName(),
                 item.getId(), label, currentUser());
 
+        changeLogWriter.logAction("ASSET_ITEM", item.getId(), label,
+                "LINK", null, captain.getFullNameAr() + " (" + captain.getKamalCode() + ")",
+                null, currentUser());
+
         return toItemResponse(item);
     }
 
@@ -235,6 +270,9 @@ public class InventoryService {
         itemRepo.save(item);
 
         custodyService.recordReturn(item.getId(), currentUser());
+
+        changeLogWriter.logAction("ASSET_ITEM", item.getId(), buildItemLabel(item),
+                "UNLINK", null, null, null, currentUser());
 
         return toItemResponse(item);
     }

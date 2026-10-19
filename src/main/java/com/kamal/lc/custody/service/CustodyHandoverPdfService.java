@@ -110,18 +110,34 @@ public class CustodyHandoverPdfService {
         CaptainCustodySummary summary = custodyService.getCaptainSummaries().stream()
                 .filter(s -> s.getCaptainId().equals(captainId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("لا توجد عهد نشطة لهذا الكابتن"));
+                .orElse(null);
 
         Captain captain = null;
         if (captainRepository != null) {
             try {
                 captain = captainRepository.findById(captainId).orElse(null);
+                if (captain == null && summary != null && summary.getCaptainCode() != null) {
+                    captain = captainRepository.findByKamalCode(summary.getCaptainCode()).orElse(null);
+                }
             } catch (Throwable t) {
-                log.warn("Could not load captain entity: {}", t.getMessage());
+                log.warn("Could not load captain entity: {}", t.getMessage(), t);
             }
         }
 
-        List<CustodyRecordResponse> items = summary.getActiveItems();
+        if (summary == null) {
+            if (captain == null) {
+                throw new IllegalArgumentException("لا توجد عهد نشطة أو بيانات لهذا الكابتن");
+            }
+            summary = CaptainCustodySummary.builder()
+                    .captainId(captain.getId())
+                    .captainCode(captain.getKamalCode())
+                    .captainName(captain.getFullNameAr())
+                    .activeCount(0)
+                    .activeItems(java.util.Collections.emptyList())
+                    .build();
+        }
+
+        List<CustodyRecordResponse> items = summary.getActiveItems() != null ? summary.getActiveItems() : java.util.Collections.emptyList();
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             // Balanced page margins
@@ -139,7 +155,7 @@ public class CustodyHandoverPdfService {
 
             // 1. Top Header Box
             addFormHeader(doc, LocalDate.now(), borderColor, darkText);
-            doc.add(spacer(3));
+            doc.add(spacer(4));
 
             // 2. Job ID Bar
             addJobIdBar(doc, summary.getCaptainCode(), borderColor, darkText);
@@ -150,26 +166,30 @@ public class CustodyHandoverPdfService {
 
             // 4. Custody Categories & Car Diagram (Side-by-Side)
             addCustodyAndCarSection(doc, items, borderColor, darkText);
+            doc.add(spacer(4));
+
+            // 5. Page 1 Inspection & Initial Handover Bar (fills page 1 completely without empty void)
+            addPage1InspectionBar(doc, borderColor, darkText);
 
             // ════════════════════════════════════════════════════════════════
             // ─── PAGE 2: TERMS & CONDITIONS + LEGAL NOTE + SIGNATURES ───
             // ════════════════════════════════════════════════════════════════
             doc.newPage();
 
-            // Page 2 Header
-            addPage2Header(doc, LocalDate.now(), brandGreen, darkText);
-            doc.add(spacer(5));
-
-            // 16-point Terms & Conditions Table
-            addTermsTable(doc, borderColor, darkText);
+            // Page 2 Header (Strictly Black & White for printing)
+            addPage2Header(doc, LocalDate.now(), Color.BLACK, Color.BLACK);
             doc.add(spacer(6));
 
-            // Legal Undertaking Box
-            addLegalUndertaking(doc, borderColor, darkText);
+            // 16-point Terms & Conditions Table (Pure White background, Black borders/text)
+            addTermsTable(doc, Color.BLACK, Color.BLACK);
             doc.add(spacer(6));
 
-            // Official Signatures
-            addSignaturesTable(doc, summary.getCaptainName(), borderColor, darkText);
+            // Legal Undertaking Box (White background, Black border/text)
+            addLegalUndertaking(doc, Color.BLACK, Color.BLACK);
+            doc.add(spacer(6));
+
+            // Official Signatures (White backgrounds, Black borders/text, spacious for signing)
+            addSignaturesTable(doc, summary.getCaptainName(), Color.BLACK, Color.BLACK);
             doc.add(spacer(4));
 
             // Footer
@@ -210,7 +230,8 @@ public class CustodyHandoverPdfService {
 
         // Cell 1: Center - Title
         Phrase titlePhrase = new Phrase();
-        titlePhrase.add(new Chunk(shape("استلام العهدة HANDOVER"), font(13.5f, Font.BOLD, darkText)));
+        titlePhrase.add(new Chunk(shape("استلام وتسليم العهدة\n"), font(13.5f, Font.BOLD, darkText)));
+        titlePhrase.add(new Chunk("CUSTODY HANDOVER & ACCEPTANCE", font(8.5f, Font.BOLD, new Color(0, 120, 60))));
         PdfPCell titleCell = new PdfPCell(titlePhrase);
         titleCell.setBorder(Rectangle.BOX);
         titleCell.setBorderColor(borderColor);
@@ -230,7 +251,7 @@ public class CustodyHandoverPdfService {
         try {
             byte[] logoBytes = new ClassPathResource("branding/logo-ksclc.png").getInputStream().readAllBytes();
             Image img = Image.getInstance(logoBytes);
-            img.scaleToFit(90, 42);
+            img.scaleToFit(95, 46);
             img.setAlignment(Element.ALIGN_CENTER);
             logoCell.addElement(img);
         } catch (Exception e) {
@@ -242,21 +263,21 @@ public class CustodyHandoverPdfService {
     }
 
     private void addMetaRow(PdfPTable table, String label, String val, Color borderColor) {
-        PdfPCell valCell = new PdfPCell(new Phrase(shape(val), font(6.5f, Font.BOLD)));
+        PdfPCell valCell = new PdfPCell(new Phrase(shape(val), font(7f, Font.BOLD)));
         valCell.setBorder(Rectangle.BOX);
         valCell.setBorderColor(borderColor);
         valCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         valCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        valCell.setPadding(2f);
+        valCell.setPadding(3f);
         valCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
-        PdfPCell lblCell = new PdfPCell(new Phrase(shape(label), font(6f, Font.BOLD, Color.DARK_GRAY)));
+        PdfPCell lblCell = new PdfPCell(new Phrase(shape(label), font(6.5f, Font.BOLD, Color.DARK_GRAY)));
         lblCell.setBorder(Rectangle.BOX);
         lblCell.setBorderColor(borderColor);
         lblCell.setBackgroundColor(new Color(245, 245, 245));
         lblCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         lblCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lblCell.setPadding(2f);
+        lblCell.setPadding(3f);
         lblCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
         table.addCell(lblCell);
@@ -266,26 +287,26 @@ public class CustodyHandoverPdfService {
     private void addJobIdBar(Document doc, String captainCode, Color borderColor, Color darkText) throws DocumentException {
         PdfPTable bar = new PdfPTable(2);
         bar.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-        bar.setWidthPercentage(35);
+        bar.setWidthPercentage(36);
         bar.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        bar.setWidths(new float[]{60f, 40f});
+        bar.setWidths(new float[]{55f, 45f});
 
-        PdfPCell lblCell = new PdfPCell(new Phrase(shape("الرقم الوظيفي\nJob ID"), font(7f, Font.BOLD, darkText)));
+        PdfPCell lblCell = new PdfPCell(new Phrase(shape("الرقم الوظيفي\nJob ID"), font(7.5f, Font.BOLD, darkText)));
         lblCell.setBorder(Rectangle.BOX);
         lblCell.setBorderColor(borderColor);
         lblCell.setBackgroundColor(new Color(245, 245, 245));
         lblCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         lblCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lblCell.setPadding(2.5f);
+        lblCell.setPadding(3.5f);
         lblCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         bar.addCell(lblCell);
 
-        PdfPCell valCell = new PdfPCell(new Phrase(captainCode != null ? captainCode : "—", font(8.5f, Font.BOLD, darkText)));
+        PdfPCell valCell = new PdfPCell(new Phrase(captainCode != null ? captainCode : "—", font(9.5f, Font.BOLD, darkText)));
         valCell.setBorder(Rectangle.BOX);
         valCell.setBorderColor(borderColor);
         valCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         valCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        valCell.setPadding(2.5f);
+        valCell.setPadding(3.5f);
         bar.addCell(valCell);
 
         doc.add(bar);
@@ -293,18 +314,17 @@ public class CustodyHandoverPdfService {
 
     private void addCaptainTable(Document doc, Captain captain, CaptainCustodySummary summary,
                                  Color borderColor, Color darkText) throws DocumentException {
-        PdfPTable table = new PdfPTable(3);
+        PdfPTable table = new PdfPTable(2);
         table.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         table.setWidthPercentage(100);
-        // RTL columns: [Cell 0: Right (Captain Header 13%)], [Cell 1: Center (Labels 27%)], [Cell 2: Left (Values 60%)]
-        table.setWidths(new float[]{60f, 27f, 13f});
+        // RTL columns: [Cell 0: Right (Captain Header 16%)], [Cell 1: Left (Fields Table 84%)]
+        table.setWidths(new float[]{84f, 16f});
 
-        // Captain Header Cell (spans all 6 rows)
+        // Far-Right column: الكابتن / CAPTAIN [✓]
         Phrase capPhrase = new Phrase();
-        capPhrase.add(new Chunk(shape("الكابتن / CAPTAIN") + "\n\n", font(8f, Font.BOLD, darkText)));
-        capPhrase.add(new Chunk(shape("[ ✓ ]"), font(9f, Font.BOLD, new Color(0, 120, 60))));
+        capPhrase.add(new Chunk(shape("الكابتن\nCAPTAIN\n\n"), font(8.5f, Font.BOLD, darkText)));
+        capPhrase.add(new Chunk(shape("[ ✓ ]"), font(10f, Font.BOLD, new Color(0, 120, 60))));
         PdfPCell capCell = new PdfPCell(capPhrase);
-        capCell.setRowspan(6);
         capCell.setBorder(Rectangle.BOX);
         capCell.setBorderColor(borderColor);
         capCell.setBackgroundColor(new Color(248, 250, 252));
@@ -314,7 +334,13 @@ public class CustodyHandoverPdfService {
         capCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         table.addCell(capCell);
 
-        // Row 1: Name
+        // Fields sub-table (6 rows)
+        PdfPTable fieldsTable = new PdfPTable(2);
+        fieldsTable.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        fieldsTable.setWidthPercentage(100);
+        // RTL columns: [Cell 0: Right (Label 28%)], [Cell 1: Left (Value 72%)]
+        fieldsTable.setWidths(new float[]{72f, 28f});
+
         String arName = summary.getCaptainName();
         String enName = "";
         String nat = "—";
@@ -324,52 +350,60 @@ public class CustodyHandoverPdfService {
 
         if (captain != null) {
             try {
-                if (captain.getFullNameAr() != null) arName = captain.getFullNameAr();
-                if (captain.getFullNameEn() != null) enName = captain.getFullNameEn();
-                if (captain.getNationality() != null) nat = captain.getNationality();
-                if (captain.getIqamaNumber() != null) idNum = captain.getIqamaNumber();
-                else if (captain.getAppId() != null) idNum = captain.getAppId();
+                if (captain.getFullNameAr() != null && !captain.getFullNameAr().isBlank()) arName = captain.getFullNameAr();
+                if (captain.getFullNameEn() != null && !captain.getFullNameEn().isBlank()) enName = captain.getFullNameEn();
+                if (captain.getNationality() != null && !captain.getNationality().isBlank()) nat = captain.getNationality();
+                if (captain.getIqamaNumber() != null && !captain.getIqamaNumber().isBlank()) idNum = captain.getIqamaNumber();
+                else if (captain.getAppId() != null && !captain.getAppId().isBlank()) idNum = captain.getAppId();
+                else if (captain.getPassportNumber() != null && !captain.getPassportNumber().isBlank()) idNum = captain.getPassportNumber();
                 if (captain.getDateOfBirth() != null) dob = captain.getDateOfBirth().toString();
-                if (captain.getPhone() != null) phone = captain.getPhone();
+                if (captain.getPhone() != null && !captain.getPhone().isBlank()) phone = captain.getPhone();
             } catch (Throwable t) {
                 log.warn("Could not read captain fields: {}", t.getMessage());
             }
         }
 
+        // Row 1: Name
         Phrase namePhrase = new Phrase();
-        namePhrase.add(new Chunk(shape(arName) + (enName.isEmpty() ? "" : "\n"), font(8f, Font.BOLD, darkText)));
+        namePhrase.add(new Chunk(shape(arName), font(8.5f, Font.BOLD, darkText)));
         if (!enName.isEmpty()) {
-            namePhrase.add(new Chunk(enName, font(7f, Font.NORMAL, Color.DARK_GRAY)));
+            namePhrase.add(new Chunk("  (" + enName + ")", font(7.5f, Font.NORMAL, Color.DARK_GRAY)));
         }
-        addCaptainRow(table, "الاســـــــــــــم\nNAME", namePhrase, borderColor);
+        addCaptainRow(fieldsTable, "الاســـــــــــــم\nNAME", namePhrase, borderColor);
 
         // Row 2: Nationality
-        addCaptainRow(table, "الجنسية", new Phrase(shape(nat), font(7.5f)), borderColor);
+        addCaptainRow(fieldsTable, "الجنسية", new Phrase(shape(nat), font(8f, Font.BOLD, darkText)), borderColor);
 
         // Row 3: National ID / Iqama
-        addCaptainRow(table, "رقم الهوية/الإقامة", new Phrase(idNum, font(8f, Font.BOLD)), borderColor);
+        addCaptainRow(fieldsTable, "رقم الهوية/الإقامة", new Phrase(idNum, font(8.5f, Font.BOLD, darkText)), borderColor);
 
         // Row 4: Birth date
-        addCaptainRow(table, "تاريخ الميلاد", new Phrase(dob, font(7.5f)), borderColor);
+        addCaptainRow(fieldsTable, "تاريخ الميلاد", new Phrase(dob, font(8f, Font.BOLD, darkText)), borderColor);
 
         // Row 5: Mobile
-        addCaptainRow(table, "رقم الجوال الشخصي", new Phrase(phone, font(8f, Font.BOLD)), borderColor);
+        addCaptainRow(fieldsTable, "رقم الجوال الشخصي", new Phrase(phone, font(8.5f, Font.BOLD, darkText)), borderColor);
 
         // Row 6: Company
         String comp = "شركة كمال بن خلف السلمي للخدمات اللوجستية";
-        addCaptainRow(table, "اسم الشركة التابع لها", new Phrase(shape(comp), font(7.5f, Font.BOLD, darkText)), borderColor);
+        addCaptainRow(fieldsTable, "اسم الشركة التابع لها", new Phrase(shape(comp), font(8f, Font.BOLD, darkText)), borderColor);
+
+        PdfPCell fieldsCell = new PdfPCell(fieldsTable);
+        fieldsCell.setBorder(Rectangle.BOX);
+        fieldsCell.setBorderColor(borderColor);
+        fieldsCell.setPadding(0);
+        table.addCell(fieldsCell);
 
         doc.add(table);
     }
 
     private void addCaptainRow(PdfPTable table, String label, Phrase valPhrase, Color borderColor) {
-        PdfPCell lblCell = new PdfPCell(new Phrase(shape(label), font(7f, Font.BOLD, Color.DARK_GRAY)));
+        PdfPCell lblCell = new PdfPCell(new Phrase(shape(label), font(7.2f, Font.BOLD, Color.DARK_GRAY)));
         lblCell.setBorder(Rectangle.BOX);
         lblCell.setBorderColor(borderColor);
         lblCell.setBackgroundColor(new Color(248, 250, 252));
         lblCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         lblCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lblCell.setPadding(2.5f);
+        lblCell.setPadding(3f);
         lblCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         table.addCell(lblCell);
 
@@ -378,7 +412,7 @@ public class CustodyHandoverPdfService {
         valCell.setBorderColor(borderColor);
         valCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         valCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        valCell.setPadding(2.5f);
+        valCell.setPadding(3f);
         valCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         table.addCell(valCell);
     }
@@ -388,8 +422,8 @@ public class CustodyHandoverPdfService {
         PdfPTable splitTable = new PdfPTable(2);
         splitTable.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         splitTable.setWidthPercentage(100);
-        // RTL columns: [Cell 0: Right (Custody Categories 58%)], [Cell 1: Left (Car Diagram 42%)]
-        splitTable.setWidths(new float[]{42f, 58f});
+        // RTL columns: [Cell 0: Right (Custody Categories 57%)], [Cell 1: Left (Car Diagram 43%)]
+        splitTable.setWidths(new float[]{43f, 57f});
 
         // Cell 0 (Right): Custody Categories Table
         PdfPCell custodyCell = new PdfPCell();
@@ -401,7 +435,7 @@ public class CustodyHandoverPdfService {
         custodyCell.addElement(categoriesTable);
         splitTable.addCell(custodyCell);
 
-        // Cell 1 (Left): Car Diagram Image
+        // Cell 1 (Left): Car Diagram Image & Inspection Note
         PdfPCell carCell = new PdfPCell();
         carCell.setBorder(Rectangle.BOX);
         carCell.setBorderColor(borderColor);
@@ -412,16 +446,57 @@ public class CustodyHandoverPdfService {
         try {
             byte[] carBytes = new ClassPathResource("branding/car sheet.jpeg").getInputStream().readAllBytes();
             Image carImg = Image.getInstance(carBytes);
-            carImg.scaleToFit(215, 275);
+            carImg.scaleToFit(225, 335);
             carImg.setAlignment(Element.ALIGN_CENTER);
             carCell.addElement(carImg);
         } catch (Exception e) {
             log.warn("Could not load car sheet: {}", e.getMessage());
             carCell.addElement(new Phrase(shape("مخطط فحص السيارة"), font(8, Font.ITALIC, Color.GRAY)));
         }
+
+        Paragraph carNote = new Paragraph();
+        carNote.setAlignment(Element.ALIGN_CENTER);
+        carNote.setSpacingBefore(3f);
+        carNote.add(new Chunk(shape("مخطط الفحص الظاهري للمركبة (التأشير على مكان أي صدمات أو خدوش)\n"), font(6.5f, Font.BOLD, Color.DARK_GRAY)));
+        carNote.add(new Chunk(shape("الرموز: (X) صدمة  |  (/) خدش  |  (O) كسر  |  (D) تعديل"), font(6.2f, Font.NORMAL, Color.DARK_GRAY)));
+        carCell.addElement(carNote);
+
         splitTable.addCell(carCell);
 
         doc.add(splitTable);
+    }
+
+    private void addPage1InspectionBar(Document doc, Color borderColor, Color darkText) throws DocumentException {
+        PdfPTable table = new PdfPTable(2);
+        table.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{45f, 55f});
+
+        Phrase condPhrase = new Phrase();
+        condPhrase.add(new Chunk(shape("حالة العهد المسلمة عند الفحص والمعاينة:\n"), font(7.5f, Font.BOLD, darkText)));
+        condPhrase.add(new Chunk(shape("[  ] ممتازة وجديدة     [  ] جيدة وصالحة للعمل     [  ] توجد ملاحظات"), font(7f, Font.NORMAL, darkText)));
+        PdfPCell condCell = new PdfPCell(condPhrase);
+        condCell.setBorder(Rectangle.BOX);
+        condCell.setBorderColor(borderColor);
+        condCell.setBackgroundColor(new Color(250, 250, 250));
+        condCell.setPadding(4f);
+        condCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        condCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        table.addCell(condCell);
+
+        Phrase signPhrase = new Phrase();
+        signPhrase.add(new Chunk(shape("توقيع المستلم بالمعاينة والاستلام المبدئي: __________________\n"), font(7f, Font.NORMAL, darkText)));
+        signPhrase.add(new Chunk(shape("توقيع مسؤول التسليم: __________________  التاريخ: ___/___/2026م"), font(7f, Font.NORMAL, darkText)));
+        PdfPCell signCell = new PdfPCell(signPhrase);
+        signCell.setBorder(Rectangle.BOX);
+        signCell.setBorderColor(borderColor);
+        signCell.setBackgroundColor(new Color(250, 250, 250));
+        signCell.setPadding(4f);
+        signCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        signCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        table.addCell(signCell);
+
+        doc.add(table);
     }
 
     private PdfPTable buildCategoriesTable(List<CustodyRecordResponse> items, Color borderColor, Color darkText) {
@@ -518,7 +593,6 @@ public class CustodyHandoverPdfService {
         addCategoryFieldRow(fieldsTable, "طـــــــــــــــراز", model, borderColor);
         addCategoryFieldRow(fieldsTable, "المـــــــــــــوديــــــل", year, borderColor);
         addCategoryFieldRow(fieldsTable, "رقم العــــــــــــداد", odo, borderColor);
-        addCategoryFieldRow(fieldsTable, "الرقم التسلســــلي", serial, borderColor);
 
         PdfPCell fieldsCell = new PdfPCell(fieldsTable);
         fieldsCell.setBorder(Rectangle.BOX);
@@ -537,16 +611,28 @@ public class CustodyHandoverPdfService {
     private PdfPCell buildPhoneCategoryBlock(CustodyRecordResponse phoneItem, Color borderColor, Color darkText) {
         boolean hasPhone = phoneItem != null;
         String phoneCode = "—";
-        String modelName = "—";
-        String modelNo = "—";
-        String serial = "—";
+        String phoneType = "—";
+        String imei = "—";
 
         if (hasPhone) {
-            String label = phoneItem.getAssetLabel() != null ? phoneItem.getAssetLabel() : "";
-            phoneCode = "PHN-" + (phoneItem.getReferenceId() != null ? phoneItem.getReferenceId().toString().substring(0, 5) : "001");
-            modelName = label;
-            serial = label.replaceAll("[^0-9]", "");
-            if (serial.isEmpty()) serial = "—";
+            // Look up the actual AssetItem from inventory to get proper data
+            if (assetItemRepository != null && phoneItem.getReferenceId() != null) {
+                try {
+                    var assetOpt = assetItemRepository.findById(phoneItem.getReferenceId());
+                    if (assetOpt.isPresent()) {
+                        var asset = assetOpt.get();
+                        phoneCode = asset.getSerialCode() != null ? asset.getSerialCode() : "—";
+                        for (var f : asset.getFields()) {
+                            if ("phone_type".equals(f.getFieldKey()) && f.getFieldValue() != null && !f.getFieldValue().isBlank())
+                                phoneType = f.getFieldValue();
+                            if ("imei".equals(f.getFieldKey()) && f.getFieldValue() != null && !f.getFieldValue().isBlank())
+                                imei = f.getFieldValue();
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.warn("Could not load phone asset details: {}", t.getMessage());
+                }
+            }
         }
 
         PdfPTable block = new PdfPTable(2);
@@ -570,9 +656,8 @@ public class CustodyHandoverPdfService {
         fieldsTable.setWidths(new float[]{65f, 35f});
 
         addTopIdRow(fieldsTable, "رقم الجوال\nID", phoneCode, borderColor);
-        addCategoryFieldRow(fieldsTable, "اسم الطــــــــــــراز", modelName, borderColor);
-        addCategoryFieldRow(fieldsTable, "رقـــــــم الطـــــــراز", modelNo, borderColor);
-        addCategoryFieldRow(fieldsTable, "الرقم التسلســــــلي", serial, borderColor);
+        addCategoryFieldRow(fieldsTable, "نوع الجـــــــــــوال", phoneType, borderColor);
+        addCategoryFieldRow(fieldsTable, "IMEI", imei, borderColor);
 
         PdfPCell fieldsCell = new PdfPCell(fieldsTable);
         fieldsCell.setBorder(Rectangle.BOX);
@@ -592,20 +677,27 @@ public class CustodyHandoverPdfService {
         boolean hasSim = simItem != null;
         String simCode = "—";
         String simType = "—";
-        String simNum = "—";
-        String serial = "—";
+        String phoneNumber = "—";
 
         if (hasSim) {
-            String label = simItem.getAssetLabel() != null ? simItem.getAssetLabel() : "";
-            simCode = "SIM-" + (simItem.getReferenceId() != null ? simItem.getReferenceId().toString().substring(0, 5) : "001");
-            if (label.contains("زين") || label.toLowerCase().contains("zain")) simType = "زين (Zain)";
-            else if (label.contains("STC") || label.contains("الاتصالات")) simType = "STC";
-            else if (label.contains("موبايلي") || label.toLowerCase().contains("mobily")) simType = "موبايلي (Mobily)";
-            else simType = label;
-
-            simNum = label.replaceAll("[^0-9]", "");
-            if (simNum.isEmpty()) simNum = "—";
-            serial = simNum.length() > 6 ? simNum : "—";
+            // Look up the actual AssetItem from inventory to get proper data
+            if (assetItemRepository != null && simItem.getReferenceId() != null) {
+                try {
+                    var assetOpt = assetItemRepository.findById(simItem.getReferenceId());
+                    if (assetOpt.isPresent()) {
+                        var asset = assetOpt.get();
+                        simCode = asset.getSerialCode() != null ? asset.getSerialCode() : "—";
+                        for (var f : asset.getFields()) {
+                            if ("sim_type".equals(f.getFieldKey()) && f.getFieldValue() != null && !f.getFieldValue().isBlank())
+                                simType = f.getFieldValue();
+                            if ("phone_number".equals(f.getFieldKey()) && f.getFieldValue() != null && !f.getFieldValue().isBlank())
+                                phoneNumber = f.getFieldValue();
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.warn("Could not load SIM asset details: {}", t.getMessage());
+                }
+            }
         }
 
         PdfPTable block = new PdfPTable(2);
@@ -630,8 +722,7 @@ public class CustodyHandoverPdfService {
 
         addTopIdRow(fieldsTable, "رقم الشريحة\nID", simCode, borderColor);
         addCategoryFieldRow(fieldsTable, "نوع الشريحة", simType, borderColor);
-        addCategoryFieldRow(fieldsTable, "رقم الشريحة", simNum, borderColor);
-        addCategoryFieldRow(fieldsTable, "الرقم التسلسلي", serial, borderColor);
+        addCategoryFieldRow(fieldsTable, "رقم الاتصال", phoneNumber, borderColor);
 
         PdfPCell fieldsCell = new PdfPCell(fieldsTable);
         fieldsCell.setBorder(Rectangle.BOX);
@@ -718,13 +809,19 @@ public class CustodyHandoverPdfService {
         PdfPCell line1 = new PdfPCell(new Phrase(" ", font(7)));
         line1.setBorder(Rectangle.BOTTOM);
         line1.setBorderColor(borderColor);
-        line1.setFixedHeight(12f);
+        line1.setFixedHeight(16f);
         sub.addCell(line1);
 
         PdfPCell line2 = new PdfPCell(new Phrase(" ", font(7)));
-        line2.setBorder(Rectangle.NO_BORDER);
-        line2.setFixedHeight(12f);
+        line2.setBorder(Rectangle.BOTTOM);
+        line2.setBorderColor(borderColor);
+        line2.setFixedHeight(16f);
         sub.addCell(line2);
+
+        PdfPCell line3 = new PdfPCell(new Phrase(" ", font(7)));
+        line3.setBorder(Rectangle.NO_BORDER);
+        line3.setFixedHeight(16f);
+        sub.addCell(line3);
 
         PdfPCell subCell = new PdfPCell(sub);
         subCell.setBorder(Rectangle.BOX);
@@ -746,21 +843,21 @@ public class CustodyHandoverPdfService {
     }
 
     private void addTopIdRow(PdfPTable table, String label, String val, Color borderColor) {
-        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(6f, Font.BOLD, Color.DARK_GRAY)));
+        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(6.5f, Font.BOLD, Color.DARK_GRAY)));
         lbl.setBorder(Rectangle.BOX);
         lbl.setBorderColor(borderColor);
         lbl.setBackgroundColor(new Color(245, 245, 245));
         lbl.setHorizontalAlignment(Element.ALIGN_CENTER);
         lbl.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lbl.setPadding(1.8f);
+        lbl.setPadding(2.5f);
         lbl.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
-        PdfPCell v = new PdfPCell(new Phrase(shape(val), font(6.8f, Font.BOLD)));
+        PdfPCell v = new PdfPCell(new Phrase(shape(val), font(7.2f, Font.BOLD)));
         v.setBorder(Rectangle.BOX);
         v.setBorderColor(borderColor);
         v.setHorizontalAlignment(Element.ALIGN_CENTER);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        v.setPadding(1.8f);
+        v.setPadding(2.5f);
         v.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
         table.addCell(lbl);
@@ -768,21 +865,21 @@ public class CustodyHandoverPdfService {
     }
 
     private void addCategoryFieldRow(PdfPTable table, String label, String val, Color borderColor) {
-        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(6.2f, Font.BOLD, Color.DARK_GRAY)));
+        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(6.6f, Font.BOLD, Color.DARK_GRAY)));
         lbl.setBorder(Rectangle.BOX);
         lbl.setBorderColor(borderColor);
         lbl.setBackgroundColor(new Color(250, 250, 250));
         lbl.setHorizontalAlignment(Element.ALIGN_RIGHT);
         lbl.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lbl.setPadding(2f);
+        lbl.setPadding(2.5f);
         lbl.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
-        PdfPCell v = new PdfPCell(new Phrase(shape(val), font(6.8f)));
+        PdfPCell v = new PdfPCell(new Phrase(shape(val), font(7.2f)));
         v.setBorder(Rectangle.BOX);
         v.setBorderColor(borderColor);
         v.setHorizontalAlignment(Element.ALIGN_CENTER);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        v.setPadding(2f);
+        v.setPadding(2.5f);
         v.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
         table.addCell(lbl);
@@ -790,19 +887,19 @@ public class CustodyHandoverPdfService {
     }
 
     private void addCheckItemRow(PdfPTable table, String label, boolean checked, Color borderColor) {
-        PdfPCell cBox = new PdfPCell(new Phrase(shape(checked ? "[ ✓ ]" : "[   ]"), font(7f, Font.BOLD, checked ? new Color(0, 120, 60) : Color.GRAY)));
+        PdfPCell cBox = new PdfPCell(new Phrase(shape(checked ? "[ ✓ ]" : "[   ]"), font(7.5f, Font.BOLD, checked ? new Color(0, 120, 60) : Color.GRAY)));
         cBox.setBorder(Rectangle.BOX);
         cBox.setBorderColor(borderColor);
         cBox.setHorizontalAlignment(Element.ALIGN_CENTER);
         cBox.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        cBox.setPadding(2f);
+        cBox.setPadding(2.8f);
 
-        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(6.8f, Font.BOLD)));
+        PdfPCell lbl = new PdfPCell(new Phrase(shape(label), font(7.2f, Font.BOLD)));
         lbl.setBorder(Rectangle.BOX);
         lbl.setBorderColor(borderColor);
         lbl.setHorizontalAlignment(Element.ALIGN_RIGHT);
         lbl.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        lbl.setPadding(2f);
+        lbl.setPadding(2.8f);
         lbl.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 
         table.addCell(lbl);
@@ -816,11 +913,11 @@ public class CustodyHandoverPdfService {
         header.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         header.setWidthPercentage(100);
         // RTL: [Cell 0: Right (Company)], [Cell 1: Center (Title)], [Cell 2: Left (Logo)]
-        header.setWidths(new float[]{20f, 50f, 30f});
+        header.setWidths(new float[]{20f, 52f, 28f});
 
         Phrase comp = new Phrase();
-        comp.add(new Chunk(shape("شركة كمال بن خلف السلمي للخدمات اللوجستية") + "\n", font(8.5f, Font.BOLD, brandGreen)));
-        comp.add(new Chunk("Kamal Logistics Services Co.", font(6.5f, Font.NORMAL, Color.GRAY)));
+        comp.add(new Chunk(shape("شركة كمال بن خلف السلمي للخدمات اللوجستية") + "\n", font(8.5f, Font.BOLD, Color.BLACK)));
+        comp.add(new Chunk("Kamal Logistics Services Co.", font(6.5f, Font.NORMAL, Color.DARK_GRAY)));
         PdfPCell c0 = new PdfPCell(comp);
         c0.setBorder(Rectangle.NO_BORDER);
         c0.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -828,8 +925,8 @@ public class CustodyHandoverPdfService {
         header.addCell(c0);
 
         Phrase t = new Phrase();
-        t.add(new Chunk(shape("الشروط والأحكام والتعهد القانوني") + "\n", font(11f, Font.BOLD, darkText)));
-        t.add(new Chunk("TERMS, CONDITIONS & LEGAL UNDERTAKING", font(7f, Font.BOLD, brandGreen)));
+        t.add(new Chunk(shape("الشروط والأحكام والتعهد القانوني") + "\n", font(12f, Font.BOLD, Color.BLACK)));
+        t.add(new Chunk("TERMS, CONDITIONS & LEGAL UNDERTAKING", font(7.5f, Font.BOLD, Color.BLACK)));
         PdfPCell c1 = new PdfPCell(t);
         c1.setBorder(Rectangle.NO_BORDER);
         c1.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -848,19 +945,19 @@ public class CustodyHandoverPdfService {
             img.setAlignment(Element.ALIGN_CENTER);
             c2.addElement(img);
         } catch (Exception e) {
-            c2.addElement(new Phrase("kslsc", font(10, Font.BOLD, brandGreen)));
+            c2.addElement(new Phrase("kslsc", font(10, Font.BOLD, Color.BLACK)));
         }
         header.addCell(c2);
 
         doc.add(header);
 
-        // Divider
+        // Divider (Black line)
         PdfPTable divider = new PdfPTable(1);
         divider.setWidthPercentage(100);
         PdfPCell divCell = new PdfPCell(new Phrase(" "));
         divCell.setBorder(Rectangle.BOTTOM);
-        divCell.setBorderColor(brandGreen);
-        divCell.setBorderWidth(1.5f);
+        divCell.setBorderColor(Color.BLACK);
+        divCell.setBorderWidth(1.2f);
         divCell.setFixedHeight(2);
         divider.addCell(divCell);
         doc.add(divider);
@@ -909,62 +1006,60 @@ public class CustodyHandoverPdfService {
         // Left-to-Right widths: [English 47.5%], [Arabic 47.5%], [Seq 5%]
         tcTable.setWidths(new float[]{47.5f, 47.5f, 5f});
 
-        // Header
-        PdfPCell numHeader = new PdfPCell(new Phrase(shape("م"), font(7, Font.BOLD, Color.WHITE)));
-        numHeader.setBackgroundColor(new Color(51, 65, 85));
+        // Header - Pure white background, Black border and text
+        PdfPCell numHeader = new PdfPCell(new Phrase(shape("م"), font(7.5f, Font.BOLD, Color.BLACK)));
+        numHeader.setBackgroundColor(Color.WHITE);
         numHeader.setBorder(Rectangle.BOX);
-        numHeader.setBorderColor(borderColor);
+        numHeader.setBorderColor(Color.BLACK);
         numHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
         numHeader.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        numHeader.setPadding(2.5f);
+        numHeader.setPadding(3.5f);
         numHeader.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         tcTable.addCell(numHeader);
 
-        PdfPCell arHeader = new PdfPCell(new Phrase(shape("البند والالتزام القانوني (عربي)"), font(7, Font.BOLD, Color.WHITE)));
-        arHeader.setBackgroundColor(new Color(51, 65, 85));
+        PdfPCell arHeader = new PdfPCell(new Phrase(shape("البند والالتزام القانوني (عربي)"), font(7.5f, Font.BOLD, Color.BLACK)));
+        arHeader.setBackgroundColor(Color.WHITE);
         arHeader.setBorder(Rectangle.BOX);
-        arHeader.setBorderColor(borderColor);
+        arHeader.setBorderColor(Color.BLACK);
         arHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
         arHeader.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        arHeader.setPadding(2.5f);
+        arHeader.setPadding(3.5f);
         arHeader.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         tcTable.addCell(arHeader);
 
-        PdfPCell enHeader = new PdfPCell(new Phrase("Term & Condition (English)", font(7, Font.BOLD, Color.WHITE)));
-        enHeader.setBackgroundColor(new Color(51, 65, 85));
+        PdfPCell enHeader = new PdfPCell(new Phrase("Term & Condition (English)", font(7.5f, Font.BOLD, Color.BLACK)));
+        enHeader.setBackgroundColor(Color.WHITE);
         enHeader.setBorder(Rectangle.BOX);
-        enHeader.setBorderColor(borderColor);
+        enHeader.setBorderColor(Color.BLACK);
         enHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
         enHeader.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        enHeader.setPadding(2.5f);
+        enHeader.setPadding(3.5f);
         tcTable.addCell(enHeader);
 
         for (int i = 0; i < terms.length; i++) {
-            Color rowBg = (i % 2 == 0) ? Color.WHITE : new Color(248, 250, 252);
-
-            PdfPCell numCell = new PdfPCell(new Phrase(String.valueOf(i + 1), font(6.8f, Font.BOLD, new Color(71, 85, 105))));
-            numCell.setBackgroundColor(rowBg);
+            PdfPCell numCell = new PdfPCell(new Phrase(String.valueOf(i + 1), font(7.2f, Font.BOLD, Color.BLACK)));
+            numCell.setBackgroundColor(Color.WHITE);
             numCell.setBorder(Rectangle.BOX);
-            numCell.setBorderColor(borderColor);
+            numCell.setBorderColor(Color.BLACK);
             numCell.setHorizontalAlignment(Element.ALIGN_CENTER);
             numCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            numCell.setPadding(2.2f);
+            numCell.setPadding(3.5f);
             tcTable.addCell(numCell);
 
-            PdfPCell arCell = new PdfPCell(new Phrase(shape(terms[i][0]), font(6.8f)));
-            arCell.setBackgroundColor(rowBg);
+            PdfPCell arCell = new PdfPCell(new Phrase(shape(terms[i][0]), font(7.2f, Font.NORMAL, Color.BLACK)));
+            arCell.setBackgroundColor(Color.WHITE);
             arCell.setBorder(Rectangle.BOX);
-            arCell.setBorderColor(borderColor);
-            arCell.setPadding(2.2f);
+            arCell.setBorderColor(Color.BLACK);
+            arCell.setPadding(3.5f);
             arCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
             arCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             tcTable.addCell(arCell);
 
-            PdfPCell enCell = new PdfPCell(new Phrase(terms[i][1], font(6.2f)));
-            enCell.setBackgroundColor(rowBg);
+            PdfPCell enCell = new PdfPCell(new Phrase(terms[i][1], font(6.5f, Font.NORMAL, Color.BLACK)));
+            enCell.setBackgroundColor(Color.WHITE);
             enCell.setBorder(Rectangle.BOX);
-            enCell.setBorderColor(borderColor);
-            enCell.setPadding(2.2f);
+            enCell.setBorderColor(Color.BLACK);
+            enCell.setPadding(3.5f);
             enCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             enCell.setHorizontalAlignment(Element.ALIGN_LEFT);
             tcTable.addCell(enCell);
@@ -978,15 +1073,15 @@ public class CustodyHandoverPdfService {
         box.setWidthPercentage(100);
 
         Phrase p = new Phrase();
-        p.add(new Chunk(shape("إقرار وتعهد المستلم: ") + "\n", font(7.8f, Font.BOLD, new Color(0, 100, 50))));
+        p.add(new Chunk(shape("إقرار وتعهد المستلم: ") + "\n", font(8.2f, Font.BOLD, Color.BLACK)));
         p.add(new Chunk(shape("أقر أنا الموقع أدناه بصفتي مستلماً للعهد الموضحة بالصفحة الأولى من هذا المحضر، بأنني عاينتها واستلمتها كاملة وسليمة وبحالة جيدة صالحة للعمل، وأتعهد بالمحافظة التامة عليها واستخدامها في مهام العمل التشغيلي المخصصة فقط، وأتحمل كامل المسؤولية النظامية والمالية في حال فقدانها أو تلفها، كما أقر بموافقتي والتزامي التام بجميع الشروط والأحكام المدونة أعلاه وبكافة لوائح وتعليمات الشركة."),
-                font(7f, Font.NORMAL, darkText)));
+                font(7.2f, Font.NORMAL, Color.BLACK)));
 
         PdfPCell cell = new PdfPCell(p);
         cell.setBorder(Rectangle.BOX);
-        cell.setBorderColor(borderColor);
-        cell.setBackgroundColor(new Color(240, 253, 244)); // Light green tint
-        cell.setPadding(5f);
+        cell.setBorderColor(Color.BLACK);
+        cell.setBackgroundColor(Color.WHITE); // Pure white background for printing
+        cell.setPadding(6f);
         cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         box.addCell(cell);
 
@@ -1001,43 +1096,43 @@ public class CustodyHandoverPdfService {
 
         // Right (Cell 0): المُسلِم (Deliverer)
         Phrase p1 = new Phrase();
-        p1.add(new Chunk(shape("المُسلِم (مسؤول العهد / أمين المستودع)") + "\n", font(7.8f, Font.BOLD, darkText)));
-        p1.add(new Chunk(shape("الاسم: ___________________________") + "\n", font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
-        p1.add(new Chunk(shape("التوقيع: ________________________") + "\n", font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
-        p1.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
+        p1.add(new Chunk(shape("المُسلِم (مسؤول العهد / أمين المستودع)") + "\n", font(8f, Font.BOLD, Color.BLACK)));
+        p1.add(new Chunk(shape("الاسم: ___________________________") + "\n\n", font(7.5f, Font.NORMAL, Color.BLACK)));
+        p1.add(new Chunk(shape("التوقيع: ________________________") + "\n\n", font(7.5f, Font.NORMAL, Color.BLACK)));
+        p1.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.5f, Font.NORMAL, Color.BLACK)));
         PdfPCell c1 = new PdfPCell(p1);
         c1.setBorder(Rectangle.BOX);
-        c1.setBorderColor(borderColor);
-        c1.setBackgroundColor(new Color(250, 250, 250));
-        c1.setPadding(5f);
+        c1.setBorderColor(Color.BLACK);
+        c1.setBackgroundColor(Color.WHITE);
+        c1.setPadding(6f);
         c1.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         signTable.addCell(c1);
 
         // Center (Cell 1): المُستلم (Recipient)
         Phrase p2 = new Phrase();
-        p2.add(new Chunk(shape("المُستلِم (الكابتن / المستلم)") + "\n", font(7.8f, Font.BOLD, darkText)));
-        p2.add(new Chunk(shape("الاسم: " + (captainName != null ? captainName : "_______________")) + "\n", font(7.5f, Font.BOLD, new Color(0, 100, 50))));
-        p2.add(new Chunk(shape("التوقيع: ________________________") + "\n", font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
-        p2.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
+        p2.add(new Chunk(shape("المُستلِم (الكابتن / المستلم)") + "\n", font(8f, Font.BOLD, Color.BLACK)));
+        p2.add(new Chunk(shape("الاسم: " + (captainName != null ? captainName : "_______________")) + "\n\n", font(7.8f, Font.BOLD, Color.BLACK)));
+        p2.add(new Chunk(shape("التوقيع: ________________________") + "\n\n", font(7.5f, Font.NORMAL, Color.BLACK)));
+        p2.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.5f, Font.NORMAL, Color.BLACK)));
         PdfPCell c2 = new PdfPCell(p2);
         c2.setBorder(Rectangle.BOX);
-        c2.setBorderColor(borderColor);
-        c2.setBackgroundColor(new Color(240, 253, 244));
-        c2.setPadding(5f);
+        c2.setBorderColor(Color.BLACK);
+        c2.setBackgroundColor(Color.WHITE);
+        c2.setPadding(6f);
         c2.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         signTable.addCell(c2);
 
         // Left (Cell 2): الاعتماد (Operations)
         Phrase p3 = new Phrase();
-        p3.add(new Chunk(shape("الاعتماد (إدارة العمليات والتشغيل)") + "\n", font(7.8f, Font.BOLD, darkText)));
-        p3.add(new Chunk(shape("الاسم: ___________________________") + "\n", font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
-        p3.add(new Chunk(shape("الختم / التوقيع: ________________") + "\n", font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
-        p3.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.2f, Font.NORMAL, Color.DARK_GRAY)));
+        p3.add(new Chunk(shape("الاعتماد (إدارة العمليات والتشغيل)") + "\n", font(8f, Font.BOLD, Color.BLACK)));
+        p3.add(new Chunk(shape("الاسم: ___________________________") + "\n\n", font(7.5f, Font.NORMAL, Color.BLACK)));
+        p3.add(new Chunk(shape("الختم / التوقيع: ________________") + "\n\n", font(7.5f, Font.NORMAL, Color.BLACK)));
+        p3.add(new Chunk(shape("التاريخ: ___ / ___ / 2026 م"), font(7.5f, Font.NORMAL, Color.BLACK)));
         PdfPCell c3 = new PdfPCell(p3);
         c3.setBorder(Rectangle.BOX);
-        c3.setBorderColor(borderColor);
-        c3.setBackgroundColor(new Color(250, 250, 250));
-        c3.setPadding(5f);
+        c3.setBorderColor(Color.BLACK);
+        c3.setBackgroundColor(Color.WHITE);
+        c3.setPadding(6f);
         c3.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
         signTable.addCell(c3);
 
@@ -1049,11 +1144,11 @@ public class CustodyHandoverPdfService {
         t.setWidthPercentage(100);
         PdfPCell cell = new PdfPCell(new Phrase(
                 shape("رقم النموذج: HMRLS - HR - 0010 — نموذج استلام وتسليم عهد — شركة كمال بن خلف السلمي للخدمات اللوجستية"),
-                font(6.2f, Font.ITALIC, new Color(100, 116, 139))));
+                font(6.5f, Font.ITALIC, Color.BLACK)));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-        cell.setPadding(1);
+        cell.setPadding(2);
         t.addCell(cell);
         doc.add(t);
     }

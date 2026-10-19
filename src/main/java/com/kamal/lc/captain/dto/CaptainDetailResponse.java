@@ -38,8 +38,10 @@ public class CaptainDetailResponse {
     // Iqama
     private String iqamaNumber;
     private String iqamaOccupation;
+    private String idExpiryDate;
     private String iqamaExpiry;
     private String iqamaExpiryRenewed;
+    private String borderNumber;
     private String iqamaStatus;
 
     // Qiwa
@@ -59,6 +61,7 @@ public class CaptainDetailResponse {
 
     // Driving Licence
     private String drivingLicenceNo;
+    private String licenceType;
     private String licenceExpiry;
     private boolean hasLicence;
     private String licenceStatus;
@@ -86,6 +89,8 @@ public class CaptainDetailResponse {
     private BigDecimal fuelAllowanceAmount;
     private BigDecimal callInternetAllowance;
     private BigDecimal rewardAllowance;
+    private BigDecimal salaryDeductions;
+    private BigDecimal netSalary;
 
     // Vehicle & Fuel flags
     private boolean usesOwnVehicle;

@@ -125,8 +125,8 @@ class PayrollCalculatorTest {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO), settings);
 
-            // 1539 − 120 − 50 + 240 + 350 + 310 + 1000 + 213
-            assertThat(result.gross()).isEqualByComparingTo("3482");
+            // 1539 − 120 − 50 + 240 + 0 + 310 + 1000 + 213 = 3132
+            assertThat(result.gross()).isEqualByComparingTo("3132");
         }
 
         @Test
@@ -140,10 +140,10 @@ class PayrollCalculatorTest {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO), settings);
 
-            assertThat(result.fuelAllowances()).isEqualByComparingTo("350");
+            assertThat(result.fuelAllowances()).isEqualByComparingTo("0");
             assertThat(result.carAllowances()).isEqualByComparingTo("310");
-            // 1482 + 350 + 310, below target so nothing else applies
-            assertThat(result.gross()).isEqualByComparingTo("2142");
+            // 1482 + 0 + 310 = 1792, below target so nothing else applies
+            assertThat(result.gross()).isEqualByComparingTo("1792");
         }
 
         @Test

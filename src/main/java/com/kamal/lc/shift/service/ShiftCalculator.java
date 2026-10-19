@@ -99,16 +99,9 @@ public class ShiftCalculator {
                     + settings.getDailyOrderThreshold() + ")");
         }
 
-        // The two allowances are decided independently — each has its own switch in the
-        // settings, its own rate and its own hours threshold — so a period can pay one
-        // without the other.
-        boolean fuelDue = settings.isFuelAllowanceEnabled()
-                && input.fuelAllowanceEligible()
-                && hours.compareTo(settings.getFuelHoursThreshold()) >= 0;
-        BigDecimal fuelAllowance = fuelDue ? money(settings.getFuelAllowanceDaily()) : zero();
-        if (fuelDue) {
-            notes.add("+ بدل بنزين " + trim(fuelAllowance));
-        }
+        // Fuel allowance is no longer computed automatically — it is managed
+        // via manual FUEL_DIFFERENCE adjustments on the payroll instead.
+        BigDecimal fuelAllowance = zero();
 
         boolean carDue = settings.isCarAllowanceEnabled()
                 && input.carAllowanceEligible()
@@ -121,7 +114,6 @@ public class ShiftCalculator {
         BigDecimal netShiftPay = money(dailyWage
                 .subtract(lateDeduction)
                 .add(dailyIncentive)
-                .add(fuelAllowance)
                 .add(carAllowance));
         notes.add("= " + trim(netShiftPay) + " ريال");
 

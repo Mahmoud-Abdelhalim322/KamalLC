@@ -5,14 +5,14 @@
     <div class="header-title">
       <span class="material-icons-outlined header-icon"></span>
       <div>
-        <h1>لوحة تحكم تحقيق الطلبات</h1>
-        <p class="subtitle">Daily Delivery Per Captain Report — أداء الكباتن اليومي والتنسيق الشرطي</p>
+        <h1>{{ 'ORDERS.TITLE' | translate }}</h1>
+        <p class="subtitle">{{ 'ORDERS.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="header-actions">
       <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || !data">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-        تصدير Excel
+        {{ 'COMMON.EXPORT_EXCEL' | translate }}
       </button>
     </div>
   </div>
@@ -27,18 +27,18 @@
     <div class="toolbar">
       <div class="date-filters">
         <div class="date-field">
-          <label>من</label>
+          <label>{{ 'ORDERS.FILTER_FROM' | translate }}</label>
           <input type="date" class="form-input" [(ngModel)]="from" (change)="onPeriodChange()">
         </div>
         <div class="date-field">
-          <label>إلى</label>
+          <label>{{ 'ORDERS.FILTER_TO' | translate }}</label>
           <input type="date" class="form-input" [(ngModel)]="to" (change)="onPeriodChange()">
         </div>
       </div>
 
       <div class="filter-tabs">
         <button class="filter-tab" [class.active]="captainType === 'ALL'" (click)="setCaptainType('ALL')">
-          <span class="material-icons-round">groups</span> الكل
+          <span class="material-icons-round">groups</span> {{ 'ORDERS.TAB_ALL' | translate }}
         </button>
         <button class="filter-tab" [class.active]="captainType === 'EMPLOYEE'" (click)="setCaptainType('EMPLOYEE')">
           <span class="material-icons-round">badge</span> KSC
@@ -50,13 +50,13 @@
 
       <div class="display-mode-tabs">
         <button class="mode-tab" [class.active]="displayMode === 'ORDERS'" (click)="setDisplayMode('ORDERS')">
-          <span class="material-icons-round">shopping_bag</span> الطلبات
+          <span class="material-icons-round">shopping_bag</span> {{ 'ORDERS.TAB_ORDERS' | translate }}
         </button>
         <button class="mode-tab" [class.active]="displayMode === 'PERFORMANCE'" (click)="setDisplayMode('PERFORMANCE')">
-          <span class="material-icons-round">insights</span> الأداء
+          <span class="material-icons-round">insights</span> {{ 'ORDERS.TAB_PERFORMANCE' | translate }}
         </button>
         <button class="mode-tab" [class.active]="displayMode === 'HOURS'" (click)="setDisplayMode('HOURS')">
-          <span class="material-icons-round">schedule</span> عدد الساعات
+          <span class="material-icons-round">schedule</span> {{ 'ORDERS.TAB_HOURS' | translate }}
         </button>
       </div>
     </div>
@@ -64,28 +64,28 @@
 
   <!-- Legend bar (clickable for filtering) -->
   <div class="card legend-card" *ngIf="displayMode !== 'HOURS'">
-    <span class="legend-title"><span class="material-icons-round">palette</span> قواعد التنسيق الشرطي:</span>
+    <span class="legend-title"><span class="material-icons-round">palette</span> {{ 'ORDERS.FORMATTING_RULES' | translate }}</span>
     <div class="legend-items">
       <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-grey'" (click)="toggleLegendFilter('cell-grey')">
-        <span class="swatch cell-grey"></span> <span>1 إلى 4</span>
+        <span class="swatch cell-grey"></span> <span>{{ 'ORDERS.RANGE_1_4' | translate }}</span>
       </div>
       <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-red'" (click)="toggleLegendFilter('cell-red')">
-        <span class="swatch cell-red"></span> <span>5 إلى 8</span>
+        <span class="swatch cell-red"></span> <span>{{ 'ORDERS.RANGE_5_8' | translate }}</span>
       </div>
       <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-orange'" (click)="toggleLegendFilter('cell-orange')">
-        <span class="swatch cell-orange"></span> <span>9 إلى 12</span>
+        <span class="swatch cell-orange"></span> <span>{{ 'ORDERS.RANGE_9_12' | translate }}</span>
       </div>
       <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-yellow-green'" (click)="toggleLegendFilter('cell-yellow-green')">
-        <span class="swatch cell-yellow-green"></span> <span>13 إلى 18</span>
+        <span class="swatch cell-yellow-green"></span> <span>{{ 'ORDERS.RANGE_13_18' | translate }}</span>
       </div>
       <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-green'" (click)="toggleLegendFilter('cell-green')">
-        <span class="swatch cell-green"></span> <span>19 أو أكثر</span>
+        <span class="swatch cell-green"></span> <span>{{ 'ORDERS.RANGE_19_PLUS' | translate }}</span>
       </div>
     </div>
     <!-- Active filter info -->
     <div class="legend-filter-info" *ngIf="activeLegendFilter">
       <span class="material-icons-round">filter_alt</span>
-      <span>{{ filteredRows.length }} كابتن — {{ filteredWorkDays }} يوم</span>
+      <span>{{ 'ORDERS.CAPTAIN_COUNT' | translate:{ count: filteredRows.length, days: filteredWorkDays } }}</span>
       <button class="btn-clear-filter" (click)="activeLegendFilter = null">
         <span class="material-icons-round">close</span>
       </button>
@@ -95,14 +95,14 @@
   <!-- Loading state -->
   <div class="loading-state card" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جارٍ تحميل بيانات تحقيق الطلبات…</p>
+    <p>{{ 'ORDERS.LOADING' | translate }}</p>
   </div>
 
   <!-- Empty state -->
   <div class="empty-state card" *ngIf="!isLoading && data && data.captainRows.length === 0">
     <span class="material-icons-round">inventory_2</span>
-    <h3>لا توجد بيانات شيفتات في هذه الفترة</h3>
-    <p>قم باستيراد ملف الشيفتات من صفحة الاستيراد ليتم احتساب تحقيق الطلبات.</p>
+    <h3>{{ 'ORDERS.NO_DATA' | translate }}</h3>
+    <p>{{ 'ORDERS.NO_DATA_HINT' | translate }}</p>
   </div>
 
   <!-- Data Grid -->
@@ -112,29 +112,29 @@
         <thead>
           <!-- Row 1: Day of week -->
           <tr class="header-days">
-            <th class="sticky-col col-name" rowspan="2">اسم الكابتن</th>
-            <th class="sticky-col col-code" rowspan="2">الكود</th>
-            <th class="sticky-col col-workdays" rowspan="2">عدد الشفتات</th>
+            <th class="sticky-col col-name" rowspan="2">{{ 'ORDERS.COL_CAPTAIN_NAME' | translate }}</th>
+            <th class="sticky-col col-code" rowspan="2">{{ 'ORDERS.COL_CODE' | translate }}</th>
+            <th class="sticky-col col-workdays" rowspan="2">{{ 'ORDERS.COL_SHIFTS' | translate }}</th>
             <!-- ORDERS mode columns -->
             <ng-container *ngIf="displayMode === 'ORDERS'">
-              <th class="sticky-col col-rate" rowspan="2">النسبة%</th>
-              <th class="sticky-col col-target" rowspan="2">الهدف</th>
-              <th class="sticky-col col-actual" rowspan="2">الفعلي</th>
+              <th class="sticky-col col-rate" rowspan="2">{{ 'ORDERS.COL_RATE' | translate }}</th>
+              <th class="sticky-col col-target" rowspan="2">{{ 'ORDERS.COL_TARGET' | translate }}</th>
+              <th class="sticky-col col-actual" rowspan="2">{{ 'ORDERS.COL_ACTUAL' | translate }}</th>
             </ng-container>
             <!-- PERFORMANCE mode columns -->
             <ng-container *ngIf="displayMode === 'PERFORMANCE'">
-              <th class="sticky-col col-hours" rowspan="2">الساعات</th>
-              <th class="sticky-col col-util" rowspan="2">نسبة التشغيل</th>
-              <th class="sticky-col col-extra" rowspan="2">عمولة بعد 18</th>
-              <th class="sticky-col col-late" rowspan="2">خصم التأخير</th>
+              <th class="sticky-col col-hours" rowspan="2">{{ 'ORDERS.COL_HOURS' | translate }}</th>
+              <th class="sticky-col col-util" rowspan="2">{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
+              <th class="sticky-col col-extra" rowspan="2">{{ 'ORDERS.COL_EXTRA_COMMISSION' | translate }}</th>
+              <th class="sticky-col col-late" rowspan="2">{{ 'ORDERS.COL_LATE_DEDUCTION' | translate }}</th>
             </ng-container>
             <!-- HOURS mode columns -->
             <ng-container *ngIf="displayMode === 'HOURS'">
-              <th class="sticky-col col-hours" rowspan="2">إجمالي الساعات</th>
-              <th class="sticky-col col-util" rowspan="2">نسبة التشغيل</th>
+              <th class="sticky-col col-hours" rowspan="2">{{ 'ORDERS.COL_TOTAL_HOURS' | translate }}</th>
+              <th class="sticky-col col-util" rowspan="2">{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
             </ng-container>
             <th *ngFor="let dateStr of data.dates" class="day-dow">
-              {{ getDayNameAr(dateStr) }}
+              {{ getDayName(dateStr) }}
             </th>
           </tr>
           <!-- Row 2: Day numbers -->
@@ -215,7 +215,7 @@
         <tfoot>
           <!-- Totals row -->
           <tr class="totals-row">
-            <td class="sticky-col col-name strong" colspan="2">المجموع</td>
+            <td class="sticky-col col-name strong" colspan="2">{{ 'ORDERS.TOTAL_ROW' | translate }}</td>
             <td class="sticky-col col-workdays num-text">{{ filteredWorkDays }}</td>
             <ng-container *ngIf="displayMode === 'ORDERS'">
               <td class="sticky-col col-rate rate-text">{{ percent(filteredTotalRate) }}</td>
@@ -247,7 +247,7 @@
 
           <!-- Summary row for Captain Count -->
           <tr class="count-row">
-            <td class="sticky-col col-name" [attr.colspan]="displayMode === 'ORDERS' ? 5 : displayMode === 'PERFORMANCE' ? 6 : 4">عدد الكباتن</td>
+            <td class="sticky-col col-name" [attr.colspan]="displayMode === 'ORDERS' ? 5 : displayMode === 'PERFORMANCE' ? 6 : 4">{{ 'ORDERS.CAPTAINS_ROW' | translate }}</td>
             <td class="sticky-col col-actual num-text strong">{{ filteredRows.length }}</td>
             <td [attr.colspan]="data.dates.length" class="empty-footer-cell"></td>
           </tr>

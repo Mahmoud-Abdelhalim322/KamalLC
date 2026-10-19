@@ -6,6 +6,8 @@ import {
 } from '../../core/models/api.models';
 import { ReportService } from '../../core/services/report.service';
 import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 type ReportTab = 'team' | 'individual' | 'profitability';
 type SortKey = keyof Pick<TeamReportRow,
@@ -15,13 +17,14 @@ type SortKey = keyof Pick<TeamReportRow,
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent implements OnInit {
 
   private reportService = inject(ReportService);
+  public i18n = inject(TranslationService);
 
   /** Captains this close to the monthly target are still worth a push before month end. */
   readonly nearTargetWindow = 60;
@@ -84,7 +87,7 @@ export class ReportsComponent implements OnInit {
       error: (err) => {
         this.isLoadingTeam = false;
         this.teamReport = null;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل تقرير الفريق');
+        this.errorMessage = errorMessage(err, this.i18n.get('REPORTS.TEAM_LOAD_FAILED'));
       }
     });
   }
@@ -102,7 +105,7 @@ export class ReportsComponent implements OnInit {
       error: (err) => {
         this.isLoadingCaptain = false;
         this.captainReport = null;
-        this.errorMessage = errorMessage(err, 'فشل في تحميل تقرير الكابتن');
+        this.errorMessage = errorMessage(err, this.i18n.get('REPORTS.CAPTAIN_LOAD_FAILED'));
       }
     });
   }
@@ -118,11 +121,15 @@ export class ReportsComponent implements OnInit {
     this.reportService.exportCaptain(report.captainId, this.from, this.to).subscribe({
       next: (blob) => {
         this.isExporting = false;
-        downloadBlob(blob, `الأداء-${report.captainCode}-${this.from}.xlsx`);
+        const filename = this.i18n.get('REPORTS.EXPORT_FILENAME', {
+          code: report.captainCode,
+          from: this.from
+        });
+        downloadBlob(blob, filename);
       },
       error: () => {
         this.isExporting = false;
-        this.errorMessage = 'فشل تحميل ملف التقرير';
+        this.errorMessage = this.i18n.get('REPORTS.EXPORT_FAILED');
       }
     });
   }

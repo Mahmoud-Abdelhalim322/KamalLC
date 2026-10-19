@@ -1,5 +1,5 @@
 <div class="page-container">
-  <h1 class="page-title"><span class="material-icons-round">directions_car</span> أسطول السيارات</h1>
+  <h1 class="page-title"><span class="material-icons-round">directions_car</span> {{ 'FLEET.TITLE' | translate }}</h1>
 
   <!-- Messages -->
   <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
@@ -8,13 +8,13 @@
   <!-- Tabs -->
   <div class="tab-bar">
     <button class="tab-btn" [class.active]="activeTab === 'vehicles'" (click)="switchTab('vehicles')">
-      <span class="material-icons-round">directions_car</span> السيارات
+      <span class="material-icons-round">directions_car</span> {{ 'FLEET.TAB_VEHICLES' | translate }}
     </button>
     <button class="tab-btn" [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')">
-      <span class="material-icons-round">swap_horiz</span> حركات التسليم والاستلام
+      <span class="material-icons-round">swap_horiz</span> {{ 'FLEET.TAB_ASSIGNMENTS' | translate }}
     </button>
     <button class="tab-btn" [class.active]="activeTab === 'maintenance'" (click)="switchTab('maintenance')">
-      <span class="material-icons-round">build</span> الصيانة
+      <span class="material-icons-round">build</span> {{ 'FLEET.TAB_MAINTENANCE' | translate }}
     </button>
   </div>
 
@@ -22,32 +22,32 @@
   <div *ngIf="activeTab === 'vehicles'" class="tab-content">
     <div class="toolbar">
       <div class="search-group">
-        <input type="text" class="search-input" placeholder="بحث بالاسم أو رقم اللوحة..."
+        <input type="text" class="search-input" [placeholder]="'FLEET.SEARCH_PLACEHOLDER' | translate"
                [(ngModel)]="vehicleSearch" (keyup.enter)="searchVehicles()">
         <select class="filter-select" [(ngModel)]="vehicleStatusFilter" (change)="searchVehicles()">
-          <option value="">كل الحالات</option>
-          <option value="AVAILABLE">متاحة</option>
-          <option value="ASSIGNED">مُسندة</option>
-          <option value="MAINTENANCE">صيانة</option>
+          <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
+          <option value="AVAILABLE">{{ 'FLEET.STATUS_AVAILABLE' | translate }}</option>
+          <option value="ASSIGNED">{{ 'FLEET.STATUS_ASSIGNED' | translate }}</option>
+          <option value="MAINTENANCE">{{ 'FLEET.STATUS_MAINTENANCE' | translate }}</option>
         </select>
         <select class="filter-select" [(ngModel)]="vehicleOwnershipFilter" (change)="searchVehicles()">
-          <option value="">كل الملكيات</option>
-          <option value="OWNED">مملوكة</option>
-          <option value="RENTED">مؤجرة</option>
-          <option value="LEASE_TO_OWN">تمويلية</option>
-          <option value="OTHER">أخرى (خاصة)</option>
+          <option value="">{{ 'FLEET.ALL_OWNERSHIP' | translate }}</option>
+          <option value="OWNED">{{ 'FLEET.OWNED_OPTION' | translate }}</option>
+          <option value="RENTED">{{ 'FLEET.RENTED_OPTION' | translate }}</option>
+          <option value="LEASE_TO_OWN">{{ 'FLEET.LEASE_OPTION' | translate }}</option>
+          <option value="OTHER">{{ 'FLEET.OTHER_OPTION' | translate }}</option>
         </select>
         <select class="filter-select" *ngIf="vehicleOwnershipFilter === 'RENTED' || vehicleOwnershipFilter === ''" [(ngModel)]="vehicleAgentFilter" (change)="searchVehicles()">
-          <option value="">كل الوكلاء</option>
+          <option value="">{{ 'FLEET.ALL_AGENTS' | translate }}</option>
           <option *ngFor="let a of rentalAgents" [value]="a">{{ a }}</option>
         </select>
       </div>
       <div class="toolbar-actions">
         <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExportingExcel">
-          <span class="material-icons-round" [class.spinning]="isExportingExcel">download</span> تصدير Excel
+          <span class="material-icons-round" [class.spinning]="isExportingExcel">download</span> {{ 'FLEET.EXPORT_EXCEL' | translate }}
         </button>
         <button class="btn btn-primary" (click)="openAddVehicle()" *ngIf="canManage">
-          <span class="material-icons-round">add</span> إضافة سيارة
+          <span class="material-icons-round">add</span> {{ 'FLEET.ADD_VEHICLE' | translate }}
         </button>
       </div>
     </div>
@@ -58,16 +58,16 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>الرقم المركبي</th>
-            <th>رقم اللوحة</th>
-            <th>الماركة / الموديل</th>
-            <th>الملكية</th>
-            <th>رقم الاستمارة والهيكل</th>
-            <th>انتهاء الاستمارة والفحص</th>
-            <th>حالة الوثائق</th>
-            <th>الحالة التشغيلية</th>
-            <th>الكابتن الحالي</th>
-            <th>إجراءات</th>
+            <th>{{ 'FLEET.COL_CODE' | translate }}</th>
+            <th>{{ 'FLEET.COL_PLATE' | translate }}</th>
+            <th>{{ 'FLEET.COL_BRAND_MODEL' | translate }}</th>
+            <th>{{ 'FLEET.COL_OWNERSHIP' | translate }}</th>
+            <th>{{ 'FLEET.COL_REG_VIN' | translate }}</th>
+            <th>{{ 'FLEET.COL_EXPIRIES' | translate }}</th>
+            <th>{{ 'FLEET.COL_DOC_STATUS' | translate }}</th>
+            <th>{{ 'FLEET.COL_OPERATIONAL_STATUS' | translate }}</th>
+            <th>{{ 'FLEET.COL_CURRENT_CAPTAIN' | translate }}</th>
+            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -77,7 +77,7 @@
             </td>
             <td class="plate-cell">
               {{ v.plateNumber }}
-              <div *ngIf="v.operatingCardNumber" class="text-muted" style="font-size:11px;">بطاقة تشغيل: {{ v.operatingCardNumber }}</div>
+              <div *ngIf="v.operatingCardNumber" class="text-muted" style="font-size:11px;">{{ 'FLEET.OPERATING_CARD' | translate }}: {{ v.operatingCardNumber }}</div>
             </td>
             <td>{{ v.brand }} {{ v.model }} <span class="year-tag" *ngIf="v.year">{{ v.year }}</span></td>
             <td>
@@ -90,20 +90,20 @@
               </span>
             </td>
             <td style="font-size: 12px;">
-              <div *ngIf="v.registrationNumber">استمارة: <strong>{{ v.registrationNumber }}</strong></div>
-              <div *ngIf="v.vin" class="text-muted">شاسي: {{ v.vin }}</div>
+              <div *ngIf="v.registrationNumber">{{ 'FLEET.REGISTRATION' | translate }}: <strong>{{ v.registrationNumber }}</strong></div>
+              <div *ngIf="v.vin" class="text-muted">{{ 'FLEET.VIN_CHASSIS' | translate }}: {{ v.vin }}</div>
               <div *ngIf="!v.registrationNumber && !v.vin">—</div>
             </td>
             <td style="font-size: 12px;">
-              <div>استمارة: {{ v.registrationExpiryDate || '—' }}</div>
-              <div>فحص: {{ v.inspectionExpiryDate || v.inspectionDate || '—' }}</div>
+              <div>{{ 'FLEET.REGISTRATION' | translate }}: {{ v.registrationExpiryDate || '—' }}</div>
+              <div>{{ 'FLEET.INSPECTION' | translate }}: {{ v.inspectionExpiryDate || v.inspectionDate || '—' }}</div>
             </td>
             <td>
               <span class="badge"
                     [class.badge-completed]="v.documentAlertStatus === 'VALID' || !v.documentAlertStatus"
                     [class.badge-rented]="v.documentAlertStatus === 'EXPIRING'"
                     [class.badge-cancelled]="v.documentAlertStatus === 'EXPIRED'">
-                {{ v.documentAlertStatus === 'EXPIRED' ? 'منتهية 🔴' : (v.documentAlertStatus === 'EXPIRING' ? 'تنتهي قريباً 🟡' : 'سارية 🟢') }}
+                {{ (v.documentAlertStatus === 'EXPIRED' ? 'FLEET.DOC_EXPIRED' : (v.documentAlertStatus === 'EXPIRING' ? 'FLEET.DOC_EXPIRING' : 'FLEET.DOC_VALID')) | translate }}
               </span>
               <div *ngFor="let alertMsg of v.documentAlerts" class="text-muted" style="font-size: 10px; color: #dc3545;">
                 {{ alertMsg }}
@@ -117,37 +117,37 @@
               <span class="text-muted" *ngIf="!v.currentCaptainName">—</span>
             </td>
             <td class="actions-cell">
-              <button class="icon-btn" title="تسليم" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE' && canManage">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_ASSIGN' | translate" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE' && canManage">
                 <span class="material-icons-round">person_add</span>
               </button>
-              <button class="icon-btn" title="تعديل" (click)="openEditVehicle(v)" *ngIf="canManage">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" (click)="openEditVehicle(v)" *ngIf="canManage">
                 <span class="material-icons-round">edit</span>
               </button>
-              <button class="icon-btn" title="صيانة" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED' && canManage">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_MAINTENANCE' | translate" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED' && canManage">
                 <span class="material-icons-round">build</span>
               </button>
-              <button class="icon-btn" title="تاريخ التسليم" (click)="openHistory(v)">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_HANDOVER_HISTORY' | translate" (click)="openHistory(v)">
                 <span class="material-icons-round">history</span>
               </button>
-              <button class="icon-btn" title="تاريخ الصيانة" (click)="openMaintenanceHistory(v)">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_MAINT_HISTORY' | translate" (click)="openMaintenanceHistory(v)">
                 <span class="material-icons-round">plumbing</span>
               </button>
-              <button class="icon-btn danger" title="حذف" (click)="deleteVehicle(v)" *ngIf="canManage">
+              <button class="icon-btn danger" [title]="'FLEET.TOOLTIP_DELETE' | translate" (click)="deleteVehicle(v)" *ngIf="canManage">
                 <span class="material-icons-round">delete</span>
               </button>
             </td>
           </tr>
           <tr *ngIf="vehicles.length === 0 && !isLoading">
-            <td colspan="10" class="empty-row">لا توجد سيارات</td>
+            <td colspan="10" class="empty-row">{{ 'FLEET.NO_VEHICLES' | translate }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="pagination" *ngIf="vehicleTotalPages > 1">
-      <button (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">السابق</button>
+      <button (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">{{ 'COMMON.PREV' | translate }}</button>
       <span>{{ vehiclePage + 1 }} / {{ vehicleTotalPages }}</span>
-      <button (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">التالي</button>
+      <button (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
     </div>
   </div>
 
@@ -155,10 +155,10 @@
   <div *ngIf="activeTab === 'assignments'" class="tab-content">
     <div class="toolbar">
       <select class="filter-select" [(ngModel)]="assignmentStatusFilter" (change)="loadAssignments()">
-        <option value="">كل الحالات</option>
-        <option value="ACTIVE">نشط</option>
-        <option value="RETURNED">مُرجعة</option>
-        <option value="LATE">متأخر</option>
+        <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
+        <option value="ACTIVE">{{ 'FLEET.STATUS_ACTIVE' | translate }}</option>
+        <option value="RETURNED">{{ 'FLEET.STATUS_RETURNED' | translate }}</option>
+        <option value="LATE">{{ 'FLEET.STATUS_LATE' | translate }}</option>
       </select>
     </div>
 
@@ -168,14 +168,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>السيارة</th>
-            <th>الكابتن</th>
-            <th>تاريخ التسليم</th>
-            <th>الإرجاع المتوقع</th>
-            <th>الإرجاع الفعلي</th>
-            <th>الكابتن التالي</th>
-            <th>الحالة</th>
-            <th>إجراءات</th>
+            <th>{{ 'FLEET.COL_VEHICLE' | translate }}</th>
+            <th>{{ 'FLEET.COL_CAPTAIN' | translate }}</th>
+            <th>{{ 'FLEET.COL_ASSIGNED_DATE' | translate }}</th>
+            <th>{{ 'FLEET.COL_EXPECTED_RETURN' | translate }}</th>
+            <th>{{ 'FLEET.COL_ACTUAL_RETURN' | translate }}</th>
+            <th>{{ 'FLEET.COL_NEXT_CAPTAIN' | translate }}</th>
+            <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
+            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -192,21 +192,21 @@
             <td class="actions-cell">
               <button class="btn btn-sm btn-success" *ngIf="(a.status === 'ACTIVE' || a.status === 'LATE') && canManage"
                       (click)="returnAssignment(a)">
-                <span class="material-icons-round">assignment_return</span> استلام
+                <span class="material-icons-round">assignment_return</span> {{ 'FLEET.BTN_RETURN' | translate }}
               </button>
             </td>
           </tr>
           <tr *ngIf="assignments.length === 0 && !isLoading">
-            <td colspan="8" class="empty-row">لا توجد حركات</td>
+            <td colspan="8" class="empty-row">{{ 'FLEET.NO_ASSIGNMENTS' | translate }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="pagination" *ngIf="assignmentTotalPages > 1">
-      <button (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">السابق</button>
+      <button (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">{{ 'COMMON.PREV' | translate }}</button>
       <span>{{ assignmentPage + 1 }} / {{ assignmentTotalPages }}</span>
-      <button (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">التالي</button>
+      <button (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
     </div>
   </div>
 
@@ -214,10 +214,10 @@
   <div *ngIf="activeTab === 'maintenance'" class="tab-content">
     <div class="toolbar">
       <select class="filter-select" [(ngModel)]="maintenanceStatusFilter" (change)="loadMaintenance()">
-        <option value="">كل الحالات</option>
-        <option value="IN_PROGRESS">جاري الصيانة</option>
-        <option value="COMPLETED">مكتملة</option>
-        <option value="CANCELLED">ملغاة</option>
+        <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
+        <option value="IN_PROGRESS">{{ 'FLEET.STATUS_IN_PROGRESS' | translate }}</option>
+        <option value="COMPLETED">{{ 'FLEET.STATUS_COMPLETED' | translate }}</option>
+        <option value="CANCELLED">{{ 'FLEET.STATUS_CANCELLED' | translate }}</option>
       </select>
     </div>
 
@@ -227,14 +227,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>السيارة</th>
-            <th>العطل</th>
-            <th>الورشة</th>
-            <th>التكلفة علي</th>
-            <th>تاريخ الدخول</th>
-            <th>التكلفة</th>
-            <th>الحالة</th>
-            <th>إجراءات</th>
+            <th>{{ 'FLEET.COL_VEHICLE' | translate }}</th>
+            <th>{{ 'FLEET.COL_FAULT' | translate }}</th>
+            <th>{{ 'FLEET.COL_WORKSHOP' | translate }}</th>
+            <th>{{ 'FLEET.COL_COST_BEARER' | translate }}</th>
+            <th>{{ 'FLEET.COL_OPEN_DATE' | translate }}</th>
+            <th>{{ 'FLEET.COL_COST' | translate }}</th>
+            <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
+            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -244,152 +244,152 @@
             <td>{{ m.workshopName || '—' }}</td>
             <td>
               <span class="badge" [class.badge-company]="m.costBearer === 'COMPANY'" [class.badge-captain]="m.costBearer === 'CAPTAIN'">
-                {{ m.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن: ' + (m.captainName || '') }}
+                {{ m.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : (('FLEET.CAPTAIN_PREFIX' | translate) + (m.captainName || '')) }}
               </span>
             </td>
             <td>{{ m.openedAt | date:'yyyy-MM-dd' }}</td>
-            <td>{{ m.totalCost !== undefined ? m.totalCost + ' ريال' : '—' }}</td>
+            <td>{{ m.totalCost !== undefined ? (m.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</td>
             <td>
               <span class="badge" 
                     [class.badge-rented]="m.status === 'IN_PROGRESS'" 
                     [class.badge-completed]="m.status === 'COMPLETED'"
                     [class.badge-cancelled]="m.status === 'CANCELLED'">
-                {{ m.status === 'IN_PROGRESS' ? 'جاري' : m.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}
+                {{ (m.status === 'IN_PROGRESS' ? 'FLEET.STATUS_IN_PROGRESS' : m.status === 'COMPLETED' ? 'FLEET.STATUS_COMPLETED' : 'FLEET.STATUS_CANCELLED') | translate }}
               </span>
             </td>
             <td class="actions-cell">
-              <button class="icon-btn" title="تعديل" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="editMaintenance(m)">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="editMaintenance(m)">
                 <span class="material-icons-round">edit</span>
               </button>
-              <button class="icon-btn" title="معاينة التفاصيل" (click)="viewMaintenanceDetails(m)">
+              <button class="icon-btn" [title]="'FLEET.TOOLTIP_DETAILS' | translate" (click)="viewMaintenanceDetails(m)">
                 <span class="material-icons-round">visibility</span>
               </button>
               <button class="btn btn-sm btn-success" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="openCloseMaintenanceDialog(m)" style="margin-right: 4px;">
-                <span class="material-icons-round">check_circle</span> تقفيل
+                <span class="material-icons-round">check_circle</span> {{ 'FLEET.BTN_CLOSE_MAINT' | translate }}
               </button>
-              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS' && canManage" title="إلغاء" (click)="cancelMaintenance(m)">
+              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS' && canManage" [title]="'COMMON.CANCEL' | translate" (click)="cancelMaintenance(m)">
                 <span class="material-icons-round">cancel</span>
               </button>
             </td>
           </tr>
           <tr *ngIf="maintenanceList.length === 0 && !isLoading">
-            <td colspan="8" class="empty-row">لا توجد أوامر صيانة</td>
+            <td colspan="8" class="empty-row">{{ 'FLEET.NO_MAINTENANCE' | translate }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="pagination" *ngIf="maintenanceTotalPages > 1">
-      <button (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">السابق</button>
+      <button (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">{{ 'COMMON.PREV' | translate }}</button>
       <span>{{ maintenancePage + 1 }} / {{ maintenanceTotalPages }}</span>
-      <button (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">التالي</button>
+      <button (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
     </div>
   </div>
 
   <!-- ══════════════ VEHICLE DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showVehicleDialog" (click)="showVehicleDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>{{ editingVehicle ? 'تعديل سيارة' : 'إضافة سيارة' }}</h2>
+      <h2>{{ (editingVehicle ? 'FLEET.DIALOG_EDIT_TITLE' : 'FLEET.DIALOG_ADD_TITLE') | translate }}</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>رقم اللوحة *</label>
+          <label>{{ 'FLEET.PLATE_NUMBER_REQ' | translate }}</label>
           <input type="text" [(ngModel)]="vForm.plateNumber" placeholder="ABC-1234">
         </div>
         <div class="form-group">
-          <label>الملكية</label>
+          <label>{{ 'FLEET.OWNERSHIP_LABEL' | translate }}</label>
           <select [(ngModel)]="vForm.ownershipType">
-            <option value="OWNED">مملوكة (شركة)</option>
-            <option value="RENTED">مؤجرة</option>
-            <option value="LEASE_TO_OWN">تمويلية (منتهية بالتمليك)</option>
-            <option value="OTHER">أخرى (خاصة)</option>
+            <option value="OWNED">{{ 'FLEET.OWNED_OPTION' | translate }}</option>
+            <option value="RENTED">{{ 'FLEET.RENTED_OPTION' | translate }}</option>
+            <option value="LEASE_TO_OWN">{{ 'FLEET.LEASE_OPTION' | translate }}</option>
+            <option value="OTHER">{{ 'FLEET.OTHER_OPTION' | translate }}</option>
           </select>
         </div>
         <div class="form-group" *ngIf="editingVehicle">
-          <label>الرقم المركبي</label>
+          <label>{{ 'FLEET.COL_CODE' | translate }}</label>
           <input type="text" [value]="editingVehicle.vehicleCode" disabled class="vehicle-code-input">
         </div>
         <div class="form-group">
-          <label>الماركة</label>
-          <input type="text" [(ngModel)]="vForm.brand" placeholder="تويوتا">
+          <label>{{ 'FLEET.BRAND' | translate }}</label>
+          <input type="text" [(ngModel)]="vForm.brand">
         </div>
         <div class="form-group">
-          <label>الموديل</label>
-          <input type="text" [(ngModel)]="vForm.model" placeholder="هايلكس">
+          <label>{{ 'FLEET.MODEL' | translate }}</label>
+          <input type="text" [(ngModel)]="vForm.model">
         </div>
         <div class="form-group">
-          <label>السنة</label>
+          <label>{{ 'FLEET.YEAR' | translate }}</label>
           <input type="number" [(ngModel)]="vForm.year" placeholder="2024">
         </div>
         <div class="form-group">
-          <label>اللون</label>
-          <input type="text" [(ngModel)]="vForm.color" placeholder="أبيض">
+          <label>{{ 'FLEET.COLOR' | translate }}</label>
+          <input type="text" [(ngModel)]="vForm.color">
         </div>
         <div class="form-group">
-          <label>العداد (كم)</label>
+          <label>{{ 'FLEET.ODOMETER' | translate }}</label>
           <input type="number" [(ngModel)]="vForm.odometer" placeholder="50000">
         </div>
 
         <!-- Documents & Expiries Section -->
         <div class="form-group full-width rental-section">
-          <label class="section-label">وثائق السيارة وتواريخ الانتهاء</label>
+          <label class="section-label">{{ 'FLEET.DOCS_SECTION_TITLE' | translate }}</label>
         </div>
         <div class="form-group">
-          <label>رقم الاستمارة</label>
+          <label>{{ 'FLEET.REGISTRATION_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="vForm.registrationNumber" placeholder="1029384756">
         </div>
         <div class="form-group">
-          <label>تاريخ انتهاء الاستمارة</label>
+          <label>{{ 'FLEET.REGISTRATION_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="vForm.registrationExpiryDate">
         </div>
         <div class="form-group">
-          <label>رقم الهيكل (VIN)</label>
+          <label>{{ 'FLEET.VIN_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="vForm.vin" placeholder="WVWZZZ3CZWE...">
         </div>
         <div class="form-group">
-          <label>تاريخ انتهاء الفحص الدوري</label>
+          <label>{{ 'FLEET.INSPECTION_EXPIRY' | translate }}</label>
           <input type="date" [(ngModel)]="vForm.inspectionExpiryDate">
         </div>
         <div class="form-group">
-          <label>رقم بطاقة التشغيل / التأمين</label>
+          <label>{{ 'FLEET.OPERATING_CARD_NUMBER' | translate }}</label>
           <input type="text" [(ngModel)]="vForm.operatingCardNumber" placeholder="987654321">
         </div>
         <div class="form-group">
-          <label>تأمين السيارة (شركة/وثيقة)</label>
-          <input type="text" [(ngModel)]="vForm.insuranceCompany" placeholder="شركة التعاونية / ملاذ">
+          <label>{{ 'FLEET.INSURANCE_COMPANY' | translate }}</label>
+          <input type="text" [(ngModel)]="vForm.insuranceCompany">
         </div>
 
         <!-- Rental fields -->
         <ng-container *ngIf="vForm.ownershipType === 'RENTED' || vForm.ownershipType === 'LEASE_TO_OWN'">
           <div class="form-group full-width rental-section">
-            <label class="section-label">{{ vForm.ownershipType === 'RENTED' ? 'بيانات المؤجر' : 'بيانات التمويل' }}</label>
+            <label class="section-label">{{ (vForm.ownershipType === 'RENTED' ? 'FLEET.RENTAL_SECTION_RENTED' : 'FLEET.RENTAL_SECTION_LEASE') | translate }}</label>
           </div>
           <div class="form-group" *ngIf="vForm.ownershipType === 'RENTED'">
-            <label>رمز المؤجر *</label>
+            <label>{{ 'FLEET.RENTAL_AGENT_CODE' | translate }}</label>
             <input type="text" [(ngModel)]="vForm.rentalAgentCode" placeholder="TOJI" dir="ltr" style="text-transform: uppercase;">
-            <small class="text-muted">رمز إنجليزي فريد يُستخدم كبادئة للكود المركبي</small>
+            <small class="text-muted">{{ 'FLEET.RENTAL_AGENT_CODE_HINT' | translate }}</small>
           </div>
           <div class="form-group">
-            <label>اسم {{ vForm.ownershipType === 'RENTED' ? 'وكيل التأجير' : 'جهة التمويل' }}</label>
-            <input type="text" [(ngModel)]="vForm.rentalAgentName" placeholder="{{ vForm.ownershipType === 'RENTED' ? 'شركة التأجير' : 'بنك / شركة تمويل' }}">
+            <label>{{ (vForm.ownershipType === 'RENTED' ? 'FLEET.RENTAL_AGENT_NAME' : 'FLEET.FINANCING_ENTITY_NAME') | translate }}</label>
+            <input type="text" [(ngModel)]="vForm.rentalAgentName">
           </div>
           <div class="form-group">
-            <label>بداية {{ vForm.ownershipType === 'RENTED' ? 'التأجير' : 'التمويل' }}</label>
+            <label>{{ (vForm.ownershipType === 'RENTED' ? 'FLEET.RENTAL_START_DATE' : 'FLEET.FINANCE_START_DATE') | translate }}</label>
             <input type="date" [(ngModel)]="vForm.rentalStartDate">
           </div>
           <div class="form-group">
-            <label>نهاية {{ vForm.ownershipType === 'RENTED' ? 'التأجير' : 'التمويل' }}</label>
+            <label>{{ (vForm.ownershipType === 'RENTED' ? 'FLEET.RENTAL_END_DATE' : 'FLEET.FINANCE_END_DATE') | translate }}</label>
             <input type="date" [(ngModel)]="vForm.rentalEndDate">
           </div>
         </ng-container>
 
         <div class="form-group full-width">
-          <label>ملاحظات</label>
+          <label>{{ 'FLEET.NOTES' | translate }}</label>
           <textarea [(ngModel)]="vForm.notes" rows="2"></textarea>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="saveVehicle()">حفظ</button>
-        <button class="btn btn-secondary" (click)="showVehicleDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="saveVehicle()">{{ 'FLEET.SAVE' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showVehicleDialog = false">{{ 'FLEET.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -397,41 +397,41 @@
   <!-- ══════════════ ASSIGN DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showAssignDialog" (click)="showAssignDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>تسليم سيارة</h2>
+      <h2>{{ 'FLEET.DIALOG_ASSIGN_TITLE' | translate }}</h2>
       <p class="dialog-subtitle">{{ assignVehicleName }}</p>
       <div class="form-grid">
         <div class="form-group full-width">
-          <label>الكابتن *</label>
-          <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value, 'captain')">
+          <label>{{ 'FLEET.CAPTAIN_LABEL' | translate }}</label>
+          <input type="text" [placeholder]="'FLEET.SEARCH_CAPTAIN_PLACEHOLDER' | translate" (input)="searchCaptains($any($event.target).value, 'captain')">
           <div class="dropdown-results" *ngIf="captainResults.length">
             <div *ngFor="let c of captainResults" class="dropdown-item" (click)="selectCaptain(c, 'captain')">
               {{ c.fullNameAr }} ({{ c.kamalCode }})
             </div>
           </div>
-          <span class="selected-hint" *ngIf="aForm.captainId">✓ تم الاختيار</span>
+          <span class="selected-hint" *ngIf="aForm.captainId">{{ 'FLEET.SELECTED_HINT' | translate }}</span>
         </div>
         <div class="form-group">
-          <label>موعد الإرجاع المتوقع *</label>
+          <label>{{ 'FLEET.EXPECTED_RETURN_LABEL' | translate }}</label>
           <input type="datetime-local" [(ngModel)]="aForm.expectedReturnAt">
         </div>
         <div class="form-group full-width">
-          <label>الكابتن التالي (اختياري)</label>
-          <input type="text" placeholder="ابحث عن الكابتن التالي..." (input)="searchCaptains($any($event.target).value, 'next')">
+          <label>{{ 'FLEET.NEXT_CAPTAIN_LABEL' | translate }}</label>
+          <input type="text" [placeholder]="'FLEET.SEARCH_CAPTAIN_PLACEHOLDER' | translate" (input)="searchCaptains($any($event.target).value, 'next')">
           <div class="dropdown-results" *ngIf="nextCaptainResults.length">
             <div *ngFor="let c of nextCaptainResults" class="dropdown-item" (click)="selectCaptain(c, 'next')">
               {{ c.fullNameAr }} ({{ c.kamalCode }})
             </div>
           </div>
-          <span class="selected-hint" *ngIf="aForm.nextCaptainId">✓ تم الاختيار</span>
+          <span class="selected-hint" *ngIf="aForm.nextCaptainId">{{ 'FLEET.SELECTED_HINT' | translate }}</span>
         </div>
         <div class="form-group full-width">
-          <label>ملاحظات</label>
+          <label>{{ 'FLEET.NOTES' | translate }}</label>
           <textarea [(ngModel)]="aForm.notes" rows="2"></textarea>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="submitAssign()">تسليم</button>
-        <button class="btn btn-secondary" (click)="showAssignDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="submitAssign()">{{ 'FLEET.SUBMIT_ASSIGN' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showAssignDialog = false">{{ 'FLEET.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -439,10 +439,16 @@
   <!-- ══════════════ HISTORY DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showHistoryDialog" (click)="showHistoryDialog = false">
     <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
-      <h2>سجل التسليمات</h2>
+      <h2>{{ 'FLEET.DIALOG_HISTORY_TITLE' | translate }}</h2>
       <table class="data-table">
         <thead>
-          <tr><th>الكابتن</th><th>التسليم</th><th>الإرجاع المتوقع</th><th>الإرجاع الفعلي</th><th>الحالة</th></tr>
+          <tr>
+            <th>{{ 'FLEET.COL_CAPTAIN' | translate }}</th>
+            <th>{{ 'FLEET.COL_ASSIGNED_DATE' | translate }}</th>
+            <th>{{ 'FLEET.COL_EXPECTED_RETURN' | translate }}</th>
+            <th>{{ 'FLEET.COL_ACTUAL_RETURN' | translate }}</th>
+            <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
+          </tr>
         </thead>
         <tbody>
           <tr *ngFor="let h of historyItems" [class.late-row]="h.late">
@@ -455,7 +461,7 @@
         </tbody>
       </table>
       <div class="dialog-actions">
-        <button class="btn btn-secondary" (click)="showHistoryDialog = false">إغلاق</button>
+        <button class="btn btn-secondary" (click)="showHistoryDialog = false">{{ 'FLEET.CLOSE' | translate }}</button>
       </div>
     </div>
   </div>
@@ -463,47 +469,47 @@
   <!-- ══════════════ MAINTENANCE OPEN DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showMaintenanceOpenDialog" (click)="showMaintenanceOpenDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>{{ selectedMaintenanceId ? 'تعديل أمر الصيانة' : 'إدخال سيارة للصيانة' }}</h2>
+      <h2>{{ (selectedMaintenanceId ? 'FLEET.DIALOG_MAINT_EDIT_TITLE' : 'FLEET.DIALOG_MAINT_OPEN_TITLE') | translate }}</h2>
       <p class="dialog-subtitle">{{ maintVehicleName }}</p>
       
       <div class="form-grid">
         <div class="form-group full-width">
-          <label>سبب العطل *</label>
-          <textarea [(ngModel)]="mOpenForm.faultReason" rows="2" placeholder="وصف العطل..."></textarea>
+          <label>{{ 'FLEET.FAULT_REASON_REQ' | translate }}</label>
+          <textarea [(ngModel)]="mOpenForm.faultReason" rows="2" [placeholder]="'FLEET.FAULT_REASON_PLACEHOLDER' | translate"></textarea>
         </div>
         
         <div class="form-group">
-          <label>اسم الورشة</label>
-          <input type="text" [(ngModel)]="mOpenForm.workshopName" placeholder="اختياري">
+          <label>{{ 'FLEET.WORKSHOP_NAME' | translate }}</label>
+          <input type="text" [(ngModel)]="mOpenForm.workshopName" [placeholder]="'FLEET.OPTIONAL' | translate">
         </div>
         
         <div class="form-group">
-          <label>تحمّل التكلفة *</label>
+          <label>{{ 'FLEET.COST_BEARER_REQ' | translate }}</label>
           <select [(ngModel)]="mOpenForm.costBearer">
-            <option value="COMPANY">الشركة</option>
-            <option value="CAPTAIN">الكابتن</option>
+            <option value="COMPANY">{{ 'FLEET.COMPANY' | translate }}</option>
+            <option value="CAPTAIN">{{ 'CAPTAINS.TITLE' | translate }}</option>
           </select>
         </div>
 
         <div class="form-group full-width" *ngIf="mOpenForm.costBearer === 'CAPTAIN'">
-          <label>الكابتن المسؤول *</label>
-          <input type="text" placeholder="ابحث عن الكابتن..." (input)="searchCaptains($any($event.target).value, 'maint')">
+          <label>{{ 'FLEET.RESPONSIBLE_CAPTAIN' | translate }}</label>
+          <input type="text" [placeholder]="'FLEET.SEARCH_CAPTAIN_PLACEHOLDER' | translate" (input)="searchCaptains($any($event.target).value, 'maint')">
           <div class="dropdown-results" *ngIf="maintCaptainResults.length">
             <div *ngFor="let c of maintCaptainResults" class="dropdown-item" (click)="selectCaptain(c, 'maint')">
               {{ c.fullNameAr }} ({{ c.kamalCode }})
             </div>
           </div>
-          <span class="selected-hint" *ngIf="mOpenForm.captainId">✓ تم الاختيار</span>
+          <span class="selected-hint" *ngIf="mOpenForm.captainId">{{ 'FLEET.SELECTED_HINT' | translate }}</span>
         </div>
 
         <div class="form-group full-width">
-          <label>ملاحظات</label>
+          <label>{{ 'FLEET.NOTES' | translate }}</label>
           <textarea [(ngModel)]="mOpenForm.notes" rows="2"></textarea>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-primary" (click)="submitOpenMaintenance()">حفظ</button>
-        <button class="btn btn-secondary" (click)="showMaintenanceOpenDialog = false">إلغاء</button>
+        <button class="btn btn-primary" (click)="submitOpenMaintenance()">{{ 'FLEET.SAVE' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceOpenDialog = false">{{ 'FLEET.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -511,39 +517,39 @@
   <!-- ══════════════ MAINTENANCE CLOSE DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showMaintenanceCloseDialog" (click)="showMaintenanceCloseDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>تقفيل أمر الصيانة</h2>
+      <h2>{{ 'FLEET.DIALOG_MAINT_CLOSE_TITLE' | translate }}</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label>التكلفة الإجمالية * (ريال)</label>
+          <label>{{ 'FLEET.TOTAL_COST_REQ' | translate }}</label>
           <input type="number" [(ngModel)]="mCloseForm.totalCost">
         </div>
         <div class="form-group">
-          <label>قراءة العداد الحالية</label>
-          <input type="number" [(ngModel)]="mCloseForm.odometerOnClose" placeholder="اختياري">
+          <label>{{ 'FLEET.CURRENT_ODOMETER' | translate }}</label>
+          <input type="number" [(ngModel)]="mCloseForm.odometerOnClose" [placeholder]="'FLEET.OPTIONAL' | translate">
         </div>
         
         <div class="form-group full-width">
-          <label>قطع الغيار</label>
+          <label>{{ 'FLEET.SPARE_PARTS' | translate }}</label>
           <div class="parts-list">
             <div class="part-item" *ngFor="let p of mCloseForm.parts; let i = index">
-              <input type="text" class="part-input" [(ngModel)]="p.partName" placeholder="اسم القطعة">
-              <input type="number" class="cost-input" [(ngModel)]="p.partCost" placeholder="السعر">
+              <input type="text" class="part-input" [(ngModel)]="p.partName" [placeholder]="'FLEET.PART_NAME' | translate">
+              <input type="number" class="cost-input" [(ngModel)]="p.partCost" [placeholder]="'FLEET.PRICE' | translate">
               <button class="icon-btn danger" (click)="removePartFromClose(i)"><span class="material-icons-round">delete</span></button>
             </div>
           </div>
           <button class="btn btn-secondary btn-sm" style="margin-top:8px" (click)="addPartToClose()">
-            <span class="material-icons-round">add</span> إضافة قطعة
+            <span class="material-icons-round">add</span> {{ 'FLEET.ADD_PART' | translate }}
           </button>
         </div>
 
         <div class="form-group full-width">
-          <label>ملاحظات التقفيل</label>
+          <label>{{ 'FLEET.CLOSE_NOTES' | translate }}</label>
           <textarea [(ngModel)]="mCloseForm.notes" rows="2"></textarea>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-success" (click)="submitCloseMaintenance()">تقفيل الصيانة</button>
-        <button class="btn btn-secondary" (click)="showMaintenanceCloseDialog = false">إلغاء</button>
+        <button class="btn btn-success" (click)="submitCloseMaintenance()">{{ 'FLEET.SUBMIT_CLOSE_MAINT' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceCloseDialog = false">{{ 'FLEET.CANCEL' | translate }}</button>
       </div>
     </div>
   </div>
@@ -551,31 +557,38 @@
   <!-- ══════════════ MAINTENANCE HISTORY DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showMaintenanceHistoryDialog" (click)="showMaintenanceHistoryDialog = false">
     <div class="dialog dialog-wide" (click)="$event.stopPropagation()">
-      <h2>تاريخ صيانة السيارة</h2>
+      <h2>{{ 'FLEET.DIALOG_MAINT_HISTORY_TITLE' | translate }}</h2>
       <table class="data-table">
         <thead>
-          <tr><th>تاريخ الدخول</th><th>الورشة</th><th>العطل</th><th>التكلفة علي</th><th>التكلفة</th><th>الحالة</th></tr>
+          <tr>
+            <th>{{ 'FLEET.COL_OPEN_DATE' | translate }}</th>
+            <th>{{ 'FLEET.COL_WORKSHOP' | translate }}</th>
+            <th>{{ 'FLEET.COL_FAULT' | translate }}</th>
+            <th>{{ 'FLEET.COL_COST_BEARER' | translate }}</th>
+            <th>{{ 'FLEET.COL_COST' | translate }}</th>
+            <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
+          </tr>
         </thead>
         <tbody>
           <tr *ngFor="let h of maintenanceHistoryItems">
             <td>{{ h.openedAt | date:'yyyy-MM-dd' }}</td>
             <td>{{ h.workshopName || '—' }}</td>
             <td>{{ h.faultReason }}</td>
-            <td>{{ h.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن' }}</td>
-            <td>{{ h.totalCost !== undefined ? h.totalCost + ' ريال' : '—' }}</td>
+            <td>{{ h.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : ('CAPTAINS.TITLE' | translate) }}</td>
+            <td>{{ h.totalCost !== undefined ? (h.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</td>
             <td>
               <span class="badge" 
                     [class.badge-rented]="h.status === 'IN_PROGRESS'" 
                     [class.badge-completed]="h.status === 'COMPLETED'"
                     [class.badge-cancelled]="h.status === 'CANCELLED'">
-                {{ h.status === 'IN_PROGRESS' ? 'جاري' : h.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}
+                {{ (h.status === 'IN_PROGRESS' ? 'FLEET.STATUS_IN_PROGRESS' : h.status === 'COMPLETED' ? 'FLEET.STATUS_COMPLETED' : 'FLEET.STATUS_CANCELLED') | translate }}
               </span>
             </td>
           </tr>
         </tbody>
       </table>
       <div class="dialog-actions">
-        <button class="btn btn-secondary" (click)="showMaintenanceHistoryDialog = false">إغلاق</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceHistoryDialog = false">{{ 'FLEET.CLOSE' | translate }}</button>
       </div>
     </div>
   </div>
@@ -583,63 +596,63 @@
   <!-- ══════════════ MAINTENANCE DETAILS DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showMaintenanceDetailsDialog" (click)="showMaintenanceDetailsDialog = false">
     <div class="dialog" (click)="$event.stopPropagation()">
-      <h2>تفاصيل الصيانة</h2>
+      <h2>{{ 'FLEET.DIALOG_MAINT_DETAILS_TITLE' | translate }}</h2>
       <div *ngIf="selectedMaintenanceDetails" class="form-grid">
         <div class="form-group">
-          <label>السيارة</label>
+          <label>{{ 'FLEET.COL_VEHICLE' | translate }}</label>
           <div class="plate-cell">{{ selectedMaintenanceDetails.vehiclePlate }}</div>
         </div>
         <div class="form-group">
-          <label>الحالة</label>
-          <div><span class="status-badge" [attr.data-status]="selectedMaintenanceDetails.status">{{ selectedMaintenanceDetails.status === 'IN_PROGRESS' ? 'جاري' : selectedMaintenanceDetails.status === 'COMPLETED' ? 'مكتمل' : 'ملغي' }}</span></div>
+          <label>{{ 'FLEET.COL_STATUS' | translate }}</label>
+          <div><span class="status-badge" [attr.data-status]="selectedMaintenanceDetails.status">{{ (selectedMaintenanceDetails.status === 'IN_PROGRESS' ? 'FLEET.STATUS_IN_PROGRESS' : selectedMaintenanceDetails.status === 'COMPLETED' ? 'FLEET.STATUS_COMPLETED' : 'FLEET.STATUS_CANCELLED') | translate }}</span></div>
         </div>
         <div class="form-group full-width">
-          <label>سبب العطل</label>
+          <label>{{ 'FLEET.COL_FAULT' | translate }}</label>
           <div>{{ selectedMaintenanceDetails.faultReason }}</div>
         </div>
         <div class="form-group">
-          <label>الورشة</label>
+          <label>{{ 'FLEET.COL_WORKSHOP' | translate }}</label>
           <div>{{ selectedMaintenanceDetails.workshopName || '—' }}</div>
         </div>
         <div class="form-group">
-          <label>تاريخ الدخول</label>
+          <label>{{ 'FLEET.COL_OPEN_DATE' | translate }}</label>
           <div>{{ selectedMaintenanceDetails.openedAt | date:'yyyy-MM-dd HH:mm' }}</div>
         </div>
         <div class="form-group">
-          <label>تاريخ الإغلاق</label>
+          <label>{{ 'FLEET.CLOSED_DATE' | translate }}</label>
           <div>{{ selectedMaintenanceDetails.closedAt ? (selectedMaintenanceDetails.closedAt | date:'yyyy-MM-dd HH:mm') : '—' }}</div>
         </div>
         <div class="form-group">
-          <label>تحمل التكلفة</label>
+          <label>{{ 'FLEET.COL_COST_BEARER' | translate }}</label>
           <div>
             <span class="badge" [class.badge-company]="selectedMaintenanceDetails.costBearer === 'COMPANY'" [class.badge-captain]="selectedMaintenanceDetails.costBearer === 'CAPTAIN'">
-              {{ selectedMaintenanceDetails.costBearer === 'COMPANY' ? 'الشركة' : 'الكابتن: ' + (selectedMaintenanceDetails.captainName || '') }}
+              {{ selectedMaintenanceDetails.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : (('FLEET.CAPTAIN_PREFIX' | translate) + (selectedMaintenanceDetails.captainName || '')) }}
             </span>
           </div>
         </div>
         <div class="form-group">
-          <label>التكلفة الإجمالية</label>
-          <div>{{ selectedMaintenanceDetails.totalCost !== undefined ? selectedMaintenanceDetails.totalCost + ' ريال' : '—' }}</div>
+          <label>{{ 'FLEET.TOTAL_COST' | translate }}</label>
+          <div>{{ selectedMaintenanceDetails.totalCost !== undefined ? (selectedMaintenanceDetails.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</div>
         </div>
         <div class="form-group full-width" *ngIf="selectedMaintenanceDetails.parts && selectedMaintenanceDetails.parts.length">
-          <label>قطع الغيار</label>
+          <label>{{ 'FLEET.SPARE_PARTS' | translate }}</label>
           <table class="data-table" style="margin-top: 8px;">
-            <thead><tr><th>اسم القطعة</th><th>السعر</th></tr></thead>
+            <thead><tr><th>{{ 'FLEET.PART_NAME' | translate }}</th><th>{{ 'FLEET.PRICE' | translate }}</th></tr></thead>
             <tbody>
               <tr *ngFor="let p of selectedMaintenanceDetails.parts">
                 <td>{{ p.partName }}</td>
-                <td>{{ p.partCost }} ريال</td>
+                <td>{{ p.partCost }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="form-group full-width" *ngIf="selectedMaintenanceDetails.notes">
-          <label>الملاحظات</label>
+          <label>{{ 'FLEET.NOTES' | translate }}</label>
           <div>{{ selectedMaintenanceDetails.notes }}</div>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="btn btn-secondary" (click)="showMaintenanceDetailsDialog = false">إغلاق</button>
+        <button class="btn btn-secondary" (click)="showMaintenanceDetailsDialog = false">{{ 'FLEET.CLOSE' | translate }}</button>
       </div>
     </div>
   </div>

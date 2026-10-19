@@ -1,26 +1,26 @@
 <div class="imports-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">استيراد البيانات</h1>
+      <h1 class="page-title">{{ 'IMPORTS.TITLE' | translate }}</h1>
       <p class="page-subtitle">
         {{ activeTab === 'captains'
-            ? 'رفع ملف بيانات الكباتن ومعرفات الموردين'
+            ? ('IMPORTS.SUBTITLE_CAPTAINS' | translate)
             : activeTab === 'reports'
-              ? 'رفع تقرير شيفتات المورد الذي تُبنى عليه التقارير والرواتب'
+              ? ('IMPORTS.SUBTITLE_REPORTS' | translate)
               : activeTab === 'deductions'
-                ? 'رفع ملف خصومات وغرامات المورد لتطبيقها على الشيفتات والرواتب'
-                : 'رفع ملف عمولة ومكافآت أوقات الإجازات المرسلة من المورد لترحيلها إلى الشيفتات والرواتب' }}
+                ? ('IMPORTS.SUBTITLE_DEDUCTIONS' | translate)
+                : ('IMPORTS.SUBTITLE_VACATION' | translate) }}
       </p>
     </div>
     <button class="btn btn-outline" (click)="downloadTemplate()">
       <span class="material-icons-round">download</span>
       {{ activeTab === 'captains'
-          ? 'تحميل نموذج Excel'
+          ? ('IMPORTS.DOWNLOAD_TEMPLATE_EXCEL' | translate)
           : activeTab === 'reports'
-            ? 'تحميل نموذج تقرير المورد'
+            ? ('IMPORTS.DOWNLOAD_TEMPLATE_REPORT' | translate)
             : activeTab === 'deductions'
-              ? 'تحميل نموذج خصومات المورد'
-              : 'تحميل نموذج عمولة أوقات الإجازة' }}
+              ? ('IMPORTS.DOWNLOAD_TEMPLATE_DEDUCTIONS' | translate)
+              : ('IMPORTS.DOWNLOAD_TEMPLATE_VACATION' | translate) }}
     </button>
   </div>
 
@@ -29,22 +29,22 @@
     <button class="filter-tab" [class.active]="activeTab === 'captains'"
             (click)="setTab('captains')">
       <span class="material-icons-round">badge</span>
-      استيراد بيانات الكباتن والموردين
+      {{ 'IMPORTS.TAB_CAPTAINS_FULL' | translate }}
     </button>
     <button class="filter-tab" [class.active]="activeTab === 'reports'"
             (click)="setTab('reports')">
       <span class="material-icons-round">assessment</span>
-      استيراد تقارير الموردين
+      {{ 'IMPORTS.TAB_REPORTS_FULL' | translate }}
     </button>
     <button class="filter-tab" [class.active]="activeTab === 'deductions'"
             (click)="setTab('deductions')">
       <span class="material-icons-round">money_off</span>
-      استيراد خصومات المورد
+      {{ 'IMPORTS.TAB_DEDUCTIONS_FULL' | translate }}
     </button>
     <button class="filter-tab" [class.active]="activeTab === 'vacation-commission'"
             (click)="setTab('vacation-commission')">
       <span class="material-icons-round">beach_access</span>
-      أستيراد عمولة اوقات الاجازة
+      {{ 'IMPORTS.TAB_VACATION_FULL' | translate }}
     </button>
   </div>
 
@@ -53,7 +53,7 @@
     <div class="supplier-selector-header">
       <div class="supplier-selector-title">
         <span class="material-icons-round">storefront</span>
-        <span>اختيار المورد المستهدف:</span>
+        <span>{{ 'IMPORTS.TARGET_SUPPLIER' | translate }}</span>
       </div>
       <span class="supplier-selected-badge" *ngIf="selectedSupplier">
         <span class="supplier-dot" [style.background-color]="selectedSupplier.color"></span>
@@ -79,7 +79,7 @@
     <span>{{ errorMessage }}</span>
     <button class="btn btn-sm btn-primary" *ngIf="misroutedFile" (click)="openCorrectTab()">
       <span class="material-icons-round">swap_horiz</span>
-      افتح التبويب الصحيح
+      {{ 'IMPORTS.OPEN_CORRECT_TAB' | translate }}
     </button>
     <button class="alert-close" (click)="clearMessages()">
       <span class="material-icons-round">close</span>
@@ -112,18 +112,20 @@
         </div>
         <h3>
           {{ activeTab === 'captains'
-              ? 'اسحب ملف بيانات الكباتن هنا'
+              ? ('IMPORTS.DRAG_DROP_CAPTAINS' | translate)
               : activeTab === 'reports'
-                ? 'اسحب ملف تقرير شيفتات المورد هنا'
-                : 'اسحب ملف خصومات وغرامات المورد هنا' }}
+                ? ('IMPORTS.DRAG_DROP_REPORTS' | translate)
+                : activeTab === 'deductions'
+                  ? ('IMPORTS.DRAG_DROP_DEDUCTIONS' | translate)
+                  : ('IMPORTS.DRAG_DROP_VACATION' | translate) }}
         </h3>
-        <p>أو اضغط لاختيار ملف</p>
-        <span class="upload-hint">يدعم ملفات .xlsx و .xls</span>
+        <p>{{ 'IMPORTS.CLICK_TO_SELECT' | translate }}</p>
+        <span class="upload-hint">{{ 'IMPORTS.SUPPORTS_XLSX' | translate }}</span>
       </div>
 
       <div class="upload-loading" *ngIf="isUploading">
         <div class="spinner"></div>
-        <p>جاري تحليل الملف...</p>
+        <p>{{ 'IMPORTS.ANALYZING_FILE' | translate }}</p>
       </div>
     </div>
 
@@ -131,22 +133,20 @@
     <div class="columns-card">
       <h3 class="columns-title">
         <span class="material-icons-round">view_column</span>
-        أعمدة الملف
+        {{ 'IMPORTS.COLUMNS_TITLE' | translate }}
       </h3>
       <p class="columns-hint" *ngIf="activeTab === 'captains'">
-        ترتيب الأعمدة غير مهم — يتم التعرف عليها بالاسم. أي عمود اختياري غير موجود يتم تجاهله،
-        والتواريخ تُقبل بصيغة 2025-12-31 أو 31/12/2025.
+        {{ 'IMPORTS.COLUMNS_HINT_CAPTAINS' | translate }}
       </p>
       <p class="columns-hint" *ngIf="activeTab === 'reports'">
-        ارفع ملف التقرير كما يُصدّره المورد دون تعديل. ترتيب الأعمدة غير مهم،
-        والتواريخ تُقرأ بتوقيت الرياض. رفع نفس الملف مرة أخرى يُحدّث الشيفتات ولا يكررها.
+        {{ 'IMPORTS.COLUMNS_HINT_REPORTS' | translate }}
       </p>
       <p class="columns-hint" *ngIf="activeTab === 'deductions'">
-        ارفع ملف خصومات المورد لتطبيق الخصومات على الشيفتات السارية. يدعم الملف 3 نطاقات مطابقة تلقائية: ID المورد Ninja، كود KSLSC الداخلي، أو رقم الهاتف/الهوية.
+        {{ 'IMPORTS.COLUMNS_HINT_DEDUCTIONS' | translate }}
       </p>
 
       <div class="columns-group">
-        <span class="group-label required">مطلوبة</span>
+        <span class="group-label required">{{ 'IMPORTS.REQUIRED' | translate }}</span>
         <div class="chips">
           <span class="chip chip-required"
                 *ngFor="let col of activeTab === 'captains' ? captainRequiredColumns : activeTab === 'reports' ? reportRequiredColumns : deductionRequiredColumns">
@@ -156,7 +156,7 @@
       </div>
 
       <div class="columns-group">
-        <span class="group-label">اختيارية</span>
+        <span class="group-label">{{ 'IMPORTS.OPTIONAL' | translate }}</span>
         <div class="chips">
           <span class="chip"
                 *ngFor="let col of activeTab === 'captains' ? captainOptionalColumns : activeTab === 'reports' ? reportOptionalColumns : deductionOptionalColumns">
@@ -174,16 +174,16 @@
         <span class="material-icons-round">description</span>
         <div>
           <h3>{{ captainPreview.fileName }}</h3>
-          <span>{{ captainPreview.totalRows }} صف</span>
+          <span>{{ captainPreview.totalRows }} {{ 'IMPORTS.ROWS_UNIT' | translate }}</span>
         </div>
       </div>
       <div class="preview-actions">
-        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">{{ 'COMMON.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="confirmImport()"
                 [disabled]="isCommitting || hasCaptainErrors">
           <span class="material-icons-round" *ngIf="!isCommitting">check</span>
           <div class="spinner-sm" *ngIf="isCommitting"></div>
-          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
+          {{ isCommitting ? ('IMPORTS.IMPORTING' | translate) : ('IMPORTS.CONFIRM_IMPORT' | translate) }}
         </button>
       </div>
     </div>
@@ -193,28 +193,28 @@
         <span class="material-icons-round">person_add</span>
         <div>
           <span class="stat-value">{{ captainPreview.newCaptains }}</span>
-          <span class="stat-label">كابتن جديد</span>
+          <span class="stat-label">{{ 'IMPORTS.NEW_CAPTAIN' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing">
         <span class="material-icons-round">person</span>
         <div>
           <span class="stat-value">{{ captainPreview.existingCaptains }}</span>
-          <span class="stat-label">كابتن موجود</span>
+          <span class="stat-label">{{ 'IMPORTS.EXISTING_CAPTAIN' | translate }}</span>
         </div>
       </div>
       <div class="stat-card new">
         <span class="material-icons-round">add_card</span>
         <div>
           <span class="stat-value">{{ captainPreview.newNinjaIds }}</span>
-          <span class="stat-label">معرف جديد</span>
+          <span class="stat-label">{{ 'IMPORTS.NEW_ID' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing">
         <span class="material-icons-round">badge</span>
         <div>
           <span class="stat-value">{{ captainPreview.existingNinjaIds }}</span>
-          <span class="stat-label">معرف موجود</span>
+          <span class="stat-label">{{ 'IMPORTS.EXISTING_ID' | translate }}</span>
         </div>
       </div>
     </div>
@@ -222,7 +222,7 @@
     <div class="issues-section" *ngIf="captainPreview.issues.length > 0">
       <h3 class="section-title">
         <span class="material-icons-round">report</span>
-        ملاحظات ({{ captainPreview.issues.length }})
+        {{ 'IMPORTS.NOTES_COUNT' | translate:{ count: captainPreview.issues.length } }}
       </h3>
       <div class="issues-list">
         <div class="issue-item" *ngFor="let issue of captainPreview.issues"
@@ -230,7 +230,7 @@
           <span class="material-icons-round issue-icon">
             {{ issue.severity === 'ERROR' ? 'error' : issue.severity === 'WARNING' ? 'warning' : 'info' }}
           </span>
-          <span class="issue-row">صف {{ issue.rowNumber }}</span>
+          <span class="issue-row">{{ 'IMPORTS.ROW' | translate }} {{ issue.rowNumber }}</span>
           <span class="issue-msg">{{ issue.message }}</span>
         </div>
       </div>
@@ -241,27 +241,27 @@
   <div class="result-card" *ngIf="captainResult">
     <div class="result-header">
       <span class="material-icons-round result-icon success">task_alt</span>
-      <h2>تم الاستيراد بنجاح</h2>
+      <h2>{{ 'IMPORTS.RESULT_SUCCESS' | translate }}</h2>
     </div>
     <div class="result-stats">
       <div class="stat-item">
         <span class="stat-value">{{ captainResult.newCaptains }}</span>
-        <span class="stat-label">تم استيرادهم</span>
+        <span class="stat-label">{{ 'IMPORTS.IMPORTED_COUNT' | translate }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-value">{{ captainResult.existingCaptains }}</span>
-        <span class="stat-label">تم تجاهلهم</span>
+        <span class="stat-label">{{ 'IMPORTS.IGNORED_COUNT' | translate }}</span>
       </div>
       <div class="stat-item" *ngIf="captainResult.issues.length > 0">
         <span class="stat-value warning">{{ captainResult.issues.length }}</span>
-        <span class="stat-label">ملاحظات</span>
+        <span class="stat-label">{{ 'COMMON.NOTES' | translate }}</span>
       </div>
     </div>
     <div class="result-actions">
       <button class="btn btn-primary" (click)="goToNinjaIds()">
-        <span class="material-icons-round">badge</span> سجل المعرفات
+        <span class="material-icons-round">badge</span> {{ 'IMPORTS.ID_REGISTRY' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف جديد</button>
+      <button class="btn btn-outline" (click)="cancelImport()">{{ 'IMPORTS.IMPORT_ANOTHER' | translate }}</button>
     </div>
   </div>
 
@@ -272,7 +272,7 @@
         <span class="material-icons-round">description</span>
         <div>
           <h3>{{ shiftPreview.fileName }}</h3>
-          <span>{{ shiftPreview.totalRows }} صف</span>
+          <span>{{ shiftPreview.totalRows }} {{ 'IMPORTS.ROWS_UNIT' | translate }}</span>
         </div>
       </div>
       <div class="preview-actions">
@@ -280,11 +280,11 @@
           <span class="material-icons-round">event</span>
           {{ shiftPreview.periodFrom }} → {{ shiftPreview.periodTo }}
         </span>
-        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">{{ 'COMMON.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="confirmImport()" [disabled]="!canCommitShifts">
           <span class="material-icons-round" *ngIf="!isCommitting">check</span>
           <div class="spinner-sm" *ngIf="isCommitting"></div>
-          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
+          {{ isCommitting ? ('IMPORTS.IMPORTING' | translate) : ('IMPORTS.CONFIRM_IMPORT' | translate) }}
         </button>
       </div>
     </div>
@@ -294,35 +294,35 @@
         <span class="material-icons-round">add_task</span>
         <div>
           <span class="stat-value">{{ shiftPreview.newShifts }}</span>
-          <span class="stat-label">شفت جديد</span>
+          <span class="stat-label">{{ 'IMPORTS.NEW_SHIFT' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing">
         <span class="material-icons-round">update</span>
         <div>
           <span class="stat-value">{{ shiftPreview.updatedShifts }}</span>
-          <span class="stat-label">تحديث لشفت قائم</span>
+          <span class="stat-label">{{ 'IMPORTS.UPDATED_SHIFT' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing">
         <span class="material-icons-round">link</span>
         <div>
           <span class="stat-value">{{ shiftPreview.matchedCaptains }}</span>
-          <span class="stat-label">مرتبط بكابتن</span>
+          <span class="stat-label">{{ 'IMPORTS.MATCHED_CAPTAIN' | translate }}</span>
         </div>
       </div>
       <div class="stat-card" [class.warn]="shiftPreview.unmatchedRows > 0">
         <span class="material-icons-round">link_off</span>
         <div>
           <span class="stat-value">{{ shiftPreview.unmatchedRows }}</span>
-          <span class="stat-label">غير مرتبط</span>
+          <span class="stat-label">{{ 'IMPORTS.UNMATCHED_CAPTAIN' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing">
         <span class="material-icons-round">person_off</span>
         <div>
           <span class="stat-value">{{ shiftPreview.absentRows }}</span>
-          <span class="stat-label">غياب</span>
+          <span class="stat-label">{{ 'IMPORTS.ABSENT' | translate }}</span>
         </div>
       </div>
     </div>
@@ -336,39 +336,36 @@
     <div class="issue-block issue-error" *ngIf="rowErrors.length">
       <b>
         <span class="material-icons-round">error_outline</span>
-        {{ rowErrors.length }} صف سيتم تخطيه
+        {{ 'IMPORTS.SKIPPED_ROWS_COUNT' | translate:{ count: rowErrors.length } }}
       </b>
       <ul>
         <li *ngFor="let issue of rowErrors.slice(0, 10)">
-          <span class="row-no" *ngIf="issue.rowNumber">صف {{ issue.rowNumber }}:</span>
+          <span class="row-no" *ngIf="issue.rowNumber">{{ 'IMPORTS.ROW' | translate }} {{ issue.rowNumber }}:</span>
           {{ issue.message }}
         </li>
       </ul>
-      <p class="muted" *ngIf="rowErrors.length > 10">و{{ rowErrors.length - 10 }} صف آخر…</p>
+      <p class="muted" *ngIf="rowErrors.length > 10">{{ 'IMPORTS.AND_MORE_ROWS' | translate:{ count: rowErrors.length - 10 } }}</p>
     </div>
 
     <div class="issue-block issue-warning" *ngIf="warningIssues.length">
       <b>
         <span class="material-icons-round">warning_amber</span>
-        {{ warningIssues.length }} تنبيه
+        {{ 'IMPORTS.WARNINGS_COUNT' | translate:{ count: warningIssues.length } }}
       </b>
       <ul>
         <li *ngFor="let issue of warningIssues.slice(0, 10)">
-          <span class="row-no" *ngIf="issue.rowNumber">صف {{ issue.rowNumber }}:</span>
+          <span class="row-no" *ngIf="issue.rowNumber">{{ 'IMPORTS.ROW' | translate }} {{ issue.rowNumber }}:</span>
           {{ issue.message }}
         </li>
       </ul>
       <p class="muted" *ngIf="warningIssues.length > 10">
-        و{{ warningIssues.length - 10 }} تنبيه آخر…
+        {{ 'IMPORTS.AND_MORE_WARNINGS' | translate:{ count: warningIssues.length - 10 } }}
       </p>
     </div>
 
     <div class="unmatched-box" *ngIf="shiftPreview.unmatchedExternalIds.length">
-      <b>معرّفات مورد غير مرتبطة بكابتن</b>
-      <p class="muted">
-        ستُستورد شيفتاتها وتظهر في تبويب «غير مربوط». اربطها من شاشة سجل المعرفات
-        ثم أعد الحساب لتُحتسب في الرواتب.
-      </p>
+      <b>{{ 'IMPORTS.UNMATCHED_IDS_TITLE' | translate }}</b>
+      <p class="muted">{{ 'IMPORTS.UNMATCHED_IDS_HINT' | translate }}</p>
       <div class="id-chips">
         <code *ngFor="let id of shiftPreview.unmatchedExternalIds.slice(0, 20)">{{ id }}</code>
         <span class="muted" *ngIf="shiftPreview.unmatchedExternalIds.length > 20">
@@ -382,7 +379,7 @@
   <div class="result-card" *ngIf="shiftResult">
     <div class="result-header">
       <span class="material-icons-round result-icon success">task_alt</span>
-      <h2>تم استيراد التقرير</h2>
+      <h2>{{ 'IMPORTS.RESULT_REPORT_SUCCESS' | translate }}</h2>
     </div>
     <p class="result-file">
       {{ shiftResult.fileName }}
@@ -393,30 +390,30 @@
     <div class="result-stats">
       <div class="stat-item">
         <span class="stat-value">{{ shiftResult.committedRows }}</span>
-        <span class="stat-label">صف مستورد</span>
+        <span class="stat-label">{{ 'IMPORTS.IMPORTED_COUNT' | translate }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-value">{{ shiftResult.newShifts }}</span>
-        <span class="stat-label">شفت جديد</span>
+        <span class="stat-label">{{ 'IMPORTS.NEW_SHIFT' | translate }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-value">{{ shiftResult.updatedShifts }}</span>
-        <span class="stat-label">تم تحديثه</span>
+        <span class="stat-label">{{ 'IMPORTS.UPDATED_SHIFT' | translate }}</span>
       </div>
       <div class="stat-item" *ngIf="shiftResult.skippedRows > 0">
         <span class="stat-value warning">{{ shiftResult.skippedRows }}</span>
-        <span class="stat-label">تم تخطيه</span>
+        <span class="stat-label">{{ 'IMPORTS.ROWS_SKIPPED' | translate }}</span>
       </div>
     </div>
     <div class="result-actions">
       <button class="btn btn-primary" (click)="goToShifts()">
-        <span class="material-icons-round">list</span> عرض الشيفتات
+        <span class="material-icons-round">list</span> {{ 'IMPORTS.VIEW_SHIFTS' | translate }}
       </button>
       <button class="btn btn-outline" *ngIf="shiftResult.unmatchedExternalIds.length"
               (click)="goToNinjaIds()">
-        <span class="material-icons-round">badge</span> ربط المعرفات غير المرتبطة
+        <span class="material-icons-round">badge</span> {{ 'IMPORTS.LINK_UNMATCHED_IDS' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+      <button class="btn btn-outline" (click)="cancelImport()">{{ 'IMPORTS.IMPORT_ANOTHER' | translate }}</button>
     </div>
   </div>
 
@@ -427,16 +424,16 @@
         <span class="material-icons-round">description</span>
         <div>
           <h3>{{ deductionPreview.fileName }}</h3>
-          <span>{{ deductionPreview.totalRows }} صف</span>
+          <span>{{ deductionPreview.totalRows }} {{ 'IMPORTS.ROWS_UNIT' | translate }}</span>
         </div>
       </div>
       <div class="preview-actions">
-        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">{{ 'COMMON.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="confirmImport()"
                 [disabled]="isCommitting || deductionPreview.matchedRows === 0">
           <span class="material-icons-round" *ngIf="!isCommitting">check</span>
           <div class="spinner-sm" *ngIf="isCommitting"></div>
-          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد استيراد الخصومات' }}
+          {{ isCommitting ? ('IMPORTS.IMPORTING' | translate) : ('IMPORTS.CONFIRM_IMPORT' | translate) }}
         </button>
       </div>
     </div>
@@ -446,38 +443,38 @@
         <span class="material-icons-round">check_circle</span>
         <div>
           <span class="stat-value">{{ deductionPreview.matchedRows }}</span>
-          <span class="stat-label">شيفت مطابق</span>
+          <span class="stat-label">{{ 'IMPORTS.MATCHED_SHIFT' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing" [class.error-card]="deductionPreview.unmatchedRows > 0">
         <span class="material-icons-round">remove_circle_outline</span>
         <div>
           <span class="stat-value">{{ deductionPreview.unmatchedRows }}</span>
-          <span class="stat-label">غير مطابق</span>
+          <span class="stat-label">{{ 'IMPORTS.UNMATCHED' | translate }}</span>
         </div>
       </div>
       <div class="stat-card total">
         <span class="material-icons-round">payments</span>
         <div>
-          <span class="stat-value">{{ deductionPreview.totalDeductionAmount | number:'1.2-2' }} ر.س</span>
-          <span class="stat-label">إجمالي الخصومات</span>
+          <span class="stat-value">{{ deductionPreview.totalDeductionAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          <span class="stat-label">{{ 'IMPORTS.TOTAL_DEDUCTIONS' | translate }}</span>
         </div>
       </div>
     </div>
 
     <!-- Deduction rows preview table -->
     <div class="preview-table-wrap" *ngIf="deductionPreview.rows.length" style="margin-top: 1rem; overflow-x: auto;">
-      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">معاينة تفاصيل الخصومات والمطابقة</h4>
+      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">{{ 'IMPORTS.DEDUCTION_PREVIEW_TITLE' | translate }}</h4>
       <table class="data-table">
         <thead>
           <tr>
-            <th>الصف</th>
-            <th>تاريخ الشيفت</th>
-            <th>المعرف / الكابتن</th>
-            <th>مبلغ الخصم</th>
-            <th>سبب الخصم</th>
-            <th>نطاق المطابقة</th>
-            <th>الحالة</th>
+            <th>{{ 'IMPORTS.ROW' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_SHIFT_DATE' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_ID_CAPTAIN' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_AMOUNT' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_REASON' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_MATCH_SCOPE' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_STATUS_LABEL' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -492,7 +489,7 @@
                 </div>
               </div>
             </td>
-            <td style="font-weight: 700; color: #e53935;">{{ row.amount | number:'1.2-2' }} ر.س</td>
+            <td style="font-weight: 700; color: #e53935;">{{ row.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</td>
             <td>{{ row.reason || '—' }}</td>
             <td>
               <span class="chip" [class.chip-required]="row.matched">
@@ -514,28 +511,28 @@
   <div class="result-card" *ngIf="deductionResult">
     <div class="result-header">
       <span class="material-icons-round result-icon success">task_alt</span>
-      <h2>تم استيراد وتطبيق الخصومات بنجاح</h2>
+      <h2>{{ 'IMPORTS.RESULT_DEDUCTIONS_SUCCESS' | translate }}</h2>
     </div>
     <p class="result-file">{{ deductionResult.fileName }}</p>
     <div class="result-stats">
       <div class="stat-item">
         <span class="stat-value">{{ deductionResult.matchedRows }}</span>
-        <span class="stat-label">شيفت تم تطبيق الخصم عليه</span>
+        <span class="stat-label">{{ 'IMPORTS.MATCHED_SHIFT' | translate }}</span>
       </div>
       <div class="stat-item" *ngIf="deductionResult.unmatchedRows > 0">
         <span class="stat-value warning">{{ deductionResult.unmatchedRows }}</span>
-        <span class="stat-label">صف غير مطابق</span>
+        <span class="stat-label">{{ 'IMPORTS.ROWS_UNMATCHED' | translate }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">{{ deductionResult.totalDeductionAmount | number:'1.2-2' }} ر.س</span>
-        <span class="stat-label">إجمالي الخصومات المطبقة</span>
+        <span class="stat-value">{{ deductionResult.totalDeductionAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="stat-label">{{ 'IMPORTS.TOTAL_DEDUCTIONS' | translate }}</span>
       </div>
     </div>
     <div class="result-actions">
       <button class="btn btn-primary" (click)="goToShifts()">
-        <span class="material-icons-round">list</span> عرض الشيفتات والخصومات
+        <span class="material-icons-round">list</span> {{ 'IMPORTS.VIEW_SHIFTS' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+      <button class="btn btn-outline" (click)="cancelImport()">{{ 'IMPORTS.IMPORT_ANOTHER' | translate }}</button>
     </div>
   </div>
 
@@ -546,16 +543,16 @@
         <span class="material-icons-round">description</span>
         <div>
           <h3>{{ vacationCommissionPreview.fileName }}</h3>
-          <span>{{ vacationCommissionPreview.totalRows }} صف</span>
+          <span>{{ vacationCommissionPreview.totalRows }} {{ 'IMPORTS.ROWS_UNIT' | translate }}</span>
         </div>
       </div>
       <div class="preview-actions">
-        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">إلغاء</button>
+        <button class="btn btn-outline" (click)="cancelImport()" [disabled]="isCommitting">{{ 'COMMON.CANCEL' | translate }}</button>
         <button class="btn btn-primary" (click)="confirmImport()"
                 [disabled]="isCommitting || vacationCommissionPreview.matchedRows === 0">
           <span class="material-icons-round" *ngIf="!isCommitting">check</span>
           <div class="spinner-sm" *ngIf="isCommitting"></div>
-          {{ isCommitting ? 'جاري الاستيراد...' : 'تأكيد استيراد العمولات' }}
+          {{ isCommitting ? ('IMPORTS.IMPORTING' | translate) : ('IMPORTS.CONFIRM_IMPORT' | translate) }}
         </button>
       </div>
     </div>
@@ -565,40 +562,40 @@
         <span class="material-icons-round">check_circle</span>
         <div>
           <span class="stat-value">{{ vacationCommissionPreview.matchedRows }}</span>
-          <span class="stat-label">سجل مطابق</span>
+          <span class="stat-label">{{ 'IMPORTS.MATCHED_RECORD' | translate }}</span>
         </div>
       </div>
       <div class="stat-card existing" [class.error-card]="vacationCommissionPreview.unmatchedRows > 0">
         <span class="material-icons-round">remove_circle_outline</span>
         <div>
           <span class="stat-value">{{ vacationCommissionPreview.unmatchedRows }}</span>
-          <span class="stat-label">غير مطابق</span>
+          <span class="stat-label">{{ 'IMPORTS.UNMATCHED' | translate }}</span>
         </div>
       </div>
       <div class="stat-card total">
         <span class="material-icons-round">payments</span>
         <div>
-          <span class="stat-value">{{ vacationCommissionPreview.totalAmount | number:'1.2-2' }} ر.س</span>
-          <span class="stat-label">إجمالي العمولات</span>
+          <span class="stat-value">{{ vacationCommissionPreview.totalAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          <span class="stat-label">{{ 'IMPORTS.TOTAL_COMMISSIONS' | translate }}</span>
         </div>
       </div>
     </div>
 
     <!-- Vacation Commission rows preview table -->
     <div class="preview-table-wrap" *ngIf="vacationCommissionPreview.rows.length" style="margin-top: 1rem; overflow-x: auto;">
-      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">معاينة تفاصيل عمولات أوقات الإجازة</h4>
+      <h4 style="margin-bottom: 0.75rem; font-size: 1rem; font-weight: 600;">{{ 'IMPORTS.VACATION_PREVIEW_TITLE' | translate }}</h4>
       <table class="data-table">
         <thead>
           <tr>
-            <th>الصف</th>
-            <th>رقم الشيفت (Days)</th>
-            <th>الكابتن</th>
-            <th>المورد</th>
-            <th>المنطقة</th>
-            <th>الوسم / FLAG</th>
-            <th>الملاحظة / NOTE</th>
-            <th>المبلغ</th>
-            <th>الحالة</th>
+            <th>{{ 'IMPORTS.ROW' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_DAYS_CODE' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_NAME' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_SUPPLIER' | translate }}</th>
+            <th>{{ 'SHIFTS.VACATION_COL_ZONE' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_FLAG' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_NOTE' | translate }}</th>
+            <th>{{ 'COMMON.TOTAL' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_STATUS_LABEL' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -617,7 +614,7 @@
             <td>{{ row.zoneName || '—' }}</td>
             <td><span class="chip chip-required" *ngIf="row.flag">{{ row.flag }}</span></td>
             <td>{{ row.note || '—' }}</td>
-            <td style="font-weight: 700; color: #2e7d32;">{{ row.amount | number:'1.2-2' }} ر.س</td>
+            <td style="font-weight: 700; color: #2e7d32;">{{ row.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</td>
             <td>
               <span class="status-badge" [class.status-committed]="row.matched" [class.status-failed]="!row.matched">
                 {{ row.statusMessage }}
@@ -633,35 +630,35 @@
   <div class="result-card" *ngIf="vacationCommissionResult">
     <div class="result-header">
       <span class="material-icons-round result-icon success">task_alt</span>
-      <h2>تم استيراد وتأكيد عمولة أوقات الإجازة بنجاح</h2>
+      <h2>{{ 'IMPORTS.RESULT_VACATION_SUCCESS' | translate }}</h2>
     </div>
     <p class="result-file">{{ vacationCommissionResult.fileName }}</p>
     <div class="result-stats">
       <div class="stat-item">
         <span class="stat-value">{{ vacationCommissionResult.matchedRows }}</span>
-        <span class="stat-label">سجل عمولة تم حفظه</span>
+        <span class="stat-label">{{ 'IMPORTS.MATCHED_RECORD' | translate }}</span>
       </div>
       <div class="stat-item" *ngIf="vacationCommissionResult.unmatchedRows > 0">
         <span class="stat-value warning">{{ vacationCommissionResult.unmatchedRows }}</span>
-        <span class="stat-label">صف غير مطابق</span>
+        <span class="stat-label">{{ 'IMPORTS.ROWS_UNMATCHED' | translate }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">{{ vacationCommissionResult.totalAmount | number:'1.2-2' }} ر.س</span>
-        <span class="stat-label">إجمالي المبالغ المستوردة</span>
+        <span class="stat-value">{{ vacationCommissionResult.totalAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="stat-label">{{ 'IMPORTS.TOTAL_COMMISSIONS' | translate }}</span>
       </div>
     </div>
     <div class="result-actions">
       <button class="btn btn-primary" (click)="goToShifts()">
-        <span class="material-icons-round">list</span> عرض أيام الإجازة في الشيفتات
+        <span class="material-icons-round">list</span> {{ 'IMPORTS.VIEW_VACATION_SHIFTS' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="cancelImport()">استيراد ملف آخر</button>
+      <button class="btn btn-outline" (click)="cancelImport()">{{ 'IMPORTS.IMPORT_ANOTHER' | translate }}</button>
     </div>
   </div>
 
   <!-- ============================================================= HISTORY -->
   <div class="history-section">
     <h2 class="section-title">
-      {{ activeTab === 'captains' ? 'سجل استيراد بيانات الكباتن' : activeTab === 'reports' ? 'سجل استيراد تقارير الموردين' : activeTab === 'deductions' ? 'سجل استيراد خصومات المورد' : 'سجل استيراد عمولة أوقات الإجازة' }}
+      {{ activeTab === 'captains' ? ('IMPORTS.HISTORY_CAPTAINS' | translate) : activeTab === 'reports' ? ('IMPORTS.HISTORY_REPORTS' | translate) : activeTab === 'deductions' ? ('IMPORTS.HISTORY_DEDUCTIONS' | translate) : ('IMPORTS.HISTORY_VACATION' | translate) }}
     </h2>
 
     <div class="loading-container" *ngIf="isLoadingHistory">
@@ -670,21 +667,21 @@
 
     <div class="empty-state" *ngIf="!isLoadingHistory && history.length === 0">
       <span class="material-icons-round">inventory_2</span>
-      <p>لا يوجد عمليات استيراد سابقة</p>
+      <p>{{ 'IMPORTS.NO_HISTORY' | translate }}</p>
     </div>
 
     <div class="history-table-wrap" *ngIf="!isLoadingHistory && history.length > 0">
       <table class="data-table">
         <thead>
           <tr>
-            <th>اسم الملف</th>
-            <th>المورد</th>
-            <th>التاريخ</th>
-            <th *ngIf="activeTab === 'reports'">فترة التقرير</th>
-            <th>الصفوف</th>
-            <th>تم الاستيراد</th>
-            <th>تم التجاهل</th>
-            <th>الحالة</th>
+            <th>{{ 'IMPORTS.COL_FILE' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_SUPPLIER' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_DATE' | translate }}</th>
+            <th *ngIf="activeTab === 'reports'">{{ 'IMPORTS.COL_PERIOD' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_ROWS' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_IMPORTED' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_SKIPPED' | translate }}</th>
+            <th>{{ 'IMPORTS.COL_STATUS' | translate }}</th>
           </tr>
         </thead>
         <tbody>

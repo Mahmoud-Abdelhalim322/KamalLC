@@ -6,11 +6,13 @@ import { LoanService } from '../../core/services/loan.service';
 import { MemberLoanSummaryResponse } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './loans.component.html',
   styleUrls: ['./loans.component.scss']
 })
@@ -19,6 +21,7 @@ export class LoansComponent implements OnInit {
   private loanService = inject(LoanService);
   private router = inject(Router);
   public authService = inject(AuthService);
+  private i18n = inject(TranslationService);
 
   get canManage(): boolean {
     return this.authService.hasPermission('LOANS_MANAGE');
@@ -48,7 +51,7 @@ export class LoansComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMsg = errorMessage(err, 'فشل في تحميل البيانات');
+        this.errorMsg = errorMessage(err, this.i18n.get('LOANS.LOAD_FAILED'));
       }
     });
   }
@@ -86,6 +89,15 @@ export class LoansComponent implements OnInit {
 
   get membersWithLoans(): number {
     return this.filteredMembers.filter(m => m.activeLoanCount > 0).length;
+  }
+
+  memberTypeLabel(type: string): string {
+    const map: Record<string, string> = {
+      CAPTAIN: 'LOANS.TYPE_CAPTAIN',
+      WORKER: 'LOANS.TYPE_WORKER',
+      MANAGER: 'LOANS.TYPE_MANAGER'
+    };
+    return map[type] ? this.i18n.get(map[type]) : type;
   }
 
   money(value: number | null | undefined): string {

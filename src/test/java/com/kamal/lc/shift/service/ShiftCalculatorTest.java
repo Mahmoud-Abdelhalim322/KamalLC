@@ -143,8 +143,9 @@ class ShiftCalculatorTest {
         }
 
         @Test
+        @DisplayName("fuel allowance is zero because automatic calculation is disabled")
         void paidWhenEligibleAndElevenHoursReached() {
-            assertThat(computeFor("11.00", true).fuelAllowance()).isEqualByComparingTo("35");
+            assertThat(computeFor("11.00", true).fuelAllowance()).isEqualByComparingTo("0");
         }
 
         @Test
@@ -158,14 +159,14 @@ class ShiftCalculatorTest {
         }
 
         @Test
-        @DisplayName("adds on top of wage and incentive")
+        @DisplayName("adds on top of wage and incentive (fuel is 0)")
         void addsToTheShiftTotal() {
             ShiftCalculator.Result result = calculator.compute(new ShiftCalculator.Input(
                     new BigDecimal("11.48"), 22, "Working more 8 Hour",
                     new BigDecimal("0.80"), true, false, false), settings);
 
-            // 57 − 0 + 20 + 35
-            assertThat(result.netShiftPay()).isEqualByComparingTo("112");
+            // 57 − 0 + 20 + 0 = 77
+            assertThat(result.netShiftPay()).isEqualByComparingTo("77");
         }
     }
 
@@ -206,7 +207,7 @@ class ShiftCalculatorTest {
                     new BigDecimal("0.80"), true, true, false), carOff);
 
             assertThat(result.carAllowance()).isEqualByComparingTo("0");
-            assertThat(result.fuelAllowance()).isEqualByComparingTo("35"); // fuel is unaffected
+            assertThat(result.fuelAllowance()).isEqualByComparingTo("0"); // fuel is disabled
         }
 
         @Test
@@ -229,8 +230,8 @@ class ShiftCalculatorTest {
                     new BigDecimal("11.48"), 22, "Working more 8 Hour",
                     new BigDecimal("0.80"), true, true, false), settings);
 
-            // 57 − 0 + 20 + 35 + 31
-            assertThat(result.netShiftPay()).isEqualByComparingTo("143");
+            // 57 − 0 + 20 + 0 + 31 = 108
+            assertThat(result.netShiftPay()).isEqualByComparingTo("108");
         }
     }
 

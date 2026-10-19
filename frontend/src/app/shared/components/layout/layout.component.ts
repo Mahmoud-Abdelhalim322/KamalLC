@@ -54,28 +54,29 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private readonly elementRef = inject(ElementRef);
 
   navItems: NavItem[] = [
-    { icon: 'dashboard', label: 'لوحة التحكم', translationKey: 'NAV.DASHBOARD', route: '/dashboard' },
-    { icon: 'shopping_bag', label: 'الطلبات', translationKey: 'NAV.ORDERS', route: '/orders' },
+    { icon: 'dashboard', label: 'Dashboard', translationKey: 'NAV.DASHBOARD', route: '/dashboard' },
+    { icon: 'shopping_bag', label: 'Orders', translationKey: 'NAV.ORDERS', route: '/orders' },
     {
-      icon: 'groups', label: 'الأعضاء', translationKey: 'NAV.MEMBERS', expanded: false, permission: 'MEMBERS_VIEW',
+      icon: 'groups', label: 'Members', translationKey: 'NAV.MEMBERS', expanded: false, permission: 'MEMBERS_VIEW',
       children: [
-        { icon: 'local_shipping', label: 'الكباتن', translationKey: 'NAV.CAPTAINS', route: '/captains', permission: 'MEMBERS_VIEW' },
-        { icon: 'engineering', label: 'العاملين', translationKey: 'NAV.WORKERS', route: '/workers', permission: 'MEMBERS_VIEW' },
-        { icon: 'admin_panel_settings', label: 'الإداريين', translationKey: 'NAV.MANAGERS', route: '/managers', permission: 'MEMBERS_VIEW' },
+        { icon: 'local_shipping', label: 'Captains', translationKey: 'NAV.CAPTAINS', route: '/captains', permission: 'MEMBERS_VIEW' },
+        { icon: 'engineering', label: 'Workers', translationKey: 'NAV.WORKERS', route: '/workers', permission: 'MEMBERS_VIEW' },
+        { icon: 'admin_panel_settings', label: 'Managers', translationKey: 'NAV.MANAGERS', route: '/managers', permission: 'MEMBERS_VIEW' },
       ]
     },
-    { icon: 'badge', label: 'سجل المعرفات', translationKey: 'NAV.NINJA_IDS', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
-    { icon: 'upload_file', label: 'استيراد البيانات', translationKey: 'NAV.IMPORTS', route: '/imports', permission: 'IMPORTS_MANAGE' },
-    { icon: 'event_note', label: 'الشيفتات', translationKey: 'NAV.SHIFTS', route: '/shifts', permission: 'SHIFTS_VIEW' },
-    { icon: 'payments', label: 'مسير الرواتب', translationKey: 'NAV.PAYROLL', route: '/payroll', permission: 'PAYROLL_VIEW' },
-    { icon: 'account_balance_wallet', label: 'السُلف', translationKey: 'NAV.LOANS', route: '/loans', permission: 'LOANS_VIEW' },
-    { icon: 'account_balance', label: 'إيراد الموردين', translationKey: 'NAV.SUPPLIER_REVENUE', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
-    { icon: 'assessment', label: 'التقارير', translationKey: 'NAV.REPORTS', route: '/reports', permission: 'REPORTS_VIEW' },
-    { icon: 'directions_car', label: 'أسطول السيارات', translationKey: 'NAV.FLEET', route: '/fleet', permission: 'FLEET_VIEW' },
-    { icon: 'inventory_2', label: 'المخزن', translationKey: 'NAV.INVENTORY', route: '/inventory', permission: 'INVENTORY_VIEW' },
-    { icon: 'account_balance_wallet', label: 'سجل العهد', translationKey: 'NAV.CUSTODY', route: '/custody', permission: 'CUSTODY_VIEW' },
-    { icon: 'manage_accounts', label: 'إدارة المستخدمين', translationKey: 'NAV.USER_MANAGEMENT', route: '/user-management', superAdminOnly: true },
-    { icon: 'settings', label: 'الإعدادات', translationKey: 'NAV.SETTINGS', route: '/settings', permission: 'SETTINGS_MANAGE' },
+    { icon: 'badge', label: 'Ninja IDs', translationKey: 'NAV.NINJA_IDS', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
+    { icon: 'upload_file', label: 'Data Import', translationKey: 'NAV.IMPORTS', route: '/imports', permission: 'IMPORTS_MANAGE' },
+    { icon: 'event_note', label: 'Shifts', translationKey: 'NAV.SHIFTS', route: '/shifts', permission: 'SHIFTS_VIEW' },
+    { icon: 'payments', label: 'Payroll', translationKey: 'NAV.PAYROLL', route: '/payroll', permission: 'PAYROLL_VIEW' },
+    { icon: 'account_balance_wallet', label: 'Loans', translationKey: 'NAV.LOANS', route: '/loans', permission: 'LOANS_VIEW' },
+    { icon: 'account_balance', label: 'Supplier Revenue', translationKey: 'NAV.SUPPLIER_REVENUE', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
+    { icon: 'assessment', label: 'Reports', translationKey: 'NAV.REPORTS', route: '/reports', permission: 'REPORTS_VIEW' },
+    { icon: 'directions_car', label: 'Car Fleet', translationKey: 'NAV.FLEET', route: '/fleet', permission: 'FLEET_VIEW' },
+    { icon: 'inventory_2', label: 'Inventory', translationKey: 'NAV.INVENTORY', route: '/inventory', permission: 'INVENTORY_VIEW' },
+    { icon: 'account_balance_wallet', label: 'Custody Log', translationKey: 'NAV.CUSTODY', route: '/custody', permission: 'CUSTODY_VIEW' },
+    { icon: 'history', label: 'Changelog', translationKey: 'NAV.CHANGELOG', route: '/changelog', permission: 'CHANGELOG_VIEW' },
+    { icon: 'manage_accounts', label: 'User Management', translationKey: 'NAV.USER_MANAGEMENT', route: '/user-management', superAdminOnly: true },
+    { icon: 'settings', label: 'Settings', translationKey: 'NAV.SETTINGS', route: '/settings', permission: 'SETTINGS_MANAGE' },
   ];
 
   ngOnInit(): void {

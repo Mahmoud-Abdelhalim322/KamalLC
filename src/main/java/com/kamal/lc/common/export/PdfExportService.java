@@ -147,80 +147,92 @@ public class PdfExportService {
     }
 
     // =========================================================================
-    // 1. Captains Payroll PDF Report
+    // 1. Captains Payroll PDF Report — Classic white organisational layout
     // =========================================================================
     public byte[] buildPayrollPdf(PayrollRunResponse run, List<PayrollLineResponse> lines) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
+            Document document = new Document(PageSize.A4.rotate(), 15, 15, 15, 15);
             PdfWriter writer = PdfWriter.getInstance(document, out);
             document.open();
 
-            // Masthead
-            addHeaderTable(document, "مسير رواتب الكباتن / CAPTAINS PAYROLL",
-                    "الفترة من " + run.getPeriodFrom() + " إلى " + run.getPeriodTo() + "   |   عدد الكباتن: " + lines.size());
+            // ---- Classic White Masthead ----
+            addClassicMasthead(document, run);
 
-            // Data Table
+            // ---- Data Table ----
             String[] headers = {
-                "الكود\nCode", "اسم الكابتن\nCaptain Name", "النوع\nType",
-                "الشفتات\nShifts", "الطلبات\nOrders", "الساعات\nHours",
-                "الأساسي\nBase", "خصم تأخير\nLate Dec.", "خصم مورد\nSupp. Dec.", "حافز\nIncentive",
-                "بنزين\nFuel", "سيارة\nCar", "عمولة إجازة\nVacation Comm.", "تعديلات\nAdj.", "صافي الراتب\nNet Pay"
+                "ID-KSLSC\ncaptain_id", "اسم الكابتن\ncaptain name",
+                "عدد الشفتات\nTOTAL SHIFT", "اجمالي الطلبات\nTotal Delivered",
+                "اجمالي الساعات\nTotal Working\nHour (Total)", "تحقيق التارقيت\nACHIEVE THE\nTARGET",
+                "خصم تذاكر\nDeduction for\nlate", "عمولة بعد\nالتارقت 18 طلب\nAfter TARGET",
+                "SUM of الطلبات\nTOTAL SALARY\nORDER", "بدل سيارة\nCAR\nALLOWANCE",
+                "تحقيق الساعات\nTOTAL TARGET\nHOUR", "مجموع الراتب\nTOTAL SALARY",
+                "بدل سكن\nHousing\nallowance", "مكافأة\nREWARD",
+                "فروقات البنزين\nGasoline price\ndifferences", "غرامة نينجا\nNinja fine or\nviolation",
+                "سلف\nLOAN", "صافي الراتب\nNET SALARY"
             };
-            float[] widths = { 6, 18, 8, 6, 6, 6, 8, 8, 8, 8, 8, 8, 9, 8, 10 };
+            float[] widths = { 5, 11, 5, 5, 6, 6, 6, 7, 6, 5, 6, 6, 5, 5, 6, 6, 5, 7 };
 
-            PdfPTable table = createRtlTable(widths);
-            addHeaderRow(table, headers);
+            PdfPTable table = new PdfPTable(widths.length);
+            table.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            table.setWidthPercentage(100);
+            table.setWidths(widths);
 
-            BigDecimal sumBase = BigDecimal.ZERO, sumLate = BigDecimal.ZERO, sumSupp = BigDecimal.ZERO, sumInc = BigDecimal.ZERO;
-            BigDecimal sumFuel = BigDecimal.ZERO, sumCar = BigDecimal.ZERO, sumVacation = BigDecimal.ZERO, sumAdj = BigDecimal.ZERO;
+            addClassicHeaderRow(table, headers);
+
+            BigDecimal sumTarget = BigDecimal.ZERO, sumLate = BigDecimal.ZERO, sumExtra = BigDecimal.ZERO;
+            BigDecimal sumBase = BigDecimal.ZERO, sumCar = BigDecimal.ZERO, sumGross = BigDecimal.ZERO;
             BigDecimal sumNet = BigDecimal.ZERO;
             int totalOrders = 0, totalShifts = 0;
 
             for (PayrollLineResponse line : lines) {
-                String memberNameStr = line.getCaptainName(); // Combined Arabic & English if available
-                addCell(table, line.getCaptainCode(), false);
-                addCell(table, memberNameStr, false);
-                addCell(table, line.getCaptainType(), false);
-                addCell(table, String.valueOf(line.getAttendedShifts()), true);
-                addCell(table, String.valueOf(line.getTotalOrders()), true);
-                addCell(table, fmt(line.getTotalHours()), true);
-                addCell(table, fmtMoney(line.getBasePay()), true);
-                addCell(table, fmtMoney(line.getLateDeductions()), true);
-                addCell(table, fmtMoney(line.getSupplierDeductions()), true);
-                addCell(table, fmtMoney(line.getDailyIncentives()), true);
-                addCell(table, fmtMoney(line.getFuelAllowances()), true);
-                addCell(table, fmtMoney(line.getCarAllowances()), true);
-                addCell(table, fmtMoney(line.getVacationCommission()), true);
-                addCell(table, fmtMoney(line.getAdjustmentsTotal()), true);
-                addCell(table, fmtMoney(line.getNet()), true, true);
+                addClassicCell(table, line.getCaptainCode());
+                addClassicCell(table, line.getCaptainName());
+                addClassicCell(table, String.valueOf(line.getAttendedShifts()));
+                addClassicCell(table, String.valueOf(line.getTotalOrders()));
+                addClassicCell(table, fmt(line.getTotalHours()));
+                addClassicCell(table, fmtMoney(line.getTargetBonus()));
+                addClassicCell(table, fmtMoney(line.getLateDeductions()));
+                addClassicCell(table, fmtMoney(line.getExtraOrderPay()));
+                addClassicCell(table, fmtMoney(line.getBasePay()));
+                addClassicCell(table, fmtMoney(line.getCarAllowances()));
+                addClassicCell(table, fmt(line.getTotalHours()));
+                addClassicCell(table, fmtMoney(line.getGross()));
+                addClassicCell(table, fmtMoney(adjAmount(line, "HOUSING_ALLOWANCE")));
+                addClassicCell(table, fmtMoney(adjAmount(line, "REWARD")));
+                addClassicCell(table, fmtMoney(adjAmount(line, "FUEL_DIFFERENCE")));
+                addClassicCell(table, fmtMoney(line.getSupplierDeductions()));
+                addClassicCell(table, fmtMoney(adjAmount(line, "LOAN")));
+                addClassicCell(table, fmtMoney(line.getNet()));
 
                 totalShifts += line.getAttendedShifts();
                 totalOrders += line.getTotalOrders();
-                sumBase = sumBase.add(nz(line.getBasePay()));
+                sumTarget = sumTarget.add(nz(line.getTargetBonus()));
                 sumLate = sumLate.add(nz(line.getLateDeductions()));
-                sumSupp = sumSupp.add(nz(line.getSupplierDeductions()));
-                sumInc = sumInc.add(nz(line.getDailyIncentives()));
-                sumFuel = sumFuel.add(nz(line.getFuelAllowances()));
+                sumExtra = sumExtra.add(nz(line.getExtraOrderPay()));
+                sumBase = sumBase.add(nz(line.getBasePay()));
                 sumCar = sumCar.add(nz(line.getCarAllowances()));
-                sumVacation = sumVacation.add(nz(line.getVacationCommission()));
-                sumAdj = sumAdj.add(nz(line.getAdjustmentsTotal()));
+                sumGross = sumGross.add(nz(line.getGross()));
                 sumNet = sumNet.add(nz(line.getNet()));
             }
 
             // Total row
-            addTotalCell(table, "المجموع / TOTAL", 3);
-            addTotalCell(table, String.valueOf(totalShifts), 1);
-            addTotalCell(table, String.valueOf(totalOrders), 1);
-            addTotalCell(table, "—", 1);
-            addTotalCell(table, fmtMoney(sumBase), 1);
-            addTotalCell(table, fmtMoney(sumLate), 1);
-            addTotalCell(table, fmtMoney(sumSupp), 1);
-            addTotalCell(table, fmtMoney(sumInc), 1);
-            addTotalCell(table, fmtMoney(sumFuel), 1);
-            addTotalCell(table, fmtMoney(sumCar), 1);
-            addTotalCell(table, fmtMoney(sumVacation), 1);
-            addTotalCell(table, fmtMoney(sumAdj), 1);
-            addTotalCell(table, fmtMoney(sumNet), 1);
+            addClassicTotalCell(table, "المجموع / TOTAL", 2);
+            addClassicTotalCell(table, String.valueOf(totalShifts), 1);
+            addClassicTotalCell(table, String.valueOf(totalOrders), 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, fmtMoney(sumTarget), 1);
+            addClassicTotalCell(table, fmtMoney(sumLate), 1);
+            addClassicTotalCell(table, fmtMoney(sumExtra), 1);
+            addClassicTotalCell(table, fmtMoney(sumBase), 1);
+            addClassicTotalCell(table, fmtMoney(sumCar), 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, fmtMoney(sumGross), 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, "—", 1);
+            addClassicTotalCell(table, fmtMoney(sumNet), 1);
 
             document.add(table);
             addOfficialSignatures(document);
@@ -233,19 +245,19 @@ public class PdfExportService {
     }
 
     // =========================================================================
-    // 2. Staff Payroll PDF Report
+    // 2. Staff Payroll PDF Report — Classic white organisational layout
     // =========================================================================
     public byte[] buildStaffPayrollPdf(PayrollRunResponse run, List<StaffPayrollLineResponse> lines, String staffType) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
+            Document document = new Document(PageSize.A4.rotate(), 15, 15, 15, 15);
             PdfWriter writer = PdfWriter.getInstance(document, out);
             document.open();
 
-            String typeTitle = "WORKER".equalsIgnoreCase(staffType) ? "العاملين / WORKERS"
-                    : "MANAGER".equalsIgnoreCase(staffType) ? "الإداريين / MANAGERS" : "الموظفين / STAFF";
+            // ---- Classic White Masthead (reuse same style) ----
+            String typeAr = "WORKER".equalsIgnoreCase(staffType) ? "العاملين"
+                    : "MANAGER".equalsIgnoreCase(staffType) ? "الإداريين" : "الموظفين";
 
-            addHeaderTable(document, "مسير رواتب " + typeTitle,
-                    "الفترة من " + run.getPeriodFrom() + " إلى " + run.getPeriodTo() + "   |   العدد: " + lines.size());
+            addClassicStaffMasthead(document, run, typeAr);
 
             String[] headers = {
                 "الكود\nCode", "اسم الموظف\nName", "المسمى الوظيفي\nJob Title",
@@ -254,22 +266,26 @@ public class PdfExportService {
             };
             float[] widths = { 10, 25, 18, 12, 12, 12, 12, 14, 15 };
 
-            PdfPTable table = createRtlTable(widths);
-            addHeaderRow(table, headers);
+            PdfPTable table = new PdfPTable(widths.length);
+            table.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            table.setWidthPercentage(100);
+            table.setWidths(widths);
+
+            addClassicHeaderRow(table, headers);
 
             BigDecimal sumBasic = BigDecimal.ZERO, sumHousing = BigDecimal.ZERO, sumOther = BigDecimal.ZERO;
             BigDecimal sumGross = BigDecimal.ZERO, sumAdj = BigDecimal.ZERO, sumNet = BigDecimal.ZERO;
 
             for (StaffPayrollLineResponse line : lines) {
-                addCell(table, line.getStaffCode(), false);
-                addCell(table, line.getStaffName(), false);
-                addCell(table, line.getJobTitle() != null ? line.getJobTitle() : "—", false);
-                addCell(table, fmtMoney(line.getBasicSalary()), true);
-                addCell(table, fmtMoney(line.getHousingAllowance()), true);
-                addCell(table, fmtMoney(line.getOtherAllowances()), true);
-                addCell(table, fmtMoney(line.getGross()), true);
-                addCell(table, fmtMoney(line.getAdjustmentsTotal()), true);
-                addCell(table, fmtMoney(line.getNet()), true, true);
+                addClassicCell(table, line.getStaffCode());
+                addClassicCell(table, line.getStaffName());
+                addClassicCell(table, line.getJobTitle() != null ? line.getJobTitle() : "—");
+                addClassicCell(table, fmtMoney(line.getBasicSalary()));
+                addClassicCell(table, fmtMoney(line.getHousingAllowance()));
+                addClassicCell(table, fmtMoney(line.getOtherAllowances()));
+                addClassicCell(table, fmtMoney(line.getGross()));
+                addClassicCell(table, fmtMoney(line.getAdjustmentsTotal()));
+                addClassicCell(table, fmtMoney(line.getNet()));
 
                 sumBasic = sumBasic.add(nz(line.getBasicSalary()));
                 sumHousing = sumHousing.add(nz(line.getHousingAllowance()));
@@ -279,13 +295,13 @@ public class PdfExportService {
                 sumNet = sumNet.add(nz(line.getNet()));
             }
 
-            addTotalCell(table, "المجموع / TOTAL", 3);
-            addTotalCell(table, fmtMoney(sumBasic), 1);
-            addTotalCell(table, fmtMoney(sumHousing), 1);
-            addTotalCell(table, fmtMoney(sumOther), 1);
-            addTotalCell(table, fmtMoney(sumGross), 1);
-            addTotalCell(table, fmtMoney(sumAdj), 1);
-            addTotalCell(table, fmtMoney(sumNet), 1);
+            addClassicTotalCell(table, "المجموع / TOTAL", 3);
+            addClassicTotalCell(table, fmtMoney(sumBasic), 1);
+            addClassicTotalCell(table, fmtMoney(sumHousing), 1);
+            addClassicTotalCell(table, fmtMoney(sumOther), 1);
+            addClassicTotalCell(table, fmtMoney(sumGross), 1);
+            addClassicTotalCell(table, fmtMoney(sumAdj), 1);
+            addClassicTotalCell(table, fmtMoney(sumNet), 1);
 
             document.add(table);
             addOfficialSignatures(document);
@@ -1200,6 +1216,186 @@ public class PdfExportService {
             case 12 -> "ديسمبر";
             default -> "";
         };
+    }
+
+    // =========================================================================
+    // Classic White Layout Helper Methods
+    // =========================================================================
+
+    /**
+     * Classic company masthead for captain payroll PDFs — matches the organisational form.
+     * Layout: Logo on the left | Company info on the right (RTL)
+     */
+    private void addClassicMasthead(Document document, PayrollRunResponse run) throws DocumentException {
+        Color borderColor = new Color(200, 200, 200);
+        Color darkText = new Color(30, 30, 30);
+
+        Font fontCompany = getFont(12, Font.BOLD, darkText);
+        Font fontDept = getFont(9, Font.NORMAL, darkText);
+        Font fontTitle = getFont(11, Font.BOLD, darkText);
+
+        LocalDate periodFrom = LocalDate.parse(run.getPeriodFrom());
+        String monthNameAr = arabicMonthName(periodFrom.getMonthValue());
+        int monthNum = periodFrom.getMonthValue();
+        int year = periodFrom.getYear();
+
+        PdfPTable masthead = new PdfPTable(2);
+        masthead.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        masthead.setWidthPercentage(100);
+        masthead.setWidths(new float[]{70, 30});
+
+        // Right cell (RTL): Company info
+        Phrase companyPhrase = new Phrase();
+        companyPhrase.add(new Chunk(shapeArabic(ExcelBranding.COMPANY_NAME) + "\n", fontCompany));
+        companyPhrase.add(new Chunk(shapeArabic("الادارة العامة") + "\n", fontDept));
+        companyPhrase.add(new Chunk(shapeArabic("قسم شؤون الموظفين") + "\n", fontDept));
+        companyPhrase.add(new Chunk(shapeArabic("مسيرات الرواتب شهر " + monthNameAr + " "
+                + String.format("%02d", monthNum) + "-" + year), fontTitle));
+
+        PdfPCell infoCell = new PdfPCell(companyPhrase);
+        infoCell.setBorder(Rectangle.BOX);
+        infoCell.setBorderColor(borderColor);
+        infoCell.setPadding(10);
+        infoCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        infoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        masthead.addCell(infoCell);
+
+        // Left cell (RTL): Logo
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBorder(Rectangle.BOX);
+        logoCell.setBorderColor(borderColor);
+        logoCell.setPadding(10);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        byte[] logoBytes = loadLogoBytes();
+        if (logoBytes != null) {
+            try {
+                Image img = Image.getInstance(logoBytes);
+                img.setAlignment(Element.ALIGN_CENTER);
+                img.scaleToFit(100, 60);
+                logoCell.addElement(img);
+            } catch (Exception e) {
+                log.warn("Failed to add logo to masthead", e);
+            }
+        }
+        masthead.addCell(logoCell);
+
+        document.add(masthead);
+        document.add(spacer(8));
+    }
+
+    /**
+     * Classic company masthead for staff payroll PDFs (workers/managers).
+     */
+    private void addClassicStaffMasthead(Document document, PayrollRunResponse run, String typeAr) throws DocumentException {
+        Color borderColor = new Color(200, 200, 200);
+        Color darkText = new Color(30, 30, 30);
+
+        Font fontCompany = getFont(12, Font.BOLD, darkText);
+        Font fontDept = getFont(9, Font.NORMAL, darkText);
+        Font fontTitle = getFont(11, Font.BOLD, darkText);
+
+        LocalDate periodFrom = LocalDate.parse(run.getPeriodFrom());
+        String monthNameAr2 = arabicMonthName(periodFrom.getMonthValue());
+        int monthNum = periodFrom.getMonthValue();
+        int year = periodFrom.getYear();
+
+        PdfPTable masthead = new PdfPTable(2);
+        masthead.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        masthead.setWidthPercentage(100);
+        masthead.setWidths(new float[]{70, 30});
+
+        Phrase companyPhrase = new Phrase();
+        companyPhrase.add(new Chunk(shapeArabic(ExcelBranding.COMPANY_NAME) + "\n", fontCompany));
+        companyPhrase.add(new Chunk(shapeArabic("الادارة العامة") + "\n", fontDept));
+        companyPhrase.add(new Chunk(shapeArabic("قسم شؤون الموظفين") + "\n", fontDept));
+        companyPhrase.add(new Chunk(shapeArabic("مسيرات رواتب " + typeAr + " شهر " + monthNameAr2
+                + " " + String.format("%02d", monthNum) + "-" + year), fontTitle));
+
+        PdfPCell infoCell = new PdfPCell(companyPhrase);
+        infoCell.setBorder(Rectangle.BOX);
+        infoCell.setBorderColor(borderColor);
+        infoCell.setPadding(10);
+        infoCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        infoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        masthead.addCell(infoCell);
+
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBorder(Rectangle.BOX);
+        logoCell.setBorderColor(borderColor);
+        logoCell.setPadding(10);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        byte[] logoBytes = loadLogoBytes();
+        if (logoBytes != null) {
+            try {
+                Image img = Image.getInstance(logoBytes);
+                img.setAlignment(Element.ALIGN_CENTER);
+                img.scaleToFit(100, 60);
+                logoCell.addElement(img);
+            } catch (Exception e) {
+                log.warn("Failed to add logo to staff masthead", e);
+            }
+        }
+        masthead.addCell(logoCell);
+
+        document.add(masthead);
+        document.add(spacer(8));
+    }
+
+    /** Classic header row — light gray background with black text */
+    private void addClassicHeaderRow(PdfPTable table, String[] headers) {
+        Color headerBg = new Color(240, 240, 240);
+        Color borderColor = new Color(180, 180, 180);
+        Font headerFont = getFont(6, Font.BOLD, Color.BLACK);
+
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(shapeArabic(h), headerFont));
+            cell.setBackgroundColor(headerBg);
+            cell.setBorder(Rectangle.BOX);
+            cell.setBorderColor(borderColor);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(4);
+            cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+            table.addCell(cell);
+        }
+    }
+
+    /** Classic data cell — white background, thin gray borders */
+    private void addClassicCell(PdfPTable table, String text) {
+        Color borderColor = new Color(200, 200, 200);
+        Font dataFont = getFont(6, Font.NORMAL, Color.BLACK);
+
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? shapeArabic(text) : "—", dataFont));
+        cell.setBackgroundColor(Color.WHITE);
+        cell.setBorder(Rectangle.BOX);
+        cell.setBorderColor(borderColor);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(3);
+        cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        table.addCell(cell);
+    }
+
+    /** Classic total row cell — slightly tinted background */
+    private void addClassicTotalCell(PdfPTable table, String text, int colspan) {
+        Color totalBg = new Color(245, 245, 245);
+        Color borderColor = new Color(180, 180, 180);
+        Font totalFont = getFont(6, Font.BOLD, Color.BLACK);
+
+        PdfPCell cell = new PdfPCell(new Phrase(shapeArabic(text), totalFont));
+        cell.setColspan(colspan);
+        cell.setBackgroundColor(totalBg);
+        cell.setBorder(Rectangle.BOX);
+        cell.setBorderColor(borderColor);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(4);
+        cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        table.addCell(cell);
     }
 
     // =========================================================================

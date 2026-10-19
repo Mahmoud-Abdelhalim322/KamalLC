@@ -9,25 +9,26 @@ import {
   CaptainLookupItem, CustodyRecordResponse
 } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
-
 import { AuthService } from '../../core/auth/auth.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
 export class InventoryComponent implements OnInit {
   readonly saudiSimProviders = [
-    'زين (Zain)',
-    'STC (الاتصالات السعودية)',
-    'موبايلي (Mobily)',
-    'سلام (Salam)',
-    'فيرجن موفابل (Virgin Mobile)',
-    'ليبارا (Lebara)',
-    'أخرى'
+    'STC',
+    'Mobily',
+    'Zain',
+    'Salam',
+    'Virgin Mobile',
+    'Lebara',
+    'Other'
   ];
 
   categories: AssetCategoryResponse[] = [];
@@ -73,7 +74,8 @@ export class InventoryComponent implements OnInit {
     private inventoryService: InventoryService,
     private captainService: CaptainService,
     private custodyService: CustodyService,
-    public authService: AuthService
+    public authService: AuthService,
+    public i18n: TranslationService
   ) {}
 
   get canManage(): boolean {
@@ -88,7 +90,7 @@ export class InventoryComponent implements OnInit {
         this.categories = cats;
         if (!this.selectedCategory && cats.length > 0) this.selectCategory(cats[0]);
       },
-      error: e => this.error = errorMessage(e, 'فشل تحميل الفئات')
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_CATS'))
     });
   }
 
@@ -108,7 +110,7 @@ export class InventoryComponent implements OnInit {
       page: this.itemPage, size: 15
     }).subscribe({
       next: p => { this.items = p.content; this.itemTotalPages = p.totalPages; this.isLoading = false; },
-      error: e => { this.error = errorMessage(e, 'فشل تحميل العناصر'); this.isLoading = false; }
+      error: e => { this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_ITEMS')); this.isLoading = false; }
     });
   }
 
@@ -129,7 +131,7 @@ export class InventoryComponent implements OnInit {
   removeFieldTemplate(i: number): void { this.catForm.fieldTemplates.splice(i, 1); }
 
   saveCategory(): void {
-    if (!this.catForm.labelAr) { this.error = 'اسم الفئة مطلوب'; return; }
+    if (!this.catForm.labelAr) { this.error = this.i18n.t('INVENTORY.ERR_CAT_NAME_REQ'); return; }
     // Auto-generate fieldKeys from labelAr if empty
     this.catForm.fieldTemplates.forEach(ft => {
       if (!ft.fieldKey) ft.fieldKey = ft.labelAr.replace(/\s+/g, '_').toLowerCase();
@@ -137,17 +139,17 @@ export class InventoryComponent implements OnInit {
     this.inventoryService.createCategory({
       labelAr: this.catForm.labelAr, name: null, fieldTemplates: this.catForm.fieldTemplates
     }).subscribe({
-      next: () => { this.showCategoryDialog = false; this.successMsg = 'تم إضافة الفئة'; this.loadCategories(); },
-      error: e => this.error = errorMessage(e, 'فشل إضافة الفئة')
+      next: () => { this.showCategoryDialog = false; this.successMsg = this.i18n.t('INVENTORY.CAT_ADDED'); this.loadCategories(); },
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_ADD_CAT'))
     });
   }
 
   deleteCategory(cat: AssetCategoryResponse): void {
-    if (cat.systemDefined) { this.error = 'لا يمكن حذف فئة نظامية'; return; }
-    if (!confirm(`حذف فئة "${cat.labelAr}"؟`)) return;
+    if (cat.systemDefined) { this.error = this.i18n.t('INVENTORY.ERR_SYSTEM_CAT'); return; }
+    if (!confirm(this.i18n.t('INVENTORY.CONFIRM_DELETE_CAT', { name: cat.labelAr }))) return;
     this.inventoryService.deleteCategory(cat.id).subscribe({
-      next: () => { this.successMsg = 'تم حذف الفئة'; this.selectedCategory = null; this.loadCategories(); },
-      error: e => this.error = errorMessage(e, 'فشل حذف الفئة')
+      next: () => { this.successMsg = this.i18n.t('INVENTORY.CAT_DELETED'); this.selectedCategory = null; this.loadCategories(); },
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_DELETE_CAT'))
     });
   }
 
@@ -179,8 +181,8 @@ export class InventoryComponent implements OnInit {
       : this.inventoryService.createItem(req);
 
     obs.subscribe({
-      next: () => { this.showItemDialog = false; this.successMsg = 'تم الحفظ'; this.loadItems(); this.loadCategories(); },
-      error: e => this.error = errorMessage(e, 'فشل حفظ العنصر')
+      next: () => { this.showItemDialog = false; this.successMsg = this.i18n.t('INVENTORY.ITEM_SAVED'); this.loadItems(); this.loadCategories(); },
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_SAVE_ITEM'))
     });
   }
 
@@ -204,23 +206,28 @@ export class InventoryComponent implements OnInit {
   }
 
   submitAssign(): void {
-    if (!this.assignCaptainId) { this.error = 'اختر الكابتن'; return; }
+    if (!this.assignCaptainId) { this.error = this.i18n.t('INVENTORY.ERR_SELECT_CAPTAIN'); return; }
     this.inventoryService.assignItem(this.assignItemId, this.assignCaptainId).subscribe({
-      next: () => { this.showAssignDialog = false; this.successMsg = 'تم الإسناد'; this.loadItems(); },
-      error: e => this.error = errorMessage(e, 'فشل الإسناد')
+      next: () => { this.showAssignDialog = false; this.successMsg = this.i18n.t('INVENTORY.ASSIGN_SUCCESS'); this.loadItems(); },
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_ASSIGN_FAILED'))
     });
   }
 
   returnItem(item: AssetItemResponse): void {
-    if (!confirm('تأكيد استرجاع العنصر؟')) return;
+    if (!confirm(this.i18n.t('INVENTORY.CONFIRM_RETURN_ITEM'))) return;
     this.inventoryService.returnItem(item.id).subscribe({
-      next: () => { this.successMsg = 'تم الاسترجاع'; this.loadItems(); },
-      error: e => this.error = errorMessage(e, 'فشل الاسترجاع')
+      next: () => { this.successMsg = this.i18n.t('INVENTORY.RETURN_SUCCESS'); this.loadItems(); },
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_RETURN_FAILED'))
     });
   }
 
   statusLabel(s: string): string {
-    return { AVAILABLE: 'متاح', ASSIGNED: 'مُسند', INACTIVE: 'غير فعال' }[s] || s;
+    const labels: Record<string, string> = {
+      AVAILABLE: this.i18n.t('INVENTORY.STATUS_AVAILABLE'),
+      ASSIGNED: this.i18n.t('INVENTORY.STATUS_ASSIGNED'),
+      INACTIVE: this.i18n.t('INVENTORY.STATUS_INACTIVE')
+    };
+    return labels[s] || s;
   }
 
   prevPage(): void { if (this.itemPage > 0) { this.itemPage--; this.loadItems(); } }
@@ -248,7 +255,7 @@ export class InventoryComponent implements OnInit {
         this.historyTotalPages = p.totalPages;
         this.showHistoryDialog = true;
       },
-      error: e => this.error = errorMessage(e, 'فشل تحميل تاريخ العهدة')
+      error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_HISTORY'))
     });
   }
 

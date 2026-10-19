@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -38,6 +39,8 @@ public interface StaffRepository extends JpaRepository<Staff, UUID> {
     List<String> findCodesStartingWith(String prefix);
 
     boolean existsByStaffCode(String staffCode);
+
+    Optional<Staff> findByStaffCode(String staffCode);
 
     List<Staff> findByStaffTypeAndStatus(String staffType, String status);
 

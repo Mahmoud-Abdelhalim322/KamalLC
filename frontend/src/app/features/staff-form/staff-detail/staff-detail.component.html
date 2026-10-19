@@ -16,10 +16,10 @@
     </div>
     <div class="header-actions">
       <a [routerLink]="editRoute" class="btn btn-secondary">
-        <span class="material-icons-round">edit</span> تعديل
+        <span class="material-icons-round">edit</span> {{ 'STAFF_DETAIL.EDIT' | translate }}
       </a>
       <button class="btn btn-danger" (click)="deleteStaff()">
-        <span class="material-icons-round">delete</span> حذف
+        <span class="material-icons-round">delete</span> {{ 'STAFF_DETAIL.DELETE' | translate }}
       </button>
     </div>
   </div>
@@ -30,27 +30,27 @@
       <span class="material-icons-round">notification_important</span>
     </div>
     <div class="banner-content">
-      <h3>تنبيه حالة الوثائق الرسمية</h3>
-      <p>يوجد وثائق تحتاج إلى تجديد أو مراجعة لهذا العضو.</p>
+      <h3>{{ 'STAFF_DETAIL.WARNING_TITLE' | translate }}</h3>
+      <p>{{ 'STAFF_DETAIL.WARNING_DESC' | translate }}</p>
     </div>
   </div>
 
   <!-- Personal Data -->
   <div class="detail-card">
-    <h2 class="card-title"><span class="material-icons-round">person</span> البيانات الشخصية</h2>
+    <h2 class="card-title"><span class="material-icons-round">person</span> {{ 'STAFF_DETAIL.BASIC_INFO' | translate }}</h2>
     <div class="info-grid">
-      <div class="info-item"><label>الاسم بالعربي</label><span>{{ staff.fullNameAr }}</span></div>
-      <div class="info-item"><label>الاسم بالإنجليزي</label><span>{{ staff.fullNameEn || '—' }}</span></div>
-      <div class="info-item"><label>الجنس</label><span>{{ staff.gender || '—' }}</span></div>
-      <div class="info-item"><label>الجنسية</label><span>{{ staff.nationality || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الميلاد</label><span>{{ staff.dateOfBirth || '—' }}</span></div>
-      <div class="info-item"><label>فصيلة الدم</label><span>{{ staff.bloodType || '—' }}</span></div>
-      <div class="info-item"><label>الهاتف</label><span dir="ltr">{{ staff.phone || '—' }}</span></div>
-      <div class="info-item"><label>البريد</label><span dir="ltr">{{ staff.email || '—' }}</span></div>
-      <div class="info-item"><label>مقر الإقامة</label><span>{{ staff.placeOfResidence || '—' }}</span></div>
-      <div class="info-item"><label>العنوان</label><span>{{ staff.homeAddress || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.NAME_AR' | translate }}</label><span>{{ staff.fullNameAr }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.NAME_EN' | translate }}</label><span>{{ staff.fullNameEn || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.GENDER' | translate }}</label><span>{{ staff.gender || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.NATIONALITY' | translate }}</label><span>{{ staff.nationality || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.DATE_OF_BIRTH' | translate }}</label><span>{{ staff.dateOfBirth || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.BLOOD_TYPE' | translate }}</label><span>{{ staff.bloodType || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PHONE' | translate }}</label><span dir="ltr">{{ staff.phone || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.EMAIL' | translate }}</label><span dir="ltr">{{ staff.email || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PLACE_OF_RESIDENCE' | translate }}</label><span>{{ staff.placeOfResidence || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.HOME_ADDRESS' | translate }}</label><span>{{ staff.homeAddress || '—' }}</span></div>
       <div class="info-item">
-        <label>المسمى الوظيفي</label><span>{{ staff.jobTitle || '—' }}</span>
+        <label>{{ 'STAFF_FORM.JOB_TITLE' | translate }}</label><span>{{ staff.jobTitle || '—' }}</span>
       </div>
     </div>
   </div>
@@ -58,116 +58,116 @@
   <!-- Passport -->
   <div class="detail-card">
     <div class="card-header-row">
-      <h2 class="card-title"><span class="material-icons-round">card_travel</span> بيانات الجواز</h2>
+      <h2 class="card-title"><span class="material-icons-round">card_travel</span> {{ 'STAFF_FORM.SECTION_PASSPORT' | translate }}</h2>
       <span class="status-chip" *ngIf="docInfo('PASSPORT')" [class]="'status-' + docInfo('PASSPORT')?.status?.toLowerCase()">
-        {{ docInfo('PASSPORT')?.statusLabelAr }}
+        {{ getDocStatusLabel(docInfo('PASSPORT')) }}
       </span>
     </div>
     <div class="info-grid">
-      <div class="info-item"><label>رقم الجواز</label><span>{{ staff.passportNumber || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الإصدار</label><span>{{ staff.passportIssueDate || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الانتهاء</label><span>{{ staff.passportExpiry || '—' }}</span></div>
-      <div class="info-item"><label>الحالة</label><span>{{ staff.passportStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PASSPORT_NUMBER' | translate }}</label><span>{{ staff.passportNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PASSPORT_ISSUE_DATE' | translate }}</label><span>{{ staff.passportIssueDate || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PASSPORT_EXPIRY' | translate }}</label><span>{{ staff.passportExpiry || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.PASSPORT_STATUS' | translate }}</label><span>{{ staff.passportStatus || '—' }}</span></div>
     </div>
   </div>
 
   <!-- Iqama -->
   <div class="detail-card">
     <div class="card-header-row">
-      <h2 class="card-title"><span class="material-icons-round">badge</span> بيانات الإقامة</h2>
+      <h2 class="card-title"><span class="material-icons-round">badge</span> {{ 'STAFF_FORM.SECTION_IQAMA' | translate }}</h2>
       <span class="status-chip" *ngIf="docInfo('IQAMA')" [class]="'status-' + docInfo('IQAMA')?.status?.toLowerCase()">
-        {{ docInfo('IQAMA')?.statusLabelAr }}
+        {{ getDocStatusLabel(docInfo('IQAMA')) }}
       </span>
     </div>
     <div class="info-grid">
-      <div class="info-item"><label>رقم الإقامة</label><span>{{ staff.iqamaNumber || '—' }}</span></div>
-      <div class="info-item"><label>المهنة</label><span>{{ staff.iqamaOccupation || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الانتهاء</label><span>{{ staff.iqamaExpiry || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ التجديد</label><span>{{ staff.iqamaExpiryRenewed || '—' }}</span></div>
-      <div class="info-item"><label>الحالة</label><span>{{ staff.iqamaStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.IQAMA_NUMBER' | translate }}</label><span>{{ staff.iqamaNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.IQAMA_OCCUPATION' | translate }}</label><span>{{ staff.iqamaOccupation || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.IQAMA_EXPIRY' | translate }}</label><span>{{ staff.iqamaExpiry || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.IQAMA_RENEWAL' | translate }}</label><span>{{ staff.iqamaExpiryRenewed || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.IQAMA_STATUS' | translate }}</label><span>{{ staff.iqamaStatus || '—' }}</span></div>
     </div>
   </div>
 
   <!-- Contract & Work Permit -->
   <div class="detail-card">
     <div class="card-header-row">
-      <h2 class="card-title"><span class="material-icons-round">description</span> بيانات عقد قوى ورخصة العمل</h2>
+      <h2 class="card-title"><span class="material-icons-round">description</span> {{ 'STAFF_FORM.SECTION_QIWA' | translate }}</h2>
       <div class="chip-group">
         <span class="status-chip" *ngIf="docInfo('QIWA_CONTRACT')" [class]="'status-' + docInfo('QIWA_CONTRACT')?.status?.toLowerCase()">
-          عقد قوى: {{ docInfo('QIWA_CONTRACT')?.statusLabelAr }}
+          {{ 'STAFF_DETAIL.QIWA_CONTRACT' | translate }}: {{ getDocStatusLabel(docInfo('QIWA_CONTRACT')) }}
         </span>
         <span class="status-chip" *ngIf="docInfo('WORK_PERMIT')" [class]="'status-' + docInfo('WORK_PERMIT')?.status?.toLowerCase()">
-          تصريح العمل: {{ docInfo('WORK_PERMIT')?.statusLabelAr }}
+          {{ 'STAFF_DETAIL.WORK_PERMIT' | translate }}: {{ getDocStatusLabel(docInfo('WORK_PERMIT')) }}
         </span>
       </div>
     </div>
     <div class="info-grid">
-      <div class="info-item"><label>رقم عقد قوى</label><span>{{ staff.qiwaContractNumber || '—' }}</span></div>
-      <div class="info-item"><label>رقم المنشأة</label><span>{{ staff.establishmentNumber || '—' }}</span></div>
-      <div class="info-item"><label>بداية العقد</label><span>{{ staff.qiwaContractStart || '—' }}</span></div>
-      <div class="info-item"><label>نهاية العقد</label><span>{{ staff.qiwaContractEnd || '—' }}</span></div>
-      <div class="info-item"><label>حالة العقد</label><span>{{ staff.qiwaContractStatus || '—' }}</span></div>
-      <div class="info-item"><label>تصريح العمل</label><span>{{ staff.workPermitExpiry || '—' }}</span></div>
-      <div class="info-item"><label>حالة التصريح</label><span>{{ staff.workPermitStatus || '—' }}</span></div>
-      <div class="info-item"><label>الشركة المنتسب لها</label><span>{{ staff.affiliatedCompany || '—' }}</span></div>
-      <div class="info-item"><label>رقم السجل التجاري</label><span>{{ staff.crNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.QIWA_NUMBER' | translate }}</label><span>{{ staff.qiwaContractNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.ESTABLISHMENT_NUMBER' | translate }}</label><span>{{ staff.establishmentNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.CONTRACT_START' | translate }}</label><span>{{ staff.qiwaContractStart || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.CONTRACT_END' | translate }}</label><span>{{ staff.qiwaContractEnd || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.CONTRACT_STATUS' | translate }}</label><span>{{ staff.qiwaContractStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.WORK_PERMIT_EXPIRY' | translate }}</label><span>{{ staff.workPermitExpiry || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.WORK_PERMIT_STATUS' | translate }}</label><span>{{ staff.workPermitStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.AFFILIATED_COMPANY' | translate }}</label><span>{{ staff.affiliatedCompany || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.CR_NUMBER' | translate }}</label><span>{{ staff.crNumber || '—' }}</span></div>
     </div>
   </div>
 
   <!-- Insurance -->
   <div class="detail-card">
     <div class="card-header-row">
-      <h2 class="card-title"><span class="material-icons-round">health_and_safety</span> بيانات التأمين</h2>
+      <h2 class="card-title"><span class="material-icons-round">health_and_safety</span> {{ 'STAFF_FORM.SECTION_INSURANCE' | translate }}</h2>
       <span class="status-chip" *ngIf="docInfo('MEDICAL_INSURANCE')" [class]="'status-' + docInfo('MEDICAL_INSURANCE')?.status?.toLowerCase()">
-        {{ docInfo('MEDICAL_INSURANCE')?.statusLabelAr }}
+        {{ getDocStatusLabel(docInfo('MEDICAL_INSURANCE')) }}
       </span>
     </div>
     <div class="info-grid">
-      <div class="info-item"><label>رقم التأمين</label><span>{{ staff.insuranceNumber || '—' }}</span></div>
-      <div class="info-item"><label>الفئة</label><span>{{ staff.insuranceCategory || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الإصدار</label><span>{{ staff.insuranceIssueDate || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ الانتهاء</label><span>{{ staff.insuranceExpiry || '—' }}</span></div>
-      <div class="info-item"><label>شركة التأمين</label><span>{{ staff.insuranceCompany || '—' }}</span></div>
-      <div class="info-item"><label>الحالة</label><span>{{ staff.insuranceStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_NUMBER' | translate }}</label><span>{{ staff.insuranceNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_CATEGORY' | translate }}</label><span>{{ staff.insuranceCategory || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_ISSUE_DATE' | translate }}</label><span>{{ staff.insuranceIssueDate || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_EXPIRY' | translate }}</label><span>{{ staff.insuranceExpiry || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_COMPANY' | translate }}</label><span>{{ staff.insuranceCompany || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.INSURANCE_STATUS' | translate }}</label><span>{{ staff.insuranceStatus || '—' }}</span></div>
     </div>
   </div>
 
   <!-- Salary -->
   <div class="detail-card">
-    <h2 class="card-title"><span class="material-icons-round">payments</span> بيانات الراتب</h2>
+    <h2 class="card-title"><span class="material-icons-round">payments</span> {{ 'STAFF_FORM.SECTION_SALARY' | translate }}</h2>
     <div class="info-grid">
-      <div class="info-item"><label>الراتب الأساسي</label><span class="money">{{ staff.basicSalary | number:'1.2-2' }}</span></div>
-      <div class="info-item"><label>بدل السكن</label><span class="money">{{ staff.housingAllowance | number:'1.2-2' }}</span></div>
-      <div class="info-item"><label>بدلات أخرى</label><span class="money">{{ staff.otherAllowances | number:'1.2-2' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.BASIC_SALARY' | translate }}</label><span class="money">{{ staff.basicSalary | number:'1.2-2' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.HOUSING_ALLOWANCE' | translate }}</label><span class="money">{{ staff.housingAllowance | number:'1.2-2' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.OTHER_ALLOWANCES' | translate }}</label><span class="money">{{ staff.otherAllowances | number:'1.2-2' }}</span></div>
       <div class="info-item highlight">
-        <label>إجمالي الراتب</label>
-        <span class="money total">{{ (staff.basicSalary + staff.housingAllowance + staff.otherAllowances) | number:'1.2-2' }} ر.س</span>
+        <label>{{ 'STAFF_DETAIL.TOTAL_SALARY' | translate }}</label>
+        <span class="money total">{{ (staff.basicSalary + staff.housingAllowance + staff.otherAllowances) | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
       </div>
     </div>
   </div>
 
   <!-- Bank & License -->
   <div class="detail-card">
-    <h2 class="card-title"><span class="material-icons-round">account_balance</span> بيانات الرخصة والبنك</h2>
+    <h2 class="card-title"><span class="material-icons-round">account_balance</span> {{ 'STAFF_FORM.SECTION_LICENCE_BANK' | translate }}</h2>
     <div class="info-grid">
-      <div class="info-item"><label>رخصة قيادة</label><span>{{ staff.hasLicence ? 'نعم' : 'لا' }}</span></div>
-      <div class="info-item" *ngIf="staff.hasLicence"><label>انتهاء الرخصة</label><span>{{ staff.licenceExpiry || '—' }}</span></div>
-      <div class="info-item" *ngIf="staff.hasLicence"><label>حالة الرخصة</label><span>{{ staff.licenceStatus || '—' }}</span></div>
-      <div class="info-item"><label>اسم البنك</label><span>{{ staff.bankName || '—' }}</span></div>
-      <div class="info-item"><label>رقم الحساب</label><span dir="ltr">{{ staff.bankAccountNumber || '—' }}</span></div>
-      <div class="info-item"><label>فترة التجربة</label><span>{{ staff.trialPeriodDays ? staff.trialPeriodDays + ' يوم' : '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.HAS_LICENCE' | translate }}</label><span>{{ staff.hasLicence ? ('COMMON.YES' | translate) : ('COMMON.NO' | translate) }}</span></div>
+      <div class="info-item" *ngIf="staff.hasLicence"><label>{{ 'STAFF_FORM.LICENCE_EXPIRY' | translate }}</label><span>{{ staff.licenceExpiry || '—' }}</span></div>
+      <div class="info-item" *ngIf="staff.hasLicence"><label>{{ 'STAFF_FORM.LICENCE_STATUS' | translate }}</label><span>{{ staff.licenceStatus || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.BANK_NAME' | translate }}</label><span>{{ staff.bankName || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.BANK_ACCOUNT' | translate }}</label><span dir="ltr">{{ staff.bankAccountNumber || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.TRIAL_PERIOD' | translate }}</label><span>{{ staff.trialPeriodDays ? staff.trialPeriodDays + ' ' + ('STAFF_DETAIL.DAYS_UNIT' | translate) : '—' }}</span></div>
     </div>
   </div>
 
   <!-- Employment -->
   <div class="detail-card">
-    <h2 class="card-title"><span class="material-icons-round">work</span> حالة التوظيف</h2>
+    <h2 class="card-title"><span class="material-icons-round">work</span> {{ 'STAFF_FORM.SECTION_EMPLOYMENT' | translate }}</h2>
     <div class="info-grid">
-      <div class="info-item"><label>تاريخ الالتحاق</label><span>{{ staff.joinDate || '—' }}</span></div>
-      <div class="info-item"><label>تاريخ المغادرة</label><span>{{ staff.leaveDate || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.JOIN_DATE' | translate }}</label><span>{{ staff.joinDate || '—' }}</span></div>
+      <div class="info-item"><label>{{ 'STAFF_FORM.LEAVE_DATE' | translate }}</label><span>{{ staff.leaveDate || '—' }}</span></div>
     </div>
     <div class="notes-section" *ngIf="staff.notes">
-      <label>ملاحظات</label>
+      <label>{{ 'COMMON.NOTES' | translate }}</label>
       <p>{{ staff.notes }}</p>
     </div>
   </div>
@@ -176,10 +176,10 @@
   <div class="detail-card">
     <h2 class="card-title">
       <span class="material-icons-round">folder</span>
-      المستندات
+      {{ 'STAFF_DETAIL.DOCUMENTS' | translate }}
     </h2>
     <div class="empty-docs" *ngIf="!staff.documents || staff.documents.length === 0" style="text-align: center; color: var(--text-muted, #888); padding: 1rem;">
-      <p>لا توجد مستندات مرفوعة</p>
+      <p>{{ 'STAFF_DETAIL.NO_DOCUMENTS' | translate }}</p>
     </div>
     <app-document-gallery *ngIf="staff.documents && staff.documents.length > 0"
                           [documents]="staff.documents" apiPrefix="staff"></app-document-gallery>
@@ -188,5 +188,5 @@
 
 <div class="loading-state" *ngIf="isLoading">
   <div class="spinner"></div>
-  <span>جاري التحميل...</span>
+  <span>{{ 'COMMON.LOADING' | translate }}</span>
 </div>

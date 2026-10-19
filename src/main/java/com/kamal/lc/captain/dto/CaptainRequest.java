@@ -51,8 +51,10 @@ public class CaptainRequest {
     // Iqama
     private String iqamaNumber;
     private String iqamaOccupation;
+    private LocalDate idExpiryDate;
     private LocalDate iqamaExpiry;
     private LocalDate iqamaExpiryRenewed;
+    private String borderNumber;
     private String iqamaStatus;
 
     // Qiwa
@@ -72,6 +74,7 @@ public class CaptainRequest {
 
     // Driving Licence
     private String drivingLicenceNo;
+    private String licenceType;
     private LocalDate licenceExpiry;
     private boolean hasLicence;
     private String licenceStatus;
@@ -99,6 +102,8 @@ public class CaptainRequest {
     private BigDecimal fuelAllowanceAmount;
     private BigDecimal callInternetAllowance;
     private BigDecimal rewardAllowance;
+    private BigDecimal salaryDeductions;
+    private BigDecimal netSalary;
 
     // Vehicle & Fuel flags
     private boolean usesOwnVehicle;

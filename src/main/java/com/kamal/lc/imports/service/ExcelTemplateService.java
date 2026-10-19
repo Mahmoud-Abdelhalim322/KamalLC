@@ -25,17 +25,133 @@ public class ExcelTemplateService {
      * other documents, so a sheet someone already filled in keeps every column where it was.
      */
     public static final List<String> TEMPLATE_HEADERS = List.of(
-            "ID-KSLSC", "ID - NINJA", "اسم الكابتن", "الهاتف", "الجنسية",
-            "تاريخ الميلاد", "البريد الالكتروني", "رقم الإقامة", "انتهاء الإقامة",
-            "رقم الجواز", "انتهاء الجواز", "رقم الرخصة", "انتهاء الرخصة",
-            "انتهاء رخصة العمل", "رقم التأمين", "شركة التأمين", "انتهاء التأمين");
+            "الرقم الوظيفي\nJob ID",
+            "معرف التطبيق\nID-APP",
+            "الاسم",
+            "Name",
+            "الجنس\nGender",
+            "الجنسية\nNationality",
+            "تاريخ الميلاد\nDate of birth",
+            "جوال\nPhone no",
+            "مدينة\nCity",
+            "عنوان السكن\nHome Address",
+            "البريد الالكتروني\nE-mail",
+            // Passport
+            "رقم الجواز\nPassport No",
+            "تاريخ الاصدار\nIssue Date",
+            "تاريخ الانتهاء\nExpiry Date",
+            "حالة الجواز\nPassport status",
+            // Iqama
+            "رقم الهوية / الاقامة\nIdentity / residence no",
+            "المهنة بالاقامة\nIqama Occu",
+            "تاريخ انتهاء الهوية\nID Expiry Date",
+            "تاريخ انتهاء الاقامة\nExpiry Iqama",
+            "تاريخ تجديد الاقامة\nRenew Iqama",
+            "رقم الحدود\nBorder no",
+            "حالة الاقامة\nResidence status",
+            // Qiwa
+            "رقم المنشأة\nEstablish no",
+            "رقم عقد قوى\nQiwa cont no",
+            "تاريخ بداية عقد قوى\nQiwa Start Date",
+            "تاريخ انتهاء عقد قوى\nQiwa Expiry Date",
+            "حالة عقد قوى\nQiwa status",
+            // Work Permit
+            "تاريخ انتهاء رخصة العمل\nWork Expire Date",
+            "حالة رخصة العمل\nWork Permit status",
+            // Insurance
+            "اسم شركة التأمين\nInsur Company Name",
+            "رقم وثيقة التأمين\nInsur Polcy No",
+            "فئة التأمين\nInsur Categ",
+            "تاريخ إصدار التأمين\nIssue Date",
+            "تاريخ انتهاء التأمين\nExpiry Date",
+            "حالة التأمين\nInsur Status",
+            // Company
+            "رقم السجل التجاري\nCR No",
+            "الشركة التابع لها\nAffiliated Company",
+            // Driving Licence
+            "رقم الرخصة\nLicense ID",
+            "نوع الرخصة\nLicense Type",
+            "تاريخ انتهاء الرخصة\nLicense Expiry",
+            // Personal
+            "فصيلة الدم\nBlood type",
+            // Bank
+            "اسم البنك\nBank Name",
+            "رقم الحساب البنكي\nBank IBAN",
+            // Job
+            "القسم\nSection",
+            "المسمى الوظيفي\nJob Title",
+            "تاريخ المباشرة\nWork start date",
+            // Salary
+            "الراتب الأساسي\nBasic Salry",
+            "بدل السكن\nHousing Allow",
+            "بدل مواصلات\nTrans Allow",
+            "خصومات\nDeduction",
+            "صافي الراتب\nNet Salry");
 
     /** One filled-in row so the expected date and ID formats are obvious. */
     private static final List<String> SAMPLE_ROW = List.of(
-            "KSC0001", "1234567", "محمد أحمد", "0501234567", "مصري",
-            "1990-05-12", "captain@example.com", "2412345678", "2026-08-30",
-            "A12345678", "2028-01-15", "L9876543", "2027-03-01",
-            "2026-11-20", "INS-556677", "شركة أمانة للتأمين التعاوني", "2027-01-31");
+            "KSC0001",
+            "1001",
+            "محمد أحمد",
+            "Mohammed Ahmed",
+            "ذكر",
+            "سعودي",
+            "1990-05-12",
+            "0501234567",
+            "الرياض",
+            "حي النسيم - شارع 10",
+            "captain@example.com",
+            // Passport
+            "A12345678",
+            "2020-01-15",
+            "2030-01-15",
+            "ساري",
+            // Iqama
+            "1023456789",
+            "سائق",
+            "2028-06-30",
+            "2028-06-30",
+            "2024-06-30",
+            "3001234567",
+            "ساري",
+            // Qiwa
+            "7001234567",
+            "QW-123456",
+            "2025-01-01",
+            "2027-01-01",
+            "ساري",
+            // Work Permit
+            "2026-11-20",
+            "ساري",
+            // Insurance
+            "شركة بوبا للتأمين",
+            "INS-556677",
+            "B",
+            "2026-01-01",
+            "2027-01-31",
+            "ساري",
+            // Company
+            "1010123456",
+            "شركة كمال للخدمات",
+            // Driving Licence
+            "L9876543",
+            "خصوصي",
+            "2027-03-01",
+            // Personal
+            "O+",
+            // Bank
+            "بنك الراجحي",
+            "SA1234567890123456789012",
+            // Job
+            "التوصيل",
+            "كابتن توصيل",
+            "2025-06-01",
+            // Salary
+            "3000",
+            "500",
+            "300",
+            "0",
+            "3800");
 
     /**
      * The supplier's own export layout, header for header. Users normally upload that
@@ -229,11 +345,12 @@ public class ExcelTemplateService {
 
     private void writeHeaderRow(Sheet sheet, List<String> headers, CellStyle style) {
         Row headerRow = sheet.createRow(0);
+        headerRow.setHeightInPoints(34);
         for (int i = 0; i < headers.size(); i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers.get(i));
             cell.setCellStyle(style);
-            sheet.setColumnWidth(i, 18 * 256);
+            sheet.setColumnWidth(i, 20 * 256);
         }
     }
 
@@ -244,6 +361,8 @@ public class ExcelTemplateService {
         CellStyle style = workbook.createCellStyle();
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return style;

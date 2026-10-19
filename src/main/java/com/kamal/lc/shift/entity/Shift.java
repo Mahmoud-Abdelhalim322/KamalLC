@@ -174,6 +174,16 @@ public class Shift implements TenantAware {
     @Column(name = "supplier_deduction_reason", length = 500)
     private String supplierDeductionReason;
 
+    @Column(name = "supplier_deduction_excluded", nullable = false)
+    @Builder.Default
+    private boolean supplierDeductionExcluded = false;
+
+    @Column(name = "supplier_deduction_original", precision = 12, scale = 2)
+    private BigDecimal supplierDeductionOriginal;
+
+    @Column(name = "supplier_deduction_exclusion_reason", length = 500)
+    private String supplierDeductionExclusionReason;
+
     @Column(name = "calc_note", length = 500)
     private String calcNote;
 

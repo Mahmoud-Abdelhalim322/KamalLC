@@ -5,23 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, DocumentInfo, StaffDetailResponse, StaffRequest } from '../../core/models/api.models';
 import { DocumentGalleryComponent } from '../../shared/components/document-gallery/document-gallery.component';
-
-const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  PERSONAL_PHOTO: 'صورة شخصية',
-  ID_CARD: 'بطاقة هوية',
-  IQAMA: 'إقامة',
-  PASSPORT: 'جواز سفر',
-  DRIVING_LICENCE: 'رخصة قيادة',
-  CONTRACT: 'عقد عمل',
-  WORK_PERMIT: 'تصريح عمل',
-  INSURANCE: 'تأمين طبي',
-  OTHER: 'أخرى'
-};
+import { TranslationService, TranslatePipe } from '../../core/i18n';
 
 @Component({
   selector: 'app-staff-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DocumentGalleryComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DocumentGalleryComponent, TranslatePipe],
   templateUrl: './staff-form.component.html',
   styleUrls: ['./staff-form.component.scss']
 })
@@ -48,7 +37,8 @@ export class StaffFormComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -69,8 +59,12 @@ export class StaffFormComponent implements OnInit {
   }
 
   get pageTitle(): string {
-    if (this.isEdit) return this.staffType === 'MANAGER' ? 'تعديل إداري' : 'تعديل عامل';
-    return this.staffType === 'MANAGER' ? 'إضافة إداري جديد' : 'إضافة عامل جديد';
+    if (this.isEdit) return this.staffType === 'MANAGER'
+      ? this.translationService.translate('STAFF_FORM.EDIT_MANAGER')
+      : this.translationService.translate('STAFF_FORM.EDIT_WORKER');
+    return this.staffType === 'MANAGER'
+      ? this.translationService.translate('STAFF_FORM.ADD_MANAGER')
+      : this.translationService.translate('STAFF_FORM.ADD_WORKER');
   }
 
   get backRoute(): string {
@@ -139,7 +133,7 @@ export class StaffFormComponent implements OnInit {
 
   uploadDocument(): void {
     if (!this.selectedFile || !this.staffId) {
-      this.documentError = 'يرجى اختيار ملف أولاً';
+      this.documentError = this.translationService.translate('STAFF_FORM.SELECT_FILE_FIRST');
       return;
     }
 
@@ -164,12 +158,12 @@ export class StaffFormComponent implements OnInit {
             const input = document.getElementById('staffDocumentFile') as HTMLInputElement | null;
             if (input) { input.value = ''; }
           } else {
-            this.documentError = res.message || 'فشل رفع المستند';
+            this.documentError = res.message || this.translationService.translate('STAFF_FORM.UPLOAD_FAILED');
           }
         },
         error: (err) => {
           this.isUploading = false;
-          this.documentError = err?.error?.message || 'فشل رفع المستند';
+          this.documentError = err?.error?.message || this.translationService.translate('STAFF_FORM.UPLOAD_FAILED');
         }
       });
   }
@@ -179,7 +173,7 @@ export class StaffFormComponent implements OnInit {
   }
 
   getDocTypeLabel(type: string): string {
-    return DOCUMENT_TYPE_LABELS[type] || type;
+    return this.translationService.translate('DOC_TYPES.' + type) || type;
   }
 
   private mapDetailToForm(d: StaffDetailResponse): void {

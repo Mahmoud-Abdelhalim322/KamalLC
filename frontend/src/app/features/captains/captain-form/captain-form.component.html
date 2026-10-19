@@ -2,15 +2,15 @@
   <div class="form-header">
     <a routerLink="/captains" class="back-link">
       <span class="material-icons-round">arrow_forward</span>
-      العودة لقائمة الكباتن
+      {{ 'CAPTAIN_FORM.BACK_TO_LIST' | translate }}
     </a>
-    <h1 class="page-title">{{ isEditMode ? 'تعديل بيانات الكابتن' : 'إضافة كابتن جديد' }}</h1>
+    <h1 class="page-title">{{ isEditMode ? ('CAPTAIN_FORM.EDIT_TITLE' | translate) : ('CAPTAIN_FORM.ADD_TITLE' | translate) }}</h1>
     <p class="page-subtitle" *ngIf="isEditMode">ID-KSLSC: <span class="code">{{ kamalCode }}</span></p>
   </div>
 
   <div class="loading-container" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جاري تحميل البيانات...</p>
+    <p>{{ 'CAPTAIN_FORM.LOADING' | translate }}</p>
   </div>
 
   <div class="alert alert-error" *ngIf="errorMessage">
@@ -25,16 +25,16 @@
 
   <form [formGroup]="form" (ngSubmit)="save()" *ngIf="!isLoading">
 
-    <!-- ===== البيانات الأساسية ===== -->
+    <!-- ===== Basic Data ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">badge</span>
-        البيانات الأساسية
+        {{ 'CAPTAIN_FORM.SECTION_BASIC' | translate }}
       </h2>
 
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">نوع الكابتن *</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.CAPTAIN_TYPE' | translate }}</label>
           <select class="form-input" formControlName="captainType" (change)="onTypeChange()">
             <option value="EMPLOYEE">KSC</option>
             <option value="FREELANCE">KSCFL</option>
@@ -46,45 +46,45 @@
           <input class="form-input readonly-input" [value]="kamalCode || '...'" readonly>
           <p class="field-hint">
             <span class="material-icons-round">auto_awesome</span>
-            {{ isEditMode ? 'الكود ثابت ولا يمكن تعديله' : 'يُولَّد تلقائياً حسب النوع المختار' }}
+            {{ isEditMode ? ('CAPTAIN_FORM.CODE_FIXED' | translate) : ('CAPTAIN_FORM.CODE_AUTO' | translate) }}
           </p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">الاسم بالعربية *</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.NAME_AR' | translate }}</label>
           <input class="form-input" formControlName="fullNameAr"
-                 [class.error]="isInvalid('fullNameAr')" placeholder="الاسم الرباعي">
-          <p class="form-error" *ngIf="isInvalid('fullNameAr')">الاسم بالعربية مطلوب</p>
+                 [class.error]="isInvalid('fullNameAr')" [placeholder]="'CAPTAIN_FORM.NAME_AR_PLACEHOLDER' | translate">
+          <p class="form-error" *ngIf="isInvalid('fullNameAr')">{{ 'CAPTAIN_FORM.NAME_AR_REQUIRED' | translate }}</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">الاسم بالإنجليزية</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.NAME_EN' | translate }}</label>
           <input class="form-input" formControlName="fullNameEn" placeholder="Full name">
         </div>
 
         <div class="form-group">
-          <label class="form-label">الجنس</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.GENDER' | translate }}</label>
           <select class="form-input" formControlName="gender">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="MALE">ذكر</option>
-            <option value="FEMALE">أنثى</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="MALE">{{ 'COMMON.MALE' | translate }}</option>
+            <option value="FEMALE">{{ 'COMMON.FEMALE' | translate }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">الجنسية</label>
-          <input class="form-input" formControlName="nationality" placeholder="مثال: مصري">
+          <label class="form-label">{{ 'CAPTAIN_FORM.NATIONALITY' | translate }}</label>
+          <input class="form-input" formControlName="nationality" [placeholder]="'CAPTAIN_FORM.NATIONALITY_PLACEHOLDER' | translate">
         </div>
 
         <div class="form-group">
-          <label class="form-label">تاريخ الميلاد</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.DATE_OF_BIRTH' | translate }}</label>
           <input class="form-input" type="date" formControlName="dateOfBirth">
         </div>
 
         <div class="form-group">
-          <label class="form-label">فصيلة الدم</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.BLOOD_TYPE' | translate }}</label>
           <select class="form-input" formControlName="bloodType">
-            <option [ngValue]="null">— اختر —</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
             <option value="A+">A+</option>
             <option value="A-">A-</option>
             <option value="B+">B+</option>
@@ -98,392 +98,412 @@
       </div>
     </section>
 
-    <!-- ===== بيانات التواصل ===== -->
+    <!-- ===== Contact ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">phone</span>
-        بيانات التواصل والإقامة
+        {{ 'CAPTAIN_FORM.SECTION_CONTACT' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم الجوال</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.PHONE' | translate }}</label>
           <input class="form-input" formControlName="phone" placeholder="05xxxxxxxx" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">البريد الإلكتروني</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.EMAIL' | translate }}</label>
           <input class="form-input" type="email" formControlName="email"
                  [class.error]="isInvalid('email')" dir="ltr" placeholder="name@example.com">
-          <p class="form-error" *ngIf="isInvalid('email')">البريد الإلكتروني غير صالح</p>
+          <p class="form-error" *ngIf="isInvalid('email')">{{ 'CAPTAIN_FORM.EMAIL_INVALID' | translate }}</p>
         </div>
         <div class="form-group">
-          <label class="form-label">مكان الإقامة</label>
-          <input class="form-input" formControlName="placeOfResidence" placeholder="المدينة">
+          <label class="form-label">{{ 'CAPTAIN_FORM.PLACE_OF_RESIDENCE' | translate }}</label>
+          <input class="form-input" formControlName="placeOfResidence" [placeholder]="'CAPTAIN_FORM.PLACE_PLACEHOLDER' | translate">
         </div>
         <div class="form-group">
-          <label class="form-label">العنوان</label>
-          <input class="form-input" formControlName="homeAddress" placeholder="الحي / الشارع">
+          <label class="form-label">{{ 'CAPTAIN_FORM.HOME_ADDRESS' | translate }}</label>
+          <input class="form-input" formControlName="homeAddress" [placeholder]="'CAPTAIN_FORM.ADDRESS_PLACEHOLDER' | translate">
         </div>
         <div class="form-group">
-          <label class="form-label">المسمى الوظيفي</label>
-          <input class="form-input" formControlName="jobTitle" placeholder="كابتن توصيل">
+          <label class="form-label">{{ 'CAPTAIN_FORM.JOB_TITLE' | translate }}</label>
+          <input class="form-input" formControlName="jobTitle" [placeholder]="'CAPTAIN_FORM.JOB_PLACEHOLDER' | translate">
         </div>
         <div class="form-group">
-          <label class="form-label">رقم تطبيق النينجا</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.APP_ID' | translate }}</label>
           <input class="form-input" formControlName="appId" dir="ltr">
         </div>
       </div>
     </section>
 
-    <!-- ===== جواز السفر ===== -->
+    <!-- ===== Passport ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">flight</span>
-        جواز السفر
+        {{ 'CAPTAIN_FORM.SECTION_PASSPORT' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم الجواز</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.PASSPORT_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="passportNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ الإصدار</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.PASSPORT_ISSUE_DATE' | translate }}</label>
           <input class="form-input" type="date" formControlName="passportIssueDate">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ الانتهاء</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.PASSPORT_EXPIRY' | translate }}</label>
           <input class="form-input" type="date" formControlName="passportExpiry">
         </div>
         <div class="form-group">
-          <label class="form-label">الحالة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.PASSPORT_STATUS' | translate }}</label>
           <select class="form-input" formControlName="passportStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </section>
 
-    <!-- ===== الإقامة ===== -->
+    <!-- ===== Iqama ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">contact_page</span>
-        الإقامة
+        {{ 'CAPTAIN_FORM.SECTION_IQAMA' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم الإقامة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.IQAMA_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="iqamaNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">المهنة في الإقامة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.IQAMA_OCCUPATION' | translate }}</label>
           <input class="form-input" formControlName="iqamaOccupation">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء الإقامة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.ID_EXPIRY_DATE' | translate }}</label>
+          <input class="form-input" type="date" formControlName="idExpiryDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'CAPTAIN_FORM.IQAMA_EXPIRY' | translate }}</label>
           <input class="form-input" type="date" formControlName="iqamaExpiry">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ الانتهاء بعد التجديد</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.IQAMA_EXPIRY_RENEWED' | translate }}</label>
           <input class="form-input" type="date" formControlName="iqamaExpiryRenewed">
         </div>
         <div class="form-group">
-          <label class="form-label">حالة الإقامة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.BORDER_NUMBER' | translate }}</label>
+          <input class="form-input" formControlName="borderNumber" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'CAPTAIN_FORM.IQAMA_STATUS' | translate }}</label>
           <select class="form-input" formControlName="iqamaStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </section>
 
-    <!-- ===== عقد قوى ورخصة العمل ===== -->
+    <!-- ===== Qiwa & Work Permit ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">description</span>
-        عقد قوى ورخصة العمل
+        {{ 'CAPTAIN_FORM.SECTION_QIWA' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم عقد قوى</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.QIWA_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="qiwaContractNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">رقم المنشأة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.ESTABLISHMENT_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="establishmentNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">بداية عقد قوى</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.QIWA_START' | translate }}</label>
           <input class="form-input" type="date" formControlName="qiwaContractStart">
         </div>
         <div class="form-group">
-          <label class="form-label">نهاية عقد قوى</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.QIWA_END' | translate }}</label>
           <input class="form-input" type="date" formControlName="qiwaContractEnd">
         </div>
         <div class="form-group">
-          <label class="form-label">حالة عقد قوى</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.QIWA_STATUS' | translate }}</label>
           <select class="form-input" formControlName="qiwaContractStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء رخصة العمل</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.WORK_PERMIT_EXPIRY' | translate }}</label>
           <input class="form-input" type="date" formControlName="workPermitExpiry">
         </div>
         <div class="form-group">
-          <label class="form-label">حالة رخصة العمل</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.WORK_PERMIT_STATUS' | translate }}</label>
           <select class="form-input" formControlName="workPermitStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">الشركة التابع لها</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.AFFILIATED_COMPANY' | translate }}</label>
           <input class="form-input" formControlName="affiliatedCompany">
         </div>
         <div class="form-group">
-          <label class="form-label">رقم السجل التجاري</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.CR_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="crNumber" dir="ltr">
         </div>
       </div>
     </section>
 
-    <!-- ===== الرخصة والتأمين ===== -->
+    <!-- ===== Licence & Insurance ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">verified_user</span>
-        رخصة القيادة والتأمين
+        {{ 'CAPTAIN_FORM.SECTION_LICENCE' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم رخصة القيادة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.LICENCE_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="drivingLicenceNo" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء الرخصة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.LICENCE_TYPE' | translate }}</label>
+          <input class="form-input" formControlName="licenceType">
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'CAPTAIN_FORM.LICENCE_EXPIRY' | translate }}</label>
           <input class="form-input" type="date" formControlName="licenceExpiry">
         </div>
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" formControlName="hasLicence">
-            <span>يحمل رخصة قيادة</span>
+            <span>{{ 'CAPTAIN_FORM.HAS_LICENCE' | translate }}</span>
           </label>
         </div>
         <div class="form-group">
-          <label class="form-label">حالة الرخصة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.LICENCE_STATUS' | translate }}</label>
           <select class="form-input" formControlName="licenceStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">رقم التأمين</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_NUMBER' | translate }}</label>
           <input class="form-input" formControlName="insuranceNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">فئة التأمين</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_CATEGORY' | translate }}</label>
           <input class="form-input" formControlName="insuranceCategory">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ إصدار التأمين</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_ISSUE_DATE' | translate }}</label>
           <input class="form-input" type="date" formControlName="insuranceIssueDate">
         </div>
         <div class="form-group">
-          <label class="form-label">شركة التأمين الطبي</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_COMPANY' | translate }}</label>
           <input class="form-input" formControlName="insuranceCompany">
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ انتهاء التأمين</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_EXPIRY' | translate }}</label>
           <input class="form-input" type="date" formControlName="insuranceExpiry">
         </div>
         <div class="form-group">
-          <label class="form-label">حالة التأمين</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.INSURANCE_STATUS' | translate }}</label>
           <select class="form-input" formControlName="insuranceStatus">
-            <option [ngValue]="null">— اختر —</option>
-            <option value="ساري">ساري</option>
-            <option value="منتهي">منتهي</option>
-            <option value="علي وشك الانتهاء">علي وشك الانتهاء</option>
+            <option [ngValue]="null">{{ 'COMMON.SELECT_CHOOSE' | translate }}</option>
+            <option value="ساري">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="منتهي">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
+            <option value="علي وشك الانتهاء">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
           </select>
         </div>
       </div>
     </section>
 
-    <!-- ===== البيانات البنكية والراتب ===== -->
+    <!-- ===== Bank & Allowances ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">account_balance</span>
-        البيانات البنكية والبدلات
+        {{ 'CAPTAIN_FORM.SECTION_BANK' | translate }}
       </h2>
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">رقم الحساب البنكي</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.BANK_ACCOUNT' | translate }}</label>
           <input class="form-input" formControlName="bankAccountNumber" dir="ltr">
         </div>
         <div class="form-group">
-          <label class="form-label">اسم البنك</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.BANK_NAME' | translate }}</label>
           <input class="form-input" formControlName="bankName">
         </div>
         <div class="form-group">
-          <label class="form-label">الراتب الأساسي</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.BASIC_SALARY' | translate }}</label>
           <input class="form-input" type="number" formControlName="basicSalary" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">بدل السكن</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.HOUSING_ALLOWANCE' | translate }}</label>
           <input class="form-input" type="number" formControlName="housingAllowance" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">بدل النقل</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.TRANSPORT_ALLOWANCE' | translate }}</label>
           <input class="form-input" type="number" formControlName="transportationAllowance" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">بدل محروقات</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.FUEL_ALLOWANCE' | translate }}</label>
           <input class="form-input" type="number" formControlName="fuelAllowanceAmount" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">بدل اتصالات</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.COMM_ALLOWANCE' | translate }}</label>
           <input class="form-input" type="number" formControlName="callInternetAllowance" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">مكافأة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.REWARD' | translate }}</label>
           <input class="form-input" type="number" formControlName="rewardAllowance" dir="ltr" step="0.01">
         </div>
         <div class="form-group">
-          <label class="form-label">فترة التجربة (أيام)</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.SALARY_DEDUCTIONS' | translate }}</label>
+          <input class="form-input" type="number" formControlName="salaryDeductions" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'CAPTAIN_FORM.NET_SALARY' | translate }}</label>
+          <input class="form-input" type="number" formControlName="netSalary" dir="ltr" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'CAPTAIN_FORM.TRIAL_PERIOD' | translate }}</label>
           <input class="form-input" type="number" formControlName="trialPeriodDays" dir="ltr">
         </div>
       </div>
     </section>
 
-    <!-- ===== بيانات التوظيف ===== -->
+    <!-- ===== Employment Data ===== -->
     <section class="form-card">
       <h2 class="card-title">
         <span class="material-icons-round">work_outline</span>
-        بيانات التوظيف
+        {{ 'CAPTAIN_FORM.SECTION_EMPLOYMENT' | translate }}
       </h2>
 
       <div class="fields-grid">
         <div class="form-group">
-          <label class="form-label">الحالة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.STATUS_LABEL' | translate }}</label>
           <select class="form-input" formControlName="status">
-            <option value="ACTIVE">ساري</option>
-            <option value="INACTIVE">علي وشك الانتهاء</option>
-            <option value="TERMINATED">منتهي</option>
+            <option value="ACTIVE">{{ 'CAPTAIN_FORM.STATUS_ACTIVE' | translate }}</option>
+            <option value="INACTIVE">{{ 'CAPTAIN_FORM.STATUS_EXPIRING' | translate }}</option>
+            <option value="TERMINATED">{{ 'CAPTAIN_FORM.STATUS_EXPIRED' | translate }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">تاريخ الانضمام</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.JOIN_DATE' | translate }}</label>
           <input class="form-input" type="date" formControlName="joinDate">
         </div>
 
         <div class="form-group">
-          <label class="form-label">تاريخ المغادرة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.LEAVE_DATE' | translate }}</label>
           <input class="form-input" type="date" formControlName="leaveDate">
         </div>
 
         <div class="form-group">
-          <label class="form-label">هاتف العمل</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.WORK_PHONE' | translate }}</label>
           <input class="form-input" formControlName="workPhone" dir="ltr">
         </div>
 
         <div class="form-group">
-          <label class="form-label">القسم</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.DEPARTMENT' | translate }}</label>
           <input class="form-input" formControlName="department">
         </div>
 
         <div class="form-group">
-          <label class="form-label">الإدارة</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.SECTION' | translate }}</label>
           <input class="form-input" formControlName="section">
         </div>
 
         <div class="form-group">
-          <label class="form-label">المشرف</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.SUPERVISOR' | translate }}</label>
           <input class="form-input" formControlName="supervisor">
         </div>
 
         <div class="form-group">
-          <label class="form-label">موقع العمل</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.WORK_LOCATION' | translate }}</label>
           <input class="form-input" formControlName="workLocation">
         </div>
 
         <div class="form-group">
-          <label class="form-label">يعمل مع</label>
+          <label class="form-label">{{ 'CAPTAIN_FORM.WORK_WITH' | translate }}</label>
           <input class="form-input" formControlName="workWith">
         </div>
 
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" formControlName="usesOwnVehicle" (change)="onOwnVehicleChange()">
-            <span>يستخدم مركبته الخاصة</span>
+            <span>{{ 'CAPTAIN_FORM.USES_OWN_VEHICLE' | translate }}</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" formControlName="fuelAllowanceEligible">
-            <span>مستحق بدل بنزين</span>
+            <span>{{ 'CAPTAIN_FORM.FUEL_ELIGIBLE' | translate }}</span>
           </label>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">ملاحظات</label>
+        <label class="form-label">{{ 'COMMON.NOTES' | translate }}</label>
         <textarea class="form-input" formControlName="notes" rows="3"
-                  placeholder="أي ملاحظات إضافية عن الكابتن..."></textarea>
+                  [placeholder]="'CAPTAIN_FORM.NOTES_PLACEHOLDER' | translate"></textarea>
       </div>
     </section>
 
     <div class="form-actions">
-      <a routerLink="/captains" class="btn btn-outline">إلغاء</a>
+      <a routerLink="/captains" class="btn btn-outline">{{ 'COMMON.CANCEL' | translate }}</a>
       <button type="submit" class="btn btn-primary" [disabled]="isSaving">
         <span class="spinner spinner-sm" *ngIf="isSaving"></span>
         <span class="material-icons-round" *ngIf="!isSaving">save</span>
-        {{ isSaving ? 'جاري الحفظ...' : (isEditMode ? 'حفظ التعديلات' : 'حفظ وإضافة المستندات') }}
+        {{ isSaving ? ('COMMON.SAVING' | translate) : (isEditMode ? ('CAPTAIN_FORM.SAVE_EDIT' | translate) : ('CAPTAIN_FORM.SAVE_ADD' | translate)) }}
       </button>
     </div>
   </form>
 
-  <!-- ===== المستندات (بعد الحفظ فقط) ===== -->
+  <!-- ===== Documents (edit mode only) ===== -->
   <section class="form-card" *ngIf="isEditMode && !isLoading">
     <h2 class="card-title">
       <span class="material-icons-round">folder_shared</span>
-      مستندات الكابتن
+      {{ 'CAPTAIN_FORM.CAPTAIN_DOCUMENTS' | translate }}
       <span class="count-chip">{{ documents.length }}</span>
     </h2>
 
     <div class="upload-row">
       <div class="form-group">
-        <label class="form-label">نوع المستند</label>
+        <label class="form-label">{{ 'CAPTAIN_FORM.DOC_TYPE' | translate }}</label>
         <select class="form-input" [(ngModel)]="selectedDocType" [ngModelOptions]="{ standalone: true }">
           <option *ngFor="let t of documentTypes" [value]="t">{{ getDocTypeLabel(t) }}</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label class="form-label">الملف (صورة أو PDF — بحد أقصى 10 ميجابايت)</label>
+        <label class="form-label">{{ 'CAPTAIN_FORM.DOC_FILE' | translate }}</label>
         <input id="documentFile" class="form-input file-input" type="file"
                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                (change)="onFileSelected($event)">
       </div>
 
       <div class="form-group">
-        <label class="form-label">ملاحظة</label>
+        <label class="form-label">{{ 'CAPTAIN_FORM.DOC_NOTE' | translate }}</label>
         <input class="form-input" [(ngModel)]="documentNote"
-               [ngModelOptions]="{ standalone: true }" placeholder="اختياري">
+               [ngModelOptions]="{ standalone: true }" [placeholder]="'COMMON.OPTIONAL' | translate">
       </div>
 
       <button type="button" class="btn btn-accent upload-btn"
               (click)="uploadDocument()" [disabled]="isUploading || !selectedFile">
         <span class="spinner spinner-sm" *ngIf="isUploading"></span>
         <span class="material-icons-round" *ngIf="!isUploading">upload_file</span>
-        رفع
+        {{ 'CAPTAIN_FORM.UPLOAD_BTN' | translate }}
       </button>
     </div>
 
@@ -491,7 +511,7 @@
 
     <div class="empty-docs" *ngIf="documents.length === 0">
       <span class="material-icons-round">folder_off</span>
-      <p>لا توجد مستندات مرفوعة بعد</p>
+      <p>{{ 'CAPTAIN_FORM.NO_DOCS_YET' | translate }}</p>
     </div>
 
     <app-document-gallery *ngIf="documents.length > 0"

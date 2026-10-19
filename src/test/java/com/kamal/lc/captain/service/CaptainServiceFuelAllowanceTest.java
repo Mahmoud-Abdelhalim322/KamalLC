@@ -7,6 +7,7 @@ import com.kamal.lc.captain.expiry.DocumentAlertPolicy;
 import com.kamal.lc.captain.repository.CaptainDocumentRepository;
 import com.kamal.lc.captain.repository.CaptainRepository;
 import com.kamal.lc.settings.repository.AppSettingRepository;
+import com.kamal.lc.changelog.service.ChangeLogWriter;
 import com.kamal.lc.supplier.repository.SupplierIdAssignmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,9 +54,10 @@ class CaptainServiceFuelAllowanceTest {
         com.kamal.lc.auth.service.CaptainAllocationService allocationService = mock(com.kamal.lc.auth.service.CaptainAllocationService.class);
         com.kamal.lc.payroll.repository.PayrollLineRepository payrollLineRepo = mock(com.kamal.lc.payroll.repository.PayrollLineRepository.class);
         com.kamal.lc.loan.repository.LoanRepository loanRepo = mock(com.kamal.lc.loan.repository.LoanRepository.class);
+        ChangeLogWriter changeLogWriter = mock(ChangeLogWriter.class);
 
         service = new CaptainService(captainRepo, documentRepo, assignmentRepo, codeGenerator,
-                documentAlerts, allocationService, payrollLineRepo, loanRepo);
+                documentAlerts, allocationService, payrollLineRepo, loanRepo, changeLogWriter);
     }
 
     private Captain savedCaptain;

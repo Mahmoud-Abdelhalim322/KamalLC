@@ -2,14 +2,14 @@
 
   <!-- Header -->
   <div class="page-header">
-    <h1 class="page-title">إدارة الفواتير والتحصيل</h1>
-    <p class="page-subtitle">تتبع الفواتير الصادرة والمدفوعات والمبالغ المستحقة لكل شركة</p>
+    <h1 class="page-title">{{ 'PLATFORM.INVOICES_TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'PLATFORM.INVOICES_SUBTITLE' | translate }}</p>
   </div>
 
   <!-- Loading State -->
   <div class="loading-container" *ngIf="loading">
     <div class="spinner"></div>
-    <p>جاري تحميل قائمة الفواتير...</p>
+    <p>{{ 'PLATFORM.LOADING_INVOICES' | translate }}</p>
   </div>
 
   <!-- Table Card -->
@@ -18,14 +18,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>رقم الفاتورة</th>
-            <th>الشركة</th>
-            <th>المبلغ قبل الضريبة</th>
-            <th>الضريبة</th>
-            <th>الإجمالي</th>
-            <th>تاريخ الاستحقاق</th>
-            <th>الحالة</th>
-            <th>تاريخ الدفع</th>
+            <th>{{ 'PLATFORM.COL_INVOICE_NUMBER' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_TENANT' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_SUBTOTAL' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_TAX' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_TOTAL' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_DUE_DATE' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_STATUS' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_PAID_AT' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -38,7 +38,7 @@
             <td>{{ inv.dueDate }}</td>
             <td>
               <span class="badge" [ngClass]="inv.status === 'PAID' ? 'badge-success' : 'badge-warning'">
-                {{ inv.status === 'PAID' ? 'مدفوعة' : 'معلقة' }}
+                {{ (inv.status === 'PAID' ? 'PLATFORM.STATUS_PAID' : 'PLATFORM.STATUS_PENDING') | translate }}
               </span>
             </td>
             <td>{{ inv.paidAt ? (inv.paidAt | date:'yyyy/MM/dd HH:mm') : '-' }}</td>
@@ -46,7 +46,7 @@
           <tr *ngIf="invoices.length === 0 && !loading">
             <td colspan="8" class="empty-cell">
               <span class="material-icons-round empty-icon">receipt_long</span>
-              <p>لا يوجد فواتير مسجلة حالياً</p>
+              <p>{{ 'PLATFORM.NO_INVOICES' | translate }}</p>
             </td>
           </tr>
         </tbody>

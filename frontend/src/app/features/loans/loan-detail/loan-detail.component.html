@@ -3,17 +3,17 @@
   <!-- Back button + header -->
   <div class="page-header">
     <button class="btn btn-outline btn-back" (click)="goBack()">
-      <span class="material-icons-round">arrow_forward</span> العودة للسلف
+      <span class="material-icons-round">arrow_forward</span> {{ 'LOAN_DETAIL.BACK' | translate }}
     </button>
     <div class="header-info" *ngIf="memberName">
-      <h1 class="page-title">سلف {{ memberName }}</h1>
+      <h1 class="page-title">{{ 'LOAN_DETAIL.TITLE' | translate:{ name: memberName } }}</h1>
       <p class="page-subtitle">
         <span class="type-badge" [attr.data-type]="memberType">{{ memberTypeLabel(memberType) }}</span>
         <span class="code">{{ memberCode }}</span>
       </p>
     </div>
     <button class="btn btn-primary" (click)="showNewLoanForm = !showNewLoanForm" *ngIf="canManage">
-      <span class="material-icons-round">add</span> سلفة جديدة
+      <span class="material-icons-round">add</span> {{ 'LOAN_DETAIL.NEW_LOAN' | translate }}
     </button>
   </div>
 
@@ -30,81 +30,81 @@
   <!-- Summary -->
   <div class="summary-row" *ngIf="!isLoading && activeLoans.length > 0">
     <div class="summary-item">
-      <span class="summary-label">سلف نشطة</span>
+      <span class="summary-label">{{ 'LOAN_DETAIL.ACTIVE_LOANS' | translate }}</span>
       <span class="summary-value">{{ activeLoans.length }}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">إجمالي المبلغ الأصلي</span>
+      <span class="summary-label">{{ 'LOAN_DETAIL.TOTAL_ORIGINAL' | translate }}</span>
       <span class="summary-value">{{ money(totalOriginal) }}</span>
     </div>
     <div class="summary-item danger">
-      <span class="summary-label">إجمالي المتبقي</span>
+      <span class="summary-label">{{ 'LOAN_DETAIL.TOTAL_REMAINING' | translate }}</span>
       <span class="summary-value">{{ money(totalRemaining) }}</span>
     </div>
   </div>
 
   <!-- New Loan Form -->
   <div class="card new-loan-form" *ngIf="showNewLoanForm && canManage">
-    <h3>تسجيل سلفة جديدة</h3>
+    <h3>{{ 'LOAN_DETAIL.NEW_LOAN_TITLE' | translate }}</h3>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">المبلغ</label>
+        <label class="form-label">{{ 'LOAN_DETAIL.AMOUNT' | translate }}</label>
         <input type="number" class="form-input" [(ngModel)]="newAmount" placeholder="5000" min="1">
       </div>
       <div class="form-group">
-        <label class="form-label">الخصم الشهري (اختياري)</label>
+        <label class="form-label">{{ 'LOAN_DETAIL.MONTHLY_DEDUCTION' | translate }}</label>
         <input type="number" class="form-input" [(ngModel)]="newMonthlyDeduction" placeholder="0" min="0">
       </div>
       <div class="form-group grow">
-        <label class="form-label">ملاحظات (اختياري)</label>
-        <input type="text" class="form-input" [(ngModel)]="newNotes" placeholder="سبب السلفة...">
+        <label class="form-label">{{ 'LOAN_DETAIL.NOTES' | translate }}</label>
+        <input type="text" class="form-input" [(ngModel)]="newNotes" [placeholder]="'LOAN_DETAIL.NOTES_PLACEHOLDER' | translate">
       </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" (click)="createLoan()" [disabled]="isBusy || !newAmount">
-        {{ isBusy ? 'جارٍ الحفظ...' : 'تسجيل السلفة' }}
+        {{ isBusy ? ('COMMON.SAVING' | translate) : ('LOAN_DETAIL.REGISTER_LOAN' | translate) }}
       </button>
-      <button class="btn btn-outline" (click)="showNewLoanForm = false">إلغاء</button>
+      <button class="btn btn-outline" (click)="showNewLoanForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
     </div>
   </div>
 
   <!-- Loading -->
   <div class="loading-section" *ngIf="isLoading">
     <div class="spinner"></div>
-    <p>جارٍ تحميل السلف...</p>
+    <p>{{ 'LOAN_DETAIL.LOADING' | translate }}</p>
   </div>
 
   <!-- Active Loans -->
   <div *ngIf="!isLoading">
     <h2 class="section-title" *ngIf="activeLoans.length > 0">
-      <span class="material-icons-round">account_balance_wallet</span> السلف النشطة
+      <span class="material-icons-round">account_balance_wallet</span> {{ 'LOAN_DETAIL.ACTIVE_LOANS' | translate }}
     </h2>
 
     <div class="loan-card" *ngFor="let loan of activeLoans">
       <div class="loan-header">
         <div class="loan-amounts">
           <div class="amount-item">
-            <span class="amount-label">المبلغ الأصلي</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.ORIGINAL_AMOUNT' | translate }}</span>
             <span class="amount-value">{{ money(loan.originalAmount) }}</span>
           </div>
           <div class="amount-item danger">
-            <span class="amount-label">المتبقي</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.REMAINING' | translate }}</span>
             <span class="amount-value">{{ money(loan.remaining) }}</span>
           </div>
           <div class="amount-item">
-            <span class="amount-label">الخصم الشهري</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.MONTHLY_DED' | translate }}</span>
             <span class="amount-value editable" *ngIf="editingDeduction?.id !== loan.id" (click)="canManage && startEditDeduction(loan)">
               {{ money(loan.monthlyDeduction) }}
               <span class="material-icons-round edit-icon" *ngIf="canManage">edit</span>
             </span>
             <span *ngIf="editingDeduction?.id === loan.id" class="inline-edit">
               <input type="number" class="form-input form-input-sm" [(ngModel)]="editDeductionValue" min="0">
-              <button class="btn btn-sm btn-primary" (click)="saveDeduction()" [disabled]="isBusy">حفظ</button>
+              <button class="btn btn-sm btn-primary" (click)="saveDeduction()" [disabled]="isBusy">{{ 'COMMON.SAVE' | translate }}</button>
               <button class="btn btn-sm btn-outline" (click)="cancelEditDeduction()">×</button>
             </span>
           </div>
           <div class="amount-item">
-            <span class="amount-label">المسدد</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.PAID' | translate }}</span>
             <span class="amount-value success">{{ money(loan.originalAmount - loan.remaining) }}</span>
           </div>
         </div>
@@ -115,42 +115,42 @@
         </div>
         <div class="loan-actions" *ngIf="canManage">
           <button class="btn btn-sm btn-primary" (click)="openPaymentForm(loan)">
-            <span class="material-icons-round">payments</span> تسجيل دفعة
+            <span class="material-icons-round">payments</span> {{ 'LOAN_DETAIL.ADD_PAYMENT' | translate }}
           </button>
-          <button class="btn btn-sm btn-danger-outline" (click)="cancelLoan(loan)">إلغاء السلفة</button>
+          <button class="btn btn-sm btn-danger-outline" (click)="cancelLoan(loan)">{{ 'LOAN_DETAIL.CANCEL_LOAN' | translate }}</button>
         </div>
       </div>
 
       <!-- Payment form for this loan -->
       <div class="payment-form" *ngIf="paymentForLoan?.id === loan.id">
-        <h4>تسجيل دفعة يدوية</h4>
+        <h4>{{ 'LOAN_DETAIL.MANUAL_PAYMENT' | translate }}</h4>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">المبلغ</label>
+            <label class="form-label">{{ 'LOAN_DETAIL.PAYMENT_AMOUNT' | translate }}</label>
             <input type="number" class="form-input" [(ngModel)]="paymentAmount"
                    [max]="loan.remaining" placeholder="500" min="1">
           </div>
           <div class="form-group grow">
-            <label class="form-label">ملاحظات</label>
-            <input type="text" class="form-input" [(ngModel)]="paymentNotes" placeholder="سبب الدفعة...">
+            <label class="form-label">{{ 'LOAN_DETAIL.PAYMENT_NOTE' | translate }}</label>
+            <input type="text" class="form-input" [(ngModel)]="paymentNotes" [placeholder]="'LOAN_DETAIL.PAYMENT_NOTE_PLACEHOLDER' | translate">
           </div>
         </div>
         <div class="form-actions">
-          <button class="btn btn-sm btn-primary" (click)="savePayment()" [disabled]="isBusy || !paymentAmount">حفظ</button>
-          <button class="btn btn-sm btn-outline" (click)="cancelPayment()">إلغاء</button>
+          <button class="btn btn-sm btn-primary" (click)="savePayment()" [disabled]="isBusy || !paymentAmount">{{ 'LOAN_DETAIL.RECORD_PAYMENT' | translate }}</button>
+          <button class="btn btn-sm btn-outline" (click)="cancelPayment()">{{ 'COMMON.CANCEL' | translate }}</button>
         </div>
       </div>
 
       <!-- Payments history -->
       <div class="payments-list" *ngIf="loan.payments && loan.payments.length > 0">
-        <h4 class="payments-title">سجل الدفعات ({{ loan.payments.length }})</h4>
+        <h4 class="payments-title">{{ 'LOAN_DETAIL.PAYMENT_HISTORY' | translate }} ({{ loan.payments.length }})</h4>
         <table class="payments-table">
           <thead>
             <tr>
-              <th>التاريخ</th>
-              <th>المبلغ</th>
-              <th>المصدر</th>
-              <th>ملاحظات</th>
+              <th>{{ 'LOAN_DETAIL.PAYMENT_DATE' | translate }}</th>
+              <th>{{ 'LOAN_DETAIL.PAYMENT_AMOUNT' | translate }}</th>
+              <th>{{ 'LOAN_DETAIL.PAYMENT_SOURCE' | translate }}</th>
+              <th>{{ 'COMMON.NOTES' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -159,7 +159,7 @@
               <td class="num">{{ money(p.amount) }}</td>
               <td>
                 <span class="source-badge" [class.payroll]="p.source === 'PAYROLL_DEDUCTION'">
-                  {{ p.sourceLabel }}
+                  {{ paymentSourceLabel(p) }}
                 </span>
               </td>
               <td class="notes-cell">{{ p.notes || '—' }}</td>
@@ -171,18 +171,18 @@
 
     <!-- Closed Loans -->
     <h2 class="section-title muted" *ngIf="closedLoans.length > 0">
-      <span class="material-icons-round">history</span> السلف المنتهية
+      <span class="material-icons-round">history</span> {{ 'LOAN_DETAIL.CLOSED_LOANS' | translate }}
     </h2>
 
     <div class="loan-card closed" *ngFor="let loan of closedLoans">
       <div class="loan-header">
         <div class="loan-amounts">
           <div class="amount-item">
-            <span class="amount-label">المبلغ الأصلي</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.ORIGINAL_AMOUNT' | translate }}</span>
             <span class="amount-value">{{ money(loan.originalAmount) }}</span>
           </div>
           <div class="amount-item">
-            <span class="amount-label">المتبقي</span>
+            <span class="amount-label">{{ 'LOAN_DETAIL.REMAINING' | translate }}</span>
             <span class="amount-value">{{ money(loan.remaining) }}</span>
           </div>
         </div>
@@ -196,7 +196,7 @@
     <!-- Empty state -->
     <div class="empty-state" *ngIf="loans.length === 0">
       <span class="material-icons-round">account_balance_wallet</span>
-      <p>لا توجد سلف مسجلة لهذا العضو</p>
+      <p>{{ 'LOAN_DETAIL.NO_LOANS' | translate }}</p>
     </div>
   </div>
 

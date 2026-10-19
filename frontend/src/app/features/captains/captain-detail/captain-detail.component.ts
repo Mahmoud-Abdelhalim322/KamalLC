@@ -11,11 +11,13 @@ import {
   SupplierIdInfo, SupplierIdSlotResponse, SupplierResponse, UnassignRequest
 } from '../../../core/models/api.models';
 import { DocumentGalleryComponent } from '../../../shared/components/document-gallery/document-gallery.component';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-captain-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DocumentGalleryComponent],
+  imports: [CommonModule, RouterLink, FormsModule, DocumentGalleryComponent, TranslatePipe],
   templateUrl: './captain-detail.component.html',
   styleUrls: ['./captain-detail.component.scss']
 })
@@ -42,12 +44,17 @@ export class CaptainDetailComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public translationService: TranslationService
   ) {}
 
   deleteCaptain(): void {
     if (!this.captain) return;
-    if (!confirm(`هل أنت تأكد من حذف الكابتن "${this.captain.fullNameAr}" (كود: ${this.captain.kamalCode}) نهائياً؟`)) {
+    const confirmMsg = this.translationService.translate('CAPTAIN_DETAIL.CONFIRM_DELETE', {
+      name: this.captain.fullNameAr,
+      code: this.captain.kamalCode
+    });
+    if (!confirm(confirmMsg)) {
       return;
     }
 
@@ -57,11 +64,11 @@ export class CaptainDetailComponent implements OnInit {
           if (res.success) {
             this.router.navigate(['/captains']);
           } else {
-            alert(res.message || 'فشل حذف الكابتن');
+            alert(res.message || this.translationService.translate('CAPTAIN_DETAIL.DELETE_FAILED'));
           }
         },
         error: (err) => {
-          alert(err?.error?.message || 'فشل حذف الكابتن');
+          alert(err?.error?.message || this.translationService.translate('CAPTAIN_DETAIL.DELETE_FAILED'));
         }
       });
   }
@@ -85,12 +92,12 @@ export class CaptainDetailComponent implements OnInit {
           if (res.success && res.data) {
             this.captain = res.data;
           } else {
-            this.errorMessage = 'فشل في تحميل بيانات الكابتن';
+            this.errorMessage = this.translationService.translate('CAPTAIN_DETAIL.LOAD_FAILED');
           }
         },
         error: () => {
           this.isLoading = false;
-          this.errorMessage = 'فشل في تحميل بيانات الكابتن';
+          this.errorMessage = this.translationService.translate('CAPTAIN_DETAIL.LOAD_FAILED');
         }
       });
   }
@@ -164,7 +171,7 @@ export class CaptainDetailComponent implements OnInit {
 
   linkSlot(): void {
     if (!this.selectedSlot || !this.captain) {
-      this.linkError = 'يرجى اختيار معرف من القائمة';
+      this.linkError = this.translationService.translate('CAPTAIN_DETAIL.SELECT_ID_FIRST');
       return;
     }
 
@@ -172,7 +179,7 @@ export class CaptainDetailComponent implements OnInit {
       captainId: this.captain.id,
       validFrom: this.linkValidFrom || null,
       supplierSideName: this.linkSideName.trim() || null,
-      reason: 'ربط يدوي من صفحة الكابتن'
+      reason: this.translationService.translate('CAPTAIN_DETAIL.MANUAL_LINK')
     };
 
     this.isLinking = true;
@@ -187,25 +194,26 @@ export class CaptainDetailComponent implements OnInit {
             this.showLinkModal = false;
             this.reload();
           } else {
-            this.linkError = res.message || 'فشل ربط المعرف';
+            this.linkError = res.message || this.translationService.translate('CAPTAIN_DETAIL.LINK_FAILED');
           }
         },
         error: (err) => {
           this.isLinking = false;
-          this.linkError = err?.error?.message || 'فشل ربط المعرف';
+          this.linkError = err?.error?.message || this.translationService.translate('CAPTAIN_DETAIL.LINK_FAILED');
         }
       });
   }
 
   /** Ends the assignment but keeps it in the slot's history. */
   unlinkSlot(sid: SupplierIdInfo): void {
-    if (!confirm(`هل تريد فك ربط المعرف ${sid.externalId} عن هذا الكابتن؟`)) {
+    const confirmMsg = this.translationService.translate('CAPTAIN_DETAIL.UNLINK_CONFIRM', { id: sid.externalId });
+    if (!confirm(confirmMsg)) {
       return;
     }
 
     const payload: UnassignRequest = {
       validTo: isoDate(),
-      reason: 'فك ربط يدوي من صفحة الكابتن'
+      reason: this.translationService.translate('CAPTAIN_DETAIL.MANUAL_UNLINK')
     };
 
     this.idError = '';
@@ -214,7 +222,7 @@ export class CaptainDetailComponent implements OnInit {
       .subscribe({
         next: () => this.reload(),
         error: (err) => {
-          this.idError = err?.error?.message || 'فشل فك الربط';
+          this.idError = err?.error?.message || this.translationService.translate('CAPTAIN_DETAIL.UNLINK_FAILED');
         }
       });
   }
@@ -234,8 +242,9 @@ export class CaptainDetailComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = { 'ACTIVE': 'نشط', 'INACTIVE': 'غير نشط', 'TERMINATED': 'منتهي' };
-    return map[status] || status;
+    const key = 'CAPTAINS.STATUS_' + status;
+    const trans = this.translationService.translate(key);
+    return trans !== key ? trans : status;
   }
 
   getStatusClass(status: string): string {
@@ -255,35 +264,51 @@ export class CaptainDetailComponent implements OnInit {
     return map[doc.status] ?? '';
   }
 
-  /** "بعد 12 يوم" / "منذ 40 يوم" / "ينتهي اليوم" — the number the office acts on. */
+  getDocLabel(doc: DocumentStatusInfo): string {
+    if (this.translationService.currentLang() === 'ar') {
+      return doc.labelAr;
+    }
+    const key = 'DOC_TYPES.' + doc.kind;
+    const trans = this.translationService.translate(key);
+    return trans !== key ? trans : doc.labelAr;
+  }
+
+  getDocStatusLabel(doc: DocumentStatusInfo): string {
+    if (this.translationService.currentLang() === 'ar') {
+      return doc.statusLabelAr;
+    }
+    const key = 'DOC_STATUS.' + doc.status;
+    const trans = this.translationService.translate(key);
+    return trans !== key ? trans : doc.statusLabelAr;
+  }
+
+  /** "In 12 days" / "12 days ago" / "Expires today" */
   daysLeftLabel(doc: DocumentStatusInfo): string {
     const days = doc.daysLeft;
     if (days === null) return '';
-    if (days === 0) return 'ينتهي اليوم';
-    return days > 0 ? `بعد ${days} يوم` : `منذ ${Math.abs(days)} يوم`;
+    if (days === 0) return this.translationService.translate('CAPTAIN_DETAIL.EXPIRES_TODAY');
+    return days > 0
+      ? this.translationService.translate('CAPTAIN_DETAIL.IN_DAYS', { days: String(days) })
+      : this.translationService.translate('CAPTAIN_DETAIL.AGO_DAYS', { days: String(Math.abs(days)) });
   }
 
   /** Headline of the banner: how bad the worst document is. */
   documentBannerTitle(): string {
+    if (!this.captain) return '';
     const map: Record<DocumentStatus, string> = {
       'VALID': '',
-      'EXPIRING': 'وثائق على وشك الانتهاء',
-      'EXPIRED': 'وثائق منتهية تحتاج تجديداً',
-      'MISSING': 'وثائق بلا تاريخ مسجل'
+      'EXPIRING': this.translationService.translate('CAPTAIN_DETAIL.BANNER_EXPIRING'),
+      'EXPIRED': this.translationService.translate('CAPTAIN_DETAIL.BANNER_EXPIRED'),
+      'MISSING': this.translationService.translate('CAPTAIN_DETAIL.BANNER_MISSING')
     };
-    return this.captain ? map[this.captain.worstDocumentStatus] : '';
+    return map[this.captain.worstDocumentStatus] || '';
   }
 
-  /**
-   * Names the documents behind the headline rather than repeating the count, so the banner
-   * says what to go and do without the reader scrolling to the card below it.
-   */
   documentBannerDetail(): string {
     if (!this.captain) return '';
     return this.captain.documentStatuses
       .filter(d => d.status !== 'VALID')
-      .map(d => `${d.labelAr}: ${d.statusLabelAr}`)
+      .map(d => `${this.getDocLabel(d)}: ${this.getDocStatusLabel(d)}`)
       .join(' — ');
   }
-
 }

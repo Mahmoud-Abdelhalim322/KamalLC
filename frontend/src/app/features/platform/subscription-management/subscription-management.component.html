@@ -2,14 +2,14 @@
 
   <!-- Header -->
   <div class="page-header">
-    <h1 class="page-title">إدارة الاشتراكات</h1>
-    <p class="page-subtitle">سجل الاشتراكات وتواريخ التجديد والانتهاء لجميع الشركات</p>
+    <h1 class="page-title">{{ 'PLATFORM.SUBSCRIPTIONS_TITLE' | translate }}</h1>
+    <p class="page-subtitle">{{ 'PLATFORM.SUBSCRIPTIONS_SUBTITLE' | translate }}</p>
   </div>
 
   <!-- Loading State -->
   <div class="loading-container" *ngIf="loading">
     <div class="spinner"></div>
-    <p>جاري تحميل قائمة الاشتراكات...</p>
+    <p>{{ 'PLATFORM.LOADING_SUBSCRIPTIONS' | translate }}</p>
   </div>
 
   <!-- Table Card -->
@@ -18,13 +18,13 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>الشركة</th>
-            <th>الخطة</th>
-            <th>دورة الفوترة</th>
-            <th>تاريخ البداية</th>
-            <th>تاريخ الانتهاء</th>
-            <th>المبلغ المدفوع</th>
-            <th>الحالة</th>
+            <th>{{ 'PLATFORM.COL_TENANT' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_PLAN_NAME' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_BILLING_CYCLE' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_START_DATE' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_END_DATE' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_PAID_AMOUNT' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_STATUS_SUB' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -32,21 +32,21 @@
             <td><strong class="tenant-name">{{ sub.tenantName }}</strong></td>
             <td><span class="badge badge-info">{{ sub.planName }}</span></td>
             <td>
-              <span class="cycle-tag">{{ sub.billingCycle === 'YEARLY' ? 'سنوي' : 'شهري' }}</span>
+              <span class="cycle-tag">{{ (sub.billingCycle === 'YEARLY' ? 'PLATFORM.CYCLE_YEARLY' : 'PLATFORM.CYCLE_MONTHLY') | translate }}</span>
             </td>
             <td>{{ sub.startDate }}</td>
             <td>{{ sub.endDate }}</td>
             <td class="amount-cell">{{ sub.paidAmount ? (sub.paidAmount | currency:'SAR':'symbol':'1.0-0') : '-' }}</td>
             <td>
               <span class="badge" [ngClass]="sub.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'">
-                {{ sub.status === 'ACTIVE' ? 'نشط' : 'منتهي' }}
+                {{ (sub.status === 'ACTIVE' ? 'PLATFORM.STATUS_ACTIVE' : 'PLATFORM.STATUS_EXPIRED') | translate }}
               </span>
             </td>
           </tr>
           <tr *ngIf="subscriptions.length === 0 && !loading">
             <td colspan="7" class="empty-cell">
               <span class="material-icons-round empty-icon">credit_card_off</span>
-              <p>لا يوجد اشتراكات مسجلة حالياً</p>
+              <p>{{ 'PLATFORM.NO_SUBSCRIPTIONS' | translate }}</p>
             </td>
           </tr>
         </tbody>

@@ -133,7 +133,7 @@
   b { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
   code {
     font-size: 0.7rem; color: var(--text-light);
-    font-family: 'Courier New', monospace; direction: ltr; text-align: right;
+    font-family: 'Courier New', monospace; direction: ltr; text-align: start;
   }
 }
 
@@ -178,7 +178,7 @@
   .data-table {
     width: 100%; border-collapse: collapse;
 
-    th, td { padding: 8px 12px; text-align: right; font-size: 0.79rem; white-space: nowrap; }
+    th, td { padding: 8px 12px; text-align: start; font-size: 0.79rem; white-space: nowrap; }
     th {
       background: var(--bg-input); font-weight: 700; color: var(--text-secondary);
       border-bottom: 1px solid var(--border);
@@ -469,7 +469,7 @@
   flex-direction: column;
   gap: 12px;
   transition: background var(--transition-normal);
-  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  border-inline-end: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .mockup-logo-area {
@@ -500,12 +500,13 @@
   gap: 6px;
   padding: 6px 8px;
   border-radius: 6px;
-  color: #000000;
+  color: inherit;
   font-size: 0.72rem;
   font-weight: 600;
 
   .mockup-nav-icon {
     font-size: 14px;
+    color: inherit;
   }
 
   &.active {

@@ -446,5 +446,34 @@
   }
 }
 
+.btn-warning-outline {
+  color: #B45309;
+  border-color: #FCD34D;
+
+  &:hover {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+  }
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+  color: #fff;
+
+  &:hover {
+    background: linear-gradient(135deg, #D97706, #F59E0B);
+  }
+}
+
+.deduction-excluded-note {
+  background: #FEF3C7 !important;
+  border-color: #FCD34D !important;
+  color: #92400E !important;
+
+  .material-icons-round {
+    color: #F59E0B !important;
+  }
+}
+
 .spinning { animation: spin 1s linear infinite; }
 

@@ -3,12 +3,12 @@
   <!-- Header -->
   <div class="page-header flex-between">
     <div>
-      <h1 class="page-title">إدارة الشركات (Tenants)</h1>
-      <p class="page-subtitle">إنشاء وإدارة حسابات الشركات والتحكم في حالتها واشتراكاتها</p>
+      <h1 class="page-title">{{ 'PLATFORM.TENANTS_TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'PLATFORM.TENANTS_SUBTITLE' | translate }}</p>
     </div>
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-icons-round">add_business</span>
-      <span>إضافة شركة جديدة</span>
+      <span>{{ 'PLATFORM.ADD_TENANT' | translate }}</span>
     </button>
   </div>
 
@@ -25,7 +25,7 @@
   <!-- Loading State -->
   <div class="loading-container" *ngIf="loading">
     <div class="spinner"></div>
-    <p>جاري تحميل بيانات الشركات...</p>
+    <p>{{ 'PLATFORM.LOADING_TENANTS' | translate }}</p>
   </div>
 
   <!-- Tenants Table Card -->
@@ -34,13 +34,13 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>اسم الشركة</th>
-            <th>المعرف (Slug)</th>
-            <th>الخطة الحالية</th>
-            <th>حالة الاشتراك</th>
-            <th>الحالة</th>
-            <th>تاريخ الإنشاء</th>
-            <th>الإجراءات</th>
+            <th>{{ 'PLATFORM.COL_TENANT_NAME' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_SLUG' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_PLAN' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_SUB_STATUS' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_STATUS' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_CREATED' | translate }}</th>
+            <th>{{ 'PLATFORM.COL_ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -58,11 +58,11 @@
             </td>
             <td><code>{{ tenant.slug }}</code></td>
             <td>
-              <span class="badge badge-info">{{ tenant.currentPlan || 'بدون خطة' }}</span>
+              <span class="badge badge-info">{{ tenant.currentPlan || ('PLATFORM.NO_PLAN' | translate) }}</span>
             </td>
             <td>
               <span class="badge" [ngClass]="getSubscriptionBadgeClass(tenant.subscriptionStatus)">
-                {{ tenant.subscriptionStatus || 'غير مسجل' }}
+                {{ getSubscriptionStatusLabel(tenant.subscriptionStatus) }}
               </span>
             </td>
             <td>
@@ -74,16 +74,16 @@
             <td>
               <div class="actions">
                 <!-- Edit Details -->
-                <button class="btn-icon-action text-primary" (click)="openEditModal(tenant)" title="تعديل بيانات الشركة">
+                <button class="btn-icon-action text-primary" (click)="openEditModal(tenant)" [title]="'PLATFORM.EDIT_TENANT_TITLE' | translate">
                   <span class="material-icons-round">edit</span>
                 </button>
                 <!-- Change Password -->
-                <button class="btn-icon-action text-warning" (click)="openPasswordModal(tenant)" title="تغيير كلمة المرور">
+                <button class="btn-icon-action text-warning" (click)="openPasswordModal(tenant)" [title]="'PLATFORM.CHANGE_PASSWORD_TITLE' | translate">
                   <span class="material-icons-round">key</span>
                 </button>
                 <!-- Toggle Status -->
                 <button class="btn-icon-action" (click)="toggleTenantStatus(tenant)"
-                  [title]="tenant.status === 'ACTIVE' ? 'تعطيل الشركة' : 'تفعيل الشركة'"
+                  [title]="(tenant.status === 'ACTIVE' ? 'PLATFORM.SUSPEND_TENANT' : 'PLATFORM.ACTIVATE_TENANT') | translate"
                   [class.text-danger]="tenant.status === 'ACTIVE'"
                   [class.text-success]="tenant.status !== 'ACTIVE'">
                   <span class="material-icons-round">
@@ -96,7 +96,7 @@
           <tr *ngIf="tenants.length === 0 && !loading">
             <td colspan="7" class="text-center empty-cell">
               <span class="material-icons-round empty-icon">domain_disabled</span>
-              <p>لا توجد شركات مسجلة حتى الآن</p>
+              <p>{{ 'PLATFORM.NO_TENANTS' | translate }}</p>
             </td>
           </tr>
         </tbody>
@@ -110,7 +110,7 @@
       <div class="modal-header">
         <h2>
           <span class="material-icons-round">add_business</span>
-          إضافة شركة جديدة
+          {{ 'PLATFORM.CREATE_TENANT_TITLE' | translate }}
         </h2>
         <button class="btn-close" (click)="closeCreateModal()">
           <span class="material-icons-round">close</span>
@@ -120,61 +120,63 @@
       <form (ngSubmit)="submitCreateTenant()">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">اسم الشركة *</label>
-            <input type="text" [(ngModel)]="newTenant.name" name="name" required class="form-input" placeholder="مثال: شركة السرعة للتوصيل" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_NAME' | translate }}</label>
+            <input type="text" [(ngModel)]="newTenant.name" name="name" required class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_NAME' | translate" />
           </div>
           <div class="form-group">
-            <label class="form-label">المعرف بالإنجليزية (Slug) *</label>
-            <input type="text" [(ngModel)]="newTenant.slug" name="slug" required class="form-input" placeholder="speed-express" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_SLUG' | translate }}</label>
+            <input type="text" [(ngModel)]="newTenant.slug" name="slug" required class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_SLUG' | translate" />
           </div>
           <div class="form-group">
-            <label class="form-label">البريد الإلكتروني للتواصل</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_CONTACT_EMAIL' | translate }}</label>
             <input type="email" [(ngModel)]="newTenant.contactEmail" name="contactEmail" class="form-input" placeholder="info@company.com" />
           </div>
           <div class="form-group">
-            <label class="form-label">رقم الهاتف</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_CONTACT_PHONE' | translate }}</label>
             <input type="text" [(ngModel)]="newTenant.contactPhone" name="contactPhone" class="form-input" placeholder="0500000000" />
           </div>
 
           <div class="section-divider">
-            <span>بيانات مدير الشركة (Admin)</span>
+            <span>{{ 'PLATFORM.SECTION_ADMIN' | translate }}</span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">اسم مستخدم المدير *</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_ADMIN_USERNAME' | translate }}</label>
             <input type="text" [(ngModel)]="newTenant.adminUsername" name="adminUsername" required class="form-input" placeholder="admin_company" />
           </div>
           <div class="form-group">
-            <label class="form-label">كلمة المرور *</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_ADMIN_PASSWORD' | translate }}</label>
             <input type="password" [(ngModel)]="newTenant.adminPassword" name="adminPassword" required class="form-input" placeholder="Admin@12345" />
           </div>
 
           <div class="section-divider">
-            <span>الاشتراك المبدئي</span>
+            <span>{{ 'PLATFORM.SECTION_INITIAL_SUB' | translate }}</span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">خطة الاشتراك</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_PLAN' | translate }}</label>
             <select [(ngModel)]="newTenant.planId" name="planId" class="form-input">
-              <option [ngValue]="null">بدون خطة حالياً</option>
-              <option *ngFor="let plan of plans" [value]="plan.id">{{ plan.nameAr }} ({{ plan.monthlyPrice }} ر.س/شهر)</option>
+              <option [ngValue]="null">{{ 'PLATFORM.NO_PLAN_OPTION' | translate }}</option>
+              <option *ngFor="let plan of plans" [value]="plan.id">
+                {{ i18n.currentLang() === 'ar' ? (plan.nameAr || plan.name) : (plan.name || plan.nameAr) }} ({{ plan.monthlyPrice }} {{ 'PLATFORM.PER_MONTH' | translate }})
+              </option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">دورة الفوترة</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_BILLING_CYCLE' | translate }}</label>
             <select [(ngModel)]="newTenant.billingCycle" name="billingCycle" class="form-input">
-              <option value="MONTHLY">شهري</option>
-              <option value="YEARLY">سنوي</option>
+              <option value="MONTHLY">{{ 'PLATFORM.CYCLE_MONTHLY' | translate }}</option>
+              <option value="YEARLY">{{ 'PLATFORM.CYCLE_YEARLY' | translate }}</option>
             </select>
           </div>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-outline" (click)="closeCreateModal()">إلغاء</button>
+          <button type="button" class="btn btn-outline" (click)="closeCreateModal()">{{ 'COMMON.CANCEL' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <span class="material-icons-round" *ngIf="!submitting">check_circle</span>
             <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
-            <span>{{ submitting ? 'جاري الإنشاء...' : 'إنشاء الحساب' }}</span>
+            <span>{{ submitting ? ('PLATFORM.BTN_CREATING' | translate) : ('PLATFORM.BTN_CREATE' | translate) }}</span>
           </button>
         </div>
       </form>
@@ -187,7 +189,7 @@
       <div class="modal-header">
         <h2>
           <span class="material-icons-round">edit_location_alt</span>
-          تعديل بيانات الشركة: {{ selectedTenant?.name }}
+          {{ 'PLATFORM.EDIT_TENANT_HEADER' | translate:{ name: selectedTenant?.name } }}
         </h2>
         <button class="btn-close" (click)="closeEditModal()">
           <span class="material-icons-round">close</span>
@@ -197,38 +199,38 @@
       <form (ngSubmit)="submitEditTenant()">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">اسم الشركة *</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_NAME' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.name" name="editName" required class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">البريد الإلكتروني للتواصل</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_CONTACT_EMAIL' | translate }}</label>
             <input type="email" [(ngModel)]="editForm.contactEmail" name="editEmail" class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">رقم الهاتف</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_CONTACT_PHONE' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.contactPhone" name="editPhone" class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">العنوان</label>
+            <label class="form-label">{{ 'PLATFORM.LABEL_ADDRESS' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.address" name="editAddress" class="form-input" />
           </div>
 
           <div class="section-divider">
-            <span>تغيير كلمة مرور المدير (اختياري)</span>
+            <span>{{ 'PLATFORM.SECTION_CHANGE_PASSWORD' | translate }}</span>
           </div>
 
           <div class="form-group full-width">
-            <label class="form-label">كلمة مرور جديدة للمدير</label>
-            <input type="password" [(ngModel)]="editForm.newPassword" name="editPassword" class="form-input" placeholder="اتركه فارغاً إذا كنت لا تريد التغيير" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_NEW_PASSWORD' | translate }}</label>
+            <input type="password" [(ngModel)]="editForm.newPassword" name="editPassword" class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_LEAVE_EMPTY' | translate" />
           </div>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-outline" (click)="closeEditModal()">إلغاء</button>
+          <button type="button" class="btn btn-outline" (click)="closeEditModal()">{{ 'COMMON.CANCEL' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <span class="material-icons-round" *ngIf="!submitting">save</span>
             <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
-            <span>{{ submitting ? 'جاري الحفظ...' : 'حفظ التعديلات' }}</span>
+            <span>{{ submitting ? ('PLATFORM.BTN_SAVING' | translate) : ('PLATFORM.BTN_SAVE' | translate) }}</span>
           </button>
         </div>
       </form>
@@ -241,7 +243,7 @@
       <div class="modal-header">
         <h2>
           <span class="material-icons-round">key</span>
-          تغيير كلمة المرور لـ: {{ selectedTenant?.name }}
+          {{ 'PLATFORM.CHANGE_PWD_HEADER' | translate:{ name: selectedTenant?.name } }}
         </h2>
         <button class="btn-close" (click)="closePasswordModal()">
           <span class="material-icons-round">close</span>
@@ -251,21 +253,21 @@
       <form (ngSubmit)="submitChangePassword()">
         <div class="form-grid single-column">
           <div class="form-group">
-            <label class="form-label">كلمة المرور الجديدة *</label>
-            <input type="password" [(ngModel)]="passwordForm.newPassword" name="pwdNew" required class="form-input" placeholder="أدخل كلمة المرور الجديدة" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_NEW_PASSWORD_REQ' | translate }}</label>
+            <input type="password" [(ngModel)]="passwordForm.newPassword" name="pwdNew" required class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_ENTER_PASSWORD' | translate" />
           </div>
           <div class="form-group">
-            <label class="form-label">تأكيد كلمة المرور الجديدة *</label>
-            <input type="password" [(ngModel)]="passwordForm.confirmPassword" name="pwdConfirm" required class="form-input" placeholder="أعد أدخال كلمة المرور" />
+            <label class="form-label">{{ 'PLATFORM.LABEL_CONFIRM_PASSWORD' | translate }}</label>
+            <input type="password" [(ngModel)]="passwordForm.confirmPassword" name="pwdConfirm" required class="form-input" [placeholder]="'PLATFORM.PLACEHOLDER_CONFIRM_PASSWORD' | translate" />
           </div>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-outline" (click)="closePasswordModal()">إلغاء</button>
+          <button type="button" class="btn btn-outline" (click)="closePasswordModal()">{{ 'COMMON.CANCEL' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <span class="material-icons-round" *ngIf="!submitting">check_circle</span>
             <span class="material-icons-round spinning" *ngIf="submitting">sync</span>
-            <span>{{ submitting ? 'جاري التغيير...' : 'تغيير كلمة المرور' }}</span>
+            <span>{{ submitting ? ('PLATFORM.BTN_CHANGING' | translate) : ('PLATFORM.BTN_CHANGE_PWD' | translate) }}</span>
           </button>
         </div>
       </form>

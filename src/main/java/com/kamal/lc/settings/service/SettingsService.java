@@ -96,7 +96,20 @@ public class SettingsService {
     @Transactional
     public SettingResponse update(String key, String newValue, LocalDate effectiveFrom) {
         AppSetting current = repository.findCurrent(key)
-                .orElseThrow(() -> new BusinessException("NOT_FOUND", "الإعداد غير موجود: " + key));
+                .orElseGet(() -> {
+                    if (key.startsWith("THEME_")) {
+                        return repository.save(AppSetting.builder()
+                                .settingKey(key)
+                                .settingGroup("APPEARANCE")
+                                .labelAr(getThemeLabel(key))
+                                .value(newValue.trim())
+                                .valueType(key.endsWith("_BG") || key.endsWith("_COLOR") ? "COLOR" : "STRING")
+                                .effectiveFrom(effectiveFrom != null ? effectiveFrom : LocalDate.of(2025, 1, 1))
+                                .effectiveTo(null)
+                                .build());
+                    }
+                    throw new BusinessException("NOT_FOUND", "الإعداد غير موجود: " + key);
+                });
 
         LocalDate from = effectiveFrom != null ? effectiveFrom : LocalDate.now();
 
@@ -192,5 +205,17 @@ public class SettingsService {
                 .effectiveTo(s.getEffectiveTo() != null ? s.getEffectiveTo().toString() : null)
                 .updatedAt(s.getUpdatedAt() != null ? s.getUpdatedAt().toString() : null)
                 .build();
+    }
+
+    private String getThemeLabel(String key) {
+        return switch (key) {
+            case "THEME_SIDEBAR_TEXT_COLOR" -> "لون خط السايدبار";
+            case "THEME_SIDEBAR_ACTIVE_BG" -> "لون تحديد الصفحة في السايدبار";
+            case "THEME_SIDEBAR_BG" -> "لون السايدبار";
+            case "THEME_TOPBAR_BG" -> "لون التوب بار";
+            case "THEME_BRAND_TEXT" -> "اسم الشركة / النص الظاهر";
+            case "THEME_LOGO" -> "شعار الشركة (اللوجو)";
+            default -> key;
+        };
     }
 }

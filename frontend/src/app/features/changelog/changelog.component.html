@@ -1,0 +1,176 @@
+<div class="changelog-page">
+  <!-- ───────── Header ───────── -->
+  <div class="page-header">
+    <div class="header-right">
+      <span class="material-icons-round header-icon">history</span>
+      <h1>{{ 'CHANGELOG.TITLE' | translate }}</h1>
+      <span class="record-count" *ngIf="!isLoading">({{ totalElements }} {{ 'CHANGELOG.RECORDS_UNIT' | translate }})</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
+        <span class="material-icons-round">table_view</span>
+        {{ 'COMMON.EXPORT_EXCEL' | translate }}
+      </button>
+      <button class="btn btn-outline" (click)="exportPdf()" [disabled]="isExporting || isLoading">
+        <span class="material-icons-round">picture_as_pdf</span>
+        {{ 'COMMON.EXPORT_PDF' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ───────── Entity Tabs ───────── -->
+  <div class="entity-tabs">
+    <button *ngFor="let tab of tabs"
+            class="tab-btn"
+            [class.active]="activeTab === tab.key"
+            (click)="switchTab(tab.key)">
+      <span class="material-icons-round">{{ tab.icon }}</span>
+      {{ ('CHANGELOG.TAB_' + tab.key) | translate }}
+    </button>
+  </div>
+
+  <!-- ───────── Filters ───────── -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>{{ 'CHANGELOG.FROM' | translate }}</label>
+      <input type="date" [(ngModel)]="from" (change)="load()">
+    </div>
+    <div class="filter-group">
+      <label>{{ 'CHANGELOG.TO' | translate }}</label>
+      <input type="date" [(ngModel)]="to" (change)="load()">
+    </div>
+    <div class="filter-group">
+      <label>{{ 'CHANGELOG.USER' | translate }}</label>
+      <select [(ngModel)]="changedBy" (change)="load()">
+        <option value="">{{ 'CHANGELOG.ALL' | translate }}</option>
+        <option *ngFor="let u of users" [value]="u">{{ u }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>{{ 'CHANGELOG.ACTION' | translate }}</label>
+      <select [(ngModel)]="action" (change)="load()">
+        <option value="">{{ 'CHANGELOG.ALL' | translate }}</option>
+        <option value="UPDATE">{{ 'CHANGELOG.ACTION_UPDATE' | translate }}</option>
+        <option value="EXCLUDE">{{ 'CHANGELOG.ACTION_EXCLUDE' | translate }}</option>
+        <option value="RESTORE">{{ 'CHANGELOG.ACTION_RESTORE' | translate }}</option>
+        <option value="LINK">{{ 'CHANGELOG.ACTION_LINK' | translate }}</option>
+        <option value="UNLINK">{{ 'CHANGELOG.ACTION_UNLINK' | translate }}</option>
+        <option value="EXCLUDE_DEDUCTION">{{ 'CHANGELOG.ACTION_EXCLUDE_DEDUCTION' | translate }}</option>
+        <option value="RESTORE_DEDUCTION">{{ 'CHANGELOG.ACTION_RESTORE_DEDUCTION' | translate }}</option>
+      </select>
+    </div>
+    <div class="filter-group search-group">
+      <label>{{ 'CHANGELOG.SEARCH' | translate }}</label>
+      <div class="search-input">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="search" (input)="onSearch()" [placeholder]="'CHANGELOG.SEARCH_PLACEHOLDER' | translate">
+      </div>
+    </div>
+    <button class="btn btn-text" (click)="clearFilters()">
+      <span class="material-icons-round">filter_alt_off</span>
+      {{ 'CHANGELOG.CLEAR_FILTERS' | translate }}
+    </button>
+  </div>
+
+  <!-- ───────── Messages ───────── -->
+  <div class="alert alert-danger" *ngIf="errorMsg">
+    <span class="material-icons-round">error</span>
+    {{ errorMsg }}
+    <button class="close-btn" (click)="errorMsg = ''">×</button>
+  </div>
+  <div class="alert alert-success" *ngIf="successMsg">
+    <span class="material-icons-round">check_circle</span>
+    {{ successMsg }}
+    <button class="close-btn" (click)="successMsg = ''">×</button>
+  </div>
+
+  <!-- ───────── Loading ───────── -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'CHANGELOG.LOADING' | translate }}</p>
+  </div>
+
+  <!-- ───────── Empty State ───────── -->
+  <div class="empty-state" *ngIf="!isLoading && entries.length === 0">
+    <span class="material-icons-round empty-icon">history_toggle_off</span>
+    <h3>{{ 'CHANGELOG.NO_CHANGES_TITLE' | translate }}</h3>
+    <p>{{ 'CHANGELOG.NO_CHANGES_DESC' | translate }}</p>
+  </div>
+
+  <!-- ───────── Table ───────── -->
+  <div class="table-container" *ngIf="!isLoading && entries.length > 0">
+    <table class="changelog-table">
+      <thead>
+        <tr>
+          <th class="col-date">{{ 'CHANGELOG.COL_DATE' | translate }}</th>
+          <th class="col-type">{{ 'CHANGELOG.COL_TYPE' | translate }}</th>
+          <th class="col-action">{{ 'CHANGELOG.COL_ACTION' | translate }}</th>
+          <th class="col-entity">{{ 'CHANGELOG.COL_ENTITY' | translate }}</th>
+          <th class="col-field">{{ 'CHANGELOG.COL_FIELD' | translate }}</th>
+          <th class="col-old">{{ 'CHANGELOG.COL_OLD' | translate }}</th>
+          <th class="col-new">{{ 'CHANGELOG.COL_NEW' | translate }}</th>
+          <th class="col-user">{{ 'CHANGELOG.COL_USER' | translate }}</th>
+          <th class="col-reason">{{ 'CHANGELOG.COL_REASON' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let entry of entries" class="changelog-row">
+          <td class="col-date">
+            <span class="date-wrapper" dir="ltr">{{ formatDate(entry.changedAt) }}</span>
+          </td>
+          <td class="col-type">
+            <span class="entity-badge">
+              <span class="material-icons-round entity-icon">{{ getEntityTypeIcon(entry.entityType) }}</span>
+              {{ getEntityTypeLabel(entry.entityType) }}
+            </span>
+          </td>
+          <td class="col-action">
+            <span class="action-badge" [ngClass]="getActionClass(entry.action)">
+              {{ getActionLabel(entry.action) }}
+            </span>
+          </td>
+          <td class="col-entity"><bdi>{{ entry.entityLabel || '—' }}</bdi></td>
+          <td class="col-field"><bdi>{{ entry.fieldLabel || entry.fieldName || '—' }}</bdi></td>
+          <td class="col-old">
+            <bdi class="value-cell old-value" *ngIf="entry.oldValue">{{ entry.oldValue }}</bdi>
+            <span class="value-empty" *ngIf="!entry.oldValue">—</span>
+          </td>
+          <td class="col-new">
+            <bdi class="value-cell new-value" *ngIf="entry.newValue">{{ entry.newValue }}</bdi>
+            <span class="value-empty" *ngIf="!entry.newValue">—</span>
+          </td>
+          <td class="col-user">
+            <span class="user-badge">
+              <span class="material-icons-round">person</span>
+              <bdi>{{ entry.changedBy }}</bdi>
+            </span>
+          </td>
+          <td class="col-reason"><bdi>{{ entry.changeReason || '—' }}</bdi></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ───────── Pagination ───────── -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" (click)="goToPage(0)" [disabled]="page === 0">
+      <span class="material-icons-round">first_page</span>
+    </button>
+    <button class="page-btn" (click)="goToPage(page - 1)" [disabled]="page === 0">
+      <span class="material-icons-round">chevron_right</span>
+    </button>
+    <button *ngFor="let p of paginationRange"
+            class="page-btn"
+            [class.active]="p === page"
+            (click)="goToPage(p)">
+      {{ p + 1 }}
+    </button>
+    <button class="page-btn" (click)="goToPage(page + 1)" [disabled]="page >= totalPages - 1">
+      <span class="material-icons-round">chevron_left</span>
+    </button>
+    <button class="page-btn" (click)="goToPage(totalPages - 1)" [disabled]="page >= totalPages - 1">
+      <span class="material-icons-round">last_page</span>
+    </button>
+    <span class="page-info">{{ 'CHANGELOG.PAGE_INFO' | translate:{ page: page + 1, total: totalPages } }}</span>
+  </div>
+</div>

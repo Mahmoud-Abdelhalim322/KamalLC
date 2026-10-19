@@ -2,40 +2,50 @@
   <!-- Header -->
   <div class="page-header">
     <div class="header-info">
-      <h1>الإداريين</h1>
+      <h1>{{ 'MANAGERS.TITLE' | translate }}</h1>
       <span class="badge-count" *ngIf="totalElements">{{ totalElements }}</span>
     </div>
-    <a routerLink="/managers/new" class="btn btn-primary" *ngIf="canManage">
-      <span class="material-icons-round">person_add</span>
-      إضافة إداري
-    </a>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting">
+        <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+        {{ 'COMMON.EXPORT_EXCEL' | translate }}
+      </button>
+      <button class="btn btn-outline" (click)="exportPdf()" [disabled]="isExportingPdf">
+        <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span>
+        {{ 'COMMON.EXPORT_PDF' | translate }}
+      </button>
+      <a routerLink="/managers/new" class="btn btn-primary" *ngIf="canManage">
+        <span class="material-icons-round">person_add</span>
+        {{ 'MANAGERS.ADD_MANAGER' | translate }}
+      </a>
+    </div>
   </div>
 
   <!-- Search & Toolbar -->
   <div class="toolbar">
     <div class="search-bar">
       <span class="material-icons-round search-icon">search</span>
-      <input type="text" placeholder="بحث بالاسم أو الكود أو الوظيفة..."
+      <input type="text" [placeholder]="'MANAGERS.SEARCH_PLACEHOLDER' | translate"
              [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
     </div>
 
     <!-- Alert Filters -->
     <div class="filter-tabs">
       <button class="filter-tab" [class.active]="!alertFilter" (click)="setAlertFilter('')">
-        الكل
+        {{ 'COMMON.ALL' | translate }}
       </button>
       <button class="filter-tab" [class.active]="alertFilter === 'ANY'" (click)="setAlertFilter('ANY')">
         <span class="material-icons-round tab-icon" style="color: #F59E0B;">notification_important</span>
-        تنبيهات الوثائق
+        {{ 'WORKERS.DOC_ALERTS' | translate }}
       </button>
       <button class="filter-tab" [class.active]="alertFilter === 'EXPIRED'" (click)="setAlertFilter('EXPIRED')">
-        منتهية
+        {{ 'WORKERS.EXPIRED' | translate }}
       </button>
       <button class="filter-tab" [class.active]="alertFilter === 'EXPIRING'" (click)="setAlertFilter('EXPIRING')">
-        وشيكة
+        {{ 'WORKERS.EXPIRING' | translate }}
       </button>
       <button class="filter-tab" [class.active]="alertFilter === 'MISSING'" (click)="setAlertFilter('MISSING')">
-        غير مسجلة
+        {{ 'WORKERS.NOT_REGISTERED' | translate }}
       </button>
     </div>
   </div>
@@ -43,7 +53,7 @@
   <!-- Loading -->
   <div class="loading-state" *ngIf="isLoading">
     <div class="spinner"></div>
-    <span>جاري التحميل...</span>
+    <span>{{ 'COMMON.LOADING' | translate }}</span>
   </div>
 
   <!-- Table -->
@@ -51,14 +61,14 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>الكود</th>
-          <th>الاسم بالعربي</th>
-          <th>الوظيفة</th>
-          <th>الجنسية</th>
-          <th>الهاتف</th>
-          <th>إنذار الوثائق</th>
-          <th>تاريخ الالتحاق</th>
-          <th>الحالة</th>
+          <th>{{ 'WORKERS.COL_CODE' | translate }}</th>
+          <th>{{ 'WORKERS.COL_NAME' | translate }}</th>
+          <th>{{ 'WORKERS.COL_JOB' | translate }}</th>
+          <th>{{ 'WORKERS.COL_NATIONALITY' | translate }}</th>
+          <th>{{ 'WORKERS.COL_PHONE' | translate }}</th>
+          <th>{{ 'WORKERS.COL_DOC_ALERT' | translate }}</th>
+          <th>{{ 'WORKERS.COL_JOIN_DATE' | translate }}</th>
+          <th>{{ 'WORKERS.COL_STATUS' | translate }}</th>
           <th></th>
         </tr>
       </thead>
@@ -81,10 +91,10 @@
             </span>
           </td>
           <td class="actions-cell">
-            <a [routerLink]="['/managers', s.id]" class="btn-link" title="عرض التفاصيل">
+            <a [routerLink]="['/managers', s.id]" class="btn-link" [title]="'COMMON.VIEW_DETAILS' | translate">
               <span class="material-icons-round">visibility</span>
             </a>
-            <button class="btn-link delete-action" *ngIf="canManage" title="حذف" (click)="deleteStaff(s, $event)">
+            <button class="btn-link delete-action" *ngIf="canManage" [title]="'COMMON.DELETE' | translate" (click)="deleteStaff(s, $event)">
               <span class="material-icons-round">delete_outline</span>
             </button>
           </td>
@@ -94,7 +104,7 @@
 
     <div class="empty-state" *ngIf="staff.length === 0">
       <span class="material-icons-round">admin_panel_settings</span>
-      <p>لا يوجد إداريين بعد</p>
+      <p>{{ 'MANAGERS.NO_MANAGERS' | translate }}</p>
     </div>
   </div>
 

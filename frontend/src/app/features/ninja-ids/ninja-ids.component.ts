@@ -11,11 +11,13 @@ import {
   PageResponse, AssignmentHistoryItem, CaptainLookupItem,
   CreateSupplierRequest, SupplierIdSlotRequest
 } from '../../core/models/api.models';
+import { TranslationService } from '../../core/i18n/translation.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-ninja-ids',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
   templateUrl: './ninja-ids.component.html',
   styleUrls: ['./ninja-ids.component.scss']
 })
@@ -68,7 +70,10 @@ export class NinjaIdsComponent implements OnInit {
   isSearchingCaptains = false;
   private captainSearch$ = new Subject<string>();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    public translationService: TranslationService
+  ) {}
 
   ngOnInit(): void {
     this.loadSuppliers();
@@ -82,20 +87,19 @@ export class NinjaIdsComponent implements OnInit {
     this.http.get<ApiResponse<SupplierResponse[]>>('/api/supplier-ids/suppliers')
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) {
-            this.suppliers = res.data;
-            if (this.activeSupplier) {
-              // Keep the current tab selected (and refresh its slot count) across reloads.
-              this.activeSupplier =
-                this.suppliers.find(s => s.id === this.activeSupplier!.id) ?? this.activeSupplier;
-            } else if (!this.hasLoadedSuppliers && this.suppliers.length > 0) {
-              this.activeSupplier = this.suppliers[0];
-            }
+          this.suppliers = (res.success && res.data) ? res.data : [];
+          if (!this.hasLoadedSuppliers) {
             this.hasLoadedSuppliers = true;
+            this.activeSupplier = this.suppliers[0] ?? null;
+          } else if (this.activeSupplier) {
+            this.activeSupplier = this.suppliers.find(s => s.id === this.activeSupplier!.id) ?? null;
           }
           this.loadSlots();
         },
-        error: () => this.loadSlots()
+        error: () => {
+          this.suppliers = [];
+          this.isLoading = false;
+        }
       });
   }
 
@@ -117,6 +121,9 @@ export class NinjaIdsComponent implements OnInit {
             this.slots = res.data.content;
             this.totalElements = res.data.totalElements;
             this.totalPages = res.data.totalPages;
+            this.updateSelectAllState();
+          } else {
+            this.slots = [];
           }
         },
         error: () => {
@@ -132,25 +139,29 @@ export class NinjaIdsComponent implements OnInit {
     this.loadSlots();
   }
 
-  // ---------- Multi-select deletion ----------
+  // ---------- Multi-select for deletion ----------
 
-  toggleSlot(slotId: string): void {
+  toggleSelectAll(): void {
+    this.selectAll = !this.selectAll;
+    if (this.selectAll) {
+      this.slots.forEach(s => this.selectedSlotIds.add(s.id));
+    } else {
+      this.clearSelection();
+    }
+  }
+
+  toggleSlot(slotId: string, event: Event): void {
+    event.stopPropagation();
     if (this.selectedSlotIds.has(slotId)) {
       this.selectedSlotIds.delete(slotId);
     } else {
       this.selectedSlotIds.add(slotId);
     }
-    this.selectAll = this.slots.length > 0 && this.slots.every(s => this.selectedSlotIds.has(s.id));
+    this.updateSelectAllState();
   }
 
-  toggleSelectAll(): void {
-    if (this.selectAll) {
-      this.slots.forEach(s => this.selectedSlotIds.delete(s.id));
-      this.selectAll = false;
-    } else {
-      this.slots.forEach(s => this.selectedSlotIds.add(s.id));
-      this.selectAll = true;
-    }
+  private updateSelectAllState(): void {
+    this.selectAll = this.slots.length > 0 && this.slots.every(s => this.selectedSlotIds.has(s.id));
   }
 
   clearSelection(): void {
@@ -165,7 +176,8 @@ export class NinjaIdsComponent implements OnInit {
   deleteSelected(): void {
     const count = this.selectedSlotIds.size;
     if (count === 0) return;
-    if (!confirm(`هل أنت متأكد من حذف ${count} معرف${count > 1 ? 'ات' : ''} مع سجلاتها؟`)) return;
+    const confirmMsg = this.translationService.translate('NINJA_IDS.CONFIRM_BULK_DELETE', { count: String(count) });
+    if (!confirm(confirmMsg)) return;
 
     const ids = Array.from(this.selectedSlotIds);
     this.http.request<ApiResponse<void>>('DELETE', '/api/supplier-ids/slots/batch', { body: ids })
@@ -175,18 +187,19 @@ export class NinjaIdsComponent implements OnInit {
             this.clearSelection();
             this.loadSuppliers();
           } else {
-            alert(res.message || 'فشل حذف المعرفات');
+            alert(res.message || this.translationService.translate('NINJA_IDS.DELETE_SLOTS_FAILED'));
           }
         },
         error: (err) => {
-          alert(err?.error?.message || 'فشل حذف المعرفات');
+          alert(err?.error?.message || this.translationService.translate('NINJA_IDS.DELETE_SLOTS_FAILED'));
         }
       });
   }
 
   deleteSingleSlot(slotId: string, event: Event): void {
     event.stopPropagation();
-    if (!confirm('هل أنت متأكد من حذف هذا المعرف مع سجلاته؟')) return;
+    const confirmMsg = this.translationService.translate('NINJA_IDS.CONFIRM_DELETE_ID');
+    if (!confirm(confirmMsg)) return;
 
     this.http.delete<ApiResponse<void>>(`/api/supplier-ids/slots/${slotId}`)
       .subscribe({
@@ -195,18 +208,19 @@ export class NinjaIdsComponent implements OnInit {
             this.selectedSlotIds.delete(slotId);
             this.loadSuppliers();
           } else {
-            alert(res.message || 'فشل حذف المعرف');
+            alert(res.message || this.translationService.translate('NINJA_IDS.DELETE_SLOT_FAILED'));
           }
         },
         error: (err) => {
-          alert(err?.error?.message || 'فشل حذف المعرف');
+          alert(err?.error?.message || this.translationService.translate('NINJA_IDS.DELETE_SLOT_FAILED'));
         }
       });
   }
 
   deleteSupplier(supplier: SupplierResponse, event: Event): void {
     event.stopPropagation();
-    if (!confirm(`هل أنت تأكد من حذف المورد "${supplier.name}" وجميع المعرفات التابعة له؟`)) {
+    const confirmMsg = this.translationService.translate('NINJA_IDS.CONFIRM_DELETE_SUPPLIER', { name: supplier.name });
+    if (!confirm(confirmMsg)) {
       return;
     }
 
@@ -219,11 +233,11 @@ export class NinjaIdsComponent implements OnInit {
             }
             this.loadSuppliers();
           } else {
-            alert(res.message || 'فشل حذف المورد');
+            alert(res.message || this.translationService.translate('NINJA_IDS.DELETE_SUPPLIER_FAILED'));
           }
         },
         error: (err) => {
-          alert(err?.error?.message || 'فشل حذف المورد');
+          alert(err?.error?.message || this.translationService.translate('NINJA_IDS.DELETE_SUPPLIER_FAILED'));
         }
       });
   }
@@ -282,7 +296,7 @@ export class NinjaIdsComponent implements OnInit {
 
   saveSupplier(): void {
     if (!this.newSupplierName.trim() || !this.newSupplierCode.trim()) {
-      this.supplierError = 'اسم المورد والكود مطلوبان';
+      this.supplierError = this.translationService.translate('NINJA_IDS.NAME_CODE_REQUIRED');
       return;
     }
 
@@ -305,12 +319,12 @@ export class NinjaIdsComponent implements OnInit {
             this.currentPage = 0;
             this.loadSuppliers();
           } else {
-            this.supplierError = res.message || 'فشل إضافة المورد';
+            this.supplierError = res.message || this.translationService.translate('NINJA_IDS.CREATE_FAILED');
           }
         },
         error: (err) => {
           this.isSavingSupplier = false;
-          this.supplierError = err?.error?.message || 'فشل إضافة المورد';
+          this.supplierError = err?.error?.message || this.translationService.translate('NINJA_IDS.CREATE_FAILED');
         }
       });
   }
@@ -374,11 +388,11 @@ export class NinjaIdsComponent implements OnInit {
 
   saveSlot(): void {
     if (!this.newSlotSupplierId) {
-      this.slotError = 'يرجى اختيار المورد';
+      this.slotError = this.translationService.translate('NINJA_IDS.SELECT_SUPPLIER_REQUIRED');
       return;
     }
     if (!this.newSlotExternalId.trim()) {
-      this.slotError = 'رقم المعرف مطلوب';
+      this.slotError = this.translationService.translate('NINJA_IDS.ID_REQUIRED');
       return;
     }
 
@@ -389,7 +403,7 @@ export class NinjaIdsComponent implements OnInit {
       captainId: this.selectedCaptain?.id ?? null,
       validFrom: this.selectedCaptain ? this.newSlotValidFrom : null,
       supplierSideName: this.selectedCaptain ? (this.newSlotSideName.trim() || null) : null,
-      reason: this.selectedCaptain ? 'إضافة يدوية من سجل المعرفات' : null
+      reason: this.selectedCaptain ? this.translationService.translate('NINJA_IDS.MANUAL_ADD_REASON') : null
     };
 
     this.isSavingSlot = true;
@@ -405,12 +419,12 @@ export class NinjaIdsComponent implements OnInit {
             // Reload suppliers too so the slot counters on the tabs stay accurate.
             this.loadSuppliers();
           } else {
-            this.slotError = res.message || 'فشل إضافة المعرف';
+            this.slotError = res.message || this.translationService.translate('NINJA_IDS.CREATE_ID_FAILED');
           }
         },
         error: (err) => {
           this.isSavingSlot = false;
-          this.slotError = err?.error?.message || 'فشل إضافة المعرف';
+          this.slotError = err?.error?.message || this.translationService.translate('NINJA_IDS.CREATE_ID_FAILED');
         }
       });
   }

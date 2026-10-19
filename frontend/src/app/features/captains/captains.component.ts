@@ -129,8 +129,7 @@ export class CaptainsComponent implements OnInit {
 
   deleteSelected(): void {
     if (this.selectedIds.size === 0) return;
-    const isAr = this.translationService.currentLang() === 'ar';
-    const confirmMsg = isAr ? `هل أنت متأكد من حذف ${this.selectedIds.size} كابتن؟` : `Are you sure you want to delete ${this.selectedIds.size} captains?`;
+    const confirmMsg = this.translationService.translate('CAPTAINS.CONFIRM_BULK_DELETE', { count: String(this.selectedIds.size) });
     if (!confirm(confirmMsg)) return;
 
     this.http.request<ApiResponse<any>>('DELETE', '/api/captains/bulk', {
@@ -139,20 +138,20 @@ export class CaptainsComponent implements OnInit {
       next: (res) => {
         this.selectedIds.clear();
         this.loadCaptains();
-        alert(res.message || (isAr ? 'تم الحذف بنجاح' : 'Deleted successfully'));
+        alert(res.message || this.translationService.translate('CAPTAINS.DELETE_SUCCESS'));
       },
       error: (err) => {
-        alert(err?.error?.message || (isAr ? 'فشل حذف الكباتن' : 'Failed to delete captains'));
+        alert(err?.error?.message || this.translationService.translate('CAPTAINS.BULK_DELETE_FAILED'));
       }
     });
   }
 
   deleteCaptain(captain: CaptainResponse, event: Event): void {
     event.stopPropagation();
-    const isAr = this.translationService.currentLang() === 'ar';
-    const confirmMsg = isAr
-      ? `هل أنت متأكد من حذف الكابتن "${captain.fullNameAr}" (كود: ${captain.kamalCode}) نهائياً؟`
-      : `Are you sure you want to delete captain "${captain.fullNameAr}" (Code: ${captain.kamalCode})?`;
+    const confirmMsg = this.translationService.translate('CAPTAINS.CONFIRM_DELETE', {
+      name: captain.fullNameAr,
+      code: captain.kamalCode
+    });
 
     if (!confirm(confirmMsg)) {
       return;
@@ -164,11 +163,11 @@ export class CaptainsComponent implements OnInit {
           if (res.success) {
             this.loadCaptains();
           } else {
-            alert(res.message || (isAr ? 'فشل حذف الكابتن' : 'Failed to delete captain'));
+            alert(res.message || this.translationService.translate('CAPTAINS.DELETE_FAILED'));
           }
         },
         error: (err) => {
-          alert(err?.error?.message || (isAr ? 'فشل حذف الكابتن' : 'Failed to delete captain'));
+          alert(err?.error?.message || this.translationService.translate('CAPTAINS.DELETE_FAILED'));
         }
       });
   }
@@ -196,10 +195,9 @@ export class CaptainsComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const isAr = this.translationService.currentLang() === 'ar';
-    const mapAr: Record<string, string> = { 'ACTIVE': 'نشط', 'INACTIVE': 'متوقف', 'TERMINATED': 'منتهي' };
-    const mapEn: Record<string, string> = { 'ACTIVE': 'Active', 'INACTIVE': 'Inactive', 'TERMINATED': 'Terminated' };
-    return (isAr ? mapAr[status] : mapEn[status]) || status;
+    const key = 'CAPTAINS.STATUS_' + status;
+    const trans = this.translationService.translate(key);
+    return trans !== key ? trans : status;
   }
 
   getStatusClass(status: string): string {
@@ -208,20 +206,9 @@ export class CaptainsComponent implements OnInit {
   }
 
   documentAlertLabel(captain: CaptainResponse): string {
-    const isAr = this.translationService.currentLang() === 'ar';
-    const mapAr: Record<DocumentStatus, string> = {
-      'VALID': '—',
-      'EXPIRING': 'على وشك الانتهاء',
-      'EXPIRED': 'منتهى',
-      'MISSING': 'غير مسجل'
-    };
-    const mapEn: Record<DocumentStatus, string> = {
-      'VALID': '—',
-      'EXPIRING': 'Expiring Soon',
-      'EXPIRED': 'Expired',
-      'MISSING': 'Missing'
-    };
-    const label = (isAr ? mapAr[captain.documentAlert] : mapEn[captain.documentAlert]) ?? '—';
+    if (captain.documentAlert === 'VALID') return '—';
+    const key = 'DOC_STATUS.' + captain.documentAlert;
+    const label = this.translationService.translate(key);
     return captain.documentAlertCount > 1 ? `${label} (${captain.documentAlertCount})` : label;
   }
 
@@ -238,6 +225,7 @@ export class CaptainsComponent implements OnInit {
   // ── Export ──
 
   isExporting = false;
+  isExportingPdf = false;
 
   exportExcel(): void {
     this.isExporting = true;
@@ -249,12 +237,36 @@ export class CaptainsComponent implements OnInit {
         this.isExporting = false;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `كباتن-${this.activeFilter || 'الكل'}.xlsx`;
+        const filterName = this.activeFilter ? this.activeFilter : this.translationService.translate('COMMON.ALL');
+        const prefix = this.translationService.translate('CAPTAINS.TITLE');
+        a.download = `${prefix}-${filterName}.xlsx`;
         a.click();
         URL.revokeObjectURL(a.href);
       },
       error: () => {
         this.isExporting = false;
+      }
+    });
+  }
+
+  exportPdf(): void {
+    this.isExportingPdf = true;
+    const params: Record<string, string> = {};
+    if (this.activeFilter) params['type'] = this.activeFilter;
+
+    this.http.get('/api/captains/export/pdf', { params, responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.isExportingPdf = false;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const filterName = this.activeFilter ? this.activeFilter : this.translationService.translate('COMMON.ALL');
+        const prefix = this.translationService.translate('CAPTAINS.TITLE');
+        a.download = `${prefix}-${filterName}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+      error: () => {
+        this.isExportingPdf = false;
       }
     });
   }

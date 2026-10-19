@@ -134,6 +134,13 @@ export const routes: Routes = [
         data: { permission: 'MEMBERS_VIEW' },
         loadComponent: () => import('./features/staff-form/staff-detail/staff-detail.component').then(m => m.StaffDetailComponent)
       },
+      // ---- Changelog ----
+      {
+        path: 'changelog',
+        canActivate: [permissionGuard],
+        data: { permission: 'CHANGELOG_VIEW' },
+        loadComponent: () => import('./features/changelog/changelog.component').then(m => m.ChangeLogComponent)
+      },
       // ---- User Management (Company ADMIN only) ----
       {
         path: 'user-management',
@@ -166,7 +173,7 @@ export const routes: Routes = [
         data: { permission: 'PAYROLL_VIEW' },
         loadComponent: () => import('./features/payroll/payroll.component').then(m => m.PayrollComponent)
       },
-      // ---- Loans (السُلف) ----
+      // ---- Loans ----
       {
         path: 'loans',
         canActivate: [permissionGuard],

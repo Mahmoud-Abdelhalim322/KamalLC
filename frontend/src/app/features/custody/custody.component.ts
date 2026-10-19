@@ -5,11 +5,13 @@ import { HttpClient } from '@angular/common/http';
 import { CustodyService } from '../../core/services/custody.service';
 import { CaptainCustodySummary, CustodyRecordResponse } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-custody',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './custody.component.html',
   styleUrls: ['./custody.component.scss']
 })
@@ -31,7 +33,10 @@ export class CustodyComponent implements OnInit {
 
   error = '';
 
-  constructor(private custodyService: CustodyService) {}
+  constructor(
+    private custodyService: CustodyService,
+    public i18n: TranslationService
+  ) {}
 
   ngOnInit(): void { this.loadSummaries(); }
 
@@ -39,7 +44,7 @@ export class CustodyComponent implements OnInit {
     this.isLoading = true;
     this.custodyService.getSummaries().subscribe({
       next: data => { this.summaries = data; this.applyFilter(); this.isLoading = false; },
-      error: e => { this.error = errorMessage(e, 'فشل تحميل العهد'); this.isLoading = false; }
+      error: e => { this.error = errorMessage(e, this.i18n.t('CUSTODY.ERR_LOAD_CUSTODY')); this.isLoading = false; }
     });
   }
 
@@ -68,7 +73,7 @@ export class CustodyComponent implements OnInit {
   loadHistory(): void {
     this.custodyService.getHistory(this.historyCaptainId, this.historyPage).subscribe({
       next: p => { this.historyRecords = p.content; this.historyTotalPages = p.totalPages; this.showHistoryDialog = true; },
-      error: e => this.error = errorMessage(e, 'فشل تحميل التاريخ')
+      error: e => this.error = errorMessage(e, this.i18n.t('CUSTODY.ERR_LOAD_HISTORY'))
     });
   }
 
@@ -92,13 +97,13 @@ export class CustodyComponent implements OnInit {
         this.isExporting = false;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'العهد.xlsx';
+        a.download = this.i18n.t('CUSTODY.EXPORT_FILENAME');
         a.click();
         URL.revokeObjectURL(a.href);
       },
       error: () => {
         this.isExporting = false;
-        this.error = 'فشل في تصدير ملف الإكسل';
+        this.error = this.i18n.t('CUSTODY.ERR_EXPORT_EXCEL');
       }
     });
   }
@@ -114,13 +119,13 @@ export class CustodyComponent implements OnInit {
         this.exportingCaptainId = null;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `محضر-تسليم-${summary.captainName}.pdf`;
+        a.download = this.i18n.t('CUSTODY.HANDOVER_FILENAME', { name: summary.captainName });
         a.click();
         URL.revokeObjectURL(a.href);
       },
       error: () => {
         this.exportingCaptainId = null;
-        this.error = 'فشل في إنشاء محضر التسليم';
+        this.error = this.i18n.t('CUSTODY.ERR_EXPORT_PDF');
       }
     });
   }

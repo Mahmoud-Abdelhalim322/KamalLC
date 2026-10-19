@@ -31,7 +31,7 @@ public class PayrollExportService {
 
     private final ExcelBranding branding;
 
-    /** Column order mirrors the existing payroll sheet. */
+    /** Column order follows the organisational form layout, with extra analytical columns appended. */
     private static final List<String> HEADERS = List.of(
             "ID-KSLSC",
             "ID - NINJA",
@@ -39,23 +39,23 @@ public class PayrollExportService {
             "النوع\nTYPE",
             "عدد الشفتات\nTOTAL SHIFT",
             "أيام الغياب\nABSENT",
-            "عدد الطلبات\nTotal Delivered",
-            "عدد الساعات\nTotal Time",
+            "اجمالي الطلبات\nTotal Delivered",
+            "اجمالي الساعات\nTotal Working Hour",
             "نسبة الانشغال\nBusy Utilization %",
-            "مجموع الدخل\nC.DUTY",
-            "خصم تأخير\nDeduction for late",
-            "خصم المورد\nSUPPLIER DEDUCTION",
-            "حوافز يومية\nDAILY INCENTIVE",
-            "بدل بنزين\nFUEL ALLOWANCE",
-            "بدل سيارة\nCAR ALLOWANCE",
             "تحقيق التارقيت\nACHIEVE THE TARGET",
-            "بعد التارقيت\nAFTER TARGET",
+            "خصم تأخير\nDeduction for late",
+            "خصم نينجا\nNinja Deduction",
+            "عمولة بعد التارقت 18 طلب\nAfter TARGET",
+            "حوافز يومية\nDAILY INCENTIVE",
+            "بدل سيارة\nCAR ALLOWANCE",
+            "تحقيق الساعات\nTOTAL TARGET HOUR",
+            "SUM of الطلبات\nTOTAL SALARY ORDER",
             "عمولة الإجازة\nVACATION COMMISSION",
             "مجموع الراتب\nTOTAL SALARY",
-            "بدل سكن\nHOUSING ALLOWANCE",
+            "بدل سكن\nHousing allowance",
             "مكافأة\nREWARD",
-            "فروقات البنزين\nFUEL DIFFERENCE",
-            "غرامات المورد\nPENALTY",
+            "فروقات البنزين\nGasoline price differences",
+            "غرامة نينجا\nNinja Penalty",
             "سلف\nLOAN",
             "صافي الراتب\nNET SALARY",
             "إيراد المورد\nSUPPLIER REVENUE",
@@ -72,7 +72,7 @@ public class PayrollExportService {
             "مجموع الراتب\nGROSS SALARY",
             "مكافأة\nREWARD",
             "إضافة أخرى\nOTHER BONUS",
-            "غرامات المورد\nPENALTY",
+            "غرامة نينجا\nNinja Penalty",
             "سلف\nLOAN",
             "خصم آخر\nOTHER DEDUCTION",
             "إجمالي البنود اليدوية\nTOTAL ADJUSTMENTS",
@@ -113,33 +113,33 @@ public class PayrollExportService {
             for (PayrollLineResponse line : lines) {
                 Row row = sheet.createRow(r++);
                 int c = 0;
-                text(row, c++, line.getCaptainCode());
-                text(row, c++, line.getSupplierExternalIds());
-                text(row, c++, line.getCaptainName());
-                text(row, c++, typeLabel(line.getCaptainType()));
-                number(row, c++, BigDecimal.valueOf(line.getAttendedShifts()), intStyle);
-                number(row, c++, BigDecimal.valueOf(line.getAbsentShifts()), intStyle);
-                number(row, c++, BigDecimal.valueOf(line.getTotalOrders()), intStyle);
-                number(row, c++, line.getTotalHours(), moneyStyle);
-                number(row, c++, line.getAvgBusyUtilization(), percentStyle);
-                number(row, c++, line.getBasePay(), moneyStyle);
-                number(row, c++, line.getLateDeductions(), moneyStyle);
-                number(row, c++, line.getSupplierDeductions(), moneyStyle);
-                number(row, c++, line.getDailyIncentives(), moneyStyle);
-                number(row, c++, line.getFuelAllowances(), moneyStyle);
-                number(row, c++, line.getCarAllowances(), moneyStyle);
-                number(row, c++, line.getTargetBonus(), moneyStyle);
-                number(row, c++, line.getExtraOrderPay(), moneyStyle);
-                number(row, c++, line.getVacationCommission(), moneyStyle);
-                number(row, c++, line.getGross(), moneyStyle);
-                number(row, c++, adjustment(line, "HOUSING_ALLOWANCE"), moneyStyle);
-                number(row, c++, adjustment(line, "REWARD"), moneyStyle);
-                number(row, c++, adjustment(line, "FUEL_DIFFERENCE"), moneyStyle);
-                number(row, c++, adjustment(line, "SUPPLIER_PENALTY"), moneyStyle);
-                number(row, c++, adjustment(line, "LOAN"), moneyStyle);
-                number(row, c++, line.getNet(), moneyStyle);
-                number(row, c++, line.getSupplierRevenueTotal(), moneyStyle);
-                number(row, c, line.getMargin(), moneyStyle);
+                text(row, c++, line.getCaptainCode());                          // 0: ID-KSLSC
+                text(row, c++, line.getSupplierExternalIds());                  // 1: ID - NINJA
+                text(row, c++, line.getCaptainName());                          // 2: اسم الكابتن
+                text(row, c++, typeLabel(line.getCaptainType()));               // 3: النوع
+                number(row, c++, BigDecimal.valueOf(line.getAttendedShifts()), intStyle); // 4: عدد الشفتات
+                number(row, c++, BigDecimal.valueOf(line.getAbsentShifts()), intStyle);   // 5: أيام الغياب
+                number(row, c++, BigDecimal.valueOf(line.getTotalOrders()), intStyle);    // 6: اجمالي الطلبات
+                number(row, c++, line.getTotalHours(), moneyStyle);             // 7: اجمالي الساعات
+                number(row, c++, line.getAvgBusyUtilization(), percentStyle);   // 8: نسبة الانشغال
+                number(row, c++, line.getTargetBonus(), moneyStyle);            // 9: تحقيق التارقيت
+                number(row, c++, line.getLateDeductions(), moneyStyle);         // 10: خصم تأخير
+                number(row, c++, line.getSupplierDeductions(), moneyStyle);     // 11: خصم نينجا
+                number(row, c++, line.getExtraOrderPay(), moneyStyle);          // 12: عمولة بعد التارقت 18 طلب
+                number(row, c++, line.getDailyIncentives(), moneyStyle);        // 13: حوافز يومية
+                number(row, c++, line.getCarAllowances(), moneyStyle);          // 14: بدل سيارة
+                number(row, c++, line.getTotalHours(), moneyStyle);             // 15: تحقيق الساعات
+                number(row, c++, line.getBasePay(), moneyStyle);                // 16: SUM of الطلبات
+                number(row, c++, line.getVacationCommission(), moneyStyle);     // 17: عمولة الإجازة
+                number(row, c++, line.getGross(), moneyStyle);                  // 18: مجموع الراتب
+                number(row, c++, adjustment(line, "HOUSING_ALLOWANCE"), moneyStyle); // 19: بدل سكن
+                number(row, c++, adjustment(line, "REWARD"), moneyStyle);       // 20: مكافأة
+                number(row, c++, adjustment(line, "FUEL_DIFFERENCE"), moneyStyle);   // 21: فروقات البنزين
+                number(row, c++, adjustment(line, "SUPPLIER_PENALTY"), moneyStyle);  // 22: غرامة نينجا
+                number(row, c++, adjustment(line, "LOAN"), moneyStyle);         // 23: سلف
+                number(row, c++, line.getNet(), moneyStyle);                    // 24: صافي الراتب
+                number(row, c++, line.getSupplierRevenueTotal(), moneyStyle);   // 25: إيراد المورد
+                number(row, c, line.getMargin(), moneyStyle);                   // 26: الهامش
             }
 
             writeTotalsRow(sheet, r, lines, totalStyle);
@@ -168,14 +168,13 @@ public class PayrollExportService {
                 new Total(5, l -> BigDecimal.valueOf(l.getAbsentShifts())),
                 new Total(6, l -> BigDecimal.valueOf(l.getTotalOrders())),
                 new Total(7, PayrollLineResponse::getTotalHours),
-                new Total(9, PayrollLineResponse::getBasePay),
+                new Total(9, PayrollLineResponse::getTargetBonus),
                 new Total(10, PayrollLineResponse::getLateDeductions),
                 new Total(11, PayrollLineResponse::getSupplierDeductions),
-                new Total(12, PayrollLineResponse::getDailyIncentives),
-                new Total(13, PayrollLineResponse::getFuelAllowances),
+                new Total(12, PayrollLineResponse::getExtraOrderPay),
+                new Total(13, PayrollLineResponse::getDailyIncentives),
                 new Total(14, PayrollLineResponse::getCarAllowances),
-                new Total(15, PayrollLineResponse::getTargetBonus),
-                new Total(16, PayrollLineResponse::getExtraOrderPay),
+                new Total(16, PayrollLineResponse::getBasePay),
                 new Total(17, PayrollLineResponse::getVacationCommission),
                 new Total(18, PayrollLineResponse::getGross),
                 new Total(24, PayrollLineResponse::getNet),
