@@ -18,6 +18,8 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
 
+    public static final String CAPTAIN_SUBJECT_PREFIX = "captain:";
+
     private final SecretKey key;
     private final long expirationMs;
 
@@ -58,6 +60,30 @@ public class JwtTokenProvider {
         }
 
         return builder.signWith(key).compact();
+    }
+
+    /**
+     * Captain-app token. The subject carries the captain's id behind {@link #CAPTAIN_SUBJECT_PREFIX}
+     * so it can never be mistaken for an {@code app_user} username, and the lifetime is the
+     * app's own — a captain stays signed in on their phone far longer than a web session.
+     */
+    public String generateCaptainToken(UUID captainId, UUID tenantId, long ttlMs) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(CAPTAIN_SUBJECT_PREFIX + captainId)
+                .claim("tenantId", tenantId.toString())
+                .claim("role", "CAPTAIN")
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + ttlMs))
+                .signWith(key)
+                .compact();
+    }
+
+    /** The captain id of a captain-app token, or {@code null} for a staff token. */
+    public static UUID captainIdOfSubject(String subject) {
+        return subject != null && subject.startsWith(CAPTAIN_SUBJECT_PREFIX)
+                ? UUID.fromString(subject.substring(CAPTAIN_SUBJECT_PREFIX.length()))
+                : null;
     }
 
     public String getUsernameFromToken(String token) {

@@ -1,25 +1,31 @@
 package com.kamal.lc.common.config;
 
+import com.kamal.lc.common.security.CaptainPrincipal;
 import com.kamal.lc.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -27,6 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * Spring Security configuration:
  * - Stateless (JWT-based, no sessions)
  * - /api/auth/login is public
+ * - /api/captain-app/** is the captain mobile app (ROLE_CAPTAIN); captain tokens reach nothing else
  * - /api/platform/** requires PLATFORM_ADMIN role
  * - /api/admin/** requires ADMIN role (company admin, was SUPER_ADMIN)
  * - Specific /api/** endpoints require respective permissions
@@ -64,6 +71,9 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/settings/logo/file/**").permitAll()
+                // Captain mobile app: OTP sign-in is public, everything else needs a captain token
+                .requestMatchers("/api/captain-app/auth/otp/**").permitAll()
+                .requestMatchers("/api/captain-app/**").hasRole("CAPTAIN")
                 // Platform admin endpoints (Super Admin of the SaaS platform)
                 .requestMatchers("/api/platform/**").hasRole("PLATFORM_ADMIN")
                 // Company admin endpoints (was SUPER_ADMIN, now ADMIN)
@@ -81,12 +91,23 @@ public class SecurityConfig {
                 .requestMatchers("/api/captains/**").hasAnyAuthority("MEMBERS_VIEW", "MEMBERS_MANAGE")
                 .requestMatchers("/api/staff/**").hasAnyAuthority("MEMBERS_VIEW", "MEMBERS_MANAGE")
                 .requestMatchers("/api/supplier-ids/**").hasAnyAuthority("MEMBERS_VIEW", "MEMBERS_MANAGE")
-                .requestMatchers("/api/**").authenticated()
+                // Captain tokens are confined to /api/captain-app/** above
+                .requestMatchers("/api/**").access(SecurityConfig::staffOnly)
                 .anyRequest().permitAll()   // Angular static files
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private static AuthorizationDecision staffOnly(Supplier<Authentication> authentication,
+                                                  RequestAuthorizationContext context) {
+        Authentication auth = authentication.get();
+        boolean granted = auth != null && auth.isAuthenticated()
+                && !(auth instanceof AnonymousAuthenticationToken)
+                && auth.getAuthorities().stream()
+                        .noneMatch(a -> CaptainPrincipal.ROLE.equals(a.getAuthority()));
+        return new AuthorizationDecision(granted);
     }
 
     @Bean

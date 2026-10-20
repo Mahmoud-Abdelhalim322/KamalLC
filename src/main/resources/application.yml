@@ -76,6 +76,18 @@ app:
     username: ${PLATFORM_ADMIN_USERNAME:kslsc}
     password: ${PLATFORM_ADMIN_PASSWORD:admin@kslsc}
 
+  # ---- Captain mobile app ----
+  captain-app:
+    token-expiration-ms: ${CAPTAIN_TOKEN_EXPIRATION_MS:2592000000}  # 30 days
+    otp:
+      length: 4
+      ttl-seconds: 300
+      resend-seconds: 60
+      max-attempts: 5
+      max-per-hour: 5
+      # Returns the code in the API response for local testing. Never enable in production.
+      dev-echo: ${CAPTAIN_OTP_DEV_ECHO:false}
+
   # ---- CORS ----
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8082}

@@ -67,4 +67,18 @@ public interface CaptainRepository extends JpaRepository<Captain, UUID> {
     /** All existing codes sharing a prefix — used to compute the next free sequence number. */
     @Query("SELECT c.kamalCode FROM Captain c WHERE c.kamalCode LIKE CONCAT(:prefix, '%')")
     List<String> findCodesStartingWith(@Param("prefix") String prefix);
+
+    /**
+     * Captains whose stored phone ends with the given nine digits — the Saudi mobile number
+     * without its 0 / +966 prefix, however it was typed into the file. Native, so it is not
+     * narrowed by the tenant filter: it runs at sign-in, before the tenant is known.
+     */
+    @Query(value = "SELECT * FROM captain WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 9) = :phoneKey",
+            nativeQuery = true)
+    List<Captain> findByPhoneKey(@Param("phoneKey") String phoneKey);
+
+    /** Whether a captain may still use the captain app: active, in an active company. */
+    @Query("SELECT COUNT(c) > 0 FROM Captain c WHERE c.id = :id AND c.status = 'ACTIVE' "
+            + "AND c.tenant.status IN ('ACTIVE', 'TRIAL')")
+    boolean isActiveForApp(@Param("id") UUID id);
 }
