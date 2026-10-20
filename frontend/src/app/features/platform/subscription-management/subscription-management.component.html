@@ -36,7 +36,7 @@
             </td>
             <td>{{ sub.startDate }}</td>
             <td>{{ sub.endDate }}</td>
-            <td class="amount-cell">{{ sub.paidAmount ? (sub.paidAmount | currency:'SAR':'symbol':'1.0-0') : '-' }}</td>
+            <td class="amount-cell">{{ sub.paidAmount ? (sub.paidAmount | sar:'1.0-0') : '-' }}</td>
             <td>
               <span class="badge" [ngClass]="sub.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'">
                 {{ (sub.status === 'ACTIVE' ? 'PLATFORM.STATUS_ACTIVE' : 'PLATFORM.STATUS_EXPIRED') | translate }}

@@ -456,7 +456,7 @@
       <div class="stat-card total">
         <span class="material-icons-round">payments</span>
         <div>
-          <span class="stat-value">{{ deductionPreview.totalDeductionAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          <span class="stat-value">{{ deductionPreview.totalDeductionAmount | sar }}</span>
           <span class="stat-label">{{ 'IMPORTS.TOTAL_DEDUCTIONS' | translate }}</span>
         </div>
       </div>
@@ -489,7 +489,7 @@
                 </div>
               </div>
             </td>
-            <td style="font-weight: 700; color: #e53935;">{{ row.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</td>
+            <td style="font-weight: 700; color: #e53935;">{{ row.amount | sar }}</td>
             <td>{{ row.reason || '—' }}</td>
             <td>
               <span class="chip" [class.chip-required]="row.matched">
@@ -524,7 +524,7 @@
         <span class="stat-label">{{ 'IMPORTS.ROWS_UNMATCHED' | translate }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">{{ deductionResult.totalDeductionAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="stat-value">{{ deductionResult.totalDeductionAmount | sar }}</span>
         <span class="stat-label">{{ 'IMPORTS.TOTAL_DEDUCTIONS' | translate }}</span>
       </div>
     </div>
@@ -575,7 +575,7 @@
       <div class="stat-card total">
         <span class="material-icons-round">payments</span>
         <div>
-          <span class="stat-value">{{ vacationCommissionPreview.totalAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+          <span class="stat-value">{{ vacationCommissionPreview.totalAmount | sar }}</span>
           <span class="stat-label">{{ 'IMPORTS.TOTAL_COMMISSIONS' | translate }}</span>
         </div>
       </div>
@@ -614,7 +614,7 @@
             <td>{{ row.zoneName || '—' }}</td>
             <td><span class="chip chip-required" *ngIf="row.flag">{{ row.flag }}</span></td>
             <td>{{ row.note || '—' }}</td>
-            <td style="font-weight: 700; color: #2e7d32;">{{ row.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</td>
+            <td style="font-weight: 700; color: #2e7d32;">{{ row.amount | sar }}</td>
             <td>
               <span class="status-badge" [class.status-committed]="row.matched" [class.status-failed]="!row.matched">
                 {{ row.statusMessage }}
@@ -643,7 +643,7 @@
         <span class="stat-label">{{ 'IMPORTS.ROWS_UNMATCHED' | translate }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">{{ vacationCommissionResult.totalAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="stat-value">{{ vacationCommissionResult.totalAmount | sar }}</span>
         <span class="stat-label">{{ 'IMPORTS.TOTAL_COMMISSIONS' | translate }}</span>
       </div>
     </div>

@@ -204,6 +204,7 @@
 /* ============ Main Wrapper ============ */
 .main-wrapper {
   flex: 1;
+  min-width: 0;
   margin-right: var(--sidebar-width);
   margin-left: 0;
   transition: margin var(--transition-slow);
@@ -252,9 +253,11 @@
 }
 
 .header-company-name {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 1.15rem;
   font-weight: 800;
   white-space: nowrap;
@@ -285,7 +288,7 @@
   transition: all var(--transition-normal);
 
   &:hover {
-    transform: translateX(-50%) scale(1.03);
+    transform: scale(1.03);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 }
@@ -324,6 +327,7 @@
 
 .header-end {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 16px;
 }
@@ -676,6 +680,7 @@
 /* ============ Main Content ============ */
 .main-content {
   flex: 1;
+  min-width: 0;
   padding: 24px;
   background: var(--bg-main);
 }

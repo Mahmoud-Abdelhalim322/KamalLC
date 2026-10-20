@@ -141,7 +141,7 @@
       <div class="info-item"><label>{{ 'STAFF_FORM.OTHER_ALLOWANCES' | translate }}</label><span class="money">{{ staff.otherAllowances | number:'1.2-2' }}</span></div>
       <div class="info-item highlight">
         <label>{{ 'STAFF_DETAIL.TOTAL_SALARY' | translate }}</label>
-        <span class="money total">{{ (staff.basicSalary + staff.housingAllowance + staff.otherAllowances) | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="money total">{{ (staff.basicSalary + staff.housingAllowance + staff.otherAllowances) | sar }}</span>
       </div>
     </div>
   </div>

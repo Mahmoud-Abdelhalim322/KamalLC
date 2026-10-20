@@ -75,7 +75,7 @@
 
 .detail-table {
   width: 100%; border-collapse: collapse;
-  th, td { padding: 10px 14px; text-align: right; font-size: 0.83rem; }
+  th, td { padding: 10px 14px; text-align: start; font-size: 0.83rem; }
   th { font-weight: 700; color: var(--text-secondary); background: var(--bg-input); }
   td { border-bottom: 1px solid var(--border-light); }
   tr:last-child td { border-bottom: none; }
@@ -117,7 +117,7 @@
 .data-table {
   width: 100%; border-collapse: collapse; background: var(--bg-card);
   border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-light);
-  th, td { padding: 12px 16px; text-align: right; font-size: 0.85rem; }
+  th, td { padding: 12px 16px; text-align: start; font-size: 0.85rem; }
   th { background: var(--bg-input); font-weight: 700; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); }
   td { border-bottom: 1px solid var(--border-light); }
   tr:last-child td { border-bottom: none; }

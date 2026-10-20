@@ -8,11 +8,12 @@ import {
 } from '../../core/models/api.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-captains',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './captains.component.html',
   styleUrls: ['./captains.component.scss']
 })

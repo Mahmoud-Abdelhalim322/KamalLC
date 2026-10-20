@@ -248,7 +248,7 @@
               </span>
             </td>
             <td>{{ m.openedAt | date:'yyyy-MM-dd' }}</td>
-            <td>{{ m.totalCost !== undefined ? (m.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</td>
+            <td>{{ m.totalCost !== undefined ? (m.totalCost | sar:'1.0-2') : '—' }}</td>
             <td>
               <span class="badge" 
                     [class.badge-rented]="m.status === 'IN_PROGRESS'" 
@@ -575,7 +575,7 @@
             <td>{{ h.workshopName || '—' }}</td>
             <td>{{ h.faultReason }}</td>
             <td>{{ h.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : ('CAPTAINS.TITLE' | translate) }}</td>
-            <td>{{ h.totalCost !== undefined ? (h.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</td>
+            <td>{{ h.totalCost !== undefined ? (h.totalCost | sar:'1.0-2') : '—' }}</td>
             <td>
               <span class="badge" 
                     [class.badge-rented]="h.status === 'IN_PROGRESS'" 
@@ -632,7 +632,7 @@
         </div>
         <div class="form-group">
           <label>{{ 'FLEET.TOTAL_COST' | translate }}</label>
-          <div>{{ selectedMaintenanceDetails.totalCost !== undefined ? (selectedMaintenanceDetails.totalCost + ' ' + ('SUPPLIER_REVENUE.SAR' | translate)) : '—' }}</div>
+          <div>{{ selectedMaintenanceDetails.totalCost !== undefined ? (selectedMaintenanceDetails.totalCost | sar:'1.0-2') : '—' }}</div>
         </div>
         <div class="form-group full-width" *ngIf="selectedMaintenanceDetails.parts && selectedMaintenanceDetails.parts.length">
           <label>{{ 'FLEET.SPARE_PARTS' | translate }}</label>
@@ -641,7 +641,7 @@
             <tbody>
               <tr *ngFor="let p of selectedMaintenanceDetails.parts">
                 <td>{{ p.partName }}</td>
-                <td>{{ p.partCost }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
+                <td>{{ p.partCost | sar:'1.0-2' }}</td>
               </tr>
             </tbody>
           </table>

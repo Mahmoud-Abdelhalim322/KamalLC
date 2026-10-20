@@ -94,7 +94,7 @@
       <div>
         <strong style="color: #2e7d32; font-size: 1.1rem;">{{ 'SHIFTS.VACATION_TOTAL' | translate }}</strong>
         <span style="font-size: 1.25rem; font-weight: bold; margin-right: 0.5rem; color: #1b5e20;">
-          {{ totalVacationCommissionsAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}
+          {{ totalVacationCommissionsAmount | sar }}
         </span>
       </div>
       <span class="muted">{{ totalElements }} {{ 'COMMON.RECORD' | translate }}</span>
@@ -136,7 +136,7 @@
           <td><span class="chip chip-required" *ngIf="vc.flag">{{ vc.flag }}</span></td>
           <td>{{ vc.note || '—' }}</td>
           <td class="strong" style="color: #2e7d32; font-size: 1.05rem;">
-            +{{ vc.amount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}
+            {{ vc.amount | sar:'1.2-2':'+' }}
           </td>
           <td *ngIf="canManage">
             <button class="btn btn-sm btn-outline btn-danger" (click)="deleteVacationCommission(vc.id)" [title]="'COMMON.DELETE' | translate">
@@ -309,7 +309,7 @@
         </div>
         <div class="total-card">
           <span class="total-label">{{ 'SHIFTS.NET_SHIFT_DUE' | translate }}</span>
-          <span class="total-value">{{ money(selected.netShiftPay) }} <small>{{ 'COMMON.SAR' | translate }}</small></span>
+          <span class="total-value">{{ selected.netShiftPay | sar }}</span>
         </div>
       </section>
 
@@ -348,12 +348,12 @@
               {{ selected.qualifiesFullRate ? ('COMMON.YES' | translate) : ('COMMON.NO' | translate) }}
             </span>
           </div>
-          <div class="kv"><span>{{ 'SHIFTS.SHIFT_REVENUE' | translate }}</span><b>{{ money(selected.supplierRevenue) }} {{ 'COMMON.SAR' | translate }}</b></div>
-          <div class="kv"><span>{{ 'SHIFTS.EXTRA_ORDER_REVENUE' | translate }}</span><b>{{ money(selected.supplierExtraRevenue) }} {{ 'COMMON.SAR' | translate }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.SHIFT_REVENUE' | translate }}</span><b>{{ selected.supplierRevenue | sar }}</b></div>
+          <div class="kv"><span>{{ 'SHIFTS.EXTRA_ORDER_REVENUE' | translate }}</span><b>{{ selected.supplierExtraRevenue | sar }}</b></div>
         </div>
         <div class="total-card margin-card">
           <span class="total-label">{{ 'SHIFTS.SHIFT_MARGIN' | translate }}</span>
-          <span class="total-value">{{ money(selected.shiftMargin) }} <small>{{ 'COMMON.SAR' | translate }}</small></span>
+          <span class="total-value">{{ selected.shiftMargin | sar }}</span>
         </div>
       </section>
 
@@ -368,7 +368,7 @@
           <div class="kv">
             <span>{{ 'SHIFTS.DEDUCTION_AMOUNT' | translate }}</span>
             <b [class.negative]="selected.supplierDeduction > 0">
-              {{ selected.supplierDeduction > 0 ? '−' + money(selected.supplierDeduction) : '0.00' }} {{ 'COMMON.SAR' | translate }}
+              {{ selected.supplierDeduction | sar:'1.2-2':(selected.supplierDeduction > 0 ? '−' : '') }}
             </b>
           </div>
           <div class="kv" *ngIf="selected.supplierDeductionReason">
@@ -382,7 +382,7 @@
           <span class="material-icons-round">money_off</span>
           <div>
             <b>{{ 'SHIFTS.DEDUCTION_EXCLUDED_TITLE' | translate }}</b>
-            <p>{{ 'SHIFTS.ORIGINAL_AMOUNT' | translate }} {{ money(selected.supplierDeductionOriginal) }} {{ 'COMMON.SAR' | translate }}</p>
+            <p>{{ 'SHIFTS.ORIGINAL_AMOUNT' | translate }} {{ selected.supplierDeductionOriginal | sar }}</p>
             <p *ngIf="selected.supplierDeductionExclusionReason">{{ 'SHIFTS.REASON_LABEL' | translate }} {{ selected.supplierDeductionExclusionReason }}</p>
           </div>
         </div>

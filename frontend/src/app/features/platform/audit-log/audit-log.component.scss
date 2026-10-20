@@ -1,6 +1,4 @@
 .audit-log-page {
-  direction: rtl;
-  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .page-header {
@@ -51,7 +49,7 @@
   font-size: 0.84rem;
   color: #64748B;
   direction: ltr;
-  text-align: right;
+  text-align: start;
 }
 
 .actor-name {

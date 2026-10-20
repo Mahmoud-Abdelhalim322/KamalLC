@@ -266,7 +266,7 @@ select.form-input { cursor: pointer; }
 
 .picker-item {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  width: 100%; padding: 10px 14px; background: none; text-align: right;
+  width: 100%; padding: 10px 14px; background: none; text-align: start;
   border: none; border-bottom: 1px solid var(--border-light); cursor: pointer;
 
   &:last-child { border-bottom: none; }

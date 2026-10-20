@@ -51,7 +51,7 @@
   border-radius: var(--radius-lg); overflow: hidden;
   border: 1px solid var(--border-light);
 
-  th, td { padding: 14px 18px; text-align: right; font-size: 0.85rem; }
+  th, td { padding: 14px 18px; text-align: start; font-size: 0.85rem; }
   th {
     background: var(--bg-input); font-weight: 700; color: var(--text-secondary);
     border-bottom: 1px solid var(--border-light); white-space: nowrap;
@@ -67,7 +67,7 @@
 
 .code-cell { font-family: 'Courier New', monospace; font-weight: 700; color: var(--primary); font-size: 0.82rem !important; }
 
-.name-cell { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.name-cell { display: flex; align-items: center; gap: 12px; font-weight: 600; white-space: nowrap; }
 
 .captain-avatar {
   width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;

@@ -68,7 +68,7 @@
     <div class="kpi-row">
       <div class="kpi">
         <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_GROSS' | translate }}</span>
-        <b class="kpi-value">{{ summary.grossRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+        <b class="kpi-value">{{ summary.grossRevenue | sar }}</b>
       </div>
 
       <div class="kpi">
@@ -79,13 +79,13 @@
       <div class="kpi" [class.good]="summary.netAdjustments > 0" [class.bad]="summary.netAdjustments < 0">
         <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_ADJUSTMENTS' | translate }}</span>
         <b class="kpi-value">
-          {{ summary.netAdjustments > 0 ? '+' : '' }}{{ summary.netAdjustments | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small>
+          {{ summary.netAdjustments | sar:'1.2-2':(summary.netAdjustments > 0 ? '+' : '') }}
         </b>
       </div>
 
       <div class="kpi accent">
         <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_REVENUE' | translate }}</span>
-        <b class="kpi-value">{{ summary.netRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+        <b class="kpi-value">{{ summary.netRevenue | sar }}</b>
       </div>
     </div>
 
@@ -126,11 +126,11 @@
             <td class="strong">{{ row.totalShifts }}</td>
             <td class="strong">{{ row.totalDelivered | number }}</td>
             <td>{{ row.workingHours | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.HOURS_UNIT' | translate }}</td>
-            <td>{{ row.baseRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
-            <td>{{ row.extraRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
+            <td>{{ row.baseRevenue | sar }}</td>
+            <td>{{ row.extraRevenue | sar }}</td>
             <td><span class="positive">+{{ row.additionsTotal | number:'1.2-2' }}</span></td>
             <td><span class="negative">-{{ row.deductionsTotal | number:'1.2-2' }}</span></td>
-            <td class="net">{{ row.netRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
+            <td class="net">{{ row.netRevenue | sar }}</td>
             <td class="text-center">
               <div class="action-buttons">
                 <button class="btn btn-outline btn-sm" [title]="'SUPPLIER_REVENUE.STATEMENT_TOOLTIP' | translate" (click)="openStatement(row)" [disabled]="!row.supplierId">
@@ -265,19 +265,19 @@
             </div>
             <div class="kpi">
               <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_BASE_REV' | translate }}</span>
-              <b class="kpi-value">{{ statement.baseRevenue + statement.extraRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+              <b class="kpi-value">{{ statement.baseRevenue + statement.extraRevenue | sar }}</b>
             </div>
             <div class="kpi good">
               <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_TOTAL_ADDITIONS' | translate }}</span>
-              <b class="kpi-value">+{{ statement.additionsTotal | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+              <b class="kpi-value">{{ statement.additionsTotal | sar:'1.2-2':'+' }}</b>
             </div>
             <div class="kpi bad">
               <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_TOTAL_DEDUCTIONS' | translate }}</span>
-              <b class="kpi-value">-{{ statement.deductionsTotal | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+              <b class="kpi-value">{{ statement.deductionsTotal | sar:'1.2-2':'-' }}</b>
             </div>
             <div class="kpi accent">
               <span class="kpi-label">{{ 'SUPPLIER_REVENUE.MINI_FINAL_NET' | translate }}</span>
-              <b class="kpi-value">{{ statement.netRevenue | number:'1.2-2' }} <small>{{ 'SUPPLIER_REVENUE.SAR' | translate }}</small></b>
+              <b class="kpi-value">{{ statement.netRevenue | sar }}</b>
             </div>
           </div>
 
@@ -317,7 +317,7 @@
                     <td class="strong">{{ getCategoryLabel(adj.category) }}</td>
                     <td>
                       <span [class.positive]="adj.type === 'ADDITION'" [class.negative]="adj.type === 'DEDUCTION'">
-                        {{ adj.type === 'ADDITION' ? '+' : '-' }}{{ adj.amount | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}
+                        {{ adj.amount | sar:'1.2-2':(adj.type === 'ADDITION' ? '+' : '-') }}
                       </span>
                     </td>
                     <td class="muted">{{ adj.notes || '-' }}</td>
@@ -366,7 +366,7 @@
                     <td>{{ s.zoneName || '-' }}</td>
                     <td class="strong">{{ s.totalDelivered }}</td>
                     <td>{{ s.workingHours | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.HOURS_UNIT' | translate }}</td>
-                    <td class="net">{{ s.supplierRevenue + s.supplierExtraRevenue | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</td>
+                    <td class="net">{{ s.supplierRevenue + s.supplierExtraRevenue | sar }}</td>
                   </tr>
                 </tbody>
               </table>

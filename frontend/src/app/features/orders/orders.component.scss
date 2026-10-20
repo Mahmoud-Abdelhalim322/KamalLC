@@ -371,13 +371,12 @@
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.813rem;
-  direction: rtl;
 
   th, td {
     padding: 0.35rem 0.5rem;
     text-align: center;
     border-bottom: 1px solid #e2e8f0;
-    border-left: 1px solid #f1f5f9;
+    border-inline-start: 1px solid #f1f5f9;
     white-space: nowrap;
   }
 
@@ -412,19 +411,19 @@
     background: #ffffff;
   }
 
-  /* Sticky Column Offsets for RTL */
-  .col-name { right: 0; min-width: 170px; max-width: 200px; text-align: right; }
-  .col-code { right: 170px; min-width: 85px; }
-  .col-workdays { right: 255px; min-width: 55px; }
-  .col-rate { right: 310px; min-width: 70px; }
-  .col-target { right: 380px; min-width: 60px; }
-  .col-actual { right: 440px; min-width: 65px; border-left: 2px solid #cbd5e1 !important; }
+  /* Sticky column offsets (logical, so they pin to the reading start in both directions) */
+  .col-name { inset-inline-start: 0; min-width: 170px; max-width: 200px; text-align: start; }
+  .col-code { inset-inline-start: 170px; min-width: 85px; }
+  .col-workdays { inset-inline-start: 255px; min-width: 55px; }
+  .col-rate { inset-inline-start: 310px; min-width: 70px; }
+  .col-target { inset-inline-start: 380px; min-width: 60px; }
+  .col-actual { inset-inline-start: 440px; min-width: 65px; border-inline-end: 2px solid #cbd5e1 !important; }
 
   /* Performance mode columns */
-  .col-hours { right: 310px; min-width: 70px; }
-  .col-util { right: 380px; min-width: 80px; }
-  .col-extra { right: 460px; min-width: 75px; }
-  .col-late { right: 535px; min-width: 75px; border-left: 2px solid #cbd5e1 !important; }
+  .col-hours { inset-inline-start: 310px; min-width: 70px; }
+  .col-util { inset-inline-start: 380px; min-width: 80px; }
+  .col-extra { inset-inline-start: 460px; min-width: 75px; }
+  .col-late { inset-inline-start: 535px; min-width: 75px; border-inline-end: 2px solid #cbd5e1 !important; }
 
   /* Hours mode: util is last sticky col */
   .cell-hours {

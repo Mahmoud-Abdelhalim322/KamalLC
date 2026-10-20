@@ -64,9 +64,9 @@
         <div class="fin-icon"><span class="material-icons-round">payments</span></div>
         <div class="fin-info">
           <span class="fin-label">{{ 'DASHBOARD.NET_PAYROLL_LABEL' | translate }}</span>
-          <span class="fin-value">{{ (data.totalNetPayroll || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
+          <span class="fin-value">{{ (data.totalNetPayroll || 0) | sar:'1.0-0' }}</span>
           <span class="fin-sub">
-            {{ 'DASHBOARD.GROSS_PAYROLL_SUB' | translate:{ amount: ((data.totalGrossPayroll || 0) | currency:'SAR':'symbol':'1.0-0') } }}
+            {{ 'DASHBOARD.GROSS_PAYROLL_SUB' | translate:{ amount: ((data.totalGrossPayroll || 0) | sar:'1.0-0') } }}
           </span>
         </div>
       </div>
@@ -75,7 +75,7 @@
         <div class="fin-icon"><span class="material-icons-round">point_of_sale</span></div>
         <div class="fin-info">
           <span class="fin-label">{{ 'DASHBOARD.SUPPLIER_REVENUE_LABEL' | translate }}</span>
-          <span class="fin-value">{{ (data.totalSupplierRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
+          <span class="fin-value">{{ (data.totalSupplierRevenue || 0) | sar:'1.0-0' }}</span>
           <span class="fin-sub">
             {{ 'DASHBOARD.SUPPLIER_REVENUE_SUB' | translate:{ count: (data.ordersThisMonth | number) } }}
           </span>
@@ -87,7 +87,7 @@
         <div class="fin-info">
           <span class="fin-label">{{ 'DASHBOARD.ESTIMATED_MARGIN_LABEL' | translate }}</span>
           <span class="fin-value" [class.negative]="(data.estimatedMargin || 0) < 0">
-            {{ (data.estimatedMargin || 0) | currency:'SAR':'symbol':'1.0-0' }}
+            {{ (data.estimatedMargin || 0) | sar:'1.0-0' }}
           </span>
           <span class="fin-sub">{{ 'DASHBOARD.ESTIMATED_MARGIN_SUB' | translate }}</span>
         </div>
@@ -201,7 +201,7 @@
                 <span class="metric-lbl">{{ 'DASHBOARD.ORDERS_UNIT' | translate }}</span>
               </div>
               <div class="metric-box">
-                <span class="metric-val highlight">{{ item.netPay | currency:'SAR':'symbol':'1.0-0' }}</span>
+                <span class="metric-val highlight">{{ item.netPay | sar:'1.0-0' }}</span>
                 <span class="metric-lbl">{{ 'DASHBOARD.NET_DUE' | translate }}</span>
               </div>
             </div>

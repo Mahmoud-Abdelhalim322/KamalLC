@@ -32,9 +32,9 @@
           <tr *ngFor="let inv of invoices">
             <td><code class="invoice-code">{{ inv.invoiceNumber }}</code></td>
             <td><strong class="tenant-name">{{ inv.tenantName }}</strong></td>
-            <td>{{ inv.amount | currency:'SAR':'symbol':'1.0-0' }}</td>
-            <td>{{ inv.taxAmount | currency:'SAR':'symbol':'1.0-0' }}</td>
-            <td><strong class="total-amount">{{ inv.totalAmount | currency:'SAR':'symbol':'1.0-0' }}</strong></td>
+            <td>{{ inv.amount | sar:'1.0-0' }}</td>
+            <td>{{ inv.taxAmount | sar:'1.0-0' }}</td>
+            <td><strong class="total-amount">{{ inv.totalAmount | sar:'1.0-0' }}</strong></td>
             <td>{{ inv.dueDate }}</td>
             <td>
               <span class="badge" [ngClass]="inv.status === 'PAID' ? 'badge-success' : 'badge-warning'">

@@ -255,35 +255,35 @@
         <div class="info-rows">
           <div class="info-row" *ngIf="captain.basicSalary != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.BASIC_SALARY' | translate }}</span>
-            <span class="info-value">{{ captain.basicSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.basicSalary | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.housingAllowance != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.HOUSING_ALLOWANCE' | translate }}</span>
-            <span class="info-value">{{ captain.housingAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.housingAllowance | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.transportationAllowance != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.TRANSPORT_ALLOWANCE' | translate }}</span>
-            <span class="info-value">{{ captain.transportationAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.transportationAllowance | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.fuelAllowanceAmount != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.FUEL_ALLOWANCE' | translate }}</span>
-            <span class="info-value">{{ captain.fuelAllowanceAmount | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.fuelAllowanceAmount | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.callInternetAllowance != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.COMM_ALLOWANCE' | translate }}</span>
-            <span class="info-value">{{ captain.callInternetAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.callInternetAllowance | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.rewardAllowance != null">
             <span class="info-label">{{ 'CAPTAIN_FORM.REWARD' | translate }}</span>
-            <span class="info-value">{{ captain.rewardAllowance | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value">{{ captain.rewardAllowance | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.salaryDeductions != null">
             <span class="info-label">{{ 'CAPTAIN_DETAIL.SALARY_DEDUCTIONS' | translate }}</span>
-            <span class="info-value" style="color: var(--danger, #dc2626); font-weight: 600;">-{{ captain.salaryDeductions | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value" style="color: var(--danger, #dc2626); font-weight: 600;">{{ captain.salaryDeductions | sar:'1.2-2':'-' }}</span>
           </div>
           <div class="info-row" *ngIf="captain.netSalary != null">
             <span class="info-label" style="font-weight: 700;">{{ 'CAPTAIN_DETAIL.NET_SALARY' | translate }}</span>
-            <span class="info-value" style="color: var(--success, #16a34a); font-weight: 700; font-size: 1.05rem;">{{ captain.netSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span class="info-value" style="color: var(--success, #16a34a); font-weight: 700; font-size: 1.05rem;">{{ captain.netSalary | sar }}</span>
           </div>
           <div class="info-row" *ngIf="captain.bankName">
             <span class="info-label">{{ 'CAPTAIN_FORM.BANK_NAME' | translate }}</span>

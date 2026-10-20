@@ -144,7 +144,7 @@
 
 .payments-table {
   width: 100%; border-collapse: collapse;
-  th, td { padding: 8px 12px; text-align: right; font-size: 0.82rem; }
+  th, td { padding: 8px 12px; text-align: start; font-size: 0.82rem; }
   th {
     font-weight: 600; color: var(--text-light); font-size: 0.75rem;
     border-bottom: 1px solid var(--border-light);

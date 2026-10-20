@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { ApiResponse, CaptainPerformance, DashboardData } from '../../core/models/api.models';
 
 interface DashboardCard {
@@ -20,7 +21,7 @@ interface DashboardCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

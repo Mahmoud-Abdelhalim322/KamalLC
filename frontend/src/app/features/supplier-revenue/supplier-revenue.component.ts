@@ -10,12 +10,13 @@ import {
 import { SupplierRevenueService } from '../../core/services/supplier-revenue.service';
 import { downloadBlob, errorMessage } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-supplier-revenue',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './supplier-revenue.component.html',
   styleUrls: ['./supplier-revenue.component.scss']
 })

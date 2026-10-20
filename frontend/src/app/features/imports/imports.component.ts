@@ -11,6 +11,7 @@ import {
 import { ImportService } from '../../core/services/import.service';
 import { downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 /**
@@ -21,7 +22,7 @@ type ImportTab = 'captains' | 'reports' | 'deductions' | 'vacation-commission';
 @Component({
   selector: 'app-imports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './imports.component.html',
   styleUrls: ['./imports.component.scss']
 })

@@ -121,7 +121,7 @@
           <td class="ltr-cell">{{ captain.borderNumber || '—' }}</td>
           <td>{{ captain.jobTitle || '—' }}</td>
           <td>
-            <span *ngIf="captain.netSalary != null">{{ captain.netSalary | number:'1.2-2' }} {{ 'COMMON.SAR' | translate }}</span>
+            <span *ngIf="captain.netSalary != null">{{ captain.netSalary | sar }}</span>
             <span class="no-data" *ngIf="captain.netSalary == null">—</span>
           </td>
           <td>

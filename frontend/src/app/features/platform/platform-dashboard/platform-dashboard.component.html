@@ -41,8 +41,8 @@
         <div class="fin-icon"><span class="material-icons-round">savings</span></div>
         <div class="fin-info">
           <span class="fin-label">{{ 'PLATFORM.MRR' | translate }}</span>
-          <span class="fin-value">{{ (stats.monthlyRecurringRevenue || 0) | currency:'SAR':'symbol':'1.0-0' }}</span>
-          <span class="fin-sub">{{ 'PLATFORM.TOTAL_COLLECTED' | translate:{ amount: ((stats.totalRevenue || 0) | currency:'SAR':'symbol':'1.0-0') } }}</span>
+          <span class="fin-value">{{ (stats.monthlyRecurringRevenue || 0) | sar:'1.0-0' }}</span>
+          <span class="fin-sub">{{ 'PLATFORM.TOTAL_COLLECTED' | translate:{ amount: ((stats.totalRevenue || 0) | sar:'1.0-0') } }}</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@
           <div class="alert-card-icon"><span class="material-icons-round">pending_actions</span></div>
           <div class="alert-card-body">
             <span class="alert-title">{{ 'PLATFORM.PENDING_INVOICES_TITLE' | translate:{ count: stats.pendingInvoices } }}</span>
-            <span class="alert-desc">{{ 'PLATFORM.PENDING_INVOICES_DESC' | translate:{ amount: (stats.pendingInvoiceAmount | currency:'SAR':'symbol':'1.0-0') } }}</span>
+            <span class="alert-desc">{{ 'PLATFORM.PENDING_INVOICES_DESC' | translate:{ amount: (stats.pendingInvoiceAmount | sar:'1.0-0') } }}</span>
           </div>
           <span class="btn-action">{{ 'PLATFORM.REVIEW_INVOICES' | translate }} &larr;</span>
         </a>

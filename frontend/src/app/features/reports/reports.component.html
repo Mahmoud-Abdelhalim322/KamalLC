@@ -360,7 +360,7 @@
           <div class="kv" [class.positive]="rep.adjustmentsTotal > 0" [class.negative]="rep.adjustmentsTotal < 0">
             <span>{{ 'REPORTS.MANUAL_ITEMS' | translate }}</span><b>{{ money(rep.adjustmentsTotal) }}</b>
           </div>
-          <div class="kv total"><span>{{ 'REPORTS.NET_SALARY' | translate }}</span><b>{{ money(rep.net) }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</b></div>
+          <div class="kv total"><span>{{ 'REPORTS.NET_SALARY' | translate }}</span><b>{{ rep.net | sar }}</b></div>
           <p class="hint">
             {{ 'REPORTS.PAY_DISCLAIMER' | translate }}
           </p>
@@ -392,7 +392,7 @@
             <h3 class="card-title">{{ 'REPORTS.PROFITABILITY_TITLE' | translate }}</h3>
             <div class="kv"><span>{{ 'REPORTS.SUPPLIER_REV_LABEL' | translate }}</span><b>{{ money(rep.supplierRevenueTotal) }}</b></div>
             <div class="kv"><span>{{ 'REPORTS.CAPTAIN_COST_LABEL' | translate }}</span><b>{{ money(rep.net) }}</b></div>
-            <div class="kv total"><span>{{ 'REPORTS.MARGIN_LABEL' | translate }}</span><b>{{ money(rep.margin) }} {{ 'SUPPLIER_REVENUE.SAR' | translate }}</b></div>
+            <div class="kv total"><span>{{ 'REPORTS.MARGIN_LABEL' | translate }}</span><b>{{ rep.margin | sar }}</b></div>
           </div>
         </div>
       </div>

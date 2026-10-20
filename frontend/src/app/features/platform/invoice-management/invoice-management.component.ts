@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, InvoiceResponse } from '../../../core/models/api.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SarPipe } from '../../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-invoice-management',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, SarPipe],
   templateUrl: './invoice-management.component.html',
   styleUrl: './invoice-management.component.scss'
 })

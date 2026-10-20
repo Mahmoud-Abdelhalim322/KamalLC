@@ -6,11 +6,12 @@ import { ApiResponse, StaffDetailResponse } from '../../../core/models/api.model
 import { DocumentGalleryComponent } from '../../../shared/components/document-gallery/document-gallery.component';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SarPipe } from '../../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-staff-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, DocumentGalleryComponent, TranslatePipe],
+  imports: [CommonModule, RouterLink, DocumentGalleryComponent, TranslatePipe, SarPipe],
   templateUrl: './staff-detail.component.html',
   styleUrls: ['./staff-detail.component.scss']
 })

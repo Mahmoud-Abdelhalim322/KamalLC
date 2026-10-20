@@ -25,11 +25,12 @@ interface StaffAdjustmentOption {
 }
 
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-payroll',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './payroll.component.html',
   styleUrls: ['./payroll.component.scss']
 })

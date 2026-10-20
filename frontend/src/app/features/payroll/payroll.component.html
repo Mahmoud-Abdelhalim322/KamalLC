@@ -64,7 +64,7 @@
           <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
         </div>
         <span class="run-item-period">{{ run.periodFrom }} → {{ run.periodTo }}</span>
-        <span class="run-item-meta">{{ run.captainCount }} {{ 'PAYROLL.CAPTAIN_UNIT' | translate }} — {{ 'PAYROLL.NET_PREFIX' | translate }} {{ money(run.totalNet) }} {{ 'COMMON.SAR' | translate }}</span>
+        <span class="run-item-meta">{{ run.captainCount }} {{ 'PAYROLL.CAPTAIN_UNIT' | translate }} — {{ 'PAYROLL.NET_PREFIX' | translate }} {{ run.totalNet | sar }}</span>
       </button>
     </aside>
 

@@ -3,6 +3,26 @@
    Arabic-first, RTL layout
    ============================================= */
 
+/* ---------- Saudi Riyal sign ---------- */
+/* U+20C1 is new in Unicode 17 and most system fonts don't draw it yet, so this font supplies just that
+   glyph (@emran-alhaddad/saudi-riyal-font, OFL — see public/fonts/saudi-riyal/OFL.txt). unicode-range
+   keeps it from touching any other character; it sits first in both font stacks below. */
+@font-face {
+  font-family: 'Saudi Riyal';
+  src: url('/fonts/saudi-riyal/saudi-riyal-regular.woff2') format('woff2');
+  font-weight: 100 600;
+  font-display: block;
+  unicode-range: U+20C1;
+}
+
+@font-face {
+  font-family: 'Saudi Riyal';
+  src: url('/fonts/saudi-riyal/saudi-riyal-bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-display: block;
+  unicode-range: U+20C1;
+}
+
 /* ---------- CSS Variables (Design Tokens) ---------- */
 :root {
   /* Primary palette */
@@ -84,7 +104,7 @@ body {
 /* RTL Layout (Default / Arabic) */
 html[dir="rtl"] body,
 body.rtl-layout {
-  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Saudi Riyal', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   direction: rtl;
   text-align: right;
 }
@@ -92,7 +112,7 @@ body.rtl-layout {
 /* LTR Layout (English) */
 html[dir="ltr"] body,
 body.ltr-layout {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Saudi Riyal', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   direction: ltr;
   text-align: left;
 }

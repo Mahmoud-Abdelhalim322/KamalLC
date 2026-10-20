@@ -11,12 +11,13 @@ import {
 import { errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-fleet',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './fleet.component.html',
   styleUrls: ['./fleet.component.scss']
 })

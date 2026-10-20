@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse, PlatformDashboardResponse } from '../../../core/models/api.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SarPipe } from '../../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-platform-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, RouterLink, TranslatePipe, SarPipe],
   templateUrl: './platform-dashboard.component.html',
   styleUrl: './platform-dashboard.component.scss'
 })

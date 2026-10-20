@@ -7,6 +7,7 @@ import {
 import { ReportService } from '../../core/services/report.service';
 import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 type ReportTab = 'team' | 'individual' | 'profitability';
@@ -17,7 +18,7 @@ type SortKey = keyof Pick<TeamReportRow,
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss']
 })
