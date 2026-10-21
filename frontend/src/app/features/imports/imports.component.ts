@@ -9,9 +9,10 @@ import {
   SupplierResponse, VacationCommissionImportPreviewResponse
 } from '../../core/models/api.models';
 import { ImportService } from '../../core/services/import.service';
-import { downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
+import { PAGE_SIZE, downloadBlob, errorCode, errorMessage } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 /**
@@ -22,7 +23,7 @@ type ImportTab = 'captains' | 'reports' | 'deductions' | 'vacation-commission';
 @Component({
   selector: 'app-imports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, PagerComponent],
   templateUrl: './imports.component.html',
   styleUrls: ['./imports.component.scss']
 })
@@ -203,6 +204,7 @@ export class ImportsComponent implements OnInit {
     this.activeTab = tab;
     // A pending preview belongs to the tab that produced it.
     this.cancelImport();
+    this.historyPage = 0;
     this.loadHistory();
   }
 
@@ -407,18 +409,30 @@ export class ImportsComponent implements OnInit {
 
   // ---------------------------------------------------------------- history
 
+  readonly historyPageSize = PAGE_SIZE;
+  historyPage = 0;
+  historyTotalElements = 0;
+  historyTotalPages = 0;
+
   loadHistory(): void {
     this.isLoadingHistory = true;
-    this.importService.history(this.batchType).subscribe({
+    this.importService.history(this.batchType, this.historyPage, this.historyPageSize).subscribe({
       next: (page) => {
         this.isLoadingHistory = false;
         this.history = page.content;
+        this.historyTotalElements = page.totalElements;
+        this.historyTotalPages = page.totalPages;
       },
       error: (err) => {
         this.isLoadingHistory = false;
         this.errorMessage = errorMessage(err, this.i18n.currentLang() === 'ar' ? 'فشل في تحميل سجل الاستيراد' : 'Failed to load import history');
       }
     });
+  }
+
+  goToHistoryPage(page: number): void {
+    this.historyPage = page;
+    this.loadHistory();
   }
 
   get batchType(): ImportBatchType {

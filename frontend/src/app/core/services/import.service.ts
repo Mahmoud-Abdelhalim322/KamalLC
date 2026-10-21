@@ -5,7 +5,7 @@ import {
   ApiResponse, DeductionImportPreviewResponse, ImportBatchResponse, ImportBatchType, ImportPreviewResponse,
   PageResponse, ShiftImportPreviewResponse
 } from '../models/api.models';
-import { unwrap } from './api.util';
+import { unwrap, PAGE_SIZE } from './api.util';
 
 @Injectable({ providedIn: 'root' })
 export class ImportService {
@@ -100,7 +100,7 @@ export class ImportService {
   // --------------------------------------------------------------- history
 
   /** Each import screen shows only its own batches — omit `type` for the combined list. */
-  history(type?: ImportBatchType, page = 0, size = 20): Observable<PageResponse<ImportBatchResponse>> {
+  history(type?: ImportBatchType, page = 0, size = PAGE_SIZE): Observable<PageResponse<ImportBatchResponse>> {
     const params: Record<string, string | number> = { page, size };
     if (type) { params['type'] = type; }
     return this.http

@@ -2,6 +2,8 @@ package com.kamal.lc.tenant.service;
 
 import com.kamal.lc.auth.entity.AppUser;
 import com.kamal.lc.auth.repository.UserRepository;
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.inventory.service.InventoryService;
 import com.kamal.lc.settings.service.SettingsService;
@@ -43,6 +45,31 @@ public class PlatformService {
 
     public List<TenantResponse> listTenants() {
         return tenantRepo.findAll().stream().map(this::toTenantResponse).toList();
+    }
+
+    /** One page of tenants matching the status filter and search, with counts over all tenants. */
+    public SummaryPageResponse<TenantResponse, TenantListSummary> listTenantsPage(
+            String filter, String search, int page, int size) {
+        List<TenantResponse> all = listTenants();
+        TenantListSummary summary = new TenantListSummary(
+                all.size(),
+                all.stream().filter(t -> "ACTIVE".equals(t.getStatus())).count(),
+                all.stream().filter(t -> "TRIAL".equals(t.getSubscriptionStatus())).count(),
+                all.stream().filter(t -> !"ACTIVE".equals(t.getStatus())).count(),
+                all.stream().mapToLong(TenantResponse::getUserCount).sum(),
+                all.stream().mapToLong(TenantResponse::getCaptainCount).sum());
+        String term = normalize(search);
+        List<TenantResponse> matches = all.stream()
+                .filter(t -> switch (filter == null ? "ALL" : filter.toUpperCase()) {
+                    case "ACTIVE" -> "ACTIVE".equals(t.getStatus());
+                    case "TRIAL" -> "TRIAL".equals(t.getSubscriptionStatus());
+                    case "SUSPENDED" -> !"ACTIVE".equals(t.getStatus());
+                    default -> true;
+                })
+                .filter(t -> term.isEmpty() || contains(t.getName(), term) || contains(t.getSlug(), term)
+                        || contains(t.getContactEmail(), term))
+                .toList();
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), summary);
     }
 
     public TenantResponse getTenant(UUID id) {
@@ -261,6 +288,42 @@ public class PlatformService {
         return subscriptionRepo.findAll().stream().map(this::toSubscriptionResponse).toList();
     }
 
+    /** A subscription ending within this many days counts as expiring soon. */
+    private static final int EXPIRING_DAYS = 30;
+
+    /** One page of subscriptions matching the status filter and search, with figures over all subscriptions. */
+    public SummaryPageResponse<SubscriptionResponse, SubscriptionListSummary> listSubscriptionsPage(
+            String filter, String search, int page, int size) {
+        List<TenantSubscription> all = subscriptionRepo.findAll();
+        all.sort(Comparator.comparing(TenantSubscription::getEndDate, Comparator.nullsLast(Comparator.naturalOrder())));
+        SubscriptionListSummary summary = new SubscriptionListSummary(
+                all.size(),
+                all.stream().filter(sub -> "ACTIVE".equals(sub.getStatus())).count(),
+                all.stream().filter(this::isExpiring).count(),
+                all.stream().filter(sub -> !"ACTIVE".equals(sub.getStatus())).count(),
+                all.stream().filter(sub -> "YEARLY".equals(sub.getBillingCycle())).count(),
+                all.stream().filter(TenantSubscription::isAutoRenew).count(),
+                all.stream().map(TenantSubscription::getPaidAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+        String term = normalize(search);
+        List<SubscriptionResponse> matches = all.stream()
+                .filter(sub -> switch (filter == null ? "ALL" : filter.toUpperCase()) {
+                    case "ACTIVE" -> "ACTIVE".equals(sub.getStatus());
+                    case "EXPIRING" -> isExpiring(sub);
+                    case "EXPIRED" -> !"ACTIVE".equals(sub.getStatus());
+                    default -> true;
+                })
+                .map(this::toSubscriptionResponse)
+                .filter(r -> term.isEmpty() || contains(r.getTenantName(), term) || contains(r.getPlanName(), term))
+                .toList();
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), summary);
+    }
+
+    private boolean isExpiring(TenantSubscription sub) {
+        if (!"ACTIVE".equals(sub.getStatus()) || sub.getEndDate() == null) return false;
+        LocalDate today = LocalDate.now();
+        return !sub.getEndDate().isBefore(today) && !sub.getEndDate().isAfter(today.plusDays(EXPIRING_DAYS));
+    }
+
     public List<SubscriptionResponse> listSubscriptionsForTenant(UUID tenantId) {
         return subscriptionRepo.findByTenantIdOrderByCreatedAtDesc(tenantId).stream()
                 .map(this::toSubscriptionResponse).toList();
@@ -311,6 +374,40 @@ public class PlatformService {
 
     public List<InvoiceResponse> listInvoices() {
         return invoiceRepo.findAll().stream().map(this::toInvoiceResponse).toList();
+    }
+
+    /** One page of invoices matching the status filter and search, with amounts over all invoices. */
+    public SummaryPageResponse<InvoiceResponse, InvoiceListSummary> listInvoicesPage(
+            String filter, String search, int page, int size) {
+        List<TenantInvoice> all = invoiceRepo.findAll();
+        all.sort(Comparator.comparing(TenantInvoice::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
+        List<TenantInvoice> paid = all.stream().filter(i -> "PAID".equals(i.getStatus())).toList();
+        List<TenantInvoice> overdue = all.stream().filter(this::isOverdue).toList();
+        List<TenantInvoice> pending = all.stream().filter(i -> !"PAID".equals(i.getStatus()) && !isOverdue(i)).toList();
+        InvoiceListSummary summary = new InvoiceListSummary(all.size(),
+                paid.size(), invoiceTotal(paid), pending.size(), invoiceTotal(pending), overdue.size(), invoiceTotal(overdue));
+        String term = normalize(search);
+        List<InvoiceResponse> matches = all.stream()
+                .filter(i -> switch (filter == null ? "ALL" : filter.toUpperCase()) {
+                    case "PAID" -> "PAID".equals(i.getStatus());
+                    case "PENDING" -> !"PAID".equals(i.getStatus()) && !isOverdue(i);
+                    case "OVERDUE" -> isOverdue(i);
+                    default -> true;
+                })
+                .map(this::toInvoiceResponse)
+                .filter(r -> term.isEmpty() || contains(r.getInvoiceNumber(), term) || contains(r.getTenantName(), term))
+                .toList();
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), summary);
+    }
+
+    /** Unpaid and past its due date. */
+    private boolean isOverdue(TenantInvoice invoice) {
+        return !"PAID".equals(invoice.getStatus()) && invoice.getDueDate() != null
+                && invoice.getDueDate().isBefore(LocalDate.now());
+    }
+
+    private static BigDecimal invoiceTotal(List<TenantInvoice> invoices) {
+        return invoices.stream().map(TenantInvoice::getTotalAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<InvoiceResponse> listInvoicesForTenant(UUID tenantId) {
@@ -448,13 +545,30 @@ public class PlatformService {
 
     // ================================================================ Audit
 
-    public List<AuditLogResponse> getAuditLogs(int page, int size) {
-        return auditLogRepo.findByOrderByCreatedAtDesc(
-                org.springframework.data.domain.PageRequest.of(page, size))
-                .stream().map(this::toAuditLogResponse).toList();
+    /** One page of the audit log, newest first, narrowed by action, tenant and a search over user and details. */
+    public SummaryPageResponse<AuditLogResponse, AuditLogFilters> getAuditLogs(
+            String action, UUID tenantId, String search, int page, int size) {
+        String term = normalize(search);
+        org.springframework.data.domain.Page<AuditLog> result = auditLogRepo.search(
+                action == null ? "" : action,
+                tenantId == null ? "" : tenantId.toString(),
+                term.isEmpty() ? "" : "%" + term + "%",
+                org.springframework.data.domain.PageRequest.of(Math.max(page, 0), size > 0 ? size : PageResponse.DEFAULT_SIZE));
+        return SummaryPageResponse.of(PageResponse.from(result.map(this::toAuditLogResponse)),
+                new AuditLogFilters(auditLogRepo.findDistinctActions(),
+                        tenantRepo.findAll().stream().map(t -> new TenantOption(t.getId(), t.getName()))
+                                .sorted(Comparator.comparing(TenantOption::getName)).toList()));
     }
 
     // ================================================================ Helpers
+
+    private static String normalize(String search) {
+        return search == null ? "" : search.trim().toLowerCase();
+    }
+
+    private static boolean contains(String value, String term) {
+        return value != null && value.toLowerCase().contains(term);
+    }
 
     private Tenant findTenant(UUID id) {
         return tenantRepo.findById(id)

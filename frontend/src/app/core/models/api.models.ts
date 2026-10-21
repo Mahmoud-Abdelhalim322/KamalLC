@@ -137,6 +137,11 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+/** A server page plus figures computed over the whole filtered set (KPI strips, table footers). */
+export interface SummaryPage<T, S> extends PageResponse<T> {
+  summary: S;
+}
+
 // Captain
 export interface CaptainResponse {
   id: string;
@@ -639,6 +644,32 @@ export interface RecalculationResult {
 
 // ---------------------------------------------------------------- Payroll
 
+/** Column totals over every captain line matching the payroll table filters. */
+export interface PayrollLineTotals {
+  shifts: number;
+  orders: number;
+  basePay: number;
+  deductions: number;
+  supplierDeductions: number;
+  incentives: number;
+  car: number;
+  targetBonus: number;
+  extraOrderPay: number;
+  vacationCommission: number;
+  gross: number;
+  activeLoans: number;
+  adjustments: number;
+  net: number;
+  revenue: number;
+  margin: number;
+}
+
+export interface StaffPayrollLineTotals {
+  gross: number;
+  adjustments: number;
+  net: number;
+}
+
 export interface PayrollRunResponse {
   id: string;
   periodFrom: string;
@@ -1113,6 +1144,15 @@ export interface CustodyRecordResponse {
   notes: string | null;
 }
 
+export interface CustodySummaryTotals {
+  captainCount: number;
+  activeCount: number;
+  vehicleCount: number;
+  simCount: number;
+  phoneCount: number;
+  otherCount: number;
+}
+
 export interface CaptainCustodySummary {
   captainId: string;
   captainCode: string;
@@ -1478,6 +1518,14 @@ export interface MemberLoanSummaryResponse {
   totalOriginal: number;
 }
 
+export interface LoanMembersSummary {
+  memberCount: number;
+  membersWithLoans: number;
+  activeLoanCount: number;
+  totalRemaining: number;
+  totalOriginal: number;
+}
+
 export interface LoanResponse {
   id: string;
   memberId: string;
@@ -1521,6 +1569,13 @@ export interface LoanPaymentRequest {
 }
 
 // ---------------------------------------------------------------- Platform Management (SaaS)
+
+export interface TenantListSummary { total: number; active: number; trial: number; suspended: number; users: number; captains: number; }
+export interface SubscriptionListSummary { total: number; active: number; expiring: number; expired: number; yearly: number; autoRenew: number; totalPaid: number; }
+export interface InvoiceListSummary {
+  total: number; paidCount: number; paidTotal: number; pendingCount: number; pendingTotal: number; overdueCount: number; overdueTotal: number;
+}
+export interface AuditLogFilters { actions: string[]; tenants: { id: string; name: string }[]; }
 
 export interface TenantResponse {
   id: string;

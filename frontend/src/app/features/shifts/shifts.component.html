@@ -233,16 +233,7 @@
       </table>
     </div>
 
-    <div class="k-pager" *ngIf="!isLoading && totalPages > 1">
-      <span class="k-pager-info">{{ 'COMMON.PAGE' | translate }} {{ page + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }} — {{ totalElements }}</span>
-      <button class="btn btn-outline btn-sm" [disabled]="page === 0" (click)="goToPage(page - 1)">
-        <span class="material-icons-round k-flip">chevron_left</span>{{ 'COMMON.PREVIOUS' | translate }}
-      </button>
-      <span class="k-page-num">{{ page + 1 }}</span>
-      <button class="btn btn-outline btn-sm" [disabled]="page + 1 >= totalPages" (click)="goToPage(page + 1)">
-        {{ 'COMMON.NEXT' | translate }}<span class="material-icons-round k-flip">chevron_right</span>
-      </button>
-    </div>
+    <app-pager [page]="page" [size]="size" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 
   <!-- Detail panel -->

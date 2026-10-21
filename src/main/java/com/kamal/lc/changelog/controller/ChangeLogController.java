@@ -31,7 +31,7 @@ public class ChangeLogController {
     public ResponseEntity<ApiResponse<PageResponse<ChangeLogResponse>>> search(
             @ModelAttribute ChangeLogFilter filter,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<ChangeLogResponse> result = service.search(filter,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "changedAt")));

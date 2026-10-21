@@ -32,6 +32,13 @@ public class UserManagementDtos {
 
     // ---- User ----
 
+    /** Account counts over the whole user list, for the accounts card header. */
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class UserListSummary {
+        private long total;
+        private long active;
+    }
+
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class UserResponse {
         private UUID id;

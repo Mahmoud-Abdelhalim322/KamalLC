@@ -1,11 +1,14 @@
 package com.kamal.lc.payroll.service;
 
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kamal.lc.loan.service.LoanService;
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.payroll.dto.StaffPayrollLineResponse;
+import com.kamal.lc.payroll.dto.StaffPayrollLineTotals;
 import com.kamal.lc.payroll.entity.StaffPayrollLine;
 import com.kamal.lc.payroll.repository.StaffPayrollLineRepository;
 import com.kamal.lc.staff.entity.Staff;
@@ -13,6 +16,7 @@ import com.kamal.lc.staff.repository.StaffRepository;
 import com.kamal.lc.payroll.dto.AdjustmentRequest;
 import com.kamal.lc.payroll.dto.AdjustmentResponse;
 import com.kamal.lc.payroll.dto.PayrollLineResponse;
+import com.kamal.lc.payroll.dto.PayrollLineTotals;
 import com.kamal.lc.payroll.dto.PayrollRunResponse;
 import com.kamal.lc.payroll.entity.CaptainAdjustment;
 import com.kamal.lc.payroll.entity.PayrollLine;
@@ -624,6 +628,60 @@ public class PayrollService {
     }
 
     // ---- Staff payroll lines ----
+
+    /** One page of captain lines matching the type filter and search, with column totals over all matches. */
+    @Transactional(readOnly = true)
+    public SummaryPageResponse<PayrollLineResponse, PayrollLineTotals> getLinesPage(
+            UUID runId, String captainType, String search, int page, int size) {
+        String term = search == null ? "" : search.trim().toLowerCase();
+        List<PayrollLineResponse> matches = getLines(runId).stream()
+                .filter(l -> captainType == null || captainType.isBlank() || captainType.equalsIgnoreCase(l.getCaptainType()))
+                .filter(l -> term.isEmpty() || containsTerm(l.getCaptainName(), term)
+                        || containsTerm(l.getCaptainCode(), term) || containsTerm(l.getSupplierExternalIds(), term))
+                .toList();
+        PayrollLineTotals totals = PayrollLineTotals.builder()
+                .shifts(matches.stream().mapToLong(PayrollLineResponse::getAttendedShifts).sum())
+                .orders(matches.stream().mapToLong(PayrollLineResponse::getTotalOrders).sum())
+                .basePay(sumOf(matches, PayrollLineResponse::getBasePay))
+                .deductions(sumOf(matches, PayrollLineResponse::getLateDeductions))
+                .supplierDeductions(sumOf(matches, PayrollLineResponse::getSupplierDeductions))
+                .incentives(sumOf(matches, PayrollLineResponse::getDailyIncentives))
+                .car(sumOf(matches, PayrollLineResponse::getCarAllowances))
+                .targetBonus(sumOf(matches, PayrollLineResponse::getTargetBonus))
+                .extraOrderPay(sumOf(matches, PayrollLineResponse::getExtraOrderPay))
+                .vacationCommission(sumOf(matches, PayrollLineResponse::getVacationCommission))
+                .gross(sumOf(matches, PayrollLineResponse::getGross))
+                .activeLoans(sumOf(matches, PayrollLineResponse::getActiveLoanBalance))
+                .adjustments(sumOf(matches, PayrollLineResponse::getAdjustmentsTotal))
+                .net(sumOf(matches, PayrollLineResponse::getNet))
+                .revenue(sumOf(matches, PayrollLineResponse::getSupplierRevenueTotal))
+                .margin(sumOf(matches, PayrollLineResponse::getMargin))
+                .build();
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), totals);
+    }
+
+    /** One page of staff lines matching the type filter and search, with totals over all matches. */
+    @Transactional(readOnly = true)
+    public SummaryPageResponse<StaffPayrollLineResponse, StaffPayrollLineTotals> getStaffLinesPage(
+            UUID runId, String staffType, String search, int page, int size) {
+        String term = search == null ? "" : search.trim().toLowerCase();
+        List<StaffPayrollLineResponse> matches = getStaffLines(runId, staffType).stream()
+                .filter(l -> term.isEmpty() || containsTerm(l.getStaffName(), term) || containsTerm(l.getStaffCode(), term))
+                .toList();
+        StaffPayrollLineTotals totals = new StaffPayrollLineTotals(
+                sumOf(matches, StaffPayrollLineResponse::getGross),
+                sumOf(matches, StaffPayrollLineResponse::getAdjustmentsTotal),
+                sumOf(matches, StaffPayrollLineResponse::getNet));
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), totals);
+    }
+
+    private static boolean containsTerm(String value, String term) {
+        return value != null && value.toLowerCase().contains(term);
+    }
+
+    private static <L> BigDecimal sumOf(List<L> lines, java.util.function.Function<L, BigDecimal> field) {
+        return lines.stream().map(field).filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
     @Transactional(readOnly = true)
     public List<StaffPayrollLineResponse> getStaffLines(UUID runId, String staffType) {

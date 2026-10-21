@@ -37,7 +37,7 @@ public class StaffController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String alert,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<StaffResponse> result = staffService.list(search, type, alert,
                 PageRequest.of(page, size, Sort.by("fullNameAr")));

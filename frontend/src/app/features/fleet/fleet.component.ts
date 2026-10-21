@@ -8,17 +8,18 @@ import {
   VehicleResponse, VehicleAssignmentResponse, CaptainLookupItem,
   MaintenanceResponse, MaintenanceOpenRequest, MaintenanceCloseRequest, FleetStats
 } from '../../core/models/api.models';
-import { errorMessage } from '../../core/services/api.util';
+import { errorMessage, PAGE_SIZE } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-fleet',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe, PagerComponent],
   templateUrl: './fleet.component.html',
   styleUrls: ['./fleet.component.scss']
 })
@@ -46,12 +47,14 @@ export class FleetComponent implements OnInit {
   assignments: VehicleAssignmentResponse[] = [];
   assignmentPage = 0;
   assignmentTotalPages = 0;
+  assignmentTotal = 0;
   assignmentStatusFilter = '';
 
   // Maintenance
   maintenanceList: MaintenanceResponse[] = [];
   maintenancePage = 0;
   maintenanceTotalPages = 0;
+  maintenanceTotal = 0;
   maintenanceStatusFilter = '';
 
   // Dialogs
@@ -123,7 +126,7 @@ export class FleetComponent implements OnInit {
       status: this.vehicleStatusFilter || undefined,
       ownership: this.vehicleOwnershipFilter || undefined,
       agent: this.vehicleAgentFilter || undefined,
-      page: this.vehiclePage, size: 15
+      page: this.vehiclePage, size: PAGE_SIZE
     }).subscribe({
       next: p => { this.vehicles = p.content; this.vehicleTotalPages = p.totalPages; this.vehicleTotal = p.totalElements; this.isLoading = false; },
       error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.LOAD_FAILED')); this.isLoading = false; }
@@ -248,9 +251,9 @@ export class FleetComponent implements OnInit {
     this.isLoading = true;
     this.fleetService.listAssignments({
       status: this.assignmentStatusFilter || undefined,
-      page: this.assignmentPage, size: 15
+      page: this.assignmentPage, size: PAGE_SIZE
     }).subscribe({
-      next: p => { this.assignments = p.content; this.assignmentTotalPages = p.totalPages; this.isLoading = false; },
+      next: p => { this.assignments = p.content; this.assignmentTotalPages = p.totalPages; this.assignmentTotal = p.totalElements; this.isLoading = false; },
       error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.ASSIGNMENTS_LOAD_FAILED')); this.isLoading = false; }
     });
   }
@@ -261,9 +264,9 @@ export class FleetComponent implements OnInit {
     this.isLoading = true;
     this.fleetService.listMaintenance({
       status: this.maintenanceStatusFilter || undefined,
-      page: this.maintenancePage, size: 15
+      page: this.maintenancePage, size: PAGE_SIZE
     }).subscribe({
-      next: p => { this.maintenanceList = p.content; this.maintenanceTotalPages = p.totalPages; this.isLoading = false; this.loadOverview(); },
+      next: p => { this.maintenanceList = p.content; this.maintenanceTotalPages = p.totalPages; this.maintenanceTotal = p.totalElements; this.isLoading = false; this.loadOverview(); },
       error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.MAINTENANCE_LOAD_FAILED')); this.isLoading = false; }
     });
   }
@@ -353,15 +356,12 @@ export class FleetComponent implements OnInit {
   }
 
   // ── Pagination ──
-  prevPage(type: 'vehicle' | 'assignment' | 'maintenance'): void {
-    if (type === 'vehicle' && this.vehiclePage > 0) { this.vehiclePage--; this.loadVehicles(); }
-    if (type === 'assignment' && this.assignmentPage > 0) { this.assignmentPage--; this.loadAssignments(); }
-    if (type === 'maintenance' && this.maintenancePage > 0) { this.maintenancePage--; this.loadMaintenance(); }
-  }
-  nextPage(type: 'vehicle' | 'assignment' | 'maintenance'): void {
-    if (type === 'vehicle' && this.vehiclePage < this.vehicleTotalPages - 1) { this.vehiclePage++; this.loadVehicles(); }
-    if (type === 'assignment' && this.assignmentPage < this.assignmentTotalPages - 1) { this.assignmentPage++; this.loadAssignments(); }
-    if (type === 'maintenance' && this.maintenancePage < this.maintenanceTotalPages - 1) { this.maintenancePage++; this.loadMaintenance(); }
+  readonly pageSize = PAGE_SIZE;
+
+  goToPage(type: 'vehicle' | 'assignment' | 'maintenance', page: number): void {
+    if (type === 'vehicle') { this.vehiclePage = page; this.loadVehicles(); }
+    if (type === 'assignment') { this.assignmentPage = page; this.loadAssignments(); }
+    if (type === 'maintenance') { this.maintenancePage = page; this.loadMaintenance(); }
   }
 
   statusLabel(s: string): string {

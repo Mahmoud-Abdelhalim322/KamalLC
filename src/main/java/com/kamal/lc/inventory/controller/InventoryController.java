@@ -50,7 +50,7 @@ public class InventoryController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<AssetItemResponse> result = service.listItems(categoryId, status, search,
                 PageRequest.of(page, size, Sort.by("serialCode")));

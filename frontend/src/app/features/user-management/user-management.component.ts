@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
   ApiResponse, UserResponse, JobTitleResponse, PermissionInfo,
-  CreateUserRequest, JobTitleRequest, StaffResponse, PageResponse,
+  CreateUserRequest, JobTitleRequest, StaffResponse, PageResponse, SummaryPage,
   UserAllocationSummary, UserAllocationDetail, CaptainSimple, UpdateUserAllocationRequest
 } from '../../core/models/api.models';
 
@@ -12,11 +12,13 @@ import { AuthService } from '../../core/auth/auth.service';
 
 import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
+import { PAGE_SIZE } from '../../core/services/api.util';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, PagerComponent],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
@@ -26,8 +28,14 @@ export class UserManagementComponent implements OnInit {
 
   // Users
   users: UserResponse[] = [];
+  userSummary: { total: number; active: number } = { total: 0, active: 0 };
 
-  get activeUsers(): number { return this.users.filter(u => u.active).length; }
+  readonly pageSize = PAGE_SIZE;
+  userPage = 0;
+  userTotalPages = 0;
+  allocationPage = 0;
+  allocationTotalElements = 0;
+  allocationTotalPages = 0;
   jobTitles: JobTitleResponse[] = [];
   allPermissions: PermissionInfo[] = [];
   managerStaff: StaffResponse[] = [];
@@ -83,10 +91,7 @@ export class UserManagementComponent implements OnInit {
     this.http.get<ApiResponse<PermissionInfo[]>>('/api/admin/permissions').subscribe(res => {
       if (res.success && res.data) this.allPermissions = res.data;
     });
-    this.http.get<ApiResponse<UserResponse[]>>('/api/admin/users').subscribe(res => {
-      if (res.success && res.data) this.users = res.data;
-      this.isLoading = false;
-    });
+    this.loadUsers();
     this.http.get<ApiResponse<JobTitleResponse[]>>('/api/admin/job-titles').subscribe(res => {
       if (res.success && res.data) this.jobTitles = res.data;
     });
@@ -96,10 +101,41 @@ export class UserManagementComponent implements OnInit {
     this.loadAllocations();
   }
 
-  loadAllocations(): void {
-    this.http.get<UserAllocationSummary[]>('/api/admin/allocations').subscribe(res => {
-      if (res) this.allocations = res;
+  loadUsers(): void {
+    this.isLoading = true;
+    this.http.get<ApiResponse<SummaryPage<UserResponse, { total: number; active: number }>>>('/api/admin/users',
+      { params: { page: this.userPage, size: this.pageSize } }).subscribe({
+      next: res => {
+        if (res.success && res.data) {
+          this.users = res.data.content;
+          this.userSummary = res.data.summary;
+          this.userTotalPages = res.data.totalPages;
+        }
+        this.isLoading = false;
+      },
+      error: () => this.isLoading = false
     });
+  }
+
+  goToUserPage(page: number): void {
+    this.userPage = page;
+    this.loadUsers();
+  }
+
+  loadAllocations(): void {
+    this.http.get<PageResponse<UserAllocationSummary>>('/api/admin/allocations',
+      { params: { page: this.allocationPage, size: this.pageSize } }).subscribe(res => {
+      if (res) {
+        this.allocations = res.content;
+        this.allocationTotalElements = res.totalElements;
+        this.allocationTotalPages = res.totalPages;
+      }
+    });
+  }
+
+  goToAllocationPage(page: number): void {
+    this.allocationPage = page;
+    this.loadAllocations();
   }
 
   // ---- Users ----

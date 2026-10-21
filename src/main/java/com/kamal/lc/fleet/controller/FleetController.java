@@ -36,7 +36,7 @@ public class FleetController {
             @RequestParam(required = false) String ownership,
             @RequestParam(required = false) String agent,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<VehicleResponse> result = service.listVehicles(search, status, ownership, agent,
                 PageRequest.of(page, size, Sort.by("plateNumber")));
@@ -97,7 +97,7 @@ public class FleetController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID captainId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<VehicleAssignmentResponse> result = service.listAssignments(status, captainId,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "assignedAt")));
@@ -153,7 +153,7 @@ public class FleetController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID vehicleId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<MaintenanceResponse> result = service.listMaintenance(status, vehicleId,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "openedAt")));

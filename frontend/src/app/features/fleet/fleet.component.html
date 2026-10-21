@@ -158,18 +158,7 @@
         </div>
       </div>
 
-      <div class="k-pager" *ngIf="vehicles.length > 0">
-        <span class="k-pager-info">{{ 'FLEET.SHOWING' | translate:{ count: vehicles.length, total: vehicleTotal } }}</span>
-        <ng-container *ngIf="vehicleTotalPages > 1">
-          <button class="btn btn-outline btn-sm" (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">
-            <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
-          </button>
-          <span class="k-page-num">{{ vehiclePage + 1 }}</span>
-          <button class="btn btn-outline btn-sm" (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">
-            {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
-          </button>
-        </ng-container>
-      </div>
+      <app-pager [page]="vehiclePage" [size]="pageSize" [totalElements]="vehicleTotal" [totalPages]="vehicleTotalPages" (pageChange)="goToPage('vehicle', $event)"></app-pager>
     </section>
 
     <!-- Open maintenance orders -->
@@ -259,15 +248,7 @@
       </div>
     </div>
 
-    <div class="k-pager" *ngIf="assignmentTotalPages > 1">
-      <button class="btn btn-outline btn-sm" (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">
-        <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
-      </button>
-      <span class="k-page-num">{{ assignmentPage + 1 }}</span>
-      <button class="btn btn-outline btn-sm" (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">
-        {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
-      </button>
-    </div>
+    <app-pager [page]="assignmentPage" [size]="pageSize" [totalElements]="assignmentTotal" [totalPages]="assignmentTotalPages" (pageChange)="goToPage('assignment', $event)"></app-pager>
   </section>
 
   <!-- ══════════════ MAINTENANCE TAB ══════════════ -->
@@ -338,15 +319,7 @@
       </div>
     </div>
 
-    <div class="k-pager" *ngIf="maintenanceTotalPages > 1">
-      <button class="btn btn-outline btn-sm" (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">
-        <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
-      </button>
-      <span class="k-page-num">{{ maintenancePage + 1 }}</span>
-      <button class="btn btn-outline btn-sm" (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">
-        {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
-      </button>
-    </div>
+    <app-pager [page]="maintenancePage" [size]="pageSize" [totalElements]="maintenanceTotal" [totalPages]="maintenanceTotalPages" (pageChange)="goToPage('maintenance', $event)"></app-pager>
   </section>
 
   <!-- ══════════════ VEHICLE DIALOG ══════════════ -->

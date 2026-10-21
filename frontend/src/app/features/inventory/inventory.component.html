@@ -121,18 +121,7 @@
           </div>
         </div>
 
-        <div class="k-pager" *ngIf="items.length > 0">
-          <span class="k-pager-info">{{ 'INVENTORY.SHOWING' | translate:{ count: items.length, total: itemTotal } }}</span>
-          <ng-container *ngIf="itemTotalPages > 1">
-            <button class="btn btn-outline btn-sm" (click)="prevPage()" [disabled]="itemPage === 0">
-              <span class="material-icons-round k-flip">chevron_left</span> {{ 'INVENTORY.PREV' | translate }}
-            </button>
-            <span class="k-page-num">{{ itemPage + 1 }}</span>
-            <button class="btn btn-outline btn-sm" (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">
-              {{ 'INVENTORY.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
-            </button>
-          </ng-container>
-        </div>
+        <app-pager [page]="itemPage" [size]="pageSize" [totalElements]="itemTotal" [totalPages]="itemTotalPages" (pageChange)="goToItemPage($event)"></app-pager>
       </section>
     </div>
 
@@ -266,11 +255,7 @@
           </tr>
         </tbody>
       </table>
-      <div class="pagination" *ngIf="historyTotalPages > 1">
-        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">{{ 'INVENTORY.PREV' | translate }}</button>
-        <span>{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
-        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">{{ 'INVENTORY.NEXT' | translate }}</button>
-      </div>
+      <app-pager [page]="historyPage" [size]="pageSize" [totalElements]="historyTotalElements" [totalPages]="historyTotalPages" (pageChange)="goToHistoryPage($event)"></app-pager>
       <div class="dialog-actions">
         <button class="btn btn-secondary" (click)="showHistoryDialog = false">{{ 'INVENTORY.CLOSE' | translate }}</button>
       </div>

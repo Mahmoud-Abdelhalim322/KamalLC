@@ -2,6 +2,8 @@ package com.kamal.lc.custody.controller;
 
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
+import com.kamal.lc.custody.dto.CustodySummaryTotals;
 import com.kamal.lc.custody.dto.CaptainCustodySummary;
 import com.kamal.lc.custody.dto.CustodyRecordResponse;
 import com.kamal.lc.custody.service.CustodyExportService;
@@ -28,10 +30,13 @@ public class CustodyController {
     private final CustodyExportService exportService;
     private final CustodyHandoverPdfService handoverPdfService;
 
-    /** All captains who hold at least one active item, with their items. */
+    /** Captains who hold at least one active item, with their items, one page at a time. */
     @GetMapping("/summaries")
-    public ResponseEntity<ApiResponse<List<CaptainCustodySummary>>> summaries() {
-        return ResponseEntity.ok(ApiResponse.ok(service.getCaptainSummaries()));
+    public ResponseEntity<ApiResponse<SummaryPageResponse<CaptainCustodySummary, CustodySummaryTotals>>> summaries(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getCaptainSummariesPage(search, page, size)));
     }
 
     /** Active custody items for a specific captain. */
@@ -46,7 +51,7 @@ public class CustodyController {
     public ResponseEntity<ApiResponse<PageResponse<CustodyRecordResponse>>> history(
             @RequestParam UUID captainId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<CustodyRecordResponse> result = service.getCustodyHistory(captainId,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "assignedAt")));
@@ -66,7 +71,7 @@ public class CustodyController {
     public ResponseEntity<ApiResponse<PageResponse<CustodyRecordResponse>>> itemHistory(
             @RequestParam UUID referenceId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<CustodyRecordResponse> result = service.getItemCustodyHistory(referenceId,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "assignedAt")));
@@ -86,7 +91,7 @@ public class CustodyController {
     public ResponseEntity<ApiResponse<PageResponse<CustodyRecordResponse>>> allActive(
             @RequestParam(required = false) String assetType,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<CustodyRecordResponse> result;
         if (assetType != null && !assetType.isBlank()) {

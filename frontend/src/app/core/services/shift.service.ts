@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import {
   ApiResponse, PageResponse, RecalculationResult, ShiftFilter, ShiftResponse
 } from '../models/api.models';
-import { unwrap, toHttpParams } from './api.util';
+import { unwrap, toHttpParams, PAGE_SIZE } from './api.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShiftService {
@@ -12,7 +12,7 @@ export class ShiftService {
   private http = inject(HttpClient);
   private readonly base = '/api/shifts';
 
-  search(filter: ShiftFilter, page = 0, size = 50): Observable<PageResponse<ShiftResponse>> {
+  search(filter: ShiftFilter, page = 0, size = PAGE_SIZE): Observable<PageResponse<ShiftResponse>> {
     const params = toHttpParams(filter).set('page', page).set('size', size);
     return this.http
       .get<ApiResponse<PageResponse<ShiftResponse>>>(this.base, { params })

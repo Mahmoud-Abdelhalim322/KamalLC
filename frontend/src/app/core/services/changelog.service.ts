@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiResponse, PageResponse } from '../models/api.models';
-import { unwrap, toHttpParams } from './api.util';
+import { unwrap, toHttpParams, PAGE_SIZE } from './api.util';
 
 export interface ChangeLogEntry {
   id: string;
@@ -35,7 +35,7 @@ export class ChangeLogService {
   private http = inject(HttpClient);
   private readonly base = '/api/changelog';
 
-  search(filter: ChangeLogFilter, page = 0, size = 50): Observable<PageResponse<ChangeLogEntry>> {
+  search(filter: ChangeLogFilter, page = 0, size = PAGE_SIZE): Observable<PageResponse<ChangeLogEntry>> {
     const params = toHttpParams(filter).set('page', page).set('size', size);
     return this.http
       .get<ApiResponse<PageResponse<ChangeLogEntry>>>(this.base, { params })

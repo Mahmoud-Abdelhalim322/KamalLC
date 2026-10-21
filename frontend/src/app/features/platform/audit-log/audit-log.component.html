@@ -14,20 +14,20 @@
     <div class="k-toolbar">
       <div class="k-search">
         <span class="material-icons-round">search</span>
-        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_AUDIT' | translate">
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchInput()" [placeholder]="'PLATFORM.SEARCH_AUDIT' | translate">
       </div>
       <label class="k-field-inline">
         <span class="material-icons-round">bolt</span>
-        <select [(ngModel)]="actionFilter">
+        <select [(ngModel)]="actionFilter" (ngModelChange)="applyFilters()">
           <option value="">{{ 'PLATFORM.ALL_ACTIONS' | translate }}</option>
-          <option *ngFor="let a of actions" [value]="a">{{ a }}</option>
+          <option *ngFor="let a of filters.actions" [value]="a">{{ a }}</option>
         </select>
       </label>
       <label class="k-field-inline">
         <span class="material-icons-round">domain</span>
-        <select [(ngModel)]="tenantFilter">
+        <select [(ngModel)]="tenantFilter" (ngModelChange)="applyFilters()">
           <option value="">{{ 'PLATFORM.ALL_TENANTS' | translate }}</option>
-          <option *ngFor="let t of tenantNames" [value]="t">{{ t }}</option>
+          <option *ngFor="let t of filters.tenants" [value]="t.id">{{ t.name }}</option>
         </select>
       </label>
     </div>
@@ -50,7 +50,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of visible">
+          <tr *ngFor="let log of logs">
             <td class="k-muted-strong k-ltr">{{ log.createdAt | date:'dd/MM/yyyy · HH:mm' }}</td>
             <td>
               <div class="k-person">
@@ -68,10 +68,11 @@
           </tr>
         </tbody>
       </table>
-      <div class="k-empty" *ngIf="visible.length === 0">
+      <div class="k-empty" *ngIf="logs.length === 0">
         <span class="material-icons-round">history_toggle_off</span>
         <p>{{ 'PLATFORM.NO_AUDIT_LOGS' | translate }}</p>
       </div>
     </div>
+    <app-pager [page]="page" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 </div>

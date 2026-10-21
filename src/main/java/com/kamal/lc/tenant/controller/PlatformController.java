@@ -1,6 +1,8 @@
 package com.kamal.lc.tenant.controller;
 
 import com.kamal.lc.common.dto.ApiResponse;
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import com.kamal.lc.tenant.dto.PlatformDtos.*;
 import com.kamal.lc.tenant.service.PlatformService;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +34,12 @@ public class PlatformController {
     // ================================================================ Tenants
 
     @GetMapping("/tenants")
-    public ResponseEntity<ApiResponse<List<TenantResponse>>> listTenants() {
-        return ResponseEntity.ok(ApiResponse.ok(service.listTenants()));
+    public ResponseEntity<ApiResponse<SummaryPageResponse<TenantResponse, TenantListSummary>>> listTenants(
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(service.listTenantsPage(filter, search, page, size)));
     }
 
     @GetMapping("/tenants/{id}")
@@ -103,8 +109,12 @@ public class PlatformController {
     // ================================================================ Subscriptions
 
     @GetMapping("/subscriptions")
-    public ResponseEntity<ApiResponse<List<SubscriptionResponse>>> listSubscriptions() {
-        return ResponseEntity.ok(ApiResponse.ok(service.listSubscriptions()));
+    public ResponseEntity<ApiResponse<SummaryPageResponse<SubscriptionResponse, SubscriptionListSummary>>> listSubscriptions(
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(service.listSubscriptionsPage(filter, search, page, size)));
     }
 
     @GetMapping("/tenants/{tenantId}/subscriptions")
@@ -123,8 +133,12 @@ public class PlatformController {
     // ================================================================ Invoices
 
     @GetMapping("/invoices")
-    public ResponseEntity<ApiResponse<List<InvoiceResponse>>> listInvoices() {
-        return ResponseEntity.ok(ApiResponse.ok(service.listInvoices()));
+    public ResponseEntity<ApiResponse<SummaryPageResponse<InvoiceResponse, InvoiceListSummary>>> listInvoices(
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(service.listInvoicesPage(filter, search, page, size)));
     }
 
     @GetMapping("/tenants/{tenantId}/invoices")
@@ -166,9 +180,12 @@ public class PlatformController {
     // ================================================================ Audit Logs
 
     @GetMapping("/audit-logs")
-    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getAuditLogs(
+    public ResponseEntity<ApiResponse<SummaryPageResponse<AuditLogResponse, AuditLogFilters>>> getAuditLogs(
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) UUID tenantId,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        return ResponseEntity.ok(ApiResponse.ok(service.getAuditLogs(page, size)));
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getAuditLogs(action, tenantId, search, page, size)));
     }
 }

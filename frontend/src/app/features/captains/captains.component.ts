@@ -9,11 +9,13 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
+import { PAGE_SIZE } from '../../core/services/api.util';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-captains',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, SarPipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, SarPipe, PagerComponent],
   templateUrl: './captains.component.html',
   styleUrls: ['./captains.component.scss']
 })
@@ -33,7 +35,7 @@ export class CaptainsComponent implements OnInit {
 
   // Pagination
   currentPage = 0;
-  pageSize = 20;
+  pageSize = PAGE_SIZE;
   totalElements = 0;
   totalPages = 0;
 
@@ -185,19 +187,12 @@ export class CaptainsComponent implements OnInit {
       });
   }
 
-  nextPage(): void {
-    if (this.currentPage < this.totalPages - 1) {
-      this.currentPage++;
-      this.loadCaptains();
-    }
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.loadCaptains();
   }
 
-  prevPage(): void {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.loadCaptains();
-    }
-  }
+
 
   getTypeLabel(type: string): string {
     return type === 'EMPLOYEE' ? 'KSC' : 'KSCFL';

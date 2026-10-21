@@ -12,23 +12,23 @@
   <div class="k-kpi-strip">
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'LOANS.TOTAL_MEMBERS' | translate }}</span>
-      <span class="k-kpi-value">{{ filteredMembers.length | number }}</span>
+      <span class="k-kpi-value">{{ (summary?.memberCount ?? 0) | number }}</span>
       <span class="k-kpi-note">{{ 'LOANS.KPI_MEMBERS_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'LOANS.MEMBERS_WITH_LOANS' | translate }}</span>
-      <span class="k-kpi-value">{{ membersWithLoans | number }}</span>
+      <span class="k-kpi-value">{{ (summary?.membersWithLoans ?? 0) | number }}</span>
       <span class="k-kpi-note">{{ 'LOANS.KPI_WITH_LOANS_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'LOANS.ACTIVE_LOANS' | translate }}</span>
-      <span class="k-kpi-value">{{ totals.activeLoanCount | number }}</span>
+      <span class="k-kpi-value">{{ (summary?.activeLoanCount ?? 0) | number }}</span>
       <span class="k-kpi-note">{{ 'LOANS.KPI_ACTIVE_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'LOANS.TOTAL_REMAINING' | translate }}</span>
-      <span class="k-kpi-value">{{ totals.totalRemaining | sar }}</span>
-      <span class="k-kpi-note">{{ 'LOANS.KPI_REMAINING_NOTE' | translate:{ amount: money(totals.totalOriginal) } }}</span>
+      <span class="k-kpi-value">{{ (summary?.totalRemaining ?? 0) | sar }}</span>
+      <span class="k-kpi-note">{{ 'LOANS.KPI_REMAINING_NOTE' | translate:{ amount: money((summary?.totalOriginal ?? 0)) } }}</span>
     </div>
   </div>
 
@@ -41,7 +41,7 @@
     <div class="k-toolbar">
       <div class="k-search">
         <span class="material-icons-round">search</span>
-        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="'LOANS.SEARCH_PLACEHOLDER' | translate">
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput()" [placeholder]="'LOANS.SEARCH_PLACEHOLDER' | translate">
       </div>
       <div class="k-chips">
         <button [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">{{ 'COMMON.ALL' | translate }}</button>
@@ -57,7 +57,7 @@
     </div>
 
     <ng-container *ngIf="!isLoading">
-      <div class="k-table-wrap" *ngIf="filteredMembers.length > 0">
+      <div class="k-table-wrap" *ngIf="members.length > 0">
         <table class="k-table">
           <thead>
             <tr>
@@ -72,7 +72,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let member of filteredMembers" class="clickable-row" (click)="openMember(member)">
+            <tr *ngFor="let member of members" class="clickable-row" (click)="openMember(member)">
               <td>
                 <div class="k-person">
                   <span class="k-avatar">{{ member.memberName | initials }}</span>
@@ -96,16 +96,17 @@
           <tfoot>
             <tr>
               <td colspan="3">{{ 'LOANS.TOTAL_ROW' | translate }}</td>
-              <td>{{ totals.activeLoanCount }}</td>
-              <td>{{ totals.totalOriginal | sar }}</td>
-              <td>{{ totals.totalRemaining | sar }}</td>
+              <td>{{ (summary?.activeLoanCount ?? 0) }}</td>
+              <td>{{ (summary?.totalOriginal ?? 0) | sar }}</td>
+              <td>{{ (summary?.totalRemaining ?? 0) | sar }}</td>
               <td colspan="2"></td>
             </tr>
           </tfoot>
         </table>
       </div>
+      <app-pager [page]="page" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
 
-      <div class="k-empty" *ngIf="filteredMembers.length === 0">
+      <div class="k-empty" *ngIf="members.length === 0">
         <span class="material-icons-round">info</span>
         <p>{{ 'LOANS.NO_RESULTS' | translate }}</p>
       </div>

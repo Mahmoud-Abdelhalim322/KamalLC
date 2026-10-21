@@ -26,7 +26,7 @@
     <div class="k-card-head">
       <span class="k-icon-tile"><span class="material-icons-round">group</span></span>
       <h3>{{ 'USER_MGMT.USERS_TITLE' | translate }}</h3>
-      <span class="k-badge head-end">{{ 'USER_MGMT.ACCOUNTS_COUNT' | translate:{ count: users.length, active: activeUsers } }}</span>
+      <span class="k-badge head-end">{{ 'USER_MGMT.ACCOUNTS_COUNT' | translate:{ count: userSummary.total, active: userSummary.active } }}</span>
     </div>
 
     <div class="k-empty" *ngIf="isLoading">
@@ -87,6 +87,7 @@
         </tbody>
       </table>
     </div>
+    <app-pager [page]="userPage" [size]="pageSize" [totalElements]="userSummary.total" [totalPages]="userTotalPages" (pageChange)="goToUserPage($event)"></app-pager>
   </section>
 
   <!-- Roles Tab -->
@@ -262,6 +263,7 @@
       </button>
       <span *ngIf="isPrimaryAdmin(item)" class="k-badge">{{ 'USER_MGMT.PERMANENT_FULL_SCOPE' | translate }}</span>
     </div>
+    <app-pager [page]="allocationPage" [size]="pageSize" [totalElements]="allocationTotalElements" [totalPages]="allocationTotalPages" (pageChange)="goToAllocationPage($event)"></app-pager>
   </section>
 
   <!-- Allocation Modal -->

@@ -1,20 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoanService } from '../../core/services/loan.service';
-import { MemberLoanSummaryResponse } from '../../core/models/api.models';
-import { errorMessage } from '../../core/services/api.util';
+import { LoanMembersSummary, MemberLoanSummaryResponse } from '../../core/models/api.models';
+import { PAGE_SIZE, errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, SarPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, SarPipe, PagerComponent],
   templateUrl: './loans.component.html',
   styleUrls: ['./loans.component.scss']
 })
@@ -30,13 +33,24 @@ export class LoansComponent implements OnInit {
   }
 
   members: MemberLoanSummaryResponse[] = [];
-  filteredMembers: MemberLoanSummaryResponse[] = [];
+  summary: LoanMembersSummary | null = null;
 
   typeFilter: 'ALL' | 'CAPTAIN' | 'WORKER' | 'MANAGER' = 'ALL';
   searchTerm = '';
 
+  readonly pageSize = PAGE_SIZE;
+  page = 0;
+  totalElements = 0;
+  totalPages = 0;
+
   isLoading = true;
   errorMsg = '';
+
+  private readonly search$ = new Subject<void>();
+
+  constructor() {
+    this.search$.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.applyFilters());
+  }
 
   ngOnInit(): void {
     this.loadMembers();
@@ -45,11 +59,14 @@ export class LoansComponent implements OnInit {
   loadMembers(): void {
     this.isLoading = true;
     this.errorMsg = '';
-    this.loanService.getMembers().subscribe({
-      next: (data) => {
+    const type = this.typeFilter === 'ALL' ? undefined : this.typeFilter;
+    this.loanService.getMembers({ type, search: this.searchTerm.trim() || undefined }, this.page, this.pageSize).subscribe({
+      next: (res) => {
         this.isLoading = false;
-        this.members = data;
-        this.applyFilters();
+        this.members = res.content;
+        this.summary = res.summary;
+        this.totalElements = res.totalElements;
+        this.totalPages = res.totalPages;
       },
       error: (err) => {
         this.isLoading = false;
@@ -58,36 +75,25 @@ export class LoansComponent implements OnInit {
     });
   }
 
+  /** Filters changed: back to the first page. */
   applyFilters(): void {
-    let result = this.members;
+    this.page = 0;
+    this.loadMembers();
+  }
 
-    if (this.typeFilter !== 'ALL') {
-      result = result.filter(m => m.memberType === this.typeFilter);
-    }
+  onSearchInput(): void {
+    this.search$.next();
+  }
 
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      result = result.filter(m =>
-        m.memberName.toLowerCase().includes(term) ||
-        m.memberCode.toLowerCase().includes(term) ||
-        (m.memberNameEn && m.memberNameEn.toLowerCase().includes(term))
-      );
-    }
-
-    this.filteredMembers = result;
+  goToPage(page: number): void {
+    this.page = page;
+    this.loadMembers();
   }
 
   openMember(member: MemberLoanSummaryResponse): void {
     this.router.navigate(['/loans', member.memberType, member.memberId]);
   }
 
-  get totals() {
-    return this.filteredMembers.reduce((acc, m) => ({
-      activeLoanCount: acc.activeLoanCount + m.activeLoanCount,
-      totalRemaining: acc.totalRemaining + m.totalRemaining,
-      totalOriginal: acc.totalOriginal + m.totalOriginal,
-    }), { activeLoanCount: 0, totalRemaining: 0, totalOriginal: 0 });
-  }
 
   /** Share of the original amount already repaid, 0–100. */
   repaidPct(member: { totalOriginal: number; totalRemaining: number }): number {
@@ -100,9 +106,6 @@ export class LoansComponent implements OnInit {
     return type === 'CAPTAIN' ? 'brand' : type === 'WORKER' ? 'info' : 'purple';
   }
 
-  get membersWithLoans(): number {
-    return this.filteredMembers.filter(m => m.activeLoanCount > 0).length;
-  }
 
   memberTypeLabel(type: string): string {
     const map: Record<string, string> = {

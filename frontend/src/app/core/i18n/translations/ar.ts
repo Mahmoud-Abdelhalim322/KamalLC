@@ -1,5 +1,6 @@
 export const AR_TRANSLATIONS = {
   COMMON: {
+    SHOWING_RANGE: 'عرض {{from}}–{{to}} من {{total}}',
     CLEAR: 'مسح',
     APP_NAME: 'كمال فود',
     COMPANY_NAME: 'شركة كمال بن خلف السلمي للخدمات اللوجستية',

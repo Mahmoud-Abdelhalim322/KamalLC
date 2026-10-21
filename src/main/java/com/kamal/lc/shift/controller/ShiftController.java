@@ -43,7 +43,7 @@ public class ShiftController {
     public ResponseEntity<ApiResponse<PageResponse<ShiftResponse>>> search(
             @ModelAttribute ShiftFilter filter,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<ShiftResponse> result = shiftService.search(filter,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "shiftDate")));
@@ -105,7 +105,7 @@ public class ShiftController {
     @GetMapping("/unmatched")
     public ResponseEntity<ApiResponse<PageResponse<ShiftResponse>>> unmatched(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
         return ResponseEntity.ok(ApiResponse.ok(
                 toPageResponse(shiftService.getUnmatched(PageRequest.of(page, size)))));
     }

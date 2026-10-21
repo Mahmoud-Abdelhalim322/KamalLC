@@ -216,4 +216,51 @@ public class PlatformDtos {
         private Boolean active;
         private String role;
     }
+
+    // ---- List summaries (KPI strips over the whole filtered set) ----
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class TenantListSummary {
+        private long total;
+        private long active;
+        private long trial;
+        private long suspended;
+        private long users;
+        private long captains;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class SubscriptionListSummary {
+        private long total;
+        private long active;
+        private long expiring;
+        private long expired;
+        private long yearly;
+        private long autoRenew;
+        private BigDecimal totalPaid;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class InvoiceListSummary {
+        private long total;
+        private long paidCount;
+        private BigDecimal paidTotal;
+        private long pendingCount;
+        private BigDecimal pendingTotal;
+        private long overdueCount;
+        private BigDecimal overdueTotal;
+    }
+
+    /** Filter choices for the audit log: actions that occur in the log, and the tenants. */
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class AuditLogFilters {
+        private java.util.List<String> actions;
+        private java.util.List<TenantOption> tenants;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class TenantOption {
+        private UUID id;
+        private String name;
+    }
 }

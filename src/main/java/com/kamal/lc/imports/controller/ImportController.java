@@ -145,7 +145,7 @@ public class ImportController {
     public ResponseEntity<ApiResponse<PageResponse<ImportBatchResponse>>> history(
             @RequestParam(required = false) ImportBatchType type,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
         // Ordering comes from the derived query (findAllByOrderByUploadedAtDesc);
         // adding a Sort here would produce a query with two order-by clauses.
         Page<ImportBatchResponse> result = importService.getHistory(type, PageRequest.of(page, size));

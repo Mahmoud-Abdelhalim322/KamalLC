@@ -20,22 +20,22 @@
   <div class="k-kpi-strip">
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_TOTAL' | translate }}</span>
-      <span class="k-kpi-value">{{ tenants.length }}</span>
-      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_USERS_NOTE' | translate:{ count: userTotal } }}</span>
+      <span class="k-kpi-value">{{ summary?.total ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_USERS_NOTE' | translate:{ count: summary?.users ?? 0 } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_ACTIVE' | translate }}</span>
-      <span class="k-kpi-value">{{ activeCount }}</span>
-      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_CAPTAINS_NOTE' | translate:{ count: captainTotal } }}</span>
+      <span class="k-kpi-value">{{ summary?.active ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_CAPTAINS_NOTE' | translate:{ count: summary?.captains ?? 0 } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_TRIAL' | translate }}</span>
-      <span class="k-kpi-value">{{ trialCount }}</span>
+      <span class="k-kpi-value">{{ summary?.trial ?? 0 }}</span>
       <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_TRIAL_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_SUSPENDED' | translate }}</span>
-      <span class="k-kpi-value">{{ suspendedCount }}</span>
+      <span class="k-kpi-value">{{ summary?.suspended ?? 0 }}</span>
       <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_SUSPENDED_NOTE' | translate }}</span>
     </div>
   </div>
@@ -54,13 +54,13 @@
     <div class="k-toolbar">
       <div class="k-search">
         <span class="material-icons-round">search</span>
-        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchInput()" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
       </div>
       <div class="k-chips">
-        <button [class.active]="filter === 'ALL'" (click)="filter = 'ALL'">{{ 'COMMON.ALL' | translate }}</button>
-        <button [class.active]="filter === 'ACTIVE'" (click)="filter = 'ACTIVE'">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
-        <button [class.active]="filter === 'TRIAL'" (click)="filter = 'TRIAL'">{{ 'PLATFORM.STATUS_TRIAL' | translate }}</button>
-        <button [class.active]="filter === 'SUSPENDED'" (click)="filter = 'SUSPENDED'">{{ 'PLATFORM.STATUS_SUSPENDED' | translate }}</button>
+        <button [class.active]="filter === 'ALL'" (click)="setFilter('ALL')">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="filter === 'ACTIVE'" (click)="setFilter('ACTIVE')">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
+        <button [class.active]="filter === 'TRIAL'" (click)="setFilter('TRIAL')">{{ 'PLATFORM.STATUS_TRIAL' | translate }}</button>
+        <button [class.active]="filter === 'SUSPENDED'" (click)="setFilter('SUSPENDED')">{{ 'PLATFORM.STATUS_SUSPENDED' | translate }}</button>
       </div>
     </div>
 
@@ -83,7 +83,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let tenant of visible">
+          <tr *ngFor="let tenant of tenants">
             <td>
               <div class="k-person">
                 <span class="k-avatar ink">{{ tenant.name | initials }}</span>
@@ -119,11 +119,12 @@
           </tr>
         </tbody>
       </table>
-      <div class="k-empty" *ngIf="visible.length === 0">
+      <div class="k-empty" *ngIf="tenants.length === 0">
         <span class="material-icons-round">domain_disabled</span>
         <p>{{ 'PLATFORM.NO_TENANTS' | translate }}</p>
       </div>
     </div>
+    <app-pager [page]="page" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 
   <!-- Create Tenant Modal -->

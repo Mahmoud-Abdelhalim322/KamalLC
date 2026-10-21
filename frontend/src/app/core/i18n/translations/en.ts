@@ -1,5 +1,6 @@
 export const EN_TRANSLATIONS = {
   COMMON: {
+    SHOWING_RANGE: 'Showing {{from}}–{{to}} of {{total}}',
     CLEAR: 'Clear',
     APP_NAME: 'Kamal Food',
     COMPANY_NAME: 'Kamal Bin Khalaf Al-Sulami Logistics Services',

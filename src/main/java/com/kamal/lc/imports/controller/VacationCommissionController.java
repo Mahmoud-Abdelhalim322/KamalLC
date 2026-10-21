@@ -38,7 +38,7 @@ public class VacationCommissionController {
             @RequestParam(required = false) UUID supplierId,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Specification<VacationCommission> spec = (root, query, cb) -> {
             // Eagerly fetch supplier and captain to avoid LazyInitializationException

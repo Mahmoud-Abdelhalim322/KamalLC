@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
-  ApiResponse, LoanPaymentRequest, LoanRequest, LoanResponse, MemberLoanSummaryResponse
+  ApiResponse, LoanMembersSummary, LoanPaymentRequest, LoanRequest, LoanResponse, MemberLoanSummaryResponse, SummaryPage
 } from '../models/api.models';
-import { unwrap } from './api.util';
+import { PAGE_SIZE, toHttpParams, unwrap } from './api.util';
 
 @Injectable({ providedIn: 'root' })
 export class LoanService {
@@ -12,12 +12,13 @@ export class LoanService {
   private http = inject(HttpClient);
   private readonly base = '/api/loans';
 
-  getMembers(type?: string): Observable<MemberLoanSummaryResponse[]> {
-    const params: any = {};
-    if (type) params.type = type;
+  /** One server page of members with loan summaries, plus totals over every match. */
+  getMembers(filter: { type?: string; search?: string }, page = 0, size = PAGE_SIZE)
+      : Observable<SummaryPage<MemberLoanSummaryResponse, LoanMembersSummary>> {
+    const params = toHttpParams({ ...filter, page, size });
     return this.http
-      .get<ApiResponse<MemberLoanSummaryResponse[]>>(`${this.base}/members`, { params })
-      .pipe(map(res => res.data ?? []));
+      .get<ApiResponse<SummaryPage<MemberLoanSummaryResponse, LoanMembersSummary>>>(`${this.base}/members`, { params })
+      .pipe(map(unwrap));
   }
 
   getMemberLoans(memberId: string, memberType: string): Observable<LoanResponse[]> {

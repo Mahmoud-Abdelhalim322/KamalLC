@@ -2,6 +2,8 @@ package com.kamal.lc.loan.service;
 
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.captain.repository.CaptainRepository;
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.common.security.TenantContext;
 import com.kamal.lc.loan.dto.*;
@@ -68,6 +70,29 @@ public class LoanService {
         }
 
         return result;
+    }
+
+    /** One page of members matching the type filter and search, with totals over all matches. */
+    @Transactional(readOnly = true)
+    public SummaryPageResponse<MemberLoanSummaryResponse, LoanMembersSummary> getMembersPage(
+            String memberTypeFilter, String search, int page, int size) {
+        String term = search == null ? "" : search.trim().toLowerCase();
+        List<MemberLoanSummaryResponse> matches = getMembers(memberTypeFilter).stream()
+                .filter(m -> term.isEmpty() || contains(m.getMemberName(), term)
+                        || contains(m.getMemberCode(), term) || contains(m.getMemberNameEn(), term))
+                .toList();
+
+        LoanMembersSummary summary = new LoanMembersSummary(
+                matches.size(),
+                matches.stream().filter(m -> m.getActiveLoanCount() > 0).count(),
+                matches.stream().mapToLong(MemberLoanSummaryResponse::getActiveLoanCount).sum(),
+                matches.stream().map(MemberLoanSummaryResponse::getTotalRemaining).reduce(BigDecimal.ZERO, BigDecimal::add),
+                matches.stream().map(MemberLoanSummaryResponse::getTotalOriginal).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), summary);
+    }
+
+    private static boolean contains(String value, String term) {
+        return value != null && value.toLowerCase().contains(term);
     }
 
     // ---- Member loans ----

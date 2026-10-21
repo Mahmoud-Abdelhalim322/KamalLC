@@ -6,6 +6,9 @@ import { ApiResponse } from '../models/api.models';
  * arrives as HTTP 200, so it has to be turned into an error here — otherwise a
  * failed call would flow into the success branch with `data` undefined.
  */
+/** Rows per page on every server-paged list. */
+export const PAGE_SIZE = 10;
+
 export function unwrap<T>(response: ApiResponse<T>): T {
   if (!response.success || response.data == null) {
     throw new ApiError(response.message ?? 'Operation failed', response.errorCode);

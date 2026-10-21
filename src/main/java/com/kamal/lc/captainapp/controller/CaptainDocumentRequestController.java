@@ -26,7 +26,7 @@ public class CaptainDocumentRequestController {
     public ResponseEntity<ApiResponse<PageResponse<DocumentRequestReview>>> list(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
         return ResponseEntity.ok(ApiResponse.ok(requestService.list(status, page, size)));
     }
 

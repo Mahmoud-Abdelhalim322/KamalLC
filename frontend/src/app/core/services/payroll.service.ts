@@ -3,9 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
   AdjustmentRequest, ApiResponse, PageResponse,
-  PayrollLineResponse, PayrollRunResponse
+  PayrollLineResponse, PayrollLineTotals, PayrollRunResponse, StaffPayrollLineResponse, StaffPayrollLineTotals, SummaryPage
 } from '../models/api.models';
-import { unwrap } from './api.util';
+import { unwrap, toHttpParams, PAGE_SIZE } from './api.util';
 
 export interface GeneratePayrollRequest {
   periodFrom: string;
@@ -19,7 +19,7 @@ export class PayrollService {
   private http = inject(HttpClient);
   private readonly base = '/api/payroll/runs';
 
-  list(page = 0, size = 24): Observable<PageResponse<PayrollRunResponse>> {
+  list(page = 0, size = PAGE_SIZE): Observable<PageResponse<PayrollRunResponse>> {
     return this.http
       .get<ApiResponse<PageResponse<PayrollRunResponse>>>(
         this.base, { params: { page, size } })
@@ -32,14 +32,13 @@ export class PayrollService {
       .pipe(map(unwrap));
   }
 
-  getLines(runId: string, captainType?: string): Observable<PayrollLineResponse[]> {
-    let url = `${this.base}/${runId}/lines`;
-    if (captainType) {
-      url += `?captainType=${encodeURIComponent(captainType)}`;
-    }
+  /** One server page of captain lines, plus column totals over every match. */
+  getLines(runId: string, filter: { captainType?: string; search?: string }, page = 0, size = PAGE_SIZE)
+      : Observable<SummaryPage<PayrollLineResponse, PayrollLineTotals>> {
     return this.http
-      .get<ApiResponse<PayrollLineResponse[]>>(url)
-      .pipe(map(res => res.data ?? []));
+      .get<ApiResponse<SummaryPage<PayrollLineResponse, PayrollLineTotals>>>(`${this.base}/${runId}/lines`,
+        { params: toHttpParams({ ...filter, page, size }) })
+      .pipe(map(unwrap));
   }
 
   /** Builds the run for a period, or rebuilds it if it is still a draft. */
@@ -85,14 +84,13 @@ export class PayrollService {
       .pipe(map(unwrap));
   }
 
-  getStaffLines(runId: string, staffType?: string): Observable<import('../models/api.models').StaffPayrollLineResponse[]> {
-    let params = new HttpParams();
-    if (staffType) {
-      params = params.set('staffType', staffType);
-    }
+  /** One server page of staff lines, plus totals over every match. */
+  getStaffLines(runId: string, filter: { staffType?: string; search?: string }, page = 0, size = PAGE_SIZE)
+      : Observable<SummaryPage<StaffPayrollLineResponse, StaffPayrollLineTotals>> {
     return this.http
-      .get<ApiResponse<import('../models/api.models').StaffPayrollLineResponse[]>>(`${this.base}/${runId}/staff-lines`, { params })
-      .pipe(map(res => res.data ?? []));
+      .get<ApiResponse<SummaryPage<StaffPayrollLineResponse, StaffPayrollLineTotals>>>(`${this.base}/${runId}/staff-lines`,
+        { params: toHttpParams({ ...filter, page, size }) })
+      .pipe(map(unwrap));
   }
 
   addStaffAdjustment(runId: string, request: import('../models/api.models').StaffAdjustmentRequest): Observable<import('../models/api.models').StaffPayrollLineResponse> {

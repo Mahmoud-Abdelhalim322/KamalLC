@@ -2,6 +2,7 @@ package com.kamal.lc.payroll.controller;
 
 import com.kamal.lc.common.dto.ApiResponse;
 import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import com.kamal.lc.payroll.dto.*;
 import com.kamal.lc.payroll.service.PayrollExportService;
 import com.kamal.lc.payroll.service.PayrollService;
@@ -33,7 +34,7 @@ public class PayrollController {
     @GetMapping("/runs")
     public ResponseEntity<ApiResponse<PageResponse<PayrollRunResponse>>> list(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
         Page<PayrollRunResponse> result = payrollService.list(PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.ok(PageResponse.<PayrollRunResponse>builder()
                 .content(result.getContent())
@@ -51,23 +52,23 @@ public class PayrollController {
     }
 
     @GetMapping("/runs/{runId}/lines")
-    public ResponseEntity<ApiResponse<List<PayrollLineResponse>>> lines(
+    public ResponseEntity<ApiResponse<SummaryPageResponse<PayrollLineResponse, PayrollLineTotals>>> lines(
             @PathVariable UUID runId,
-            @RequestParam(required = false) String captainType) {
-        List<PayrollLineResponse> all = payrollService.getLines(runId);
-        if (captainType != null && !captainType.isBlank()) {
-            all = all.stream()
-                    .filter(l -> captainType.equalsIgnoreCase(l.getCaptainType()))
-                    .toList();
-        }
-        return ResponseEntity.ok(ApiResponse.ok(all));
+            @RequestParam(required = false) String captainType,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getLinesPage(runId, captainType, search, page, size)));
     }
 
     @GetMapping("/runs/{runId}/staff-lines")
-    public ResponseEntity<ApiResponse<List<StaffPayrollLineResponse>>> staffLines(
+    public ResponseEntity<ApiResponse<SummaryPageResponse<StaffPayrollLineResponse, StaffPayrollLineTotals>>> staffLines(
             @PathVariable UUID runId,
-            @RequestParam(required = false) String staffType) {
-        return ResponseEntity.ok(ApiResponse.ok(payrollService.getStaffLines(runId, staffType)));
+            @RequestParam(required = false) String staffType,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getStaffLinesPage(runId, staffType, search, page, size)));
     }
 
     /** Builds the run for a period, or rebuilds it if it is still a draft. */

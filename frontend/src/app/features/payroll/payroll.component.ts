@@ -1,14 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, Subject, debounceTime } from 'rxjs';
 import {
   AdjustmentRequest, AdjustmentType,
-  PayrollLineResponse, PayrollRunResponse,
+  PayrollLineResponse, PayrollLineTotals, PayrollRunResponse,
   StaffPayrollLineResponse, StaffAdjustmentType, StaffAdjustmentRequest
 } from '../../core/models/api.models';
 import { PayrollService } from '../../core/services/payroll.service';
-import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
+import { PAGE_SIZE, downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
 
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -27,11 +28,12 @@ interface StaffAdjustmentOption {
 import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-payroll',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe, PagerComponent],
   templateUrl: './payroll.component.html',
   styleUrls: ['./payroll.component.scss']
 })
@@ -98,24 +100,18 @@ export class PayrollComponent implements OnInit {
   staffLines: StaffPayrollLineResponse[] = [];
   searchQuery = '';
 
-  get filteredLines(): PayrollLineResponse[] {
-    const q = this.searchQuery.trim().toLowerCase();
-    if (!q) return this.lines;
-    return this.lines.filter(l =>
-      (l.captainName && l.captainName.toLowerCase().includes(q)) ||
-      (l.captainCode && l.captainCode.toLowerCase().includes(q)) ||
-      (l.supplierExternalIds && l.supplierExternalIds.toLowerCase().includes(q))
-    );
-  }
+  // Server paging of the lines table (captains and staff share it; switching tab or filters resets it)
+  readonly pageSize = PAGE_SIZE;
+  linePage = 0;
+  lineTotalElements = 0;
+  runsPage = 0;
+  runsTotalElements = 0;
+  runsTotalPages = 0;
+  lineTotalPages = 0;
+  totals: PayrollLineTotals = PayrollComponent.emptyTotals();
+  private readonly search$ = new Subject<void>();
 
-  get filteredStaffLines(): StaffPayrollLineResponse[] {
-    const q = this.searchQuery.trim().toLowerCase();
-    if (!q) return this.staffLines;
-    return this.staffLines.filter(s =>
-      (s.staffName && s.staffName.toLowerCase().includes(q)) ||
-      (s.staffCode && s.staffCode.toLowerCase().includes(q))
-    );
-  }
+
 
   isLoadingRuns = true;
   isLoadingLines = false;
@@ -149,6 +145,13 @@ export class PayrollComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  constructor() {
+    this.search$.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => {
+      this.linePage = 0;
+      this.loadData();
+    });
+  }
+
   ngOnInit(): void {
     const today = new Date();
     this.periodFrom = isoDate(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -160,10 +163,14 @@ export class PayrollComponent implements OnInit {
 
   loadRuns(selectId?: string): void {
     this.isLoadingRuns = true;
-    this.payrollService.list().subscribe({
+    // A run just generated or reopened is the newest one, on the first page.
+    if (selectId) this.runsPage = 0;
+    this.payrollService.list(this.runsPage, this.pageSize).subscribe({
       next: (page) => {
         this.isLoadingRuns = false;
         this.runs = page.content;
+        this.runsTotalElements = page.totalElements;
+        this.runsTotalPages = page.totalPages;
 
         const target = selectId
           ? this.runs.find(r => r.id === selectId)
@@ -189,6 +196,7 @@ export class PayrollComponent implements OnInit {
 
   selectRun(run: PayrollRunResponse): void {
     this.selectedRun = run;
+    this.linePage = 0;
     this.confirmingApproval = false;
     this.confirmingDelete = false;
     this.showReopenForm = false;
@@ -199,6 +207,7 @@ export class PayrollComponent implements OnInit {
 
   switchTab(tab: 'CAPTAIN' | 'WORKER' | 'MANAGER'): void {
     this.activeTab = tab;
+    this.linePage = 0;
     if (this.selectedRun) {
       this.loadData();
     }
@@ -215,10 +224,15 @@ export class PayrollComponent implements OnInit {
 
   loadLines(runId: string): void {
     this.isLoadingLines = true;
-    this.payrollService.getLines(runId, this.captainTypeFilter || undefined).subscribe({
-      next: (lines) => {
+    this.payrollService.getLines(runId, {
+      captainType: this.captainTypeFilter || undefined, search: this.searchQuery.trim() || undefined
+    }, this.linePage, this.pageSize).subscribe({
+      next: (res) => {
         this.isLoadingLines = false;
-        this.lines = lines;
+        this.lines = res.content;
+        this.totals = res.summary;
+        this.lineTotalElements = res.totalElements;
+        this.lineTotalPages = res.totalPages;
       },
       error: (err) => {
         this.isLoadingLines = false;
@@ -230,17 +244,43 @@ export class PayrollComponent implements OnInit {
 
   setCaptainTypeFilter(filter: '' | 'EMPLOYEE' | 'FREELANCE'): void {
     this.captainTypeFilter = filter;
+    this.linePage = 0;
     if (this.selectedRun && this.activeTab === 'CAPTAIN') {
       this.loadLines(this.selectedRun.id);
     }
   }
 
+  /** Search typed: wait for a pause, then reload the lines from the first page. */
+  onSearchInput(): void {
+    this.search$.next();
+  }
+
+  goToRunsPage(page: number): void {
+    this.runsPage = page;
+    this.loadRuns();
+  }
+
+  goToLinePage(page: number): void {
+    this.linePage = page;
+    this.loadData();
+  }
+
+  private static emptyTotals(): PayrollLineTotals {
+    return {
+      shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, car: 0, targetBonus: 0,
+      extraOrderPay: 0, vacationCommission: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
+    };
+  }
+
   loadStaffLines(runId: string, type: string): void {
     this.isLoadingLines = true;
-    this.payrollService.getStaffLines(runId, type).subscribe({
-      next: (lines) => {
+    this.payrollService.getStaffLines(runId, { staffType: type, search: this.searchQuery.trim() || undefined },
+      this.linePage, this.pageSize).subscribe({
+      next: (res) => {
         this.isLoadingLines = false;
-        this.staffLines = lines;
+        this.staffLines = res.content;
+        this.lineTotalElements = res.totalElements;
+        this.lineTotalPages = res.totalPages;
       },
       error: (err) => {
         this.isLoadingLines = false;
@@ -620,29 +660,6 @@ export class PayrollComponent implements OnInit {
 
   // ---------------------------------------------------------------- display
 
-  get totals() {
-    return this.filteredLines.reduce((acc, l) => ({
-      shifts: acc.shifts + l.attendedShifts,
-      orders: acc.orders + l.totalOrders,
-      basePay: acc.basePay + l.basePay,
-      deductions: acc.deductions + l.lateDeductions,
-      supplierDeductions: acc.supplierDeductions + (l.supplierDeductions || 0),
-      incentives: acc.incentives + l.dailyIncentives,
-      car: acc.car + l.carAllowances,
-      targetBonus: acc.targetBonus + l.targetBonus,
-      extraOrderPay: acc.extraOrderPay + l.extraOrderPay,
-      vacationCommission: acc.vacationCommission + (l.vacationCommission || 0),
-      gross: acc.gross + l.gross,
-      activeLoans: acc.activeLoans + (l.activeLoanBalance || 0),
-      adjustments: acc.adjustments + l.adjustmentsTotal,
-      net: acc.net + l.net,
-      revenue: acc.revenue + l.supplierRevenueTotal,
-      margin: acc.margin + l.margin,
-    }), {
-      shifts: 0, orders: 0, basePay: 0, deductions: 0, supplierDeductions: 0, incentives: 0, car: 0,
-      targetBonus: 0, vacationCommission: 0, extraOrderPay: 0, gross: 0, activeLoans: 0, adjustments: 0, net: 0, revenue: 0, margin: 0
-    });
-  }
 
   statusLabel(status: string): string {
     const isAr = this.translationService.currentLang() === 'ar';

@@ -151,17 +151,6 @@
     </div>
 
     <!-- Pagination -->
-    <div class="k-pager" *ngIf="totalPages > 1">
-      <span class="k-pager-info">{{ 'COMMON.PAGE' | translate }} {{ currentPage + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }}</span>
-      <button class="btn btn-outline btn-sm" [disabled]="currentPage === 0" (click)="prevPage()">
-        <span class="material-icons-round k-flip">chevron_left</span>
-        {{ 'COMMON.PREVIOUS' | translate }}
-      </button>
-      <span class="k-page-num">{{ currentPage + 1 }}</span>
-      <button class="btn btn-outline btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">
-        {{ 'COMMON.NEXT' | translate }}
-        <span class="material-icons-round k-flip">chevron_right</span>
-      </button>
-    </div>
+    <app-pager [page]="currentPage" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 </div>

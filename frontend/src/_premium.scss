@@ -857,6 +857,29 @@ html[dir="rtl"] .k-flip { transform: scaleX(-1); }
 
 .k-pager.outside { margin-top: 20px; }
 
+.k-pager.compact {
+  flex-wrap: wrap;
+  justify-content: center;
+
+  .k-pager-info { flex-basis: 100%; margin: 0 0 4px; text-align: center; }
+}
+
+.k-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-weight: 800;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  cursor: pointer;
+
+  &:hover { border-color: var(--brand); }
+  &.active { background: var(--ink); border-color: var(--ink); color: var(--brand); }
+}
+
 .k-table {
   .k-check-col { width: 18px; padding-inline-end: 0; }
   .k-actions { width: 1%; white-space: nowrap; }

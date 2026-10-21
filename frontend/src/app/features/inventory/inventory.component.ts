@@ -9,16 +9,17 @@ import {
   AssetCategoryResponse, AssetItemResponse, FieldTemplateResponse,
   CaptainLookupItem, CustodyRecordResponse
 } from '../../core/models/api.models';
-import { errorMessage } from '../../core/services/api.util';
+import { errorMessage, PAGE_SIZE } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, InitialsPipe, PagerComponent],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
@@ -54,6 +55,8 @@ export class InventoryComponent implements OnInit {
   historyRecords: CustodyRecordResponse[] = [];
   historyPage = 0;
   historyTotalPages = 0;
+  historyTotalElements = 0;
+  readonly pageSize = PAGE_SIZE;
   historyReferenceId = '';
 
   // Category form
@@ -110,7 +113,7 @@ export class InventoryComponent implements OnInit {
       categoryId: this.selectedCategory.id,
       status: this.itemStatusFilter || undefined,
       search: this.itemSearch || undefined,
-      page: this.itemPage, size: 15
+      page: this.itemPage, size: PAGE_SIZE
     }).subscribe({
       next: p => { this.items = p.content; this.itemTotalPages = p.totalPages; this.itemTotal = p.totalElements; this.isLoading = false; },
       error: e => { this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_ITEMS')); this.isLoading = false; }
@@ -246,8 +249,8 @@ export class InventoryComponent implements OnInit {
     return labels[s] || s;
   }
 
-  prevPage(): void { if (this.itemPage > 0) { this.itemPage--; this.loadItems(); } }
-  nextPage(): void { if (this.itemPage < this.itemTotalPages - 1) { this.itemPage++; this.loadItems(); } }
+  goToItemPage(page: number): void { this.itemPage = page; this.loadItems(); }
+  goToHistoryPage(page: number): void { this.historyPage = page; this.loadItemHistory(); }
 
   dismissMsg(): void { this.error = ''; this.successMsg = ''; }
 
@@ -269,12 +272,11 @@ export class InventoryComponent implements OnInit {
       next: p => {
         this.historyRecords = p.content;
         this.historyTotalPages = p.totalPages;
+        this.historyTotalElements = p.totalElements;
         this.showHistoryDialog = true;
       },
       error: e => this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_HISTORY'))
     });
   }
 
-  prevHistoryPage(): void { if (this.historyPage > 0) { this.historyPage--; this.loadItemHistory(); } }
-  nextHistoryPage(): void { if (this.historyPage < this.historyTotalPages - 1) { this.historyPage++; this.loadItemHistory(); } }
 }

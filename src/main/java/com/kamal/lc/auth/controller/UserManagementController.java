@@ -3,6 +3,8 @@ package com.kamal.lc.auth.controller;
 import com.kamal.lc.auth.dto.UserManagementDtos.*;
 import com.kamal.lc.auth.service.UserManagementService;
 import com.kamal.lc.common.dto.ApiResponse;
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -57,8 +59,12 @@ public class UserManagementController {
     // ---- Users ----
 
     @GetMapping("/users")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers() {
-        return ResponseEntity.ok(ApiResponse.ok(service.listUsers()));
+    public ResponseEntity<ApiResponse<SummaryPageResponse<UserResponse, UserListSummary>>> listUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        List<UserResponse> all = service.listUsers();
+        UserListSummary summary = new UserListSummary(all.size(), all.stream().filter(UserResponse::isActive).count());
+        return ResponseEntity.ok(ApiResponse.ok(SummaryPageResponse.of(PageResponse.slice(all, page, size), summary)));
     }
 
     @PostMapping("/users")

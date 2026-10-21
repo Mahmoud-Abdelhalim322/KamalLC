@@ -2,6 +2,7 @@ package com.kamal.lc.auth.controller;
 
 import com.kamal.lc.auth.dto.CaptainAllocationDtos.*;
 import com.kamal.lc.auth.service.CaptainAllocationService;
+import com.kamal.lc.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,8 +23,10 @@ public class CaptainAllocationController {
 
     @GetMapping("/admin/allocations")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserAllocationSummaryResponse>> getAllAllocations() {
-        return ResponseEntity.ok(allocationService.getAllUserAllocations());
+    public ResponseEntity<PageResponse<UserAllocationSummaryResponse>> getAllAllocations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(PageResponse.slice(allocationService.getAllUserAllocations(), page, size));
     }
 
     @GetMapping("/admin/allocations/users/{userId}")

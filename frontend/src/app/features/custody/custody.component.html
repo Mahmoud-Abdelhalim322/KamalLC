@@ -17,23 +17,23 @@
   <div class="k-kpi-strip">
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'CUSTODY.KPI_CAPTAINS' | translate }}</span>
-      <span class="k-kpi-value">{{ summaries.length }}</span>
+      <span class="k-kpi-value">{{ totals?.captainCount ?? 0 }}</span>
       <span class="k-kpi-note">{{ 'CUSTODY.KPI_CAPTAINS_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'CUSTODY.KPI_ACTIVE' | translate }}</span>
-      <span class="k-kpi-value">{{ totalActive }}</span>
-      <span class="k-kpi-note">{{ 'CUSTODY.KPI_ACTIVE_NOTE' | translate:{ vehicles: totalVehicles, items: totalActive - totalVehicles } }}</span>
+      <span class="k-kpi-value">{{ totals?.activeCount ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_ACTIVE_NOTE' | translate:{ vehicles: totals?.vehicleCount ?? 0, items: (totals?.activeCount ?? 0) - (totals?.vehicleCount ?? 0) } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'CUSTODY.KPI_VEHICLES' | translate }}</span>
-      <span class="k-kpi-value">{{ totalVehicles }}</span>
+      <span class="k-kpi-value">{{ totals?.vehicleCount ?? 0 }}</span>
       <span class="k-kpi-note">{{ 'CUSTODY.KPI_VEHICLES_NOTE' | translate }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'CUSTODY.KPI_DEVICES' | translate }}</span>
-      <span class="k-kpi-value">{{ totalSimsPhones }}</span>
-      <span class="k-kpi-note">{{ 'CUSTODY.KPI_DEVICES_NOTE' | translate:{ count: totalOther } }}</span>
+      <span class="k-kpi-value">{{ (totals?.simCount ?? 0) + (totals?.phoneCount ?? 0) }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_DEVICES_NOTE' | translate:{ count: totals?.otherCount ?? 0 } }}</span>
     </div>
   </div>
 
@@ -46,9 +46,9 @@
         <span class="material-icons-round">search</span>
         <input type="text" [placeholder]="'CUSTODY.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery" (input)="applyFilter()">
       </div>
-      <span class="side-label">{{ summaries.length }} {{ 'CUSTODY.CAPTAINS_COUNT' | translate }}</span>
+      <span class="side-label">{{ totalElements }} {{ 'CUSTODY.CAPTAINS_COUNT' | translate }}</span>
       <div class="loading-bar" *ngIf="isLoading"></div>
-      <button *ngFor="let s of filteredSummaries" type="button" class="captain-row"
+      <button *ngFor="let s of summaries" type="button" class="captain-row"
               [class.active]="selectedCaptainId === s.captainId" (click)="selectCaptain(s)">
         <span class="k-avatar">{{ s.captainName | initials }}</span>
         <span class="captain-text">
@@ -57,10 +57,11 @@
         </span>
         <span class="count-pill">{{ s.activeCount }} {{ 'CUSTODY.ITEMS_COUNT' | translate }}</span>
       </button>
-      <div class="k-empty" *ngIf="filteredSummaries.length === 0 && !isLoading">
+      <div class="k-empty" *ngIf="summaries.length === 0 && !isLoading">
         <span class="material-icons-round">inventory</span>
         <p>{{ 'CUSTODY.NO_ACTIVE_CUSTODY' | translate }}</p>
       </div>
+      <app-pager [compact]="true" [page]="page" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
     </aside>
 
     <div class="detail-column">
@@ -185,11 +186,7 @@
           </tr>
         </tbody>
       </table>
-      <div class="pagination" *ngIf="historyTotalPages > 1">
-        <button (click)="prevHistoryPage()" [disabled]="historyPage === 0">{{ 'CUSTODY.PREV' | translate }}</button>
-        <span>{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
-        <button (click)="nextHistoryPage()" [disabled]="historyPage >= historyTotalPages - 1">{{ 'CUSTODY.NEXT' | translate }}</button>
-      </div>
+      <app-pager [page]="historyPage" [size]="pageSize" [totalElements]="historyTotalElements" [totalPages]="historyTotalPages" (pageChange)="goToHistoryPage($event)"></app-pager>
       <div class="dialog-actions">
         <button class="btn btn-secondary" (click)="showHistoryDialog = false">{{ 'CUSTODY.CLOSE' | translate }}</button>
       </div>

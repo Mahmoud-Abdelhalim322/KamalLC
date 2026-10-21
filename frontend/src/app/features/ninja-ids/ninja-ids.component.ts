@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { isoDate } from '../../core/services/api.util';
+import { isoDate, PAGE_SIZE } from '../../core/services/api.util';
 import {
   ApiResponse, SupplierResponse, SupplierIdSlotResponse,
   PageResponse, AssignmentHistoryItem, CaptainLookupItem,
@@ -14,11 +14,12 @@ import {
 import { TranslationService } from '../../core/i18n/translation.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-ninja-ids',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, InitialsPipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, InitialsPipe, PagerComponent],
   templateUrl: './ninja-ids.component.html',
   styleUrls: ['./ninja-ids.component.scss']
 })
@@ -36,7 +37,7 @@ export class NinjaIdsComponent implements OnInit {
 
   // Pagination
   currentPage = 0;
-  pageSize = 20;
+  pageSize = PAGE_SIZE;
   totalElements = 0;
   totalPages = 0;
 
@@ -433,17 +434,10 @@ export class NinjaIdsComponent implements OnInit {
       });
   }
 
-  nextPage(): void {
-    if (this.currentPage < this.totalPages - 1) {
-      this.currentPage++;
-      this.loadSlots();
-    }
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.loadSlots();
   }
 
-  prevPage(): void {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.loadSlots();
-    }
-  }
+
 }

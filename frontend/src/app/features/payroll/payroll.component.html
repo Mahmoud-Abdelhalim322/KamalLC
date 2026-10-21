@@ -70,6 +70,7 @@
         <span class="run-item-period">{{ run.periodFrom }} → {{ run.periodTo }}</span>
         <span class="run-item-meta">{{ run.captainCount }} {{ 'PAYROLL.CAPTAIN_UNIT' | translate }} — {{ 'PAYROLL.NET_PREFIX' | translate }} {{ run.totalNet | sar }}</span>
       </button>
+      <app-pager [compact]="true" [page]="runsPage" [size]="pageSize" [totalElements]="runsTotalElements" [totalPages]="runsTotalPages" (pageChange)="goToRunsPage($event)"></app-pager>
     </aside>
 
     <!-- Selected run -->
@@ -114,7 +115,7 @@
                 {{ isGenerating ? ('PAYROLL.GENERATING_BTN' | translate) : ('PAYROLL.REGENERATE' | translate) }}
               </button>
               <button class="btn btn-primary btn-sm" *ngIf="!confirmingApproval" (click)="confirmingApproval = true"
-                [disabled]="isBusy || lines.length === 0">
+                [disabled]="isBusy || lineTotalElements === 0">
                 <span class="material-icons-round">lock</span> {{ 'PAYROLL.APPROVE_LOCK' | translate }}
               </button>
               <button class="btn btn-danger btn-sm" *ngIf="!confirmingDelete" (click)="confirmingDelete = true"
@@ -204,7 +205,7 @@
           </div>
           <div class="search-box">
             <span class="material-icons-round">search</span>
-            <input type="text" [placeholder]="'PAYROLL.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery">
+            <input type="text" [placeholder]="'PAYROLL.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery" (ngModelChange)="onSearchInput()">
           </div>
         </div>
 
@@ -246,7 +247,7 @@
         <p>{{ 'COMMON.LOADING' | translate }}</p>
       </div>
 
-      <div class="empty-state card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length === 0">
+      <div class="empty-state card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length === 0 && !searchQuery.trim()">
         <span class="material-icons-round">receipt_long</span>
         <h3>{{ 'PAYROLL.EMPTY_CAPTAINS' | translate }}</h3>
         <p>{{ 'PAYROLL.EMPTY_CAPTAINS_HINT' | translate }}</p>
@@ -256,7 +257,7 @@
         </button>
       </div>
 
-      <div class="empty-state card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length === 0">
+      <div class="empty-state card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length === 0 && !searchQuery.trim()">
         <span class="material-icons-round">receipt_long</span>
         <h3>{{ 'PAYROLL.EMPTY_STAFF' | translate }}</h3>
         <p>{{ 'PAYROLL.EMPTY_STAFF_HINT' | translate }}</p>
@@ -266,7 +267,7 @@
         </button>
       </div>
 
-      <div class="k-card payroll-table" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length > 0">
+      <div class="k-card payroll-table" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && (lines.length > 0 || searchQuery.trim())">
         <div class="k-table-wrap">
         <table class="k-table">
           <thead>
@@ -295,7 +296,7 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let line of filteredLines">
+            <ng-container *ngFor="let line of lines">
               <tr>
                 <td>
                   <div class="k-person">
@@ -405,9 +406,10 @@
           </tfoot>
         </table>
         </div>
+        <app-pager [page]="linePage" [size]="pageSize" [totalElements]="lineTotalElements" [totalPages]="lineTotalPages" (pageChange)="goToLinePage($event)"></app-pager>
       </div>
 
-      <div class="k-card payroll-table" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length > 0">
+      <div class="k-card payroll-table" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && (staffLines.length > 0 || searchQuery.trim())">
         <div class="k-table-wrap">
         <table class="k-table">
           <thead>
@@ -425,7 +427,7 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let line of filteredStaffLines">
+            <ng-container *ngFor="let line of staffLines">
               <tr>
                 <td>
                   <div class="k-person">
@@ -486,6 +488,7 @@
           </tbody>
         </table>
         </div>
+        <app-pager [page]="linePage" [size]="pageSize" [totalElements]="lineTotalElements" [totalPages]="lineTotalPages" (pageChange)="goToLinePage($event)"></app-pager>
       </div>
     </section>
 

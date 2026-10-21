@@ -1,26 +1,35 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CustodyService } from '../../core/services/custody.service';
-import { CaptainCustodySummary, CustodyRecordResponse } from '../../core/models/api.models';
-import { errorMessage } from '../../core/services/api.util';
+import { CaptainCustodySummary, CustodyRecordResponse, CustodySummaryTotals } from '../../core/models/api.models';
+import { PAGE_SIZE, errorMessage } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 @Component({
   selector: 'app-custody',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, PagerComponent],
   templateUrl: './custody.component.html',
   styleUrls: ['./custody.component.scss']
 })
 export class CustodyComponent implements OnInit {
   private readonly http = inject(HttpClient);
   summaries: CaptainCustodySummary[] = [];
-  filteredSummaries: CaptainCustodySummary[] = [];
+  totals: CustodySummaryTotals | null = null;
   searchQuery = '';
+
+  readonly pageSize = PAGE_SIZE;
+  page = 0;
+  totalElements = 0;
+  totalPages = 0;
+  private readonly search$ = new Subject<void>();
   isLoading = false;
   selectedCaptainId: string | null = null;
 
@@ -33,6 +42,7 @@ export class CustodyComponent implements OnInit {
   historyRecords: CustodyRecordResponse[] = [];
   historyPage = 0;
   historyTotalPages = 0;
+  historyTotalElements = 0;
   historyCaptainId = '';
 
   error = '';
@@ -40,40 +50,46 @@ export class CustodyComponent implements OnInit {
   constructor(
     private custodyService: CustodyService,
     public i18n: TranslationService
-  ) {}
+  ) {
+    this.search$.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => {
+      this.page = 0;
+      this.loadSummaries();
+    });
+  }
 
   ngOnInit(): void { this.loadSummaries(); }
 
   loadSummaries(): void {
     this.isLoading = true;
-    this.custodyService.getSummaries().subscribe({
-      next: data => {
-        this.summaries = data;
-        this.applyFilter();
+    this.custodyService.getSummaries(this.searchQuery.trim() || undefined, this.page, this.pageSize).subscribe({
+      next: res => {
+        this.summaries = res.content;
+        this.totals = res.summary;
+        this.totalElements = res.totalElements;
+        this.totalPages = res.totalPages;
         this.isLoading = false;
-        if (!this.selected && data.length > 0) this.selectCaptain(data[0]);
+        if (!this.selected && res.content.length > 0) this.selectCaptain(res.content[0]);
       },
       error: e => { this.error = errorMessage(e, this.i18n.t('CUSTODY.ERR_LOAD_CUSTODY')); this.isLoading = false; }
     });
   }
 
+  /** Search typed: wait for a pause, then reload from the first page. */
   applyFilter(): void {
-    if (!this.searchQuery) {
-      this.filteredSummaries = this.summaries;
-    } else {
-      const q = this.searchQuery.toLowerCase();
-      this.filteredSummaries = this.summaries.filter(s =>
-        s.captainName.toLowerCase().includes(q) || s.captainCode.toLowerCase().includes(q)
-      );
-    }
+    this.search$.next();
   }
 
-  get selected(): CaptainCustodySummary | null {
-    return this.summaries.find(s => s.captainId === this.selectedCaptainId) ?? null;
+  goToPage(page: number): void {
+    this.page = page;
+    this.loadSummaries();
   }
+
+  /** Kept as its own object so the detail stays open while the list pages. */
+  selected: CaptainCustodySummary | null = null;
 
   selectCaptain(s: CaptainCustodySummary): void {
     this.selectedCaptainId = s.captainId;
+    this.selected = s;
     this.recentHistory = [];
     this.custodyService.getHistory(s.captainId, 0, 5).subscribe({
       next: p => this.recentHistory = p.content,
@@ -81,11 +97,6 @@ export class CustodyComponent implements OnInit {
     });
   }
 
-  // KPI strip totals over all captains holding custody
-  get totalActive(): number { return this.summaries.reduce((n, s) => n + s.activeCount, 0); }
-  get totalVehicles(): number { return this.summaries.reduce((n, s) => n + s.vehicleCount, 0); }
-  get totalSimsPhones(): number { return this.summaries.reduce((n, s) => n + s.simCount + s.phoneCount, 0); }
-  get totalOther(): number { return this.summaries.reduce((n, s) => n + s.otherCount, 0); }
 
   openHistory(s: CaptainCustodySummary): void {
     this.historyCaptainId = s.captainId;
@@ -96,13 +107,12 @@ export class CustodyComponent implements OnInit {
 
   loadHistory(): void {
     this.custodyService.getHistory(this.historyCaptainId, this.historyPage).subscribe({
-      next: p => { this.historyRecords = p.content; this.historyTotalPages = p.totalPages; this.showHistoryDialog = true; },
+      next: p => { this.historyRecords = p.content; this.historyTotalPages = p.totalPages; this.historyTotalElements = p.totalElements; this.showHistoryDialog = true; },
       error: e => this.error = errorMessage(e, this.i18n.t('CUSTODY.ERR_LOAD_HISTORY'))
     });
   }
 
-  prevHistoryPage(): void { if (this.historyPage > 0) { this.historyPage--; this.loadHistory(); } }
-  nextHistoryPage(): void { if (this.historyPage < this.historyTotalPages - 1) { this.historyPage++; this.loadHistory(); } }
+  goToHistoryPage(page: number): void { this.historyPage = page; this.loadHistory(); }
 
   assetTypeIcon(type: string): string {
     return { VEHICLE: 'directions_car', SIM_CARD: 'sim_card', PHONE: 'phone_iphone' }[type] || 'category';

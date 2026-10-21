@@ -1,5 +1,8 @@
 package com.kamal.lc.custody.service;
 
+import com.kamal.lc.common.dto.PageResponse;
+import com.kamal.lc.common.dto.SummaryPageResponse;
+import com.kamal.lc.custody.dto.CustodySummaryTotals;
 import com.kamal.lc.captain.entity.Captain;
 import com.kamal.lc.common.exception.BusinessException;
 import com.kamal.lc.custody.dto.CaptainCustodySummary;
@@ -87,6 +90,26 @@ public class CustodyService {
     /**
      * Summary cards for the custody dashboard — one card per captain holding any active items.
      */
+    /** One page of captains holding custody, matching the search, with totals over all matches. */
+    @Transactional(readOnly = true)
+    public SummaryPageResponse<CaptainCustodySummary, CustodySummaryTotals> getCaptainSummariesPage(
+            String search, int page, int size) {
+        String term = search == null ? "" : search.trim().toLowerCase();
+        List<CaptainCustodySummary> matches = getCaptainSummaries().stream()
+                .filter(c -> term.isEmpty()
+                        || (c.getCaptainName() != null && c.getCaptainName().toLowerCase().contains(term))
+                        || (c.getCaptainCode() != null && c.getCaptainCode().toLowerCase().contains(term)))
+                .toList();
+        CustodySummaryTotals totals = new CustodySummaryTotals(
+                matches.size(),
+                matches.stream().mapToLong(CaptainCustodySummary::getActiveCount).sum(),
+                matches.stream().mapToLong(CaptainCustodySummary::getVehicleCount).sum(),
+                matches.stream().mapToLong(CaptainCustodySummary::getSimCount).sum(),
+                matches.stream().mapToLong(CaptainCustodySummary::getPhoneCount).sum(),
+                matches.stream().mapToLong(CaptainCustodySummary::getOtherCount).sum());
+        return SummaryPageResponse.of(PageResponse.slice(matches, page, size), totals);
+    }
+
     @Transactional(readOnly = true)
     public List<CaptainCustodySummary> getCaptainSummaries() {
         // Get all active custody records grouped by captain

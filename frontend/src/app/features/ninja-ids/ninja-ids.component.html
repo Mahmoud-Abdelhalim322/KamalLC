@@ -146,18 +146,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="k-pager" *ngIf="!isLoading && slots.length > 0">
-      <span class="k-pager-info">{{ 'NINJA_IDS.SHOWING' | translate:{ count: slots.length, total: totalElements } }}</span>
-      <ng-container *ngIf="totalPages > 1">
-        <button class="btn btn-outline btn-sm" (click)="prevPage()" [disabled]="currentPage === 0">
-          <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREVIOUS' | translate }}
-        </button>
-        <span class="k-page-num">{{ currentPage + 1 }}</span>
-        <button class="btn btn-outline btn-sm" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-          {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
-        </button>
-      </ng-container>
-    </div>
+    <app-pager [page]="currentPage" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 
   <div class="modal-overlay" *ngIf="selectedSlot" (click)="closeHistory()">

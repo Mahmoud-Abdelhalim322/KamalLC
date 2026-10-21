@@ -52,7 +52,7 @@ public class SupplierIdController {
             @RequestParam(required = false) UUID supplierId,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
 
         Page<SupplierIdSlotResponse> result = service.getSlots(supplierId, q,
                 PageRequest.of(page, size, Sort.by("externalId")));

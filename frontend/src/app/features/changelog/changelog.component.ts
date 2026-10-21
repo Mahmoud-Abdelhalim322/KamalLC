@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { ChangeLogService, ChangeLogEntry, ChangeLogFilter } from '../../core/services/changelog.service';
-import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
+import { downloadBlob, errorMessage, isoDate, PAGE_SIZE } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 type EntityTab = 'ALL' | 'SHIFT' | 'SUPPLIER_ID' | 'VEHICLE' | 'ASSET_ITEM' | 'CAPTAIN';
 
 @Component({
   selector: 'app-changelog',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, PagerComponent],
   templateUrl: './changelog.component.html',
   styleUrls: ['./changelog.component.scss']
 })
@@ -43,7 +44,7 @@ export class ChangeLogComponent implements OnInit, OnDestroy {
 
   entries: ChangeLogEntry[] = [];
   page = 0;
-  size = 50;
+  size = PAGE_SIZE;
   totalElements = 0;
   totalPages = 0;
   isLoading = true;

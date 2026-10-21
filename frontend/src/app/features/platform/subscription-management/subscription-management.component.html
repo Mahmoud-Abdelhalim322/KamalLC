@@ -12,22 +12,22 @@
   <div class="k-kpi-strip">
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_ACTIVE' | translate }}</span>
-      <span class="k-kpi-value">{{ activeCount }}</span>
-      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_ACTIVE_NOTE' | translate:{ yearly: yearlyCount, monthly: subscriptions.length - yearlyCount } }}</span>
+      <span class="k-kpi-value">{{ summary?.active ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_ACTIVE_NOTE' | translate:{ yearly: summary?.yearly ?? 0, monthly: (summary?.total ?? 0) - (summary?.yearly ?? 0) } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_EXPIRING' | translate }}</span>
-      <span class="k-kpi-value">{{ expiringCount }}</span>
-      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_AUTORENEW_NOTE' | translate:{ count: autoRenewCount } }}</span>
+      <span class="k-kpi-value">{{ summary?.expiring ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_AUTORENEW_NOTE' | translate:{ count: summary?.autoRenew ?? 0 } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_EXPIRED' | translate }}</span>
-      <span class="k-kpi-value">{{ expiredCount }}</span>
-      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_TOTAL_NOTE' | translate:{ count: subscriptions.length } }}</span>
+      <span class="k-kpi-value">{{ summary?.expired ?? 0 }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_TOTAL_NOTE' | translate:{ count: summary?.total ?? 0 } }}</span>
     </div>
     <div class="k-kpi">
       <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_PAID' | translate }}</span>
-      <span class="k-kpi-value">{{ totalPaid | sar:'1.0-0' }}</span>
+      <span class="k-kpi-value">{{ (summary?.totalPaid ?? 0) | sar:'1.0-0' }}</span>
       <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_PAID_NOTE' | translate }}</span>
     </div>
   </div>
@@ -36,13 +36,13 @@
     <div class="k-toolbar">
       <div class="k-search">
         <span class="material-icons-round">search</span>
-        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchInput()" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
       </div>
       <div class="k-chips">
-        <button [class.active]="filter === 'ALL'" (click)="filter = 'ALL'">{{ 'COMMON.ALL' | translate }}</button>
-        <button [class.active]="filter === 'ACTIVE'" (click)="filter = 'ACTIVE'">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
-        <button [class.active]="filter === 'EXPIRING'" (click)="filter = 'EXPIRING'">{{ 'PLATFORM.EXPIRING_SOON' | translate }}</button>
-        <button [class.active]="filter === 'EXPIRED'" (click)="filter = 'EXPIRED'">{{ 'PLATFORM.STATUS_EXPIRED' | translate }}</button>
+        <button [class.active]="filter === 'ALL'" (click)="setFilter('ALL')">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="filter === 'ACTIVE'" (click)="setFilter('ACTIVE')">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
+        <button [class.active]="filter === 'EXPIRING'" (click)="setFilter('EXPIRING')">{{ 'PLATFORM.EXPIRING_SOON' | translate }}</button>
+        <button [class.active]="filter === 'EXPIRED'" (click)="setFilter('EXPIRED')">{{ 'PLATFORM.STATUS_EXPIRED' | translate }}</button>
       </div>
     </div>
 
@@ -65,7 +65,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let sub of visible" [class.highlight]="isExpiring(sub)">
+          <tr *ngFor="let sub of subscriptions" [class.highlight]="isExpiring(sub)">
             <td>
               <div class="k-person">
                 <span class="k-avatar ink">{{ sub.tenantName | initials }}</span>
@@ -91,10 +91,11 @@
           </tr>
         </tbody>
       </table>
-      <div class="k-empty" *ngIf="visible.length === 0">
+      <div class="k-empty" *ngIf="subscriptions.length === 0">
         <span class="material-icons-round">credit_card_off</span>
         <p>{{ 'PLATFORM.NO_SUBSCRIPTIONS' | translate }}</p>
       </div>
     </div>
+    <app-pager [page]="page" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
   </section>
 </div>

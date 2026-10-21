@@ -1,25 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Subject, debounceTime } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { ApiResponse, TenantResponse, CreateTenantRequest, UpdateTenantRequest, PlanResponse } from '../../../core/models/api.models';
+import { ApiResponse, TenantResponse, CreateTenantRequest, UpdateTenantRequest, PlanResponse, SummaryPage, TenantListSummary } from '../../../core/models/api.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { PagerComponent } from '../../../shared/components/pager/pager.component';
+import { PAGE_SIZE } from '../../../core/services/api.util';
+
 
 type TenantFilter = 'ALL' | 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
 
 @Component({
   selector: 'app-tenant-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, PagerComponent],
   templateUrl: './tenant-management.component.html',
   styleUrl: './tenant-management.component.scss'
 })
 export class TenantManagementComponent implements OnInit {
   tenants: TenantResponse[] = [];
+  summary: TenantListSummary | null = null;
   filter: TenantFilter = 'ALL';
   search = '';
+
+  readonly pageSize = PAGE_SIZE;
+  page = 0;
+  totalElements = 0;
+  totalPages = 0;
+  private readonly search$ = new Subject<void>();
   plans: PlanResponse[] = [];
   loading = true;
   showCreateModal = false;
@@ -62,19 +75,46 @@ export class TenantManagementComponent implements OnInit {
     confirmPassword: ''
   };
 
-  constructor(private http: HttpClient, public i18n: TranslationService) {}
+  constructor(private http: HttpClient, public i18n: TranslationService) {
+    this.search$.pipe(debounceTime(300), takeUntilDestroyed(inject(DestroyRef))).subscribe(() => {
+      this.page = 0;
+      this.fetchTenants();
+    });
+  }
 
   ngOnInit(): void {
     this.fetchTenants();
     this.fetchPlans();
   }
+  setFilter(filter: typeof this.filter): void {
+    this.filter = filter;
+    this.page = 0;
+    this.fetchTenants();
+  }
+
+  onSearchInput(): void {
+    this.search$.next();
+  }
+
+  goToPage(page: number): void {
+    this.page = page;
+    this.fetchTenants();
+  }
+
 
   fetchTenants(): void {
     this.loading = true;
-    this.http.get<ApiResponse<TenantResponse[]>>('/api/platform/tenants')
+    this.http.get<ApiResponse<SummaryPage<TenantResponse, TenantListSummary>>>('/api/platform/tenants', {
+      params: { page: this.page, size: this.pageSize, filter: this.filter, search: this.search.trim() }
+    })
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) this.tenants = res.data;
+          if (res.success && res.data) {
+            this.tenants = res.data.content;
+            this.summary = res.data.summary;
+            this.totalElements = res.data.totalElements;
+            this.totalPages = res.data.totalPages;
+          }
           this.loading = false;
         },
         error: () => this.loading = false
@@ -238,22 +278,6 @@ export class TenantManagementComponent implements OnInit {
     return status === 'ACTIVE' ? 'success' : status === 'TRIAL' ? 'warning' : status ? 'danger' : '';
   }
 
-  get activeCount(): number { return this.tenants.filter(t => t.status === 'ACTIVE').length; }
-  get trialCount(): number { return this.tenants.filter(t => t.subscriptionStatus === 'TRIAL').length; }
-  get suspendedCount(): number { return this.tenants.filter(t => t.status !== 'ACTIVE').length; }
-  get captainTotal(): number { return this.tenants.reduce((n, t) => n + (t.captainCount || 0), 0); }
-  get userTotal(): number { return this.tenants.reduce((n, t) => n + (t.userCount || 0), 0); }
-
-  get visible(): TenantResponse[] {
-    const q = this.search.trim().toLowerCase();
-    return this.tenants.filter(t =>
-      (this.filter === 'ALL'
-        || (this.filter === 'ACTIVE' && t.status === 'ACTIVE')
-        || (this.filter === 'TRIAL' && t.subscriptionStatus === 'TRIAL')
-        || (this.filter === 'SUSPENDED' && t.status !== 'ACTIVE'))
-      && (!q || t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
-        || (t.contactEmail || '').toLowerCase().includes(q)));
-  }
 
   private showFeedback(msg: string): void {
     this.successMessage = msg;

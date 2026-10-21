@@ -692,5 +692,6 @@
         </tbody>
       </table>
     </div>
+    <app-pager [page]="historyPage" [size]="historyPageSize" [totalElements]="historyTotalElements" [totalPages]="historyTotalPages" (pageChange)="goToHistoryPage($event)"></app-pager>
   </div>
 </div>

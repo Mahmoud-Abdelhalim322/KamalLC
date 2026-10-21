@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { ShiftFilter, ShiftResponse } from '../../core/models/api.models';
 import { ShiftService } from '../../core/services/shift.service';
-import { downloadBlob, errorMessage, isoDate } from '../../core/services/api.util';
+import { downloadBlob, errorMessage, isoDate, PAGE_SIZE } from '../../core/services/api.util';
 
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -13,13 +13,14 @@ import { VacationCommissionResponse } from '../../core/models/api.models';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
+import { PagerComponent } from '../../shared/components/pager/pager.component';
 
 type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched' | 'vacation-days';
 
 @Component({
   selector: 'app-shifts',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe, PagerComponent],
   templateUrl: './shifts.component.html',
   styleUrls: ['./shifts.component.scss']
 })
@@ -56,7 +57,7 @@ export class ShiftsComponent implements OnInit, OnDestroy {
   vacationCommissions: VacationCommissionResponse[] = [];
   totalVacationCommissionsAmount = 0;
   page = 0;
-  size = 50;
+  size = PAGE_SIZE;
   totalElements = 0;
   totalPages = 0;
   isLoading = true;

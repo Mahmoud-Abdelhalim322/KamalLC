@@ -75,14 +75,5 @@
     </div>
   </ng-container>
 
-  <div class="k-pager outside" *ngIf="totalPages > 1">
-    <span class="k-pager-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
-    <button class="btn btn-outline btn-sm" (click)="prevPage()" [disabled]="currentPage === 0">
-      <span class="material-icons-round k-flip">chevron_left</span>{{ 'COMMON.PREVIOUS' | translate }}
-    </button>
-    <span class="k-page-num">{{ currentPage + 1 }}</span>
-    <button class="btn btn-outline btn-sm" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-      {{ 'COMMON.NEXT' | translate }}<span class="material-icons-round k-flip">chevron_right</span>
-    </button>
-  </div>
+  <app-pager [page]="currentPage" [size]="pageSize" [totalElements]="totalElements" [totalPages]="totalPages" (pageChange)="goToPage($event)"></app-pager>
 </div>
