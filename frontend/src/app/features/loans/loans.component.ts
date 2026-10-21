@@ -8,11 +8,13 @@ import { errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { SarPipe } from '../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe, SarPipe],
   templateUrl: './loans.component.html',
   styleUrls: ['./loans.component.scss']
 })
@@ -85,6 +87,17 @@ export class LoansComponent implements OnInit {
       totalRemaining: acc.totalRemaining + m.totalRemaining,
       totalOriginal: acc.totalOriginal + m.totalOriginal,
     }), { activeLoanCount: 0, totalRemaining: 0, totalOriginal: 0 });
+  }
+
+  /** Share of the original amount already repaid, 0–100. */
+  repaidPct(member: { totalOriginal: number; totalRemaining: number }): number {
+    if (!member.totalOriginal) return 0;
+    return Math.round(((member.totalOriginal - member.totalRemaining) / member.totalOriginal) * 100);
+  }
+
+  /** k-badge tone per member type. */
+  typeTone(type: string): string {
+    return type === 'CAPTAIN' ? 'brand' : type === 'WORKER' ? 'info' : 'purple';
   }
 
   get membersWithLoans(): number {

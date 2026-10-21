@@ -7,7 +7,7 @@
   .page-title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0F172A;
+    color: var(--ink);
     margin: 0;
   }
 
@@ -46,7 +46,7 @@
 }
 
 .tenant-name {
-  color: #0F172A;
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -61,7 +61,7 @@
 
 .amount-cell {
   font-weight: 800;
-  color: #2563EB;
+  color: var(--brand-deep);
 }
 
 .empty-cell {
@@ -80,4 +80,15 @@
     font-weight: 600;
     margin: 0;
   }
+}
+
+/* ---------- Premium layout (Figma W29) ---------- */
+.period-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  strong { font-weight: 800; color: var(--ink); }
+  small { margin-inline-start: 8px; font-size: 0.7rem; color: var(--text-light); }
+  .k-progress { width: 120px; height: 5px; }
 }

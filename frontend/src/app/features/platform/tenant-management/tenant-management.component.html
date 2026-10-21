@@ -1,15 +1,43 @@
 <div class="tenant-management-page">
 
   <!-- Header -->
-  <div class="page-header flex-between">
-    <div>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">domain</span>{{ 'NAV.SECTION_PLATFORM' | translate }}</span>
       <h1 class="page-title">{{ 'PLATFORM.TENANTS_TITLE' | translate }}</h1>
-      <p class="page-subtitle">{{ 'PLATFORM.TENANTS_SUBTITLE' | translate }}</p>
+      <p class="k-page-sub">{{ 'PLATFORM.TENANTS_SUBTITLE' | translate }}</p>
     </div>
-    <button class="btn btn-primary" (click)="openCreateModal()">
+    <div class="k-page-actions">
+      <button class="btn btn-ink" (click)="openCreateModal()">
       <span class="material-icons-round">add_business</span>
       <span>{{ 'PLATFORM.ADD_TENANT' | translate }}</span>
-    </button>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_TOTAL' | translate }}</span>
+      <span class="k-kpi-value">{{ tenants.length }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_USERS_NOTE' | translate:{ count: userTotal } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_ACTIVE' | translate }}</span>
+      <span class="k-kpi-value">{{ activeCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_CAPTAINS_NOTE' | translate:{ count: captainTotal } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_TRIAL' | translate }}</span>
+      <span class="k-kpi-value">{{ trialCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_TRIAL_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_TENANTS_SUSPENDED' | translate }}</span>
+      <span class="k-kpi-value">{{ suspendedCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_TENANTS_SUSPENDED_NOTE' | translate }}</span>
+    </div>
   </div>
 
   <!-- Banners for feedback -->
@@ -22,16 +50,27 @@
     <span>{{ errorMessage }}</span>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="loading">
-    <div class="spinner"></div>
-    <p>{{ 'PLATFORM.LOADING_TENANTS' | translate }}</p>
-  </div>
+  <section class="k-card">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
+      </div>
+      <div class="k-chips">
+        <button [class.active]="filter === 'ALL'" (click)="filter = 'ALL'">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="filter === 'ACTIVE'" (click)="filter = 'ACTIVE'">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
+        <button [class.active]="filter === 'TRIAL'" (click)="filter = 'TRIAL'">{{ 'PLATFORM.STATUS_TRIAL' | translate }}</button>
+        <button [class.active]="filter === 'SUSPENDED'" (click)="filter = 'SUSPENDED'">{{ 'PLATFORM.STATUS_SUSPENDED' | translate }}</button>
+      </div>
+    </div>
 
-  <!-- Tenants Table Card -->
-  <div class="card table-card" *ngIf="!loading">
-    <div class="table-responsive">
-      <table class="data-table">
+    <div class="k-empty" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>{{ 'PLATFORM.LOADING_TENANTS' | translate }}</p>
+    </div>
+
+    <div class="k-table-wrap" *ngIf="!loading">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'PLATFORM.COL_TENANT_NAME' | translate }}</th>
@@ -40,69 +79,52 @@
             <th>{{ 'PLATFORM.COL_SUB_STATUS' | translate }}</th>
             <th>{{ 'PLATFORM.COL_STATUS' | translate }}</th>
             <th>{{ 'PLATFORM.COL_CREATED' | translate }}</th>
-            <th>{{ 'PLATFORM.COL_ACTIONS' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let tenant of tenants">
+          <tr *ngFor="let tenant of visible">
             <td>
-              <div class="tenant-cell">
-                <div class="tenant-logo" [style.background-color]="tenant.primaryColor || '#2563EB'">
-                  {{ tenant.name.substring(0, 1) }}
-                </div>
-                <div class="tenant-info">
-                  <span class="tenant-name">{{ tenant.name }}</span>
-                  <span class="tenant-email" *ngIf="tenant.contactEmail">{{ tenant.contactEmail }}</span>
+              <div class="k-person">
+                <span class="k-avatar ink">{{ tenant.name | initials }}</span>
+                <div>
+                  <strong>{{ tenant.name }}</strong>
+                  <span class="k-ltr" *ngIf="tenant.contactEmail">{{ tenant.contactEmail }}</span>
                 </div>
               </div>
             </td>
-            <td><code>{{ tenant.slug }}</code></td>
+            <td><span class="k-badge k-ltr">{{ tenant.slug }}</span></td>
+            <td><span class="k-badge" [ngClass]="tenant.currentPlan ? 'brand' : ''">{{ tenant.currentPlan || ('PLATFORM.NO_PLAN' | translate) }}</span></td>
             <td>
-              <span class="badge badge-info">{{ tenant.currentPlan || ('PLATFORM.NO_PLAN' | translate) }}</span>
-            </td>
-            <td>
-              <span class="badge" [ngClass]="getSubscriptionBadgeClass(tenant.subscriptionStatus)">
+              <span class="k-badge dot" [ngClass]="subTone(tenant.subscriptionStatus)" *ngIf="tenant.subscriptionStatus">
                 {{ getSubscriptionStatusLabel(tenant.subscriptionStatus) }}
               </span>
+              <span class="k-muted" *ngIf="!tenant.subscriptionStatus">—</span>
             </td>
             <td>
-              <span class="badge" [ngClass]="getStatusBadgeClass(tenant.status)">
-                {{ getStatusLabel(tenant.status) }}
-              </span>
+              <button type="button" class="k-switch" [class.on]="tenant.status === 'ACTIVE'" (click)="toggleTenantStatus(tenant)"
+                      [title]="(tenant.status === 'ACTIVE' ? 'PLATFORM.SUSPEND_TENANT' : 'PLATFORM.ACTIVATE_TENANT') | translate">
+                <span></span>
+              </button>
             </td>
-            <td>{{ tenant.createdAt | date:'yyyy/MM/dd' }}</td>
-            <td>
-              <div class="actions">
-                <!-- Edit Details -->
-                <button class="btn-icon-action text-primary" (click)="openEditModal(tenant)" [title]="'PLATFORM.EDIT_TENANT_TITLE' | translate">
-                  <span class="material-icons-round">edit</span>
-                </button>
-                <!-- Change Password -->
-                <button class="btn-icon-action text-warning" (click)="openPasswordModal(tenant)" [title]="'PLATFORM.CHANGE_PASSWORD_TITLE' | translate">
-                  <span class="material-icons-round">key</span>
-                </button>
-                <!-- Toggle Status -->
-                <button class="btn-icon-action" (click)="toggleTenantStatus(tenant)"
-                  [title]="(tenant.status === 'ACTIVE' ? 'PLATFORM.SUSPEND_TENANT' : 'PLATFORM.ACTIVATE_TENANT') | translate"
-                  [class.text-danger]="tenant.status === 'ACTIVE'"
-                  [class.text-success]="tenant.status !== 'ACTIVE'">
-                  <span class="material-icons-round">
-                    {{ tenant.status === 'ACTIVE' ? 'block' : 'check_circle' }}
-                  </span>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr *ngIf="tenants.length === 0 && !loading">
-            <td colspan="7" class="text-center empty-cell">
-              <span class="material-icons-round empty-icon">domain_disabled</span>
-              <p>{{ 'PLATFORM.NO_TENANTS' | translate }}</p>
+            <td class="k-muted">{{ tenant.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td class="k-actions">
+              <button class="k-icon-btn" (click)="openEditModal(tenant)" [title]="'PLATFORM.EDIT_TENANT_TITLE' | translate">
+                <span class="material-icons-round">edit</span>
+              </button>
+              <button class="k-icon-btn" (click)="openPasswordModal(tenant)" [title]="'PLATFORM.CHANGE_PASSWORD_TITLE' | translate">
+                <span class="material-icons-round">key</span>
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="visible.length === 0">
+        <span class="material-icons-round">domain_disabled</span>
+        <p>{{ 'PLATFORM.NO_TENANTS' | translate }}</p>
+      </div>
     </div>
-  </div>
+  </section>
 
   <!-- Create Tenant Modal -->
   <div class="modal-overlay" *ngIf="showCreateModal">

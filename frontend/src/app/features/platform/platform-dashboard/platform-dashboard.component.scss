@@ -1,6 +1,5 @@
 .dashboard-page {
-  max-width: 1350px;
-  margin: 0 auto;
+    margin: 0 auto;
   padding-bottom: 40px;
 }
 
@@ -10,7 +9,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  background: linear-gradient(135deg, var(--ink) 0%, #1E293B 100%);
   padding: 24px 30px;
   border-radius: 20px;
   color: #FFFFFF;
@@ -29,7 +28,7 @@
       border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 700;
-      color: #93C5FD;
+      color: var(--brand);
       margin-bottom: 8px;
 
       .pulse-dot {
@@ -73,7 +72,7 @@
       border-radius: 12px;
       font-size: 0.82rem;
       font-weight: 600;
-      color: #93C5FD;
+      color: var(--brand);
 
       .material-icons-round {
         font-size: 18px;
@@ -121,7 +120,7 @@
     width: 48px;
     height: 48px;
     border: 4px solid #E2E8F0;
-    border-top-color: #2563EB;
+    border-top-color: var(--brand-deep);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -167,7 +166,7 @@
       height: 4px;
     }
 
-    &.mrr::before { background: linear-gradient(90deg, #2563EB, #60A5FA); }
+    &.mrr::before { background: linear-gradient(90deg, var(--brand-deep), #60A5FA); }
     &.subscriptions::before { background: linear-gradient(90deg, #10B981, #34D399); }
     &.tenants::before { background: linear-gradient(90deg, #8B5CF6, #C084FC); }
     &.scale::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
@@ -186,7 +185,7 @@
       }
     }
 
-    &.mrr .fin-icon { background: #EFF6FF; color: #2563EB; }
+    &.mrr .fin-icon { background: #FFF8E1; color: var(--brand-deep); }
     &.subscriptions .fin-icon { background: #ECFDF5; color: #059669; }
     &.tenants .fin-icon { background: #F5F3FF; color: #7C3AED; }
     &.scale .fin-icon { background: #FFFBEB; color: #D97706; }
@@ -205,7 +204,7 @@
       .fin-value {
         font-size: 1.45rem;
         font-weight: 800;
-        color: #0F172A;
+        color: var(--ink);
         line-height: 1.2;
 
         small {
@@ -368,21 +367,21 @@
 
       .panel-icon {
         font-size: 22px;
-        color: #2563EB;
+        color: var(--brand-deep);
       }
 
       h3 {
         margin: 0;
         font-size: 1rem;
         font-weight: 800;
-        color: #0F172A;
+        color: var(--ink);
       }
     }
 
     .btn-link {
       font-size: 0.82rem;
       font-weight: 700;
-      color: #2563EB;
+      color: var(--brand-deep);
       text-decoration: none;
 
       &:hover {
@@ -410,7 +409,7 @@
       color: #475569;
 
       strong {
-        color: #0F172A;
+        color: var(--ink);
         font-weight: 700;
       }
     }
@@ -427,7 +426,7 @@
         transition: width 0.6s ease;
 
         &.green { background: linear-gradient(90deg, #10B981, #34D399); }
-        &.blue { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+        &.blue { background: linear-gradient(90deg, var(--brand), #60A5FA); }
         &.red { background: linear-gradient(90deg, #EF4444, #F87171); }
       }
     }
@@ -472,7 +471,7 @@
       .donut-val {
         font-size: 1.25rem;
         font-weight: 800;
-        color: #0F172A;
+        color: var(--ink);
       }
 
       .donut-lbl {
@@ -506,7 +505,7 @@
       }
 
       strong {
-        color: #0F172A;
+        color: var(--ink);
       }
     }
   }
@@ -526,7 +525,7 @@
     gap: 8px;
     font-size: 0.95rem;
     font-weight: 800;
-    color: #0F172A;
+    color: var(--ink);
     margin-bottom: 16px;
 
     .material-icons-round {
@@ -565,8 +564,8 @@
       }
 
       &.btn-primary {
-        background: linear-gradient(135deg, #2563EB, #1D4ED8);
-        border-color: #2563EB;
+        background: linear-gradient(135deg, var(--brand-deep), var(--ink));
+        border-color: var(--brand-deep);
         color: #FFFFFF;
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 
@@ -590,4 +589,104 @@
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
   70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
   100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* =============================================
+   Premium brand-yellow theme (mirrors the company dashboard)
+   Header on the shell's yellow band, financial figures as the ink KPI strip,
+   blue/indigo accents moved to the brand.
+   ============================================= */
+
+.executive-header {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  color: var(--ink);
+  margin-bottom: 22px;
+
+  .header-titles {
+    .badge-tag { background: var(--ink); border-color: transparent; color: var(--brand); }
+    .page-title { color: var(--ink); }
+    .page-subtitle { color: rgba(22, 23, 27, 0.72); }
+  }
+
+  .header-controls {
+    .live-status-badge {
+      background: rgba(255, 255, 255, 0.6);
+      border-color: transparent;
+      color: var(--ink);
+    }
+
+    .btn-refresh {
+      background: var(--ink);
+      border-color: transparent;
+      color: #FFFFFF;
+      box-shadow: var(--shadow-ink);
+
+      .material-icons-round { color: var(--brand); }
+    }
+  }
+}
+
+.loading-container .spinner { border-top-color: var(--brand); }
+
+.financial-overview-grid {
+  gap: 0;
+  padding: 18px 8px;
+  border-radius: 24px;
+  background: var(--ink);
+  box-shadow: var(--shadow-ink);
+
+  .financial-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 4px 20px;
+
+    &::before { display: none; }
+    &:hover { transform: none; box-shadow: none; }
+    & + .financial-card { border-inline-start: 1px solid rgba(255, 255, 255, 0.12); }
+
+    &.mrr .fin-icon, &.subscriptions .fin-icon, &.tenants .fin-icon, &.scale .fin-icon, .fin-icon {
+      background: rgba(245, 176, 0, 0.14);
+      color: var(--brand);
+    }
+
+    .fin-info {
+      .fin-label { color: #A1A1AE; }
+      .fin-value { color: #FFFFFF; }
+      .fin-sub { color: var(--brand); }
+    }
+  }
+}
+
+.action-center-container {
+  background: var(--bg-card);
+  border-color: var(--border);
+  border-radius: 24px;
+}
+
+.analytics-main-grid .dashboard-panel {
+  border-radius: 24px;
+  border-color: var(--border);
+
+  .panel-header {
+    .panel-icon { color: var(--brand-deep); }
+    .btn-link { color: var(--brand-deep); }
+  }
+}
+
+.breakdown-bars .bar-group .bar-fill.blue { background: var(--btn-gradient); }
+
+.quick-actions-toolbar {
+  border-radius: 24px;
+
+  .actions-buttons .action-btn.btn-primary {
+    background: var(--btn-gradient);
+    border-color: transparent;
+    color: var(--ink);
+
+    .material-icons-round { color: var(--ink); }
+  }
 }

@@ -428,6 +428,14 @@ export class ImportsComponent implements OnInit {
     return 'VACATION_COMMISSION';
   }
 
+  /** The four import kinds, shown as selectable cards (Figma W11). */
+  readonly importTypes = [
+    { key: 'captains', icon: 'group_add', title: 'IMPORTS.TAB_CAPTAINS_FULL', desc: 'IMPORTS.SUBTITLE_CAPTAINS' },
+    { key: 'reports', icon: 'assessment', title: 'IMPORTS.TAB_REPORTS_FULL', desc: 'IMPORTS.SUBTITLE_REPORTS' },
+    { key: 'deductions', icon: 'money_off', title: 'IMPORTS.TAB_DEDUCTIONS_FULL', desc: 'IMPORTS.SUBTITLE_DEDUCTIONS' },
+    { key: 'vacation-commission', icon: 'beach_access', title: 'IMPORTS.TAB_VACATION_FULL', desc: 'IMPORTS.SUBTITLE_VACATION' }
+  ] as const;
+
   // --------------------------------------------------------------- template
 
   /**

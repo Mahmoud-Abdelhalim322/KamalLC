@@ -1,259 +1,209 @@
 <div class="orders-page animate-fade-in">
-
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-title">
-      <span class="material-icons-outlined header-icon"></span>
-      <div>
-        <h1>{{ 'ORDERS.TITLE' | translate }}</h1>
-        <p class="subtitle">{{ 'ORDERS.SUBTITLE' | translate }}</p>
-      </div>
+  <!-- Header on the yellow band (Figma W02) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">shopping_bag</span>{{ 'NAV.SECTION_OPERATIONS' | translate }}</span>
+      <h1 class="page-title">{{ 'ORDERS.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'ORDERS.SUBTITLE' | translate }}</p>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || !data">
+    <div class="k-page-actions">
+      <button class="btn btn-glass" (click)="exportExcel()" [disabled]="isExporting || !data">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
         {{ 'COMMON.EXPORT_EXCEL' | translate }}
       </button>
     </div>
   </div>
 
-  <!-- Error Alert -->
+  <!-- KPI strip (from the rows currently shown) -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'ORDERS.KPI_TOTAL_ORDERS' | translate }}</span>
+      <span class="k-kpi-value">{{ filteredTotalActual | number }}</span>
+      <span class="k-kpi-note">{{ 'ORDERS.KPI_TOTAL_NOTE' | translate:{ from: from, to: to } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'ORDERS.KPI_AVG' | translate }}</span>
+      <span class="k-kpi-value">{{ (filteredWorkDays ? filteredTotalActual / filteredWorkDays : 0) | number:'1.0-1' }}</span>
+      <span class="k-kpi-note">{{ 'ORDERS.KPI_AVG_NOTE' | translate:{ count: filteredWorkDays } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'ORDERS.KPI_RATE' | translate }}</span>
+      <span class="k-kpi-value">{{ percent(filteredTotalRate) }}</span>
+      <span class="k-kpi-note">{{ 'ORDERS.KPI_RATE_NOTE' | translate:{ target: (filteredTotalTarget | number) } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'ORDERS.KPI_CAPTAINS' | translate }}</span>
+      <span class="k-kpi-value">{{ filteredRows.length | number }}</span>
+      <span class="k-kpi-note">{{ 'ORDERS.KPI_CAPTAINS_NOTE' | translate:{ count: filteredTotalExtraOrders } }}</span>
+    </div>
+  </div>
+
   <div class="alert alert-danger" *ngIf="errorMessage">
     <span class="material-icons-round">error_outline</span>{{ errorMessage }}
   </div>
 
-  <!-- Filters & Toolbar -->
-  <div class="card toolbar-card">
-    <div class="toolbar">
-      <div class="date-filters">
-        <div class="date-field">
-          <label>{{ 'ORDERS.FILTER_FROM' | translate }}</label>
-          <input type="date" class="form-input" [(ngModel)]="from" (change)="onPeriodChange()">
-        </div>
-        <div class="date-field">
-          <label>{{ 'ORDERS.FILTER_TO' | translate }}</label>
-          <input type="date" class="form-input" [(ngModel)]="to" (change)="onPeriodChange()">
-        </div>
+  <section class="k-card">
+    <!-- Period, contract type, display mode -->
+    <div class="k-toolbar">
+      <label class="k-field-inline">
+        <span class="material-icons-round">event</span>
+        <input type="date" [(ngModel)]="from" (change)="onPeriodChange()" [attr.aria-label]="'ORDERS.FILTER_FROM' | translate">
+      </label>
+      <label class="k-field-inline">
+        <span class="material-icons-round">event</span>
+        <input type="date" [(ngModel)]="to" (change)="onPeriodChange()" [attr.aria-label]="'ORDERS.FILTER_TO' | translate">
+      </label>
+      <div class="k-chips type-chips">
+        <button [class.active]="captainType === 'ALL'" (click)="setCaptainType('ALL')">{{ 'ORDERS.TAB_ALL' | translate }}</button>
+        <button [class.active]="captainType === 'EMPLOYEE'" (click)="setCaptainType('EMPLOYEE')">KSC</button>
+        <button [class.active]="captainType === 'FREELANCE'" (click)="setCaptainType('FREELANCE')">KSCFL</button>
       </div>
-
-      <div class="filter-tabs">
-        <button class="filter-tab" [class.active]="captainType === 'ALL'" (click)="setCaptainType('ALL')">
-          <span class="material-icons-round">groups</span> {{ 'ORDERS.TAB_ALL' | translate }}
-        </button>
-        <button class="filter-tab" [class.active]="captainType === 'EMPLOYEE'" (click)="setCaptainType('EMPLOYEE')">
-          <span class="material-icons-round">badge</span> KSC
-        </button>
-        <button class="filter-tab" [class.active]="captainType === 'FREELANCE'" (click)="setCaptainType('FREELANCE')">
-          <span class="material-icons-round">directions_bike</span> KSCFL
-        </button>
-      </div>
-
-      <div class="display-mode-tabs">
-        <button class="mode-tab" [class.active]="displayMode === 'ORDERS'" (click)="setDisplayMode('ORDERS')">
-          <span class="material-icons-round">shopping_bag</span> {{ 'ORDERS.TAB_ORDERS' | translate }}
-        </button>
-        <button class="mode-tab" [class.active]="displayMode === 'PERFORMANCE'" (click)="setDisplayMode('PERFORMANCE')">
-          <span class="material-icons-round">insights</span> {{ 'ORDERS.TAB_PERFORMANCE' | translate }}
-        </button>
-        <button class="mode-tab" [class.active]="displayMode === 'HOURS'" (click)="setDisplayMode('HOURS')">
-          <span class="material-icons-round">schedule</span> {{ 'ORDERS.TAB_HOURS' | translate }}
-        </button>
+      <div class="k-tabs">
+        <button type="button" [class.active]="displayMode === 'ORDERS'" (click)="setDisplayMode('ORDERS')">{{ 'ORDERS.TAB_ORDERS' | translate }}</button>
+        <button type="button" [class.active]="displayMode === 'PERFORMANCE'" (click)="setDisplayMode('PERFORMANCE')">{{ 'ORDERS.TAB_PERFORMANCE' | translate }}</button>
+        <button type="button" [class.active]="displayMode === 'HOURS'" (click)="setDisplayMode('HOURS')">{{ 'ORDERS.TAB_HOURS' | translate }}</button>
       </div>
     </div>
-  </div>
 
-  <!-- Legend bar (clickable for filtering) -->
-  <div class="card legend-card" *ngIf="displayMode !== 'HOURS'">
-    <span class="legend-title"><span class="material-icons-round">palette</span> {{ 'ORDERS.FORMATTING_RULES' | translate }}</span>
-    <div class="legend-items">
-      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-grey'" (click)="toggleLegendFilter('cell-grey')">
-        <span class="swatch cell-grey"></span> <span>{{ 'ORDERS.RANGE_1_4' | translate }}</span>
-      </div>
-      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-red'" (click)="toggleLegendFilter('cell-red')">
-        <span class="swatch cell-red"></span> <span>{{ 'ORDERS.RANGE_5_8' | translate }}</span>
-      </div>
-      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-orange'" (click)="toggleLegendFilter('cell-orange')">
-        <span class="swatch cell-orange"></span> <span>{{ 'ORDERS.RANGE_9_12' | translate }}</span>
-      </div>
-      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-yellow-green'" (click)="toggleLegendFilter('cell-yellow-green')">
-        <span class="swatch cell-yellow-green"></span> <span>{{ 'ORDERS.RANGE_13_18' | translate }}</span>
-      </div>
-      <div class="legend-item clickable" [class.active]="activeLegendFilter === 'cell-green'" (click)="toggleLegendFilter('cell-green')">
-        <span class="swatch cell-green"></span> <span>{{ 'ORDERS.RANGE_19_PLUS' | translate }}</span>
-      </div>
+    <!-- Colour legend (click a range to filter the grid) -->
+    <div class="legend-row" *ngIf="displayMode !== 'HOURS'">
+      <span class="legend-title">{{ 'ORDERS.FORMATTING_RULES' | translate }}</span>
+      <button class="legend-pill cell-grey" [class.active]="activeLegendFilter === 'cell-grey'" (click)="toggleLegendFilter('cell-grey')">{{ 'ORDERS.RANGE_1_4' | translate }}</button>
+      <button class="legend-pill cell-red" [class.active]="activeLegendFilter === 'cell-red'" (click)="toggleLegendFilter('cell-red')">{{ 'ORDERS.RANGE_5_8' | translate }}</button>
+      <button class="legend-pill cell-orange" [class.active]="activeLegendFilter === 'cell-orange'" (click)="toggleLegendFilter('cell-orange')">{{ 'ORDERS.RANGE_9_12' | translate }}</button>
+      <button class="legend-pill cell-yellow-green" [class.active]="activeLegendFilter === 'cell-yellow-green'" (click)="toggleLegendFilter('cell-yellow-green')">{{ 'ORDERS.RANGE_13_18' | translate }}</button>
+      <button class="legend-pill cell-green" [class.active]="activeLegendFilter === 'cell-green'" (click)="toggleLegendFilter('cell-green')">{{ 'ORDERS.RANGE_19_PLUS' | translate }}</button>
+      <span class="k-badge legend-count">
+        {{ 'ORDERS.CAPTAIN_COUNT' | translate:{ count: filteredRows.length, days: data?.dates?.length || 0 } }}
+        <button class="clear" *ngIf="activeLegendFilter" (click)="activeLegendFilter = null" [title]="'COMMON.CLEAR' | translate">
+          <span class="material-icons-round">close</span>
+        </button>
+      </span>
     </div>
-    <!-- Active filter info -->
-    <div class="legend-filter-info" *ngIf="activeLegendFilter">
-      <span class="material-icons-round">filter_alt</span>
-      <span>{{ 'ORDERS.CAPTAIN_COUNT' | translate:{ count: filteredRows.length, days: filteredWorkDays } }}</span>
-      <button class="btn-clear-filter" (click)="activeLegendFilter = null">
-        <span class="material-icons-round">close</span>
-      </button>
+
+    <div class="k-empty" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>{{ 'ORDERS.LOADING' | translate }}</p>
     </div>
-  </div>
 
-  <!-- Loading state -->
-  <div class="loading-state card" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'ORDERS.LOADING' | translate }}</p>
-  </div>
+    <div class="k-empty" *ngIf="!isLoading && data && data.captainRows.length === 0">
+      <span class="material-icons-round">inventory_2</span>
+      <h3>{{ 'ORDERS.NO_DATA' | translate }}</h3>
+      <p>{{ 'ORDERS.NO_DATA_HINT' | translate }}</p>
+    </div>
 
-  <!-- Empty state -->
-  <div class="empty-state card" *ngIf="!isLoading && data && data.captainRows.length === 0">
-    <span class="material-icons-round">inventory_2</span>
-    <h3>{{ 'ORDERS.NO_DATA' | translate }}</h3>
-    <p>{{ 'ORDERS.NO_DATA_HINT' | translate }}</p>
-  </div>
-
-  <!-- Data Grid -->
-  <div class="table-container card" *ngIf="!isLoading && data && data.captainRows.length > 0">
-    <div class="table-scroll-wrapper">
-      <table class="grid-table">
+    <!-- Heatmap -->
+    <div class="k-table-wrap" *ngIf="!isLoading && data && data.captainRows.length > 0">
+      <table class="k-table heatmap">
         <thead>
-          <!-- Row 1: Day of week -->
-          <tr class="header-days">
-            <th class="sticky-col col-name" rowspan="2">{{ 'ORDERS.COL_CAPTAIN_NAME' | translate }}</th>
-            <th class="sticky-col col-code" rowspan="2">{{ 'ORDERS.COL_CODE' | translate }}</th>
-            <th class="sticky-col col-workdays" rowspan="2">{{ 'ORDERS.COL_SHIFTS' | translate }}</th>
-            <!-- ORDERS mode columns -->
+          <tr>
+            <th class="sticky-col">{{ 'ORDERS.COL_CAPTAIN_NAME' | translate }}</th>
+            <th *ngFor="let dateStr of data.dates" class="day-head">
+              <b>{{ getDayNumber(dateStr) }}</b>
+              <small>{{ getDayName(dateStr) }}</small>
+            </th>
+            <th>{{ 'ORDERS.COL_SHIFTS' | translate }}</th>
             <ng-container *ngIf="displayMode === 'ORDERS'">
-              <th class="sticky-col col-rate" rowspan="2">{{ 'ORDERS.COL_RATE' | translate }}</th>
-              <th class="sticky-col col-target" rowspan="2">{{ 'ORDERS.COL_TARGET' | translate }}</th>
-              <th class="sticky-col col-actual" rowspan="2">{{ 'ORDERS.COL_ACTUAL' | translate }}</th>
+              <th>{{ 'ORDERS.COL_RATE' | translate }}</th>
+              <th>{{ 'ORDERS.COL_TARGET' | translate }}</th>
+              <th>{{ 'ORDERS.COL_ACTUAL' | translate }}</th>
             </ng-container>
-            <!-- PERFORMANCE mode columns -->
             <ng-container *ngIf="displayMode === 'PERFORMANCE'">
-              <th class="sticky-col col-hours" rowspan="2">{{ 'ORDERS.COL_HOURS' | translate }}</th>
-              <th class="sticky-col col-util" rowspan="2">{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
-              <th class="sticky-col col-extra" rowspan="2">{{ 'ORDERS.COL_EXTRA_COMMISSION' | translate }}</th>
-              <th class="sticky-col col-late" rowspan="2">{{ 'ORDERS.COL_LATE_DEDUCTION' | translate }}</th>
+              <th>{{ 'ORDERS.COL_HOURS' | translate }}</th>
+              <th>{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
+              <th>{{ 'ORDERS.COL_EXTRA_COMMISSION' | translate }}</th>
+              <th>{{ 'ORDERS.COL_LATE_DEDUCTION' | translate }}</th>
             </ng-container>
-            <!-- HOURS mode columns -->
             <ng-container *ngIf="displayMode === 'HOURS'">
-              <th class="sticky-col col-hours" rowspan="2">{{ 'ORDERS.COL_TOTAL_HOURS' | translate }}</th>
-              <th class="sticky-col col-util" rowspan="2">{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
+              <th>{{ 'ORDERS.COL_TOTAL_HOURS' | translate }}</th>
+              <th>{{ 'ORDERS.COL_UTILIZATION' | translate }}</th>
             </ng-container>
-            <th *ngFor="let dateStr of data.dates" class="day-dow">
-              {{ getDayName(dateStr) }}
-            </th>
-          </tr>
-          <!-- Row 2: Day numbers -->
-          <tr class="header-nums">
-            <th *ngFor="let dateStr of data.dates" class="day-num">
-              {{ getDayNumber(dateStr) }}
-            </th>
           </tr>
         </thead>
 
         <tbody>
-          <tr *ngFor="let row of filteredRows" class="captain-row">
-            <td class="sticky-col col-name name-text" [title]="row.captainName">{{ row.captainName }}</td>
-            <td class="sticky-col col-code code-text">{{ row.captainCode }}</td>
-            <td class="sticky-col col-workdays workdays-text">{{ getCaptainWorkDays(row) }}</td>
+          <tr *ngFor="let row of filteredRows">
+            <td class="sticky-col">
+              <div class="captain">
+                <strong [title]="row.captainName">{{ row.captainName }}</strong>
+                <span>{{ row.captainCode }}</span>
+              </div>
+            </td>
 
-            <!-- ORDERS mode -->
-            <ng-container *ngIf="displayMode === 'ORDERS'">
-              <td class="sticky-col col-rate rate-text" [class.achieved]="getCaptainAchievementRate(row) >= 1">
-                {{ percent(getCaptainAchievementRate(row)) }}
-              </td>
-              <td class="sticky-col col-target num-text">{{ row.target }}</td>
-              <td class="sticky-col col-actual num-text strong">{{ getCaptainActual(row) }}</td>
-            </ng-container>
-
-            <!-- PERFORMANCE mode -->
-            <ng-container *ngIf="displayMode === 'PERFORMANCE'">
-              <td class="sticky-col col-hours num-text">{{ hours(row.totalHours) }}</td>
-              <td class="sticky-col col-util rate-text">{{ percent(row.avgBusyUtilization) }}</td>
-              <td class="sticky-col col-extra num-text">{{ row.totalExtraOrders || '—' }}</td>
-              <td class="sticky-col col-late num-text late-deduction">{{ row.totalLateDeduction ? row.totalLateDeduction.toFixed(0) : '—' }}</td>
-            </ng-container>
-
-            <!-- HOURS mode -->
-            <ng-container *ngIf="displayMode === 'HOURS'">
-              <td class="sticky-col col-hours num-text">{{ hours(row.totalHours) }}</td>
-              <td class="sticky-col col-util rate-text">{{ percent(row.avgBusyUtilization) }}</td>
-            </ng-container>
-
-            <!-- Day cells — ORDERS & PERFORMANCE modes -->
             <ng-container *ngIf="displayMode !== 'HOURS'">
-              <td *ngFor="let dateStr of data.dates"
-                  class="day-cell"
-                  [ngClass]="isDayMatchingFilter(row.dailyOrders[dateStr]) ? getDayCellColorClass(row.dailyOrders[dateStr]) : 'cell-blank'"
-                  [class.multi-shift-cell]="isDayMatchingFilter(row.dailyOrders[dateStr]) && isMultiShift(row.dailyOrders[dateStr])">
-                <ng-container *ngIf="isDayMatchingFilter(row.dailyOrders[dateStr])">
-                  <ng-container *ngIf="!isMultiShift(row.dailyOrders[dateStr])">
-                    {{ dayTotal(row.dailyOrders[dateStr]) || '' }}
+              <td *ngFor="let dateStr of data.dates" class="day">
+                <span class="heat" [ngClass]="isDayMatchingFilter(row.dailyOrders[dateStr]) ? getDayCellColorClass(row.dailyOrders[dateStr]) : 'cell-blank'">
+                  <ng-container *ngIf="isDayMatchingFilter(row.dailyOrders[dateStr])">
+                    <ng-container *ngIf="!isMultiShift(row.dailyOrders[dateStr])">{{ dayTotal(row.dailyOrders[dateStr]) || '—' }}</ng-container>
+                    <span class="split" *ngIf="isMultiShift(row.dailyOrders[dateStr])">
+                      <i *ngFor="let shiftVal of row.dailyOrders[dateStr]">{{ shiftVal }}</i>
+                    </span>
                   </ng-container>
-                  <ng-container *ngIf="isMultiShift(row.dailyOrders[dateStr])">
-                    <div class="shift-split">
-                      <span *ngFor="let shiftVal of row.dailyOrders[dateStr]" class="shift-value">{{ shiftVal }}</span>
-                    </div>
-                  </ng-container>
-                </ng-container>
+                  <ng-container *ngIf="!isDayMatchingFilter(row.dailyOrders[dateStr])">—</ng-container>
+                </span>
               </td>
             </ng-container>
-
-            <!-- Day cells — HOURS mode -->
             <ng-container *ngIf="displayMode === 'HOURS'">
-              <td *ngFor="let dateStr of data.dates"
-                  class="day-cell cell-hours">
-                <ng-container *ngIf="row.dailyHours && row.dailyHours[dateStr]">
-                  <ng-container *ngIf="!isMultiShiftHours(row.dailyHours[dateStr])">
-                    {{ formatHours(dayHoursTotal(row.dailyHours[dateStr])) }}
+              <td *ngFor="let dateStr of data.dates" class="day">
+                <span class="heat cell-hours">
+                  <ng-container *ngIf="row.dailyHours && row.dailyHours[dateStr]; else noHours">
+                    <ng-container *ngIf="!isMultiShiftHours(row.dailyHours[dateStr])">{{ formatHours(dayHoursTotal(row.dailyHours[dateStr])) }}</ng-container>
+                    <span class="split" *ngIf="isMultiShiftHours(row.dailyHours[dateStr])">
+                      <i *ngFor="let h of row.dailyHours[dateStr]">{{ formatHours(h) }}</i>
+                    </span>
                   </ng-container>
-                  <ng-container *ngIf="isMultiShiftHours(row.dailyHours[dateStr])">
-                    <div class="shift-split">
-                      <span *ngFor="let h of row.dailyHours[dateStr]" class="shift-value">{{ formatHours(h) }}</span>
-                    </div>
-                  </ng-container>
-                </ng-container>
+                  <ng-template #noHours>—</ng-template>
+                </span>
               </td>
+            </ng-container>
+            <td class="num">{{ getCaptainWorkDays(row) }}</td>
+
+            <ng-container *ngIf="displayMode === 'ORDERS'">
+              <td><span class="k-badge" [class.success]="getCaptainAchievementRate(row) >= 1">{{ percent(getCaptainAchievementRate(row)) }}</span></td>
+              <td class="k-muted-strong">{{ row.target }}</td>
+              <td class="strong">{{ getCaptainActual(row) }}</td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'PERFORMANCE'">
+              <td>{{ hours(row.totalHours) }}</td>
+              <td>{{ percent(row.avgBusyUtilization) }}</td>
+              <td class="num">{{ row.totalExtraOrders || '—' }}</td>
+              <td class="negative">{{ row.totalLateDeduction ? row.totalLateDeduction.toFixed(0) : '—' }}</td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td class="strong">{{ hours(row.totalHours) }}</td>
+              <td>{{ percent(row.avgBusyUtilization) }}</td>
             </ng-container>
           </tr>
         </tbody>
 
         <tfoot>
-          <!-- Totals row -->
-          <tr class="totals-row">
-            <td class="sticky-col col-name strong" colspan="2">{{ 'ORDERS.TOTAL_ROW' | translate }}</td>
-            <td class="sticky-col col-workdays num-text">{{ filteredWorkDays }}</td>
+          <tr>
+            <td class="sticky-col">{{ 'ORDERS.TOTAL_ROW' | translate }} · {{ 'ORDERS.CAPTAINS_ROW' | translate }} {{ filteredRows.length }}</td>
+            <ng-container *ngIf="displayMode !== 'HOURS'">
+              <td *ngFor="let dateStr of data.dates" class="day">{{ getDailyTotalForDate(dateStr) }}</td>
+            </ng-container>
+            <ng-container *ngIf="displayMode === 'HOURS'">
+              <td *ngFor="let dateStr of data.dates" class="day">{{ getDailyHoursTotalForDate(dateStr) ? getDailyHoursTotalForDate(dateStr).toFixed(1) : '' }}</td>
+            </ng-container>
+            <td>{{ filteredWorkDays }}</td>
             <ng-container *ngIf="displayMode === 'ORDERS'">
-              <td class="sticky-col col-rate rate-text">{{ percent(filteredTotalRate) }}</td>
-              <td class="sticky-col col-target num-text">{{ filteredTotalTarget }}</td>
-              <td class="sticky-col col-actual num-text strong">{{ filteredTotalActual }}</td>
+              <td>{{ percent(filteredTotalRate) }}</td>
+              <td>{{ filteredTotalTarget }}</td>
+              <td>{{ filteredTotalActual }}</td>
             </ng-container>
             <ng-container *ngIf="displayMode === 'PERFORMANCE'">
-              <td class="sticky-col col-hours num-text"></td>
-              <td class="sticky-col col-util rate-text"></td>
-              <td class="sticky-col col-extra num-text strong">{{ filteredTotalExtraOrders }}</td>
-              <td class="sticky-col col-late num-text late-deduction">{{ filteredTotalLateDeduction.toFixed(0) }}</td>
+              <td></td>
+              <td></td>
+              <td>{{ filteredTotalExtraOrders }}</td>
+              <td class="negative">{{ filteredTotalLateDeduction.toFixed(0) }}</td>
             </ng-container>
             <ng-container *ngIf="displayMode === 'HOURS'">
-              <td class="sticky-col col-hours num-text strong">{{ hours(filteredTotalHours) }}</td>
-              <td class="sticky-col col-util rate-text"></td>
+              <td>{{ hours(filteredTotalHours) }}</td>
+              <td></td>
             </ng-container>
-
-            <ng-container *ngIf="displayMode !== 'HOURS'">
-              <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
-                {{ getDailyTotalForDate(dateStr) }}
-              </td>
-            </ng-container>
-            <ng-container *ngIf="displayMode === 'HOURS'">
-              <td *ngFor="let dateStr of data.dates" class="day-cell day-total">
-                {{ getDailyHoursTotalForDate(dateStr) ? getDailyHoursTotalForDate(dateStr).toFixed(1) : '' }}
-              </td>
-            </ng-container>
-          </tr>
-
-          <!-- Summary row for Captain Count -->
-          <tr class="count-row">
-            <td class="sticky-col col-name" [attr.colspan]="displayMode === 'ORDERS' ? 5 : displayMode === 'PERFORMANCE' ? 6 : 4">{{ 'ORDERS.CAPTAINS_ROW' | translate }}</td>
-            <td class="sticky-col col-actual num-text strong">{{ filteredRows.length }}</td>
-            <td [attr.colspan]="data.dates.length" class="empty-footer-cell"></td>
           </tr>
         </tfoot>
       </table>
     </div>
-  </div>
-
+  </section>
 </div>

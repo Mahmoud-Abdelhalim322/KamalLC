@@ -46,40 +46,7 @@
 }
 
 /* ─── Buttons ─── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
 
-  .material-icons-round,
-  .material-symbols-rounded {
-    font-size: 1.1rem;
-  }
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--border, #d1d5db);
-  color: var(--text-primary, #374151);
-
-  &:hover:not(:disabled) {
-    background: var(--surface-2, #f3f4f6);
-    border-color: var(--primary, #6366f1);
-    color: var(--primary, #6366f1);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
 
 .btn-text {
   background: transparent;
@@ -490,4 +457,12 @@
   .filter-group { width: 100%; }
   .filter-group input, .filter-group select { width: 100%; }
   .header-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* ---------- Premium layout (Figma W22): chips, filters and table share one card ---------- */
+.changelog-card {
+  .module-chips { flex-wrap: wrap; }
+  .filters-bar { margin-bottom: 0; padding: 0; border: none; box-shadow: none; background: transparent; }
+  .table-container { border-radius: 16px; }
+  .pagination { margin-top: 0; }
 }

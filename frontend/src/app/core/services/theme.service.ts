@@ -13,10 +13,10 @@ export interface ThemeSettings {
 
 export const DEFAULT_THEME: ThemeSettings = {
   logoUrl: 'logo-ksclc.png',
-  sidebarBg: '#F5B000',
+  sidebarBg: '#FFFFFF',
   topbarBg: '#F5B000',
-  sidebarActiveBg: '#D98E04',
-  sidebarTextColor: '#000000',
+  sidebarActiveBg: '#F5B000',
+  sidebarTextColor: '#16171B',
   brandText: 'Kamal Bin Khalaf Al-Sulami Logistics Co.',
 };
 

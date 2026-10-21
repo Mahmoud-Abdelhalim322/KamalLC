@@ -12,17 +12,21 @@ import {
   CreateSupplierRequest, SupplierIdSlotRequest
 } from '../../core/models/api.models';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-ninja-ids',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, InitialsPipe],
   templateUrl: './ninja-ids.component.html',
   styleUrls: ['./ninja-ids.component.scss']
 })
 export class NinjaIdsComponent implements OnInit {
   suppliers: SupplierResponse[] = [];
+
+  get totalSlots(): number { return this.suppliers.reduce((n, s) => n + s.slotCount, 0); }
+  get activeSuppliers(): number { return this.suppliers.filter(s => s.active).length; }
   activeSupplier: SupplierResponse | null = null;
   /** Guards the "select the first tab" default so it only applies to the initial load. */
   hasLoadedSuppliers = false;

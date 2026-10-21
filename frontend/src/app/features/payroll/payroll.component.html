@@ -1,13 +1,17 @@
 <div class="payroll-page">
 
-  <div class="page-header flex-between">
-    <div>
+  <!-- Header on the yellow band (Figma W14) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">payments</span>{{ 'NAV.SECTION_OPERATIONS' | translate }}</span>
       <h1 class="page-title">{{ 'PAYROLL.TITLE' | translate }}</h1>
-      <p class="page-subtitle">{{ 'PAYROLL.SUBTITLE' | translate }}</p>
+      <p class="k-page-sub">{{ 'PAYROLL.SUBTITLE' | translate }}</p>
     </div>
-    <button class="btn btn-new-payroll" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
-      <span class="material-icons-round">add</span> {{ 'PAYROLL.NEW_PAYROLL' | translate }}
-    </button>
+    <div class="k-page-actions">
+      <button class="btn btn-ink" (click)="showGenerateForm = !showGenerateForm" *ngIf="canManage">
+        <span class="material-icons-round">add</span> {{ 'PAYROLL.NEW_PAYROLL' | translate }}
+      </button>
+    </div>
   </div>
 
   <div class="alert alert-danger" *ngIf="errorMessage">
@@ -61,7 +65,7 @@
         (click)="selectRun(run)">
         <div class="run-item-head">
           <b>{{ run.title || run.periodFrom }}</b>
-          <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
+          <span class="k-badge dot" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
         </div>
         <span class="run-item-period">{{ run.periodFrom }} → {{ run.periodTo }}</span>
         <span class="run-item-meta">{{ run.captainCount }} {{ 'PAYROLL.CAPTAIN_UNIT' | translate }} — {{ 'PAYROLL.NET_PREFIX' | translate }} {{ run.totalNet | sar }}</span>
@@ -77,7 +81,7 @@
             <h2>{{ run.title || ('PAYROLL.DEFAULT_RUN_TITLE' | translate) }}</h2>
             <p>
               {{ run.periodFrom }} → {{ run.periodTo }}
-              <span class="badge" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
+              <span class="k-badge dot" [ngClass]="statusClass(run.status)">{{ statusLabel(run.status) }}</span>
             </p>
             <p class="run-trail" *ngIf="run.approvedBy">
               {{ 'PAYROLL.APPROVED_BY' | translate:{ user: run.approvedBy } }} — {{ run.approvedAt | date:'yyyy-MM-dd HH:mm' }}
@@ -205,7 +209,7 @@
         </div>
 
         <!-- Summary -->
-        <div class="summary-grid" *ngIf="activeTab === 'CAPTAIN'">
+        <div class="summary-grid cols-5" *ngIf="activeTab === 'CAPTAIN'">
           <div class="summary-tile">
             <span>{{ 'PAYROLL.CAPTAINS_COUNT' | translate }}</span><b>{{ run.captainCount }}</b>
           </div>
@@ -223,7 +227,7 @@
           </div>
         </div>
 
-        <div class="summary-grid" *ngIf="activeTab !== 'CAPTAIN'">
+        <div class="summary-grid cols-3" *ngIf="activeTab !== 'CAPTAIN'">
           <div class="summary-tile">
             <span>{{ 'PAYROLL.STAFF_COUNT' | translate }}</span><b>{{ run.staffCount }}</b>
           </div>
@@ -262,11 +266,11 @@
         </button>
       </div>
 
-      <div class="table-wrap card" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length > 0">
-        <table class="data-table">
+      <div class="k-card payroll-table" *ngIf="activeTab === 'CAPTAIN' && !isLoadingLines && lines.length > 0">
+        <div class="k-table-wrap">
+        <table class="k-table">
           <thead>
             <tr>
-              <th>{{ 'PAYROLL.COL_CODE' | translate }}</th>
               <th>{{ 'PAYROLL.COL_CAPTAIN' | translate }}</th>
               <th>{{ 'PAYROLL.COL_TYPE' | translate }}</th>
               <th>{{ 'PAYROLL.COL_SHIFTS' | translate }}</th>
@@ -293,8 +297,12 @@
           <tbody>
             <ng-container *ngFor="let line of filteredLines">
               <tr>
-                <td class="code-cell">{{ line.captainCode }}</td>
-                <td class="name">{{ line.captainName }}</td>
+                <td>
+                  <div class="k-person">
+                    <span class="k-avatar">{{ line.captainName | initials }}</span>
+                    <div><strong>{{ line.captainName }}</strong><span>{{ line.captainCode }}</span></div>
+                  </div>
+                </td>
                 <td>
                   <span class="badge" [class.badge-employee]="line.captainType === 'EMPLOYEE'"
                     [class.badge-freelance]="line.captainType === 'FREELANCE'">
@@ -344,7 +352,8 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="17" class="adjustment-label">
+                <td colspan="16" class="adjustment-label">
+                  <span class="adj-inner">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
                     [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
@@ -352,6 +361,8 @@
                   {{ adj.labelAr }}
                   <em *ngIf="adj.reason">— {{ adj.reason }}</em>
                   <small *ngIf="adj.createdBy">({{ adj.createdBy }})</small>
+                  <b class="adj-amount" [class.up]="adj.kind === 'BONUS'" [class.down]="adj.kind === 'DEDUCTION'">{{ money(adj.signedAmount) }}</b>
+                  </span>
                 </td>
                 <td [class.positive]="adj.kind === 'BONUS'" [class.negative]="adj.kind === 'DEDUCTION'">
                   {{ money(adj.signedAmount) }}
@@ -368,7 +379,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3">{{ 'PAYROLL.TOTAL_ROW' | translate }}</td>
+              <td colspan="2">{{ 'PAYROLL.TOTAL_ROW' | translate }}</td>
               <td>{{ totals.shifts }}</td>
               <td></td>
               <td>{{ totals.orders }}</td>
@@ -393,13 +404,14 @@
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
-      <div class="table-wrap card" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length > 0">
-        <table class="data-table">
+      <div class="k-card payroll-table" *ngIf="activeTab !== 'CAPTAIN' && !isLoadingLines && staffLines.length > 0">
+        <div class="k-table-wrap">
+        <table class="k-table">
           <thead>
             <tr>
-              <th>{{ 'PAYROLL.COL_CODE' | translate }}</th>
               <th>{{ 'PAYROLL.COL_NAME' | translate }}</th>
               <th>{{ 'PAYROLL.COL_JOB' | translate }}</th>
               <th>{{ 'PAYROLL.COL_BASIC' | translate }}</th>
@@ -415,8 +427,12 @@
           <tbody>
             <ng-container *ngFor="let line of filteredStaffLines">
               <tr>
-                <td class="code-cell">{{ line.staffCode }}</td>
-                <td class="name">{{ line.staffName }}</td>
+                <td>
+                  <div class="k-person">
+                    <span class="k-avatar">{{ line.staffName | initials }}</span>
+                    <div><strong>{{ line.staffName }}</strong><span>{{ line.staffCode }}</span></div>
+                  </div>
+                </td>
                 <td>{{ line.jobTitle || '—' }}</td>
                 <td>{{ money(line.basicSalary) }}</td>
                 <td>{{ money(line.housingAllowance) }}</td>
@@ -443,7 +459,8 @@
               <!-- Manual adjustment rows -->
               <tr class="adjustment-row" *ngFor="let adj of line.adjustments">
                 <td></td>
-                <td colspan="7" class="adjustment-label">
+                <td colspan="6" class="adjustment-label">
+                  <span class="adj-inner">
                   <span class="material-icons-round" [class.up]="adj.kind === 'BONUS'"
                     [class.down]="adj.kind === 'DEDUCTION'">
                     {{ adj.kind === 'BONUS' ? 'add' : 'remove' }}
@@ -451,6 +468,8 @@
                   {{ adj.labelAr }}
                   <em *ngIf="adj.reason">— {{ adj.reason }}</em>
                   <small *ngIf="adj.createdBy">({{ adj.createdBy }})</small>
+                  <b class="adj-amount" [class.up]="adj.kind === 'BONUS'" [class.down]="adj.kind === 'DEDUCTION'">{{ money(adj.signedAmount) }}</b>
+                  </span>
                 </td>
                 <td [class.positive]="adj.kind === 'BONUS'" [class.negative]="adj.kind === 'DEDUCTION'">
                   {{ money(adj.signedAmount) }}
@@ -466,6 +485,7 @@
             </ng-container>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 

@@ -1,21 +1,58 @@
-<div class="sub-management-page animate-fade-in">
-
-  <!-- Header -->
-  <div class="page-header">
-    <h1 class="page-title">{{ 'PLATFORM.SUBSCRIPTIONS_TITLE' | translate }}</h1>
-    <p class="page-subtitle">{{ 'PLATFORM.SUBSCRIPTIONS_SUBTITLE' | translate }}</p>
+<div class="sub-management-page">
+  <!-- Header on the yellow band (Figma W29) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">autorenew</span>{{ 'NAV.SECTION_PLATFORM' | translate }}</span>
+      <h1 class="page-title">{{ 'PLATFORM.SUBSCRIPTIONS_TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'PLATFORM.SUBSCRIPTIONS_SUBTITLE' | translate }}</p>
+    </div>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="loading">
-    <div class="spinner"></div>
-    <p>{{ 'PLATFORM.LOADING_SUBSCRIPTIONS' | translate }}</p>
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_ACTIVE' | translate }}</span>
+      <span class="k-kpi-value">{{ activeCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_ACTIVE_NOTE' | translate:{ yearly: yearlyCount, monthly: subscriptions.length - yearlyCount } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_EXPIRING' | translate }}</span>
+      <span class="k-kpi-value">{{ expiringCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_AUTORENEW_NOTE' | translate:{ count: autoRenewCount } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_EXPIRED' | translate }}</span>
+      <span class="k-kpi-value">{{ expiredCount }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_TOTAL_NOTE' | translate:{ count: subscriptions.length } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_SUBS_PAID' | translate }}</span>
+      <span class="k-kpi-value">{{ totalPaid | sar:'1.0-0' }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_SUBS_PAID_NOTE' | translate }}</span>
+    </div>
   </div>
 
-  <!-- Table Card -->
-  <div class="card table-card" *ngIf="!loading">
-    <div class="table-responsive">
-      <table class="data-table">
+  <section class="k-card">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_TENANT' | translate">
+      </div>
+      <div class="k-chips">
+        <button [class.active]="filter === 'ALL'" (click)="filter = 'ALL'">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="filter === 'ACTIVE'" (click)="filter = 'ACTIVE'">{{ 'PLATFORM.STATUS_ACTIVE' | translate }}</button>
+        <button [class.active]="filter === 'EXPIRING'" (click)="filter = 'EXPIRING'">{{ 'PLATFORM.EXPIRING_SOON' | translate }}</button>
+        <button [class.active]="filter === 'EXPIRED'" (click)="filter = 'EXPIRED'">{{ 'PLATFORM.STATUS_EXPIRED' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="k-empty" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>{{ 'PLATFORM.LOADING_SUBSCRIPTIONS' | translate }}</p>
+    </div>
+
+    <div class="k-table-wrap" *ngIf="!loading">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'PLATFORM.COL_TENANT' | translate }}</th>
@@ -28,30 +65,36 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let sub of subscriptions">
-            <td><strong class="tenant-name">{{ sub.tenantName }}</strong></td>
-            <td><span class="badge badge-info">{{ sub.planName }}</span></td>
+          <tr *ngFor="let sub of visible" [class.highlight]="isExpiring(sub)">
             <td>
-              <span class="cycle-tag">{{ (sub.billingCycle === 'YEARLY' ? 'PLATFORM.CYCLE_YEARLY' : 'PLATFORM.CYCLE_MONTHLY') | translate }}</span>
+              <div class="k-person">
+                <span class="k-avatar ink">{{ sub.tenantName | initials }}</span>
+                <div><strong>{{ sub.tenantName }}</strong></div>
+              </div>
             </td>
-            <td>{{ sub.startDate }}</td>
-            <td>{{ sub.endDate }}</td>
-            <td class="amount-cell">{{ sub.paidAmount ? (sub.paidAmount | sar:'1.0-0') : '-' }}</td>
+            <td><span class="k-badge brand">{{ sub.planName }}</span></td>
+            <td class="k-muted-strong">{{ (sub.billingCycle === 'YEARLY' ? 'PLATFORM.CYCLE_YEARLY' : 'PLATFORM.CYCLE_MONTHLY') | translate }}</td>
+            <td class="k-muted">{{ sub.startDate }}</td>
             <td>
-              <span class="badge" [ngClass]="sub.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'">
-                {{ (sub.status === 'ACTIVE' ? 'PLATFORM.STATUS_ACTIVE' : 'PLATFORM.STATUS_EXPIRED') | translate }}
+              <div class="period-cell">
+                <span><strong>{{ sub.endDate }}</strong>
+                  <small>{{ daysLeft(sub) >= 0 ? ('PLATFORM.DAYS_LEFT' | translate:{ count: daysLeft(sub) }) : ('PLATFORM.STATUS_EXPIRED' | translate) }}</small></span>
+                <span class="k-progress" [class.danger]="daysLeft(sub) < 0 || isExpiring(sub)"><i [style.width.%]="usedPct(sub)"></i></span>
+              </div>
+            </td>
+            <td class="strong">{{ sub.paidAmount ? (sub.paidAmount | sar:'1.0-0') : '—' }}</td>
+            <td>
+              <span class="k-badge dot" [ngClass]="sub.status !== 'ACTIVE' ? 'danger' : isExpiring(sub) ? 'warning' : 'success'">
+                {{ (sub.status !== 'ACTIVE' ? 'PLATFORM.STATUS_EXPIRED' : isExpiring(sub) ? 'PLATFORM.EXPIRING_SOON' : 'PLATFORM.STATUS_ACTIVE') | translate }}
               </span>
-            </td>
-          </tr>
-          <tr *ngIf="subscriptions.length === 0 && !loading">
-            <td colspan="7" class="empty-cell">
-              <span class="material-icons-round empty-icon">credit_card_off</span>
-              <p>{{ 'PLATFORM.NO_SUBSCRIPTIONS' | translate }}</p>
             </td>
           </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="visible.length === 0">
+        <span class="material-icons-round">credit_card_off</span>
+        <p>{{ 'PLATFORM.NO_SUBSCRIPTIONS' | translate }}</p>
+      </div>
     </div>
-  </div>
-
+  </section>
 </div>

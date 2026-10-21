@@ -7,11 +7,12 @@ import { CaptainCustodySummary, CustodyRecordResponse } from '../../core/models/
 import { errorMessage } from '../../core/services/api.util';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-custody',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
   templateUrl: './custody.component.html',
   styleUrls: ['./custody.component.scss']
 })
@@ -21,7 +22,10 @@ export class CustodyComponent implements OnInit {
   filteredSummaries: CaptainCustodySummary[] = [];
   searchQuery = '';
   isLoading = false;
-  expandedCaptainId: string | null = null;
+  selectedCaptainId: string | null = null;
+
+  // Recent custody history of the selected captain (inline card)
+  recentHistory: CustodyRecordResponse[] = [];
 
   // History dialog
   showHistoryDialog = false;
@@ -43,7 +47,12 @@ export class CustodyComponent implements OnInit {
   loadSummaries(): void {
     this.isLoading = true;
     this.custodyService.getSummaries().subscribe({
-      next: data => { this.summaries = data; this.applyFilter(); this.isLoading = false; },
+      next: data => {
+        this.summaries = data;
+        this.applyFilter();
+        this.isLoading = false;
+        if (!this.selected && data.length > 0) this.selectCaptain(data[0]);
+      },
       error: e => { this.error = errorMessage(e, this.i18n.t('CUSTODY.ERR_LOAD_CUSTODY')); this.isLoading = false; }
     });
   }
@@ -59,9 +68,24 @@ export class CustodyComponent implements OnInit {
     }
   }
 
-  toggleCaptain(id: string): void {
-    this.expandedCaptainId = this.expandedCaptainId === id ? null : id;
+  get selected(): CaptainCustodySummary | null {
+    return this.summaries.find(s => s.captainId === this.selectedCaptainId) ?? null;
   }
+
+  selectCaptain(s: CaptainCustodySummary): void {
+    this.selectedCaptainId = s.captainId;
+    this.recentHistory = [];
+    this.custodyService.getHistory(s.captainId, 0, 5).subscribe({
+      next: p => this.recentHistory = p.content,
+      error: () => this.recentHistory = []
+    });
+  }
+
+  // KPI strip totals over all captains holding custody
+  get totalActive(): number { return this.summaries.reduce((n, s) => n + s.activeCount, 0); }
+  get totalVehicles(): number { return this.summaries.reduce((n, s) => n + s.vehicleCount, 0); }
+  get totalSimsPhones(): number { return this.summaries.reduce((n, s) => n + s.simCount + s.phoneCount, 0); }
+  get totalOther(): number { return this.summaries.reduce((n, s) => n + s.otherCount, 0); }
 
   openHistory(s: CaptainCustodySummary): void {
     this.historyCaptainId = s.captainId;

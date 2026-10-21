@@ -1,110 +1,147 @@
 <div class="page-container">
-  <h1 class="page-title"><span class="material-icons-round">inventory_2</span> {{ 'INVENTORY.PAGE_TITLE' | translate }}</h1>
+  <!-- Header on the yellow band (Figma W20) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">inventory_2</span>{{ 'NAV.SECTION_ASSETS' | translate }}</span>
+      <h1 class="page-title">{{ 'INVENTORY.PAGE_TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'INVENTORY.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <a class="btn btn-glass" routerLink="/custody">
+        <span class="material-icons-round">handshake</span> {{ 'INVENTORY.CUSTODY_LOG' | translate }}
+      </a>
+    </div>
+  </div>
 
   <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
   <div class="alert alert-success" *ngIf="successMsg" (click)="dismissMsg()">{{ successMsg }}</div>
 
   <div class="inventory-layout">
-    <!-- Category Sidebar -->
-    <aside class="category-sidebar">
-      <div class="sidebar-header">
-        <h3>{{ 'INVENTORY.CATEGORIES' | translate }}</h3>
-        <button class="icon-btn" [title]="'INVENTORY.ADD_CATEGORY' | translate" (click)="openAddCategory()" *ngIf="canManage">
-          <span class="material-icons-round">add_circle</span>
-        </button>
-      </div>
-      <div class="category-list">
-        <div *ngFor="let cat of categories" class="category-card"
-             [class.active]="selectedCategory?.id === cat.id" (click)="selectCategory(cat)">
-          <div class="cat-info">
-            <span class="cat-icon material-icons-round">
-              {{ cat.name === 'SIM_CARD' ? 'sim_card' : cat.name === 'PHONE' ? 'phone_iphone' : 'category' }}
-            </span>
-            <div>
-              <span class="cat-name">{{ cat.labelAr }}</span>
-              <span class="cat-count">{{ cat.itemCount }} {{ 'INVENTORY.ITEMS_COUNT' | translate }}</span>
-            </div>
-          </div>
-          <button class="icon-btn danger small" [title]="'INVENTORY.DELETE_CATEGORY' | translate" *ngIf="!cat.systemDefined && canManage" (click)="deleteCategory(cat); $event.stopPropagation()">
-            <span class="material-icons-round">delete</span>
-          </button>
-        </div>
-      </div>
+    <!-- Categories -->
+    <aside class="k-card category-card">
+      <span class="side-label">{{ 'INVENTORY.CATEGORIES' | translate }}</span>
+      <button *ngFor="let cat of categories" class="cat-row" type="button"
+              [class.active]="selectedCategory?.id === cat.id" (click)="selectCategory(cat)">
+        <span class="cat-icon"><span class="material-icons-round">{{ categoryIcon(cat) }}</span></span>
+        <span class="cat-name">{{ cat.labelAr }}</span>
+        <span class="cat-count">{{ cat.itemCount }}</span>
+      </button>
+      <button class="cat-new" type="button" (click)="openAddCategory()" *ngIf="canManage">
+        <span class="material-icons-round">add</span> {{ 'INVENTORY.NEW_CATEGORY' | translate }}
+      </button>
     </aside>
 
-    <!-- Items Area -->
-    <main class="items-area" *ngIf="selectedCategory">
-      <div class="toolbar">
-        <div class="search-group">
-          <input type="text" class="search-input" [placeholder]="'INVENTORY.SEARCH_PLACEHOLDER' | translate"
-                 [(ngModel)]="itemSearch" (keyup.enter)="searchItems()">
-          <select class="filter-select" [(ngModel)]="itemStatusFilter" (change)="searchItems()">
-            <option value="">{{ 'INVENTORY.ALL_STATUSES' | translate }}</option>
-            <option value="AVAILABLE">{{ 'INVENTORY.STATUS_AVAILABLE' | translate }}</option>
-            <option value="ASSIGNED">{{ 'INVENTORY.STATUS_ASSIGNED' | translate }}</option>
-            <option value="INACTIVE">{{ 'INVENTORY.STATUS_INACTIVE' | translate }}</option>
-          </select>
+    <div class="items-column" *ngIf="selectedCategory">
+      <!-- Selected category -->
+      <section class="k-card cat-head">
+        <div class="cat-head-row">
+          <span class="k-icon-tile lg brand"><span class="material-icons-round">{{ categoryIcon(selectedCategory) }}</span></span>
+          <div class="cat-head-text">
+            <h2>{{ selectedCategory.labelAr }}</h2>
+            <span>{{ selectedCategory.itemCount }} {{ 'INVENTORY.ITEMS_COUNT' | translate }}</span>
+          </div>
+          <div class="cat-head-actions">
+            <button class="btn btn-outline" *ngIf="!selectedCategory.systemDefined && canManage" (click)="deleteCategory(selectedCategory)">
+              <span class="material-icons-round">delete_outline</span> {{ 'INVENTORY.DELETE_CATEGORY' | translate }}
+            </button>
+            <button class="btn btn-primary" (click)="openAddItem()" *ngIf="canManage">
+              <span class="material-icons-round">add</span> {{ 'INVENTORY.ADD_ITEM' | translate }}
+            </button>
+          </div>
         </div>
-        <button class="btn btn-primary" (click)="openAddItem()" *ngIf="canManage">
-          <span class="material-icons-round">add</span> {{ 'INVENTORY.ADD_ITEM' | translate }}
-        </button>
+        <div class="field-chips" *ngIf="getFieldTemplates().length">
+          <span class="k-muted">{{ 'INVENTORY.CAT_FIELDS' | translate }}</span>
+          <span class="k-badge" *ngFor="let ft of getFieldTemplates()">{{ ft.labelAr }}{{ ft.required ? ' *' : '' }}</span>
+        </div>
+      </section>
+
+      <!-- Items -->
+      <section class="k-card">
+        <div class="items-toolbar">
+          <div class="k-search">
+            <span class="material-icons-round">search</span>
+            <input type="text" [placeholder]="'INVENTORY.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="itemSearch" (keyup.enter)="searchItems()">
+          </div>
+          <div class="k-chips">
+            <button [class.active]="itemStatusFilter === ''" (click)="setStatusFilter('')">{{ 'COMMON.ALL' | translate }}</button>
+            <button [class.active]="itemStatusFilter === 'AVAILABLE'" (click)="setStatusFilter('AVAILABLE')">{{ 'INVENTORY.STATUS_AVAILABLE' | translate }}</button>
+            <button [class.active]="itemStatusFilter === 'ASSIGNED'" (click)="setStatusFilter('ASSIGNED')">{{ 'INVENTORY.STATUS_ASSIGNED' | translate }}</button>
+            <button [class.active]="itemStatusFilter === 'INACTIVE'" (click)="setStatusFilter('INACTIVE')">{{ 'INVENTORY.STATUS_INACTIVE' | translate }}</button>
+          </div>
+        </div>
+
+        <div class="loading-bar" *ngIf="isLoading"></div>
+
+        <div class="k-table-wrap">
+          <table class="k-table">
+            <thead>
+              <tr>
+                <th>{{ 'INVENTORY.COL_CODE' | translate }}</th>
+                <th>{{ 'INVENTORY.COL_STATUS' | translate }}</th>
+                <th>{{ 'INVENTORY.COL_CAPTAIN' | translate }}</th>
+                <th *ngFor="let ft of getFieldTemplates()">{{ ft.labelAr }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items">
+                <td class="strong">{{ item.serialCode }}</td>
+                <td><span class="k-badge dot" [ngClass]="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
+                <td>
+                  <div class="k-person" *ngIf="item.currentCaptainName">
+                    <span class="k-avatar">{{ item.currentCaptainName | initials }}</span>
+                    <div>
+                      <strong>{{ item.currentCaptainName }}</strong>
+                      <span>{{ item.assignedSince ? ('INVENTORY.SINCE' | translate:{ date: (item.assignedSince | date:'yyyy-MM-dd') }) : item.currentCaptainCode }}</span>
+                    </div>
+                  </div>
+                  <span class="k-muted" *ngIf="!item.currentCaptainName">—</span>
+                </td>
+                <td *ngFor="let ft of getFieldTemplates()">{{ item.fields[ft.fieldKey] || '—' }}</td>
+                <td class="k-actions">
+                  <button class="btn btn-ink btn-sm" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE' && canManage">
+                    <span class="material-icons-round">person_add</span> {{ 'INVENTORY.BTN_ASSIGN' | translate }}
+                  </button>
+                  <button class="btn btn-outline btn-sm" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED' && canManage">
+                    <span class="material-icons-round">assignment_return</span> {{ 'INVENTORY.BTN_RETURN' | translate }}
+                  </button>
+                  <button class="k-icon-btn" [title]="'INVENTORY.ACTION_EDIT' | translate" (click)="openEditItem(item)" *ngIf="canManage">
+                    <span class="material-icons-round">edit</span>
+                  </button>
+                  <button class="k-icon-btn" [title]="'INVENTORY.ACTION_HISTORY' | translate" (click)="openItemHistory(item)">
+                    <span class="material-icons-round">history</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="k-empty" *ngIf="items.length === 0 && !isLoading">
+            <span class="material-icons-round">inventory_2</span>
+            <p>{{ 'INVENTORY.NO_ITEMS' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="k-pager" *ngIf="items.length > 0">
+          <span class="k-pager-info">{{ 'INVENTORY.SHOWING' | translate:{ count: items.length, total: itemTotal } }}</span>
+          <ng-container *ngIf="itemTotalPages > 1">
+            <button class="btn btn-outline btn-sm" (click)="prevPage()" [disabled]="itemPage === 0">
+              <span class="material-icons-round k-flip">chevron_left</span> {{ 'INVENTORY.PREV' | translate }}
+            </button>
+            <span class="k-page-num">{{ itemPage + 1 }}</span>
+            <button class="btn btn-outline btn-sm" (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">
+              {{ 'INVENTORY.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
+            </button>
+          </ng-container>
+        </div>
+      </section>
+    </div>
+
+    <section class="k-card items-column" *ngIf="!selectedCategory">
+      <div class="k-empty">
+        <span class="material-icons-round">inventory_2</span>
+        <p>{{ 'INVENTORY.SELECT_CATEGORY_PROMPT' | translate }}</p>
       </div>
-
-      <div class="loading-bar" *ngIf="isLoading"></div>
-
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>{{ 'INVENTORY.COL_CODE' | translate }}</th>
-              <th *ngFor="let ft of getFieldTemplates()">{{ ft.labelAr }}</th>
-              <th>{{ 'INVENTORY.COL_STATUS' | translate }}</th>
-              <th>{{ 'INVENTORY.COL_CAPTAIN' | translate }}</th>
-              <th>{{ 'INVENTORY.COL_ACTIONS' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of items">
-              <td class="serial-cell">{{ item.serialCode }}</td>
-              <td *ngFor="let ft of getFieldTemplates()">{{ item.fields[ft.fieldKey] || '—' }}</td>
-              <td><span class="status-badge" [attr.data-status]="item.status">{{ statusLabel(item.status) }}</span></td>
-              <td>
-                <span *ngIf="item.currentCaptainName">{{ item.currentCaptainName }} ({{ item.currentCaptainCode }})</span>
-                <span class="text-muted" *ngIf="!item.currentCaptainName">—</span>
-              </td>
-              <td class="actions-cell">
-                <button class="icon-btn" [title]="'INVENTORY.ACTION_HISTORY' | translate" (click)="openItemHistory(item)">
-                  <span class="material-icons-round">history</span>
-                </button>
-                <button class="icon-btn" [title]="'INVENTORY.ACTION_ASSIGN' | translate" (click)="openAssignDialog(item)" *ngIf="item.status === 'AVAILABLE' && canManage">
-                  <span class="material-icons-round">person_add</span>
-                </button>
-                <button class="icon-btn" [title]="'INVENTORY.ACTION_RETURN' | translate" (click)="returnItem(item)" *ngIf="item.status === 'ASSIGNED' && canManage">
-                  <span class="material-icons-round">assignment_return</span>
-                </button>
-                <button class="icon-btn" [title]="'INVENTORY.ACTION_EDIT' | translate" (click)="openEditItem(item)" *ngIf="canManage">
-                  <span class="material-icons-round">edit</span>
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="items.length === 0 && !isLoading">
-              <td [attr.colspan]="getFieldTemplates().length + 4" class="empty-row">{{ 'INVENTORY.NO_ITEMS' | translate }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination" *ngIf="itemTotalPages > 1">
-        <button (click)="prevPage()" [disabled]="itemPage === 0">{{ 'INVENTORY.PREV' | translate }}</button>
-        <span>{{ itemPage + 1 }} / {{ itemTotalPages }}</span>
-        <button (click)="nextPage()" [disabled]="itemPage >= itemTotalPages - 1">{{ 'INVENTORY.NEXT' | translate }}</button>
-      </div>
-    </main>
-
-    <main class="items-area empty-state" *ngIf="!selectedCategory">
-      <span class="material-icons-round">inventory_2</span>
-      <p>{{ 'INVENTORY.SELECT_CATEGORY_PROMPT' | translate }}</p>
-    </main>
+    </section>
   </div>
 
   <!-- ══════════════ CATEGORY DIALOG ══════════════ -->

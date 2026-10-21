@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -12,29 +13,37 @@ interface NavItem {
   icon: string;
   label: string;
   translationKey?: string;
-  route?: string;
-  children?: NavItem[];
-  expanded?: boolean;
+  route: string;
   superAdminOnly?: boolean;
   permission?: string;
 }
+
+interface NavSection {
+  labelKey?: string;
+  items: NavItem[];
+}
+
+import { HeroBandDirective } from './hero-band.directive';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
     TranslatePipe,
-    LanguageSwitcherComponent
+    LanguageSwitcherComponent,
+    HeroBandDirective
   ],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss']
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
+  globalSearch = '';
   showNotifications = false;
   notifications: NotificationItem[] = [];
   notificationCount = 0;
@@ -53,30 +62,55 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
 
-  navItems: NavItem[] = [
-    { icon: 'dashboard', label: 'Dashboard', translationKey: 'NAV.DASHBOARD', route: '/dashboard' },
-    { icon: 'shopping_bag', label: 'Orders', translationKey: 'NAV.ORDERS', route: '/orders' },
+  /** Sidebar sections; a section's heading is hidden when none of its items are visible. */
+  navSections: NavSection[] = [
     {
-      icon: 'groups', label: 'Members', translationKey: 'NAV.MEMBERS', expanded: false, permission: 'MEMBERS_VIEW',
-      children: [
+      items: [
+        { icon: 'dashboard', label: 'Dashboard', translationKey: 'NAV.DASHBOARD', route: '/dashboard' },
+        { icon: 'shopping_bag', label: 'Orders', translationKey: 'NAV.ORDERS', route: '/orders' },
+      ]
+    },
+    {
+      labelKey: 'NAV.SECTION_MEMBERS',
+      items: [
         { icon: 'local_shipping', label: 'Captains', translationKey: 'NAV.CAPTAINS', route: '/captains', permission: 'MEMBERS_VIEW' },
         { icon: 'engineering', label: 'Workers', translationKey: 'NAV.WORKERS', route: '/workers', permission: 'MEMBERS_VIEW' },
         { icon: 'admin_panel_settings', label: 'Managers', translationKey: 'NAV.MANAGERS', route: '/managers', permission: 'MEMBERS_VIEW' },
+        { icon: 'badge', label: 'Ninja IDs', translationKey: 'NAV.NINJA_IDS', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
       ]
     },
-    { icon: 'badge', label: 'Ninja IDs', translationKey: 'NAV.NINJA_IDS', route: '/ninja-ids', permission: 'MEMBERS_VIEW' },
-    { icon: 'upload_file', label: 'Data Import', translationKey: 'NAV.IMPORTS', route: '/imports', permission: 'IMPORTS_MANAGE' },
-    { icon: 'event_note', label: 'Shifts', translationKey: 'NAV.SHIFTS', route: '/shifts', permission: 'SHIFTS_VIEW' },
-    { icon: 'payments', label: 'Payroll', translationKey: 'NAV.PAYROLL', route: '/payroll', permission: 'PAYROLL_VIEW' },
-    { icon: 'account_balance_wallet', label: 'Loans', translationKey: 'NAV.LOANS', route: '/loans', permission: 'LOANS_VIEW' },
-    { icon: 'account_balance', label: 'Supplier Revenue', translationKey: 'NAV.SUPPLIER_REVENUE', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
-    { icon: 'assessment', label: 'Reports', translationKey: 'NAV.REPORTS', route: '/reports', permission: 'REPORTS_VIEW' },
-    { icon: 'directions_car', label: 'Car Fleet', translationKey: 'NAV.FLEET', route: '/fleet', permission: 'FLEET_VIEW' },
-    { icon: 'inventory_2', label: 'Inventory', translationKey: 'NAV.INVENTORY', route: '/inventory', permission: 'INVENTORY_VIEW' },
-    { icon: 'account_balance_wallet', label: 'Custody Log', translationKey: 'NAV.CUSTODY', route: '/custody', permission: 'CUSTODY_VIEW' },
-    { icon: 'history', label: 'Changelog', translationKey: 'NAV.CHANGELOG', route: '/changelog', permission: 'CHANGELOG_VIEW' },
-    { icon: 'manage_accounts', label: 'User Management', translationKey: 'NAV.USER_MANAGEMENT', route: '/user-management', superAdminOnly: true },
-    { icon: 'settings', label: 'Settings', translationKey: 'NAV.SETTINGS', route: '/settings', permission: 'SETTINGS_MANAGE' },
+    {
+      labelKey: 'NAV.SECTION_OPERATIONS',
+      items: [
+        { icon: 'upload_file', label: 'Data Import', translationKey: 'NAV.IMPORTS', route: '/imports', permission: 'IMPORTS_MANAGE' },
+        { icon: 'event_note', label: 'Shifts', translationKey: 'NAV.SHIFTS', route: '/shifts', permission: 'SHIFTS_VIEW' },
+        { icon: 'payments', label: 'Payroll', translationKey: 'NAV.PAYROLL', route: '/payroll', permission: 'PAYROLL_VIEW' },
+        { icon: 'account_balance_wallet', label: 'Loans', translationKey: 'NAV.LOANS', route: '/loans', permission: 'LOANS_VIEW' },
+      ]
+    },
+    {
+      labelKey: 'NAV.SECTION_FINANCE',
+      items: [
+        { icon: 'account_balance', label: 'Supplier Revenue', translationKey: 'NAV.SUPPLIER_REVENUE', route: '/supplier-revenue', permission: 'REPORTS_VIEW' },
+        { icon: 'assessment', label: 'Reports', translationKey: 'NAV.REPORTS', route: '/reports', permission: 'REPORTS_VIEW' },
+      ]
+    },
+    {
+      labelKey: 'NAV.SECTION_ASSETS',
+      items: [
+        { icon: 'directions_car', label: 'Car Fleet', translationKey: 'NAV.FLEET', route: '/fleet', permission: 'FLEET_VIEW' },
+        { icon: 'inventory_2', label: 'Inventory', translationKey: 'NAV.INVENTORY', route: '/inventory', permission: 'INVENTORY_VIEW' },
+        { icon: 'handshake', label: 'Custody Log', translationKey: 'NAV.CUSTODY', route: '/custody', permission: 'CUSTODY_VIEW' },
+      ]
+    },
+    {
+      labelKey: 'NAV.SECTION_SYSTEM',
+      items: [
+        { icon: 'history', label: 'Changelog', translationKey: 'NAV.CHANGELOG', route: '/changelog', permission: 'CHANGELOG_VIEW' },
+        { icon: 'manage_accounts', label: 'User Management', translationKey: 'NAV.USER_MANAGEMENT', route: '/user-management', superAdminOnly: true },
+        { icon: 'settings', label: 'Settings', translationKey: 'NAV.SETTINGS', route: '/settings', permission: 'SETTINGS_MANAGE' },
+      ]
+    },
   ];
 
   ngOnInit(): void {
@@ -233,25 +267,30 @@ export class LayoutComponent implements OnInit, OnDestroy {
     return this.translationService.translate('HEADER.ROLE_STAFF');
   }
 
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+  /** Top-bar search: looks captains up by name, code, ID or phone on the captains page. */
+  submitSearch(): void {
+    const term = this.globalSearch.trim();
+    this.router.navigate(['/captains'], { queryParams: term ? { search: term } : {} });
   }
 
-  toggleGroup(item: NavItem): void {
-    item.expanded = !item.expanded;
+  /** Two-letter monogram for the avatar in the sidebar user card. */
+  get initials(): string {
+    const parts = this.username.trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map(p => p[0]).join('').toUpperCase() || '؟';
   }
 
   isVisible(item: NavItem): boolean {
     if (item.superAdminOnly) {
       return this.authService.isAdmin() || this.authService.isPlatformAdmin();
     }
-    if (item.children && item.children.length > 0) {
-      return item.children.some(child => this.isVisible(child));
-    }
     if (item.permission) {
       return this.authService.hasPermission(item.permission);
     }
     return true;
+  }
+
+  visibleItems(section: NavSection): NavItem[] {
+    return section.items.filter(item => this.isVisible(item));
   }
 
   logout(): void {

@@ -5,16 +5,21 @@ import { HttpClient } from '@angular/common/http';
 import { ApiResponse, TenantResponse, CreateTenantRequest, UpdateTenantRequest, PlanResponse } from '../../../core/models/api.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+
+type TenantFilter = 'ALL' | 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
 
 @Component({
   selector: 'app-tenant-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
   templateUrl: './tenant-management.component.html',
   styleUrl: './tenant-management.component.scss'
 })
 export class TenantManagementComponent implements OnInit {
   tenants: TenantResponse[] = [];
+  filter: TenantFilter = 'ALL';
+  search = '';
   plans: PlanResponse[] = [];
   loading = true;
   showCreateModal = false;
@@ -227,6 +232,27 @@ export class TenantManagementComponent implements OnInit {
 
   getSubscriptionBadgeClass(status: string | null): string {
     return status === 'ACTIVE' ? 'badge-active' : 'badge-suspended';
+  }
+
+  subTone(status: string | null): string {
+    return status === 'ACTIVE' ? 'success' : status === 'TRIAL' ? 'warning' : status ? 'danger' : '';
+  }
+
+  get activeCount(): number { return this.tenants.filter(t => t.status === 'ACTIVE').length; }
+  get trialCount(): number { return this.tenants.filter(t => t.subscriptionStatus === 'TRIAL').length; }
+  get suspendedCount(): number { return this.tenants.filter(t => t.status !== 'ACTIVE').length; }
+  get captainTotal(): number { return this.tenants.reduce((n, t) => n + (t.captainCount || 0), 0); }
+  get userTotal(): number { return this.tenants.reduce((n, t) => n + (t.userCount || 0), 0); }
+
+  get visible(): TenantResponse[] {
+    const q = this.search.trim().toLowerCase();
+    return this.tenants.filter(t =>
+      (this.filter === 'ALL'
+        || (this.filter === 'ACTIVE' && t.status === 'ACTIVE')
+        || (this.filter === 'TRIAL' && t.subscriptionStatus === 'TRIAL')
+        || (this.filter === 'SUSPENDED' && t.status !== 'ACTIVE'))
+      && (!q || t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
+        || (t.contactEmail || '').toLowerCase().includes(q)));
   }
 
   private showFeedback(msg: string): void {

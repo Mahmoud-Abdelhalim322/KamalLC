@@ -1,26 +1,28 @@
 <div class="detail-page" *ngIf="!isLoading && staff">
   <!-- Header -->
-  <div class="detail-header">
-    <a [routerLink]="backRoute" class="back-btn">
-      <span class="material-icons-round">arrow_forward</span>
-    </a>
-    <div class="header-info">
-      <h1>{{ staff.fullNameAr }}</h1>
-      <div class="header-meta">
-        <span class="code-badge">{{ staff.staffCode }}</span>
-        <span class="type-badge">{{ typeLabel }}</span>
-        <span class="status-badge" [ngClass]="getStatusClass(staff.status)">
-          {{ getStatusLabel(staff.status) }}
-        </span>
+  <div class="k-page-head">
+    <div class="k-page-lead">
+      <span class="k-avatar ink xl">{{ staff.fullNameAr | initials }}</span>
+      <div class="k-page-titles">
+        <span class="k-crumb"><span class="material-icons-round">badge</span>{{ typeLabel }} · {{ staff.staffCode }}</span>
+        <h1 class="page-title">{{ staff.fullNameAr }}</h1>
+        <p class="k-page-sub k-page-badges">
+          <span class="k-badge brand">{{ typeLabel }}</span>
+          <span class="k-badge dot" [ngClass]="getStatusClass(staff.status)">{{ getStatusLabel(staff.status) }}</span>
+        </p>
       </div>
     </div>
-    <div class="header-actions">
-      <a [routerLink]="editRoute" class="btn btn-secondary">
-        <span class="material-icons-round">edit</span> {{ 'STAFF_DETAIL.EDIT' | translate }}
+    <div class="k-page-actions">
+      <a [routerLink]="backRoute" class="btn btn-glass">
+        <span class="material-icons-round k-flip">arrow_back</span>
+        {{ 'COMMON.BACK' | translate }}
       </a>
-      <button class="btn btn-danger" (click)="deleteStaff()">
+      <button class="btn btn-glass" (click)="deleteStaff()">
         <span class="material-icons-round">delete</span> {{ 'STAFF_DETAIL.DELETE' | translate }}
       </button>
+      <a [routerLink]="editRoute" class="btn btn-ink">
+        <span class="material-icons-round">edit</span> {{ 'STAFF_DETAIL.EDIT' | translate }}
+      </a>
     </div>
   </div>
 

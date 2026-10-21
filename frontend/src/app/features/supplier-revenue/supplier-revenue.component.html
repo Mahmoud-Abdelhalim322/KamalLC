@@ -1,9 +1,45 @@
 <div class="supplier-revenue-page">
+  <!-- Header on the yellow band (Figma W17) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">account_balance</span>{{ 'NAV.SECTION_FINANCE' | translate }}</span>
+      <h1 class="page-title">{{ 'SUPPLIER_REVENUE.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'SUPPLIER_REVENUE.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <div class="k-tabs glass">
+        <button [class.active]="activePreset === 'current-month'" (click)="setPreset('current-month')">{{ 'SUPPLIER_REVENUE.CURRENT_MONTH' | translate }}</button>
+        <button [class.active]="activePreset === 'last-month'" (click)="setPreset('last-month')">{{ 'SUPPLIER_REVENUE.LAST_MONTH' | translate }}</button>
+        <button [class.active]="activePreset === 'last-30'" (click)="setPreset('last-30')">{{ 'SUPPLIER_REVENUE.LAST_30_DAYS' | translate }}</button>
+      </div>
+      <button class="btn btn-ink" (click)="openAddAdjustmentModal()">
+        <span class="material-icons-round">add</span> {{ 'SUPPLIER_REVENUE.ADD_ADJUSTMENT' | translate }}
+      </button>
+    </div>
+  </div>
 
-  <!-- Header -->
-  <div class="page-header">
-    <h1 class="page-title">{{ 'SUPPLIER_REVENUE.TITLE' | translate }}</h1>
-    <p class="page-subtitle">{{ 'SUPPLIER_REVENUE.SUBTITLE' | translate }}</p>
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'SUPPLIER_REVENUE.KPI_GROSS' | translate }}</span>
+      <span class="k-kpi-value">{{ summary ? (summary.grossRevenue | sar) : '—' }}</span>
+      <span class="k-kpi-note" *ngIf="summary">{{ 'SUPPLIER_REVENUE.KPI_SUPPLIERS_NOTE' | translate:{ count: summary.totalSuppliers } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'SUPPLIER_REVENUE.KPI_ORDERS' | translate }}</span>
+      <span class="k-kpi-value">{{ summary ? (summary.totalOrders | number) : '—' }}</span>
+      <span class="k-kpi-note">{{ 'SUPPLIER_REVENUE.ORDERS_UNIT' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_ADJUSTMENTS' | translate }}</span>
+      <span class="k-kpi-value">{{ summary ? (summary.netAdjustments | sar:'1.2-2':(summary.netAdjustments > 0 ? '+' : '')) : '—' }}</span>
+      <span class="k-kpi-note">{{ fromDate }} → {{ toDate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_REVENUE' | translate }}</span>
+      <span class="k-kpi-value">{{ summary ? (summary.netRevenue | sar) : '—' }}</span>
+      <span class="k-kpi-note">{{ 'SUPPLIER_REVENUE.KPI_NET_NOTE' | translate }}</span>
+    </div>
   </div>
 
   <!-- Alerts -->
@@ -19,90 +55,37 @@
     <button class="alert-close" (click)="clearMessages()">&times;</button>
   </div>
 
-  <!-- Toolbar & Filters -->
-  <div class="toolbar">
-    <div class="date-field">
-      <label>{{ 'SUPPLIER_REVENUE.FILTER_FROM' | translate }}</label>
-      <input type="date" class="form-input" [(ngModel)]="fromDate" (change)="onDateChange()" />
-    </div>
-
-    <div class="date-field">
-      <label>{{ 'SUPPLIER_REVENUE.FILTER_TO' | translate }}</label>
-      <input type="date" class="form-input" [(ngModel)]="toDate" (change)="onDateChange()" />
-    </div>
-
-    <div class="filter-tabs">
-      <button class="filter-tab" [class.active]="activePreset === 'current-month'" (click)="setPreset('current-month')">
-        {{ 'SUPPLIER_REVENUE.CURRENT_MONTH' | translate }}
-      </button>
-      <button class="filter-tab" [class.active]="activePreset === 'last-month'" (click)="setPreset('last-month')">
-        {{ 'SUPPLIER_REVENUE.LAST_MONTH' | translate }}
-      </button>
-      <button class="filter-tab" [class.active]="activePreset === 'last-30'" (click)="setPreset('last-30')">
-        {{ 'SUPPLIER_REVENUE.LAST_30_DAYS' | translate }}
-      </button>
-    </div>
-
-    <div class="header-actions">
-      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
-        <span class="material-icons-round" [class.spinning]="isExporting">download</span>
-        <span>{{ 'SUPPLIER_REVENUE.EXPORT_EXCEL' | translate }}</span>
-      </button>
-      <button class="btn btn-primary" (click)="openAddAdjustmentModal()">
-        <span class="material-icons-round">add_circle</span>
-        <span>{{ 'SUPPLIER_REVENUE.ADD_ADJUSTMENT' | translate }}</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading State -->
-  <div class="loading-state" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'SUPPLIER_REVENUE.LOADING' | translate }}</p>
-  </div>
-
-  <!-- Content -->
-  <ng-container *ngIf="!isLoading && summary">
-
-    <!-- KPI Grid Row -->
-    <div class="kpi-row">
-      <div class="kpi">
-        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_GROSS' | translate }}</span>
-        <b class="kpi-value">{{ summary.grossRevenue | sar }}</b>
-      </div>
-
-      <div class="kpi">
-        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_ORDERS' | translate }}</span>
-        <b class="kpi-value">{{ summary.totalOrders | number }} <small>{{ 'SUPPLIER_REVENUE.ORDERS_UNIT' | translate }}</small></b>
-      </div>
-
-      <div class="kpi" [class.good]="summary.netAdjustments > 0" [class.bad]="summary.netAdjustments < 0">
-        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_ADJUSTMENTS' | translate }}</span>
-        <b class="kpi-value">
-          {{ summary.netAdjustments | sar:'1.2-2':(summary.netAdjustments > 0 ? '+' : '') }}
-        </b>
-      </div>
-
-      <div class="kpi accent">
-        <span class="kpi-label">{{ 'SUPPLIER_REVENUE.KPI_NET_REVENUE' | translate }}</span>
-        <b class="kpi-value">{{ summary.netRevenue | sar }}</b>
+  <!-- Summary card -->
+  <section class="k-card">
+    <div class="k-card-head">
+      <span class="k-icon-tile"><span class="material-icons-round">account_balance</span></span>
+      <h3>{{ 'SUPPLIER_REVENUE.SUMMARY_TITLE' | translate:{ count: summary?.totalSuppliers ?? 0 } }}</h3>
+      <div class="head-tools">
+        <label class="k-field-inline">
+          <span class="material-icons-round">event</span>
+          <input type="date" [(ngModel)]="fromDate" (change)="onDateChange()" [attr.aria-label]="'SUPPLIER_REVENUE.FILTER_FROM' | translate" />
+        </label>
+        <label class="k-field-inline">
+          <span class="material-icons-round">event</span>
+          <input type="date" [(ngModel)]="toDate" (change)="onDateChange()" [attr.aria-label]="'SUPPLIER_REVENUE.FILTER_TO' | translate" />
+        </label>
+        <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
+          <span class="material-icons-round" [class.spinning]="isExporting">download</span>
+          {{ 'SUPPLIER_REVENUE.EXPORT_EXCEL' | translate }}
+        </button>
       </div>
     </div>
 
-    <!-- Summary Table -->
-    <div class="table-wrap card">
-      <div class="card-title-bar">
-        <h2 class="card-title-text">
-          <span class="material-icons-round">table_chart</span>
-          {{ 'SUPPLIER_REVENUE.SUMMARY_TITLE' | translate:{ count: summary.totalSuppliers } }}
-        </h2>
-      </div>
+    <div class="k-empty" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>{{ 'SUPPLIER_REVENUE.LOADING' | translate }}</p>
+    </div>
 
-      <table class="data-table">
+    <div class="k-table-wrap" *ngIf="!isLoading && summary">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'SUPPLIER_REVENUE.COL_SUPPLIER' | translate }}</th>
-            <th>{{ 'SUPPLIER_REVENUE.COL_CODE' | translate }}</th>
             <th>{{ 'SUPPLIER_REVENUE.COL_SHIFTS' | translate }}</th>
             <th>{{ 'SUPPLIER_REVENUE.COL_ORDERS' | translate }}</th>
             <th>{{ 'SUPPLIER_REVENUE.COL_HOURS' | translate }}</th>
@@ -111,45 +94,45 @@
             <th>{{ 'SUPPLIER_REVENUE.COL_ADDITIONS' | translate }}</th>
             <th>{{ 'SUPPLIER_REVENUE.COL_DEDUCTIONS' | translate }}</th>
             <th>{{ 'SUPPLIER_REVENUE.COL_NET_REV' | translate }}</th>
-            <th class="text-center">{{ 'SUPPLIER_REVENUE.COL_ACTIONS' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let row of summary.rows">
             <td>
               <div class="supplier-cell">
-                <span class="supplier-badge" [style.background-color]="row.color || '#1B5E20'"></span>
-                <span class="name">{{ row.supplierName }}</span>
+                <span class="supplier-tile" [style.background-color]="row.color || '#9CA3AF'"></span>
+                <div>
+                  <strong>{{ row.supplierName }}</strong>
+                  <span>{{ row.supplierCode }}</span>
+                </div>
               </div>
             </td>
-            <td><span class="code-cell">{{ row.supplierCode }}</span></td>
             <td class="strong">{{ row.totalShifts }}</td>
             <td class="strong">{{ row.totalDelivered | number }}</td>
-            <td>{{ row.workingHours | number:'1.2-2' }} {{ 'SUPPLIER_REVENUE.HOURS_UNIT' | translate }}</td>
+            <td>{{ row.workingHours | number:'1.0-0' }}</td>
             <td>{{ row.baseRevenue | sar }}</td>
             <td>{{ row.extraRevenue | sar }}</td>
-            <td><span class="positive">+{{ row.additionsTotal | number:'1.2-2' }}</span></td>
-            <td><span class="negative">-{{ row.deductionsTotal | number:'1.2-2' }}</span></td>
-            <td class="net">{{ row.netRevenue | sar }}</td>
-            <td class="text-center">
-              <div class="action-buttons">
-                <button class="btn btn-outline btn-sm" [title]="'SUPPLIER_REVENUE.STATEMENT_TOOLTIP' | translate" (click)="openStatement(row)" [disabled]="!row.supplierId">
-                  <span class="material-icons-round">receipt_long</span> {{ 'SUPPLIER_REVENUE.STATEMENT' | translate }}
-                </button>
-                <button class="btn btn-outline btn-sm btn-warn" [title]="'SUPPLIER_REVENUE.ADJUSTMENT_TOOLTIP' | translate" (click)="openAddAdjustmentModal(row)" [disabled]="!row.supplierId">
-                  <span class="material-icons-round">add_moderator</span> {{ 'SUPPLIER_REVENUE.ADJUSTMENT' | translate }}
-                </button>
-              </div>
+            <td class="positive">+{{ row.additionsTotal | number:'1.2-2' }}</td>
+            <td class="negative">-{{ row.deductionsTotal | number:'1.2-2' }}</td>
+            <td class="strong">{{ row.netRevenue | sar }}</td>
+            <td class="k-actions">
+              <button class="btn btn-outline btn-sm" [title]="'SUPPLIER_REVENUE.STATEMENT_TOOLTIP' | translate" (click)="openStatement(row)" [disabled]="!row.supplierId">
+                <span class="material-icons-round">receipt_long</span> {{ 'SUPPLIER_REVENUE.STATEMENT' | translate }}
+              </button>
+              <button class="k-icon-btn" [title]="'SUPPLIER_REVENUE.ADJUSTMENT_TOOLTIP' | translate" (click)="openAddAdjustmentModal(row)" [disabled]="!row.supplierId">
+                <span class="material-icons-round">add</span>
+              </button>
             </td>
-          </tr>
-          <tr *ngIf="summary.rows.length === 0">
-            <td colspan="11" class="empty-state">{{ 'SUPPLIER_REVENUE.NO_DATA' | translate }}</td>
           </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="summary.rows.length === 0">
+        <span class="material-icons-round">account_balance</span>
+        <p>{{ 'SUPPLIER_REVENUE.NO_DATA' | translate }}</p>
+      </div>
     </div>
-
-  </ng-container>
+  </section>
 
   <!-- Add/Deduct Adjustment Modal -->
   <div class="panel-backdrop" *ngIf="showAdjustmentModal" (click)="closeAdjustmentModal()">

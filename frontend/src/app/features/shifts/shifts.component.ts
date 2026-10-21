@@ -11,6 +11,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { VacationCommissionResponse } from '../../core/models/api.models';
 
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
 
 type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched' | 'vacation-days';
@@ -18,7 +19,7 @@ type ShiftTab = 'all' | 'attended' | 'absent' | 'excluded' | 'unmatched' | 'vaca
 @Component({
   selector: 'app-shifts',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe],
   templateUrl: './shifts.component.html',
   styleUrls: ['./shifts.component.scss']
 })

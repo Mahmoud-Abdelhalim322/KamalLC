@@ -1,15 +1,19 @@
 <div class="plan-management-page">
 
   <!-- Header -->
-  <div class="page-header flex-between">
-    <div>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">workspace_premium</span>{{ 'NAV.SECTION_PLATFORM' | translate }}</span>
       <h1 class="page-title">{{ 'PLATFORM.PLANS_TITLE' | translate }}</h1>
-      <p class="page-subtitle">{{ 'PLATFORM.PLANS_SUBTITLE' | translate }}</p>
+      <p class="k-page-sub">{{ 'PLATFORM.PLANS_SUBTITLE' | translate }}</p>
     </div>
-    <button class="btn btn-primary" (click)="openCreateModal()">
+    <div class="k-page-actions">
+      <button class="btn btn-ink" (click)="openCreateModal()">
       <span class="material-icons-round">add</span>
       <span>{{ 'PLATFORM.ADD_PLAN' | translate }}</span>
-    </button>
+      </button>
+    </div>
   </div>
 
   <!-- Banners for feedback -->

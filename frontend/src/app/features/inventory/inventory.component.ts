@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../core/services/inventory.service';
 import { CaptainService } from '../../core/services/captain.service';
@@ -12,11 +13,12 @@ import { errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, InitialsPipe],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
@@ -36,6 +38,7 @@ export class InventoryComponent implements OnInit {
   items: AssetItemResponse[] = [];
   itemPage = 0;
   itemTotalPages = 0;
+  itemTotal = 0;
   itemSearch = '';
   itemStatusFilter = '';
   isLoading = false;
@@ -109,12 +112,25 @@ export class InventoryComponent implements OnInit {
       search: this.itemSearch || undefined,
       page: this.itemPage, size: 15
     }).subscribe({
-      next: p => { this.items = p.content; this.itemTotalPages = p.totalPages; this.isLoading = false; },
+      next: p => { this.items = p.content; this.itemTotalPages = p.totalPages; this.itemTotal = p.totalElements; this.isLoading = false; },
       error: e => { this.error = errorMessage(e, this.i18n.t('INVENTORY.ERR_LOAD_ITEMS')); this.isLoading = false; }
     });
   }
 
   searchItems(): void { this.itemPage = 0; this.loadItems(); }
+
+  setStatusFilter(status: string): void {
+    this.itemStatusFilter = status;
+    this.searchItems();
+  }
+
+  categoryIcon(cat: AssetCategoryResponse): string {
+    return cat.name === 'SIM_CARD' ? 'sim_card' : cat.name === 'PHONE' ? 'phone_iphone' : 'category';
+  }
+
+  statusTone(s: string): string {
+    return s === 'AVAILABLE' ? 'success' : s === 'ASSIGNED' ? 'warning' : '';
+  }
 
   // ── Category Dialog ──
 

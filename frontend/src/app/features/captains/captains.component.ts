@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
-  ApiResponse, CaptainResponse, DocumentAlertFilter, DocumentStatus, PageResponse
+  ApiResponse, CaptainResponse, DashboardData, DocumentAlertFilter, DocumentStatus, PageResponse
 } from '../../core/models/api.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
@@ -48,12 +48,24 @@ export class CaptainsComponent implements OnInit {
     return this.captains.length > 0 && this.captains.every(c => this.selectedIds.has(c.id));
   }
 
+  /** Company-wide counts for the KPI strip (active captains, document alerts). */
+  summary: DashboardData | null = null;
+
   ngOnInit(): void {
-    const alert = this.route.snapshot.queryParamMap.get('alert');
-    if (alert === 'ANY' || alert === 'EXPIRED' || alert === 'EXPIRING' || alert === 'MISSING') {
-      this.alertFilter = alert;
-    }
-    this.loadCaptains();
+    this.http.get<ApiResponse<DashboardData>>('/api/dashboard').subscribe({
+      next: res => this.summary = res.success ? res.data ?? null : null,
+      error: () => this.summary = null
+    });
+
+    // Re-read on every change: the top-bar search navigates here with ?search= even when already on this page.
+    this.route.queryParamMap.subscribe(params => {
+      const alert = params.get('alert');
+      if (alert === 'ANY' || alert === 'EXPIRED' || alert === 'EXPIRING' || alert === 'MISSING') {
+        this.alertFilter = alert;
+      }
+      this.searchQuery = params.get('search') ?? this.searchQuery;
+      this.loadCaptains();
+    });
   }
 
   loadCaptains(): void {
@@ -191,8 +203,9 @@ export class CaptainsComponent implements OnInit {
     return type === 'EMPLOYEE' ? 'KSC' : 'KSCFL';
   }
 
+  /** k-badge tone for the contract type. */
   getTypeClass(type: string): string {
-    return type === 'EMPLOYEE' ? 'type-employee' : 'type-freelance';
+    return type === 'EMPLOYEE' ? 'brand' : 'purple';
   }
 
   getStatusLabel(status: string): string {
@@ -201,8 +214,9 @@ export class CaptainsComponent implements OnInit {
     return trans !== key ? trans : status;
   }
 
+  /** k-badge tone for the employment status. */
   getStatusClass(status: string): string {
-    const map: Record<string, string> = { 'ACTIVE': 'status-active', 'INACTIVE': 'status-inactive', 'TERMINATED': 'status-terminated' };
+    const map: Record<string, string> = { 'ACTIVE': 'success', 'ON_LEAVE': 'info', 'TERMINATED': 'danger' };
     return map[status] || '';
   }
 
@@ -213,14 +227,20 @@ export class CaptainsComponent implements OnInit {
     return captain.documentAlertCount > 1 ? `${label} (${captain.documentAlertCount})` : label;
   }
 
+  /** k-badge tone for the worst document; a valid one stays uncoloured. */
   documentAlertClass(captain: CaptainResponse): string {
     const map: Record<DocumentStatus, string> = {
-      'VALID': 'no-data',
-      'EXPIRING': 'doc-expiring',
-      'EXPIRED': 'doc-expired',
-      'MISSING': 'doc-missing'
+      'VALID': '',
+      'EXPIRING': 'warning',
+      'EXPIRED': 'danger',
+      'MISSING': 'purple'
     };
-    return map[captain.documentAlert] ?? 'no-data';
+    return map[captain.documentAlert] ?? '';
+  }
+
+  /** Initials for the avatar in the name cell. */
+  initials(name: string | null | undefined): string {
+    return (name || '').trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('');
   }
 
   // ── Export ──

@@ -1,159 +1,167 @@
 <div class="captains-page">
-  <div class="page-header">
-    <h1 class="page-title">{{ 'CAPTAINS.TITLE' | translate }}</h1>
-    <p class="page-subtitle">
-      {{ 'CAPTAINS.MANAGE_SUBTITLE' | translate }} {{ totalElements }} {{ 'CAPTAINS.CAPTAIN_UNIT' | translate }}
-    </p>
-  </div>
-
-  <!-- Search & Filters -->
-  <div class="toolbar">
-    <div class="search-box">
-      <span class="material-icons-round">search</span>
-      <input type="text" [placeholder]="'CAPTAINS.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+  <!-- Header on the yellow band (Figma W03) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">groups</span>{{ 'NAV.SECTION_MEMBERS' | translate }}</span>
+      <h1 class="page-title">{{ 'CAPTAINS.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'CAPTAINS.MANAGE_SUBTITLE' | translate }} {{ totalElements }} {{ 'CAPTAINS.CAPTAIN_UNIT' | translate }}</p>
     </div>
-
-    <div class="filter-tabs">
-      <button class="filter-tab" [class.active]="activeFilter === ''" (click)="setFilter('')">{{ 'COMMON.ALL' | translate }}</button>
-      <button class="filter-tab" [class.active]="activeFilter === 'EMPLOYEE'" (click)="setFilter('EMPLOYEE')">
-        <span class="dot employee"></span> KSC
-      </button>
-      <button class="filter-tab" [class.active]="activeFilter === 'FREELANCE'" (click)="setFilter('FREELANCE')">
-        <span class="dot freelance"></span> KSCFL
-      </button>
-      <button class="filter-tab" [class.active]="!!alertFilter" (click)="toggleAlertFilter()">
-        <span class="material-icons-round tab-icon">notification_important</span> {{ 'CAPTAINS.HAS_ALERT' | translate }}
-      </button>
-    </div>
-
-    <div class="toolbar-actions">
-      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting">
+    <div class="k-page-actions">
+      <button class="btn btn-glass" (click)="exportExcel()" [disabled]="isExporting">
         <span class="material-icons-round" [class.spinning]="isExporting">download</span>
         {{ 'COMMON.EXPORT_EXCEL' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="exportPdf()" [disabled]="isExportingPdf">
+      <button class="btn btn-glass" (click)="exportPdf()" [disabled]="isExportingPdf">
         <span class="material-icons-round" [class.spinning]="isExportingPdf">picture_as_pdf</span>
         {{ 'COMMON.EXPORT_PDF' | translate }}
       </button>
-      <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
+      <a routerLink="/captains/new" class="btn btn-ink" *ngIf="canManage">
         <span class="material-icons-round">person_add</span>
         {{ 'CAPTAINS.ADD_CAPTAIN' | translate }}
       </a>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'COMMON.LOADING' | translate }}</p>
-  </div>
-
-  <!-- Empty State -->
-  <div class="empty-state" *ngIf="!isLoading && captains.length === 0">
-    <span class="material-icons-round">people_outline</span>
-    <h3>{{ 'CAPTAINS.NO_CAPTAINS' | translate }}</h3>
-    <p>{{ 'CAPTAINS.NO_CAPTAINS_HINT' | translate }}</p>
-    <div class="empty-actions">
-      <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
-        <span class="material-icons-round">person_add</span>
-        {{ 'CAPTAINS.ADD_CAPTAIN' | translate }}
-      </a>
-      <a routerLink="/imports" class="btn btn-outline">
-        <span class="material-icons-round">upload_file</span>
-        {{ 'NAV.IMPORTS' | translate }}
-      </a>
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CAPTAINS.KPI_TOTAL' | translate }}</span>
+      <span class="k-kpi-value">{{ totalElements | number }}</span>
+      <span class="k-kpi-note">{{ 'CAPTAINS.KPI_TOTAL_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CAPTAINS.KPI_ACTIVE' | translate }}</span>
+      <span class="k-kpi-value">{{ summary?.totalActiveCaptains ?? '—' }}</span>
+      <span class="k-kpi-note" *ngIf="summary">{{ 'CAPTAINS.KPI_ACTIVE_NOTE' | translate:{ count: summary.captainsAtTarget } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CAPTAINS.KPI_DOC_ALERTS' | translate }}</span>
+      <span class="k-kpi-value">{{ summary?.captainsWithDocumentAlerts ?? '—' }}</span>
+      <span class="k-kpi-note" *ngIf="summary">{{ 'CAPTAINS.KPI_DOC_NOTE' | translate:{ expired: summary.expiredDocuments, expiring: summary.expiringDocuments } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CAPTAINS.KPI_MISSING' | translate }}</span>
+      <span class="k-kpi-value">{{ summary?.missingDocuments ?? '—' }}</span>
+      <span class="k-kpi-note">{{ 'CAPTAINS.KPI_MISSING_NOTE' | translate }}</span>
     </div>
   </div>
 
-  <!-- Captains Table -->
-  <div class="table-wrap" *ngIf="!isLoading && captains.length > 0">
-    <div class="bulk-actions" *ngIf="selectedIds.size > 0 && canManage">
-      <span class="selected-count">{{ selectedIds.size }} {{ 'COMMON.SELECTED' | translate }}</span>
+  <section class="k-card">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [placeholder]="'CAPTAINS.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+      </div>
+      <div class="k-chips">
+        <button [class.active]="activeFilter === ''" (click)="setFilter('')">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="activeFilter === 'EMPLOYEE'" (click)="setFilter('EMPLOYEE')">KSC</button>
+        <button [class.active]="activeFilter === 'FREELANCE'" (click)="setFilter('FREELANCE')">KSCFL</button>
+        <button [class.active]="!!alertFilter" (click)="toggleAlertFilter()">
+          <span class="material-icons-round">notification_important</span>{{ 'CAPTAINS.HAS_ALERT' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Bulk actions -->
+    <div class="k-bulk-bar" *ngIf="selectedIds.size > 0 && canManage">
+      <span class="k-check on"><span class="material-icons-round">check</span></span>
+      <strong>{{ selectedIds.size }} {{ 'COMMON.SELECTED' | translate }}</strong>
       <button class="btn btn-danger btn-sm" (click)="deleteSelected()">
         <span class="material-icons-round">delete_sweep</span>
         {{ 'COMMON.DELETE_SELECTED' | translate }}
       </button>
     </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="checkbox-cell" *ngIf="canManage">
-            <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll()" title="Select All">
-          </th>
-          <th>{{ 'CAPTAINS.COL_CODE' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_NAME' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_NAME_EN' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_CONTRACT_TYPE' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_APP_ID' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_PHONE' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_NATIONALITY' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_BORDER_NO' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_JOB_TITLE' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_NET_SALARY' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_DOC_STATUS' | translate }}</th>
-          <th>{{ 'CAPTAINS.COL_STATUS' | translate }}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let captain of captains" [routerLink]="['/captains', captain.id]" class="clickable-row"
-            [class.selected-row]="isSelected(captain.id)">
-          <td class="checkbox-cell" *ngIf="canManage">
-            <input type="checkbox" [checked]="isSelected(captain.id)" (click)="toggleSelect(captain.id, $event)">
-          </td>
-          <td class="code-cell">{{ captain.kamalCode }}</td>
-          <td class="name-cell">
-            <div class="captain-avatar">{{ captain.fullNameAr ? captain.fullNameAr.charAt(0) : 'C' }}</div>
-            {{ captain.fullNameAr }}
-          </td>
-          <td class="ltr-cell">{{ captain.fullNameEn || '—' }}</td>
-          <td>
-            <span class="type-badge" [class]="getTypeClass(captain.captainType)">
-              {{ getTypeLabel(captain.captainType) }}
-            </span>
-          </td>
-          <td>
-            <span class="ninja-id" *ngIf="captain.currentNinjaId">{{ captain.currentNinjaId }}</span>
-            <span class="no-data" *ngIf="!captain.currentNinjaId">—</span>
-          </td>
-          <td class="ltr-cell">{{ captain.phone }}</td>
-          <td>{{ captain.nationality || '—' }}</td>
-          <td class="ltr-cell">{{ captain.borderNumber || '—' }}</td>
-          <td>{{ captain.jobTitle || '—' }}</td>
-          <td>
-            <span *ngIf="captain.netSalary != null">{{ captain.netSalary | sar }}</span>
-            <span class="no-data" *ngIf="captain.netSalary == null">—</span>
-          </td>
-          <td>
-            <span class="badge" [class]="documentAlertClass(captain)">
-              {{ documentAlertLabel(captain) }}
-            </span>
-          </td>
-          <td>
-            <span class="badge" [class]="getStatusClass(captain.status)">
-              {{ getStatusLabel(captain.status) }}
-            </span>
-          </td>
-          <td class="actions-cell">
-            <button *ngIf="canManage" class="btn-icon danger" (click)="deleteCaptain(captain, $event)" title="Delete">
-              <span class="material-icons-round">delete_outline</span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+
+    <div class="k-empty" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>{{ 'COMMON.LOADING' | translate }}</p>
+    </div>
+
+    <div class="k-empty" *ngIf="!isLoading && captains.length === 0">
+      <span class="material-icons-round">people_outline</span>
+      <h3>{{ 'CAPTAINS.NO_CAPTAINS' | translate }}</h3>
+      <p>{{ 'CAPTAINS.NO_CAPTAINS_HINT' | translate }}</p>
+      <div class="empty-actions">
+        <a routerLink="/captains/new" class="btn btn-primary" *ngIf="canManage">
+          <span class="material-icons-round">person_add</span>
+          {{ 'CAPTAINS.ADD_CAPTAIN' | translate }}
+        </a>
+        <a routerLink="/imports" class="btn btn-outline">
+          <span class="material-icons-round">upload_file</span>
+          {{ 'NAV.IMPORTS' | translate }}
+        </a>
+      </div>
+    </div>
+
+    <div class="k-table-wrap" *ngIf="!isLoading && captains.length > 0">
+      <table class="k-table">
+        <thead>
+          <tr>
+            <th class="check-col" *ngIf="canManage">
+              <input type="checkbox" class="k-checkbox" [checked]="allSelected" (change)="toggleSelectAll()" title="Select All">
+            </th>
+            <th>{{ 'CAPTAINS.COL_NAME' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_CODE' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_CONTRACT_TYPE' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_PHONE' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_NATIONALITY' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_NET_SALARY' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_DOC_STATUS' | translate }}</th>
+            <th>{{ 'CAPTAINS.COL_STATUS' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let captain of captains" [routerLink]="['/captains', captain.id]" class="clickable-row"
+              [class.highlight]="isSelected(captain.id)">
+            <td class="check-col" *ngIf="canManage">
+              <input type="checkbox" class="k-checkbox" [checked]="isSelected(captain.id)" (click)="toggleSelect(captain.id, $event)">
+            </td>
+            <td>
+              <div class="k-person">
+                <span class="k-avatar">{{ initials(captain.fullNameAr) || 'C' }}</span>
+                <div>
+                  <strong>{{ captain.fullNameAr }}</strong>
+                  <span class="ltr">{{ captain.fullNameEn || '—' }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="code">{{ captain.kamalCode }}</td>
+            <td><span class="k-badge" [ngClass]="getTypeClass(captain.captainType)">{{ getTypeLabel(captain.captainType) }}</span></td>
+            <td class="ltr">{{ captain.phone }}</td>
+            <td>{{ captain.nationality || '—' }}</td>
+            <td class="strong">
+              <span *ngIf="captain.netSalary != null">{{ captain.netSalary | sar }}</span>
+              <span class="muted" *ngIf="captain.netSalary == null">—</span>
+            </td>
+            <td>
+              <span *ngIf="captain.documentAlert !== 'VALID'" class="k-badge dot" [ngClass]="documentAlertClass(captain)">{{ documentAlertLabel(captain) }}</span>
+              <span *ngIf="captain.documentAlert === 'VALID'" class="muted">—</span>
+            </td>
+            <td><span class="k-badge dot" [ngClass]="getStatusClass(captain.status)">{{ getStatusLabel(captain.status) }}</span></td>
+            <td class="actions">
+              <button *ngIf="canManage" class="k-icon-btn danger" (click)="deleteCaptain(captain, $event)" title="Delete">
+                <span class="material-icons-round">delete_outline</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Pagination -->
-    <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn btn-sm btn-outline" [disabled]="currentPage === 0" (click)="prevPage()">
-        <span class="material-icons-round">chevron_right</span>
+    <div class="k-pager" *ngIf="totalPages > 1">
+      <span class="k-pager-info">{{ 'COMMON.PAGE' | translate }} {{ currentPage + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }}</span>
+      <button class="btn btn-outline btn-sm" [disabled]="currentPage === 0" (click)="prevPage()">
+        <span class="material-icons-round k-flip">chevron_left</span>
         {{ 'COMMON.PREVIOUS' | translate }}
       </button>
-      <span class="page-info">{{ 'COMMON.PAGE' | translate }} {{ currentPage + 1 }} {{ 'COMMON.OF' | translate }} {{ totalPages }}</span>
-      <button class="btn btn-sm btn-outline" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">
+      <span class="k-page-num">{{ currentPage + 1 }}</span>
+      <button class="btn btn-outline btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">
         {{ 'COMMON.NEXT' | translate }}
-        <span class="material-icons-round">chevron_left</span>
+        <span class="material-icons-round k-flip">chevron_right</span>
       </button>
     </div>
-  </div>
+  </section>
 </div>

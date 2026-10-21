@@ -1,11 +1,17 @@
 <div class="form-page">
-  <div class="form-header">
-    <a routerLink="/captains" class="back-link">
-      <span class="material-icons-round">arrow_forward</span>
-      {{ 'CAPTAIN_FORM.BACK_TO_LIST' | translate }}
-    </a>
-    <h1 class="page-title">{{ isEditMode ? ('CAPTAIN_FORM.EDIT_TITLE' | translate) : ('CAPTAIN_FORM.ADD_TITLE' | translate) }}</h1>
-    <p class="page-subtitle" *ngIf="isEditMode">ID-KSLSC: <span class="code">{{ kamalCode }}</span></p>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">person_add</span>{{ 'NAV.CAPTAINS' | translate }}</span>
+      <h1 class="page-title">{{ isEditMode ? ('CAPTAIN_FORM.EDIT_TITLE' | translate) : ('CAPTAIN_FORM.ADD_TITLE' | translate) }}</h1>
+      <p class="k-page-sub" *ngIf="isEditMode">ID-KSLSC: <span class="code">{{ kamalCode }}</span></p>
+    </div>
+    <div class="k-page-actions">
+      <a routerLink="/captains" class="btn btn-glass">
+        <span class="material-icons-round k-flip">arrow_back</span>
+        {{ 'CAPTAIN_FORM.BACK_TO_LIST' | translate }}
+      </a>
+    </div>
   </div>
 
   <div class="loading-container" *ngIf="isLoading">

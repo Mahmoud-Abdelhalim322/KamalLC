@@ -1,4 +1,4 @@
-.reports-page { max-width: 1600px; }
+.reports-page { }
 
 .page-header { margin-bottom: 24px; }
 .page-title { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
@@ -305,3 +305,7 @@ th.sortable {
     &.absent { background: var(--warning); }
   }
 }
+
+/* ---------- Premium layout (Figma W18) ---------- */
+.report-table { margin-bottom: 24px; }
+.report-table td { white-space: nowrap; }

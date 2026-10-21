@@ -13,12 +13,13 @@ import {
 import { DocumentGalleryComponent } from '../../../shared/components/document-gallery/document-gallery.component';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { SarPipe } from '../../../shared/pipes/sar.pipe';
 
 @Component({
   selector: 'app-captain-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DocumentGalleryComponent, TranslatePipe, SarPipe],
+  imports: [CommonModule, RouterLink, FormsModule, DocumentGalleryComponent, TranslatePipe, SarPipe, InitialsPipe],
   templateUrl: './captain-detail.component.html',
   styleUrls: ['./captain-detail.component.scss']
 })

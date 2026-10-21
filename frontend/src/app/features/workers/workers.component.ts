@@ -7,11 +7,12 @@ import { ApiResponse, DocumentAlertFilter, DocumentStatus, PageResponse, StaffRe
 
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-workers',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterLink, FormsModule, TranslatePipe, InitialsPipe],
   templateUrl: './workers.component.html',
   styleUrls: ['./workers.component.scss']
 })

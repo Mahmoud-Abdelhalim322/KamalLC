@@ -1,20 +1,22 @@
 <div class="loan-detail-page">
 
   <!-- Back button + header -->
-  <div class="page-header">
-    <button class="btn btn-outline btn-back" (click)="goBack()">
-      <span class="material-icons-round">arrow_forward</span> {{ 'LOAN_DETAIL.BACK' | translate }}
-    </button>
-    <div class="header-info" *ngIf="memberName">
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">account_balance_wallet</span>{{ 'NAV.SECTION_OPERATIONS' | translate }}</span>
       <h1 class="page-title">{{ 'LOAN_DETAIL.TITLE' | translate:{ name: memberName } }}</h1>
-      <p class="page-subtitle">
-        <span class="type-badge" [attr.data-type]="memberType">{{ memberTypeLabel(memberType) }}</span>
-        <span class="code">{{ memberCode }}</span>
-      </p>
+      <p class="k-page-sub"><span class="type-badge" [attr.data-type]="memberType">{{ memberTypeLabel(memberType) }}</span>
+        <span class="code">{{ memberCode }}</span></p>
     </div>
-    <button class="btn btn-primary" (click)="showNewLoanForm = !showNewLoanForm" *ngIf="canManage">
+    <div class="k-page-actions">
+      <button class="btn btn-glass btn-back" (click)="goBack()">
+      <span class="material-icons-round k-flip">arrow_back</span> {{ 'LOAN_DETAIL.BACK' | translate }}
+      </button>
+      <button class="btn btn-ink" (click)="showNewLoanForm = !showNewLoanForm" *ngIf="canManage">
       <span class="material-icons-round">add</span> {{ 'LOAN_DETAIL.NEW_LOAN' | translate }}
-    </button>
+      </button>
+    </div>
   </div>
 
   <!-- Messages -->

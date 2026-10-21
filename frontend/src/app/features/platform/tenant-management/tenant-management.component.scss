@@ -10,7 +10,7 @@
   .page-title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0F172A;
+    color: var(--ink);
     margin: 0;
   }
 
@@ -72,7 +72,7 @@
 
     .tenant-name {
       font-weight: 700;
-      color: #0F172A;
+      color: var(--ink);
       font-size: 0.92rem;
     }
 
@@ -89,7 +89,7 @@ code {
   border-radius: 6px;
   font-family: monospace;
   font-size: 0.85rem;
-  color: #2563EB;
+  color: var(--brand-deep);
 }
 
 .badge-active {
@@ -103,7 +103,7 @@ code {
 }
 
 .badge-trial {
-  background: #DBEAFE;
+  background: #FFE9A8;
   color: #1E40AF;
 }
 
@@ -140,8 +140,8 @@ code {
   }
 
   &.text-primary {
-    color: #2563EB;
-    &:hover { background: #EFF6FF; border-color: #93C5FD; }
+    color: var(--brand-deep);
+    &:hover { background: #FFF8E1; border-color: var(--brand); }
   }
 
   &.text-warning {
@@ -244,13 +244,13 @@ code {
       margin: 0;
       font-size: 1.15rem;
       font-weight: 800;
-      color: #0F172A;
+      color: var(--ink);
       display: flex;
       align-items: center;
       gap: 10px;
 
       .material-icons-round {
-        color: #2563EB;
+        color: var(--brand-deep);
       }
     }
 
@@ -269,7 +269,7 @@ code {
 
       &:hover {
         background: #E2E8F0;
-        color: #0F172A;
+        color: var(--ink);
       }
     }
   }
@@ -330,7 +330,7 @@ code {
       padding-inline-end: 12px;
       font-size: 0.85rem;
       font-weight: 800;
-      color: #2563EB;
+      color: var(--brand-deep);
     }
 
     @media (max-width: 600px) {

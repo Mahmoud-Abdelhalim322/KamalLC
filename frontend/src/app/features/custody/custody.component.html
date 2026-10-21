@@ -1,90 +1,157 @@
 <div class="page-container">
-  <h1 class="page-title"><span class="material-icons-round">account_balance_wallet</span> {{ 'CUSTODY.PAGE_TITLE' | translate }}</h1>
+  <!-- Header on the yellow band (Figma W21) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">handshake</span>{{ 'NAV.SECTION_ASSETS' | translate }}</span>
+      <h1 class="page-title">{{ 'CUSTODY.PAGE_TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'CUSTODY.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <button class="btn btn-glass" (click)="exportExcel()" [disabled]="isExporting">
+        <span class="material-icons-round" [class.spinning]="isExporting">download</span> {{ 'CUSTODY.EXPORT_EXCEL' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CUSTODY.KPI_CAPTAINS' | translate }}</span>
+      <span class="k-kpi-value">{{ summaries.length }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_CAPTAINS_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CUSTODY.KPI_ACTIVE' | translate }}</span>
+      <span class="k-kpi-value">{{ totalActive }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_ACTIVE_NOTE' | translate:{ vehicles: totalVehicles, items: totalActive - totalVehicles } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CUSTODY.KPI_VEHICLES' | translate }}</span>
+      <span class="k-kpi-value">{{ totalVehicles }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_VEHICLES_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'CUSTODY.KPI_DEVICES' | translate }}</span>
+      <span class="k-kpi-value">{{ totalSimsPhones }}</span>
+      <span class="k-kpi-note">{{ 'CUSTODY.KPI_DEVICES_NOTE' | translate:{ count: totalOther } }}</span>
+    </div>
+  </div>
 
   <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
 
-  <div class="toolbar">
-    <div class="search-group">
-      <input type="text" class="search-input" [placeholder]="'CUSTODY.SEARCH_PLACEHOLDER' | translate"
-             [(ngModel)]="searchQuery" (input)="applyFilter()">
-    </div>
-    <div class="stat-pills">
-      <div class="pill">
-        <span class="material-icons-round">people</span>
-        <span>{{ summaries.length }} {{ 'CUSTODY.CAPTAINS_COUNT' | translate }}</span>
+  <div class="custody-layout">
+    <!-- Captains holding custody -->
+    <aside class="k-card captains-card">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [placeholder]="'CUSTODY.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="searchQuery" (input)="applyFilter()">
       </div>
-    </div>
-    <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting">
-      <span class="material-icons-round" [class.spinning]="isExporting">download</span> {{ 'CUSTODY.EXPORT_EXCEL' | translate }}
-    </button>
-  </div>
-
-  <div class="loading-bar" *ngIf="isLoading"></div>
-
-  <div class="custody-grid">
-    <div *ngFor="let s of filteredSummaries" class="custody-card" [class.expanded]="expandedCaptainId === s.captainId">
-      <div class="card-header" (click)="toggleCaptain(s.captainId)">
-        <div class="captain-info">
-          <div class="captain-avatar">{{ s.captainName.charAt(0) }}</div>
-          <div>
-            <span class="captain-name">{{ s.captainName }}</span>
-            <span class="captain-code">{{ s.captainCode }}</span>
-          </div>
-        </div>
-        <div class="asset-counters">
-          <div class="counter" *ngIf="s.vehicleCount > 0">
-            <span class="material-icons-round">directions_car</span> {{ s.vehicleCount }}
-          </div>
-          <div class="counter" *ngIf="s.simCount > 0">
-            <span class="material-icons-round">sim_card</span> {{ s.simCount }}
-          </div>
-          <div class="counter" *ngIf="s.phoneCount > 0">
-            <span class="material-icons-round">phone_iphone</span> {{ s.phoneCount }}
-          </div>
-          <div class="counter" *ngIf="s.otherCount > 0">
-            <span class="material-icons-round">category</span> {{ s.otherCount }}
-          </div>
-          <div class="total-badge">{{ s.activeCount }} {{ 'CUSTODY.ITEMS_COUNT' | translate }}</div>
-          <span class="material-icons-round expand-icon">{{ expandedCaptainId === s.captainId ? 'expand_less' : 'expand_more' }}</span>
-        </div>
+      <span class="side-label">{{ summaries.length }} {{ 'CUSTODY.CAPTAINS_COUNT' | translate }}</span>
+      <div class="loading-bar" *ngIf="isLoading"></div>
+      <button *ngFor="let s of filteredSummaries" type="button" class="captain-row"
+              [class.active]="selectedCaptainId === s.captainId" (click)="selectCaptain(s)">
+        <span class="k-avatar">{{ s.captainName | initials }}</span>
+        <span class="captain-text">
+          <strong>{{ s.captainName }}</strong>
+          <span>{{ s.captainCode }}</span>
+        </span>
+        <span class="count-pill">{{ s.activeCount }} {{ 'CUSTODY.ITEMS_COUNT' | translate }}</span>
+      </button>
+      <div class="k-empty" *ngIf="filteredSummaries.length === 0 && !isLoading">
+        <span class="material-icons-round">inventory</span>
+        <p>{{ 'CUSTODY.NO_ACTIVE_CUSTODY' | translate }}</p>
       </div>
+    </aside>
 
-      <div class="card-detail" *ngIf="expandedCaptainId === s.captainId">
-        <table class="detail-table">
-          <thead>
-            <tr>
-              <th>{{ 'CUSTODY.COL_TYPE' | translate }}</th>
-              <th>{{ 'CUSTODY.COL_DESCRIPTION' | translate }}</th>
-              <th>{{ 'CUSTODY.COL_ASSIGNED_DATE' | translate }}</th>
-              <th>{{ 'CUSTODY.COL_BY' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of s.activeItems">
-              <td>
-                <span class="material-icons-round type-icon">{{ assetTypeIcon(item.assetType) }}</span>
-                {{ item.assetTypeLabelAr }}
-              </td>
-              <td class="asset-label">{{ item.assetLabel }}</td>
-              <td>{{ item.assignedAt | date:'yyyy-MM-dd' }}</td>
-              <td>{{ item.assignedBy || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="card-actions">
-          <button class="btn btn-secondary btn-sm history-btn" (click)="openHistory(s); $event.stopPropagation()">
-            <span class="material-icons-round">history</span> {{ 'CUSTODY.VIEW_ALL_HISTORY' | translate }}
-          </button>
-          <button class="btn btn-outline btn-sm" (click)="exportHandoverPdf(s); $event.stopPropagation()" [disabled]="exportingCaptainId === s.captainId">
-            <span class="material-icons-round" [class.spinning]="exportingCaptainId === s.captainId">picture_as_pdf</span> {{ 'CUSTODY.EXPORT_HANDOVER_PDF' | translate }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <div class="detail-column">
+      <ng-container *ngIf="selected as s; else noSelection">
+        <!-- Active custody of the selected captain -->
+        <section class="k-card">
+          <div class="selected-head">
+            <div class="k-person">
+              <span class="k-avatar">{{ s.captainName | initials }}</span>
+              <div><strong>{{ s.captainName }}</strong><span>{{ s.captainCode }}</span></div>
+            </div>
+            <div class="selected-actions">
+              <button class="btn btn-outline" (click)="openHistory(s)">
+                <span class="material-icons-round">history</span> {{ 'CUSTODY.VIEW_ALL_HISTORY' | translate }}
+              </button>
+              <button class="btn btn-primary" (click)="exportHandoverPdf(s)" [disabled]="exportingCaptainId === s.captainId">
+                <span class="material-icons-round" [class.spinning]="exportingCaptainId === s.captainId">picture_as_pdf</span> {{ 'CUSTODY.EXPORT_HANDOVER_PDF' | translate }}
+              </button>
+            </div>
+          </div>
 
-    <div class="empty-state" *ngIf="filteredSummaries.length === 0 && !isLoading">
-      <span class="material-icons-round">inventory</span>
-      <p>{{ 'CUSTODY.NO_ACTIVE_CUSTODY' | translate }}</p>
+          <h3 class="section-title">{{ 'CUSTODY.ACTIVE_ITEMS' | translate:{ count: s.activeCount } }}</h3>
+
+          <div class="k-table-wrap">
+            <table class="k-table">
+              <thead>
+                <tr>
+                  <th>{{ 'CUSTODY.COL_TYPE' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_DESCRIPTION' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_ASSIGNED_DATE' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_BY' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of s.activeItems">
+                  <td>
+                    <span class="type-cell">
+                      <span class="type-icon"><span class="material-icons-round">{{ assetTypeIcon(item.assetType) }}</span></span>
+                      <strong>{{ item.assetTypeLabelAr }}</strong>
+                    </span>
+                  </td>
+                  <td class="k-muted-strong">{{ item.assetLabel }}</td>
+                  <td>{{ item.assignedAt | date:'dd/MM/yyyy' }}</td>
+                  <td class="k-muted">{{ item.assignedBy || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Recent history -->
+        <section class="k-card" *ngIf="recentHistory.length > 0">
+          <div class="k-card-head">
+            <span class="k-icon-tile"><span class="material-icons-round">history</span></span>
+            <h3>{{ 'CUSTODY.HISTORY_TITLE' | translate }}</h3>
+          </div>
+          <div class="k-table-wrap">
+            <table class="k-table">
+              <thead>
+                <tr>
+                  <th>{{ 'CUSTODY.COL_ITEM' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_ASSIGNED_DATE' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_RETURNED_DATE' | translate }}</th>
+                  <th>{{ 'CUSTODY.COL_STATUS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of recentHistory">
+                  <td>{{ r.assetTypeLabelAr }} · {{ r.assetLabel }}</td>
+                  <td>{{ r.assignedAt | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ r.returnedAt ? (r.returnedAt | date:'dd/MM/yyyy') : '—' }}</td>
+                  <td>
+                    <span class="k-badge dot" [ngClass]="r.status === 'ACTIVE' ? 'warning' : 'success'">
+                      {{ (r.status === 'ACTIVE' ? 'CUSTODY.STATUS_ACTIVE' : 'CUSTODY.STATUS_RETURNED') | translate }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-template #noSelection>
+        <section class="k-card">
+          <div class="k-empty">
+            <span class="material-icons-round">handshake</span>
+            <p>{{ 'CUSTODY.NO_ACTIVE_CUSTODY' | translate }}</p>
+          </div>
+        </section>
+      </ng-template>
     </div>
   </div>
 

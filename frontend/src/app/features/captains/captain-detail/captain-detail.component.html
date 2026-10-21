@@ -14,39 +14,31 @@
 
   <ng-container *ngIf="captain && !isLoading">
     <!-- Back + Header -->
-    <div class="detail-header">
-      <a routerLink="/captains" class="back-link">
-        <span class="material-icons-round">arrow_forward</span>
-        {{ 'CAPTAIN_DETAIL.BACK_TO_LIST' | translate }}
-      </a>
-
-      <div class="header-content">
-        <div class="header-right">
-          <div class="captain-avatar-lg">{{ captain.fullNameAr.charAt(0) }}</div>
-          <div class="header-info">
-            <h1>{{ captain.fullNameAr }}</h1>
-            <div class="header-meta">
-              <span class="code">{{ captain.kamalCode }}</span>
-              <span class="type-badge" [class]="getTypeClass(captain.captainType)">
-                {{ getTypeLabel(captain.captainType) }}
-              </span>
-              <span class="status-badge" [class]="getStatusClass(captain.status)">
-                {{ getStatusLabel(captain.status) }}
-              </span>
-            </div>
-          </div>
+    <div class="k-page-head">
+      <div class="k-page-lead">
+        <span class="k-avatar ink xl">{{ captain.fullNameAr | initials }}</span>
+        <div class="k-page-titles">
+          <span class="k-crumb"><span class="material-icons-round">local_shipping</span>{{ 'NAV.CAPTAINS' | translate }} · {{ captain.kamalCode }}</span>
+          <h1 class="page-title">{{ captain.fullNameAr }}</h1>
+          <p class="k-page-sub k-page-badges">
+            <span class="k-badge" [ngClass]="getTypeClass(captain.captainType)">{{ getTypeLabel(captain.captainType) }}</span>
+            <span class="k-badge dot" [ngClass]="getStatusClass(captain.status)">{{ getStatusLabel(captain.status) }}</span>
+          </p>
         </div>
-
-        <div class="header-actions">
-          <a class="btn btn-primary" [routerLink]="['/captains', captain.id, 'edit']">
-            <span class="material-icons-round">edit</span>
-            {{ 'CAPTAIN_DETAIL.EDIT_DATA' | translate }}
-          </a>
-          <button class="btn btn-danger" (click)="deleteCaptain()">
-            <span class="material-icons-round">delete_outline</span>
-            {{ 'CAPTAIN_DETAIL.DELETE_CAPTAIN' | translate }}
-          </button>
-        </div>
+      </div>
+      <div class="k-page-actions">
+        <a routerLink="/captains" class="btn btn-glass">
+          <span class="material-icons-round k-flip">arrow_back</span>
+          {{ 'CAPTAIN_DETAIL.BACK_TO_LIST' | translate }}
+        </a>
+        <button class="btn btn-glass" (click)="deleteCaptain()">
+          <span class="material-icons-round">delete_outline</span>
+          {{ 'CAPTAIN_DETAIL.DELETE_CAPTAIN' | translate }}
+        </button>
+        <a class="btn btn-ink" [routerLink]="['/captains', captain.id, 'edit']">
+          <span class="material-icons-round">edit</span>
+          {{ 'CAPTAIN_DETAIL.EDIT_DATA' | translate }}
+        </a>
       </div>
     </div>
 

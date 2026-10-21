@@ -1,5 +1,6 @@
 export const EN_TRANSLATIONS = {
   COMMON: {
+    CLEAR: 'Clear',
     APP_NAME: 'Kamal Food',
     COMPANY_NAME: 'Kamal Bin Khalaf Al-Sulami Logistics Services',
     COMPANY_NAME_SHORT: 'Kamal Al-Sulami Co.',
@@ -99,6 +100,14 @@ export const EN_TRANSLATIONS = {
     USER_MANAGEMENT: 'User Management',
     SETTINGS: 'Settings',
     LOGOUT: 'Logout',
+    TAGLINE: 'Captains & Delivery Ops',
+    PLATFORM_TAGLINE: 'Platform',
+    SECTION_MEMBERS: 'Members',
+    SECTION_OPERATIONS: 'Operations',
+    SECTION_FINANCE: 'Finance & Reports',
+    SECTION_ASSETS: 'Assets',
+    SECTION_SYSTEM: 'System',
+    SECTION_PLATFORM: 'Master Management',
 
     // Platform navigation
     PLATFORM_DASHBOARD: 'Platform Dashboard',
@@ -111,6 +120,7 @@ export const EN_TRANSLATIONS = {
   },
 
   HEADER: {
+    SEARCH_PLACEHOLDER: 'Search captains by name, code, ID or phone…',
     NOTIFICATIONS: 'Notifications & Alerts',
     NOTIFICATIONS_EMPTY: 'No new notifications, all documents are up to date!',
     MARK_ALL_READ: 'Mark all as read',
@@ -138,6 +148,13 @@ export const EN_TRANSLATIONS = {
 
   AUTH: {
     LOGIN_TITLE: 'Kamal Al-Sulami Co.',
+    WELCOME_BACK: 'Welcome back',
+    WELCOME_SUB: 'Sign in to manage captains, shifts and payroll',
+    HERO_BADGE: 'Delivery captains management',
+    HERO_TITLE: 'Every captain, every shift, every riyal — in one place.',
+    FAST_DELIVERY_DESC: 'Live shift and order tracking',
+    INVENTORY_MANAGEMENT_DESC: 'Fleet, custody and documents together',
+    SECURITY_PRO_DESC: 'Fine-grained roles and a full audit trail',
     LOGIN_SUBTITLE: 'Logistics & Fleet Management System',
     TAGLINE: 'Integrated Logistics Solutions',
     FAST_DELIVERY: 'Fast Delivery',
@@ -156,6 +173,17 @@ export const EN_TRANSLATIONS = {
   },
 
   DASHBOARD: {
+    ALERTS_OPEN: '{{count}} open alerts',
+    EXPIRED_DOCS_LABEL: 'Expired Documents',
+    UNMATCHED_LABEL: 'IDs + Unlinked Shifts',
+    LATE_RETURNS_LABEL: 'Overdue Vehicle Returns',
+    COL_CAPTAIN: 'Captain',
+    COL_TYPE: 'Type',
+    COL_SHIFTS: 'Shifts',
+    COL_ORDERS: 'Orders',
+    TARGET_ACHIEVED_SHORT: 'Achieved',
+    QUICK_ACTIONS_SHORT: 'Quick Actions',
+    ACTION_REPORTS: 'Reports',
     HERO_TAG: 'Executive Operations Command Center',
     TITLE: 'Strategic Performance Dashboard',
     SUBTITLE_PERIOD: 'Comprehensive overview from {{from}} to {{to}}',
@@ -235,6 +263,14 @@ export const EN_TRANSLATIONS = {
   },
 
   CAPTAINS: {
+    KPI_TOTAL: 'Total Captains',
+    KPI_TOTAL_NOTE: 'matching the current filter',
+    KPI_ACTIVE: 'Active Captains',
+    KPI_ACTIVE_NOTE: '{{count}} at target',
+    KPI_DOC_ALERTS: 'Captains with Document Alerts',
+    KPI_DOC_NOTE: '{{expired}} expired · {{expiring}} expiring soon',
+    KPI_MISSING: 'Missing Documents',
+    KPI_MISSING_NOTE: 'records to complete',
     TITLE: 'Captains Management',
     ADD_CAPTAIN: 'Add New Captain',
     SEARCH_PLACEHOLDER: 'Search by name, Kamal code, national ID, phone...',
@@ -512,6 +548,7 @@ export const EN_TRANSLATIONS = {
   },
 
   WORKERS: {
+    SUBTITLE: '{{count}} workers — maintenance, warehouse, transport and support staff',
     TITLE: 'Workers',
     ADD_WORKER: 'Add Worker',
     SEARCH_PLACEHOLDER: 'Search by name, code, or national ID...',
@@ -536,6 +573,8 @@ export const EN_TRANSLATIONS = {
   },
 
   MANAGERS: {
+    SUBTITLE: '{{count}} managers — management and supervision team',
+    SINCE: 'Since {{date}}',
     TITLE: 'Managers',
     ADD_MANAGER: 'Add Manager',
     SEARCH_PLACEHOLDER: 'Search by name, code, or job title...',
@@ -662,6 +701,14 @@ export const EN_TRANSLATIONS = {
   },
 
   NINJA_IDS: {
+    KPI_TOTAL: 'Total IDs',
+    KPI_TOTAL_NOTE: 'Across {{count}} suppliers',
+    KPI_SUPPLIERS: 'Suppliers',
+    KPI_SUPPLIERS_NOTE: '{{count}} active',
+    KPI_VIEW: 'In current view',
+    KPI_VIEW_ALL: 'All suppliers',
+    ALL_SUPPLIERS: 'All suppliers',
+    SHOWING: 'Showing {{count}} of {{total}}',
     TITLE: 'Supplier ID Registry',
     SUBTITLE: 'Manage supplier IDs and assign them to captains',
     SUBTITLE_MANAGE: 'Manage supplier IDs and link them to captains — {{count}} IDs',
@@ -745,6 +792,7 @@ export const EN_TRANSLATIONS = {
   },
 
   IMPORTS: {
+    DOWNLOAD_TEMPLATE_SHORT: 'Download template',
     TITLE: 'Data Imports',
     SUBTITLE: 'Import shift sheets, captain data, deductions, and vacation commissions',
     SUBTITLE_CAPTAINS: 'Upload captain roster and supplier IDs',
@@ -872,6 +920,12 @@ export const EN_TRANSLATIONS = {
   },
 
   SHIFTS: {
+    KPI_SHIFTS: 'Shifts in Period',
+    KPI_SHIFTS_NOTE: 'matching the current filters',
+    KPI_PAGE_ORDERS: 'Orders on this Page',
+    KPI_PAGE_HOURS: 'Hours on this Page',
+    KPI_PAGE_PAY: 'Net Dues on this Page',
+    KPI_PAGE_NOTE: '{{count}} shifts shown',
     TITLE: 'Shifts',
     SUBTITLE: 'Each shift imported from the supplier, with captain payment calculations',
     IMPORT_DEDUCTIONS: 'Import Supplier Deductions',
@@ -1098,6 +1152,11 @@ export const EN_TRANSLATIONS = {
   },
 
   LOANS: {
+    COL_REPAID: 'Repaid',
+    KPI_MEMBERS_NOTE: 'captains, workers and managers',
+    KPI_WITH_LOANS_NOTE: 'with outstanding loans',
+    KPI_ACTIVE_NOTE: 'deducted monthly from payroll',
+    KPI_REMAINING_NOTE: 'of {{amount}} issued',
     TITLE: 'Loan Management',
     SUBTITLE: 'View and manage loans for all members (captains, workers, managers)',
     TOTAL_MEMBERS: 'Total Members',
@@ -1173,6 +1232,14 @@ export const EN_TRANSLATIONS = {
   },
 
   ORDERS: {
+    KPI_TOTAL_ORDERS: 'Total Orders',
+    KPI_TOTAL_NOTE: '{{from}} to {{to}}',
+    KPI_AVG: 'Avg Orders / Shift',
+    KPI_AVG_NOTE: 'over {{count}} shifts',
+    KPI_RATE: 'Target Achievement',
+    KPI_RATE_NOTE: 'target {{target}} orders',
+    KPI_CAPTAINS: 'Captains',
+    KPI_CAPTAINS_NOTE: 'extra orders after 18: {{count}}',
     TITLE: 'Orders Achievement Dashboard',
     SUBTITLE: 'Daily Delivery Per Captain Report — Daily captain performance & conditional formatting',
     FILTER_FROM: 'From',
@@ -1212,6 +1279,8 @@ export const EN_TRANSLATIONS = {
   },
 
   SUPPLIER_REVENUE: {
+    KPI_SUPPLIERS_NOTE: '{{count}} suppliers',
+    KPI_NET_NOTE: 'After adjustments and extra revenue',
     TITLE: 'Supplier Revenue & Financial Adjustments',
     SUBTITLE: 'Track supplier revenue, orders, and manage deduction and addition items',
     FILTER_FROM: 'From',
@@ -1441,6 +1510,22 @@ export const EN_TRANSLATIONS = {
   },
 
   FLEET: {
+    KPI_TOTAL: 'Total vehicles',
+    KPI_TOTAL_NOTE: '{{count}} rented',
+    KPI_ASSIGNED: 'Assigned',
+    KPI_ASSIGNED_NOTE: '{{count}} late returns',
+    KPI_AVAILABLE: 'Available',
+    KPI_AVAILABLE_NOTE: 'Ready to hand over',
+    KPI_MAINT: 'In maintenance',
+    KPI_MAINT_NOTE: '{{count}} open orders',
+    OPEN_ORDERS: 'Open maintenance orders',
+    OPEN_COUNT: '{{count}} in progress',
+    SHOWING: 'Showing {{count}} of {{total}} vehicles',
+    COL_VEHICLE_CAR: 'Vehicle',
+    COL_DOCS: 'Documents',
+    HAND_TO_CAPTAIN: 'Hand to captain',
+    SINCE: 'Since {{date}}',
+    SUBTITLE: 'Vehicles, handover movements and maintenance orders',
     TITLE: 'Fleet Management',
     TAB_VEHICLES: 'Vehicles',
     TAB_ASSIGNMENTS: 'Handover Movements',
@@ -1467,9 +1552,9 @@ export const EN_TRANSLATIONS = {
     COL_ACTIONS: 'Actions',
 
     // Document status badges
-    DOC_EXPIRED: 'Expired 🔴',
-    DOC_EXPIRING: 'Expiring Soon 🟡',
-    DOC_VALID: 'Valid 🟢',
+    DOC_EXPIRED: 'Expired',
+    DOC_EXPIRING: 'Expiring Soon',
+    DOC_VALID: 'Valid',
 
     OPERATING_CARD: 'Operating Card',
     REGISTRATION: 'Registration',
@@ -1635,6 +1720,14 @@ export const EN_TRANSLATIONS = {
   },
 
   INVENTORY: {
+    CAT_FIELDS: 'Category fields:',
+    NEW_CATEGORY: 'New category',
+    CUSTODY_LOG: 'Custody log',
+    SHOWING: 'Showing {{count}} of {{total}}',
+    SINCE: 'Since {{date}}',
+    BTN_ASSIGN: 'Hand over',
+    BTN_RETURN: 'Receive',
+    SUBTITLE: 'Items that can be handed to captains as custody',
     PAGE_TITLE: 'Inventory Storage',
     CATEGORIES: 'Categories',
     ADD_CATEGORY: 'Add Category',
@@ -1725,6 +1818,16 @@ export const EN_TRANSLATIONS = {
   },
 
   CUSTODY: {
+    KPI_CAPTAINS: 'Captains holding custody',
+    KPI_CAPTAINS_NOTE: 'With active custody now',
+    KPI_ACTIVE: 'Active custody',
+    KPI_ACTIVE_NOTE: '{{vehicles}} vehicles · {{items}} items',
+    KPI_VEHICLES: 'Vehicles handed over',
+    KPI_VEHICLES_NOTE: 'From the company fleet',
+    KPI_DEVICES: 'SIMs & phones',
+    KPI_DEVICES_NOTE: '{{count}} other items',
+    ACTIVE_ITEMS: 'Active custody ({{count}})',
+    HISTORY_TITLE: 'Custody history',
     TITLE: 'Custody Log',
     PAGE_TITLE: 'Custody Log',
     SUBTITLE: 'Track custody items handed to and returned by members',
@@ -1843,6 +1946,8 @@ export const EN_TRANSLATIONS = {
   },
 
   USER_MGMT: {
+    ACCOUNTS_COUNT: '{{count}} accounts · {{active}} active',
+    COL_USER: 'User',
     TITLE: 'User Management',
     SUBTITLE: 'Manage system users, roles, and permissions',
     TAB_USERS: 'User Accounts',
@@ -2112,6 +2217,38 @@ export const EN_TRANSLATIONS = {
   },
 
   PLATFORM: {
+    SEARCH_AUDIT: 'Search by user or details...',
+    ALL_ACTIONS: 'All actions',
+    ALL_TENANTS: 'All companies',
+    KPI_TENANTS_TOTAL: 'Total companies',
+    KPI_TENANTS_USERS_NOTE: '{{count}} users',
+    KPI_TENANTS_ACTIVE: 'Active',
+    KPI_TENANTS_CAPTAINS_NOTE: '{{count}} captains on the platform',
+    KPI_TENANTS_TRIAL: 'On trial',
+    KPI_TENANTS_TRIAL_NOTE: 'Trial subscription',
+    KPI_TENANTS_SUSPENDED: 'Suspended',
+    KPI_TENANTS_SUSPENDED_NOTE: 'Needs review',
+    KPI_SUBS_ACTIVE: 'Active subscriptions',
+    KPI_SUBS_ACTIVE_NOTE: '{{yearly}} yearly · {{monthly}} monthly',
+    KPI_SUBS_EXPIRING: 'Expiring in 30 days',
+    KPI_SUBS_AUTORENEW_NOTE: 'Auto-renew on {{count}}',
+    KPI_SUBS_EXPIRED: 'Expired',
+    KPI_SUBS_TOTAL_NOTE: 'Of {{count}} subscriptions',
+    KPI_SUBS_PAID: 'Total paid',
+    KPI_SUBS_PAID_NOTE: 'Across all subscriptions',
+    EXPIRING_SOON: 'Expiring soon',
+    DAYS_LEFT: '{{count}} days',
+    SEARCH_TENANT: 'Search by company...',
+    SEARCH_INVOICE: 'Search by invoice or company...',
+    KPI_INV_COUNT: 'Invoices issued',
+    KPI_INV_COUNT_NOTE: 'All periods',
+    KPI_INV_PAID: 'Collected',
+    KPI_INV_PAID_NOTE: '{{count}} paid invoices',
+    KPI_INV_PENDING: 'Pending',
+    KPI_INV_PENDING_NOTE: '{{count}} awaiting payment',
+    KPI_INV_OVERDUE: 'Overdue',
+    KPI_INV_OVERDUE_NOTE: '{{count}} overdue invoices',
+    STATUS_OVERDUE: 'Overdue',
     // Executive Hero / Dashboard
     EXECUTIVE_BADGE: 'Platform Executive Command & Operations Center',
     DASHBOARD_TITLE: 'Strategic Growth & KPI Dashboard',

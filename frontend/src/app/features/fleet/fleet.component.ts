@@ -6,18 +6,19 @@ import { FleetService } from '../../core/services/fleet.service';
 import { CaptainService } from '../../core/services/captain.service';
 import {
   VehicleResponse, VehicleAssignmentResponse, CaptainLookupItem,
-  MaintenanceResponse, MaintenanceOpenRequest, MaintenanceCloseRequest
+  MaintenanceResponse, MaintenanceOpenRequest, MaintenanceCloseRequest, FleetStats
 } from '../../core/models/api.models';
 import { errorMessage } from '../../core/services/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-fleet',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, SarPipe, InitialsPipe],
   templateUrl: './fleet.component.html',
   styleUrls: ['./fleet.component.scss']
 })
@@ -29,12 +30,17 @@ export class FleetComponent implements OnInit {
   vehicles: VehicleResponse[] = [];
   vehiclePage = 0;
   vehicleTotalPages = 0;
+  vehicleTotal = 0;
   vehicleSearch = '';
   vehicleStatusFilter = '';
   vehicleOwnershipFilter = '';
   vehicleAgentFilter = '';
   rentalAgents: string[] = [];
   isLoading = false;
+
+  // Overview: KPI strip and the open maintenance orders card
+  stats: FleetStats | null = null;
+  openOrders: MaintenanceResponse[] = [];
 
   // Assignments
   assignments: VehicleAssignmentResponse[] = [];
@@ -96,6 +102,7 @@ export class FleetComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadVehicles();
+    this.loadOverview();
     this.fleetService.getRentalAgents().subscribe(agents => this.rentalAgents = agents);
   }
 
@@ -118,8 +125,17 @@ export class FleetComponent implements OnInit {
       agent: this.vehicleAgentFilter || undefined,
       page: this.vehiclePage, size: 15
     }).subscribe({
-      next: p => { this.vehicles = p.content; this.vehicleTotalPages = p.totalPages; this.isLoading = false; },
+      next: p => { this.vehicles = p.content; this.vehicleTotalPages = p.totalPages; this.vehicleTotal = p.totalElements; this.isLoading = false; },
       error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.LOAD_FAILED')); this.isLoading = false; }
+    });
+  }
+
+  /** Fleet-wide counts and the in-progress maintenance orders shown under the vehicles table. */
+  loadOverview(): void {
+    this.fleetService.getStats().subscribe({ next: s => this.stats = s, error: () => this.stats = null });
+    this.fleetService.listMaintenance({ status: 'IN_PROGRESS', page: 0, size: 5 }).subscribe({
+      next: p => this.openOrders = p.content,
+      error: () => this.openOrders = []
     });
   }
 
@@ -247,7 +263,7 @@ export class FleetComponent implements OnInit {
       status: this.maintenanceStatusFilter || undefined,
       page: this.maintenancePage, size: 15
     }).subscribe({
-      next: p => { this.maintenanceList = p.content; this.maintenanceTotalPages = p.totalPages; this.isLoading = false; },
+      next: p => { this.maintenanceList = p.content; this.maintenanceTotalPages = p.totalPages; this.isLoading = false; this.loadOverview(); },
       error: e => { this.error = errorMessage(e, this.i18n.get('FLEET.MAINTENANCE_LOAD_FAILED')); this.isLoading = false; }
     });
   }
@@ -369,6 +385,28 @@ export class FleetComponent implements OnInit {
     if (s === 'LEASE_TO_OWN') return this.i18n.get('FLEET.OWNERSHIP_LEASE');
     if (s === 'OTHER') return this.i18n.get('FLEET.OWNERSHIP_OTHER');
     return this.i18n.get('FLEET.OWNERSHIP_OWNED');
+  }
+
+  ownershipTone(s: string): string {
+    return ({ OWNED: 'brand', RENTED: 'info', LEASE_TO_OWN: 'purple' } as Record<string, string>)[s] || '';
+  }
+
+  statusTone(s: string): string {
+    return ({
+      AVAILABLE: 'success', ASSIGNED: 'warning', MAINTENANCE: 'danger', DECOMMISSIONED: '',
+      ACTIVE: 'warning', RETURNED: 'success', LATE: 'danger',
+      IN_PROGRESS: 'warning', COMPLETED: 'success', CANCELLED: ''
+    } as Record<string, string>)[s] ?? '';
+  }
+
+  docTone(s?: string): string {
+    return s === 'EXPIRED' ? 'danger' : s === 'EXPIRING' ? 'warning' : 'success';
+  }
+
+  /** Splits a plate like "ABJ-4821" into its letters and digits for the plate chip. */
+  plateParts(plate: string): { letters: string; digits: string } {
+    const clean = (plate || '').replace(/[\s-]/g, '');
+    return { letters: clean.replace(/[0-9٠-٩]/g, ''), digits: clean.replace(/[^0-9٠-٩]/g, '') };
   }
 
   dismissMsg(): void { this.error = ''; this.successMsg = ''; }

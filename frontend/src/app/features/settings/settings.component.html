@@ -1,20 +1,17 @@
 <div class="page-container">
-  <div class="page-header">
-    <h1 class="page-title">{{ 'SETTINGS.TITLE' | translate }}</h1>
-    <p class="page-subtitle">{{ 'SETTINGS.SUBTITLE' | translate }}</p>
-  </div>
-
-  <!-- Tabs Bar -->
-  <div class="settings-nav-tabs">
-    <button class="tab-btn" [class.active]="activeTab === 'OPERATIONAL'" (click)="setTab('OPERATIONAL')">
-      <span class="material-icons-round">tune</span>
-      <span>{{ 'SETTINGS.TAB_OPERATIONAL' | translate }}</span>
-    </button>
-
-    <button class="tab-btn" [class.active]="activeTab === 'APPEARANCE'" (click)="setTab('APPEARANCE')">
-      <span class="material-icons-round">palette</span>
-      <span>{{ 'SETTINGS.TAB_APPEARANCE' | translate }}</span>
-    </button>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">settings</span>{{ 'NAV.SECTION_SYSTEM' | translate }}</span>
+      <h1 class="page-title">{{ 'SETTINGS.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'SETTINGS.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <div class="k-tabs glass">
+        <button [class.active]="activeTab === 'OPERATIONAL'" (click)="setTab('OPERATIONAL')">{{ 'SETTINGS.TAB_OPERATIONAL' | translate }}</button>
+        <button [class.active]="activeTab === 'APPEARANCE'" (click)="setTab('APPEARANCE')">{{ 'SETTINGS.TAB_APPEARANCE' | translate }}</button>
+      </div>
+    </div>
   </div>
 
   <!-- Messages -->

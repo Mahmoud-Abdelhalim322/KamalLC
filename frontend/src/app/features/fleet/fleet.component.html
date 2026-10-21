@@ -1,29 +1,59 @@
 <div class="page-container">
-  <h1 class="page-title"><span class="material-icons-round">directions_car</span> {{ 'FLEET.TITLE' | translate }}</h1>
+  <!-- Header on the yellow band (Figma W19) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">directions_car</span>{{ 'NAV.SECTION_ASSETS' | translate }}</span>
+      <h1 class="page-title">{{ 'FLEET.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'FLEET.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <div class="k-tabs glass">
+        <button [class.active]="activeTab === 'vehicles'" (click)="switchTab('vehicles')">{{ 'FLEET.TAB_VEHICLES' | translate }}</button>
+        <button [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')">{{ 'FLEET.TAB_ASSIGNMENTS' | translate }}</button>
+        <button [class.active]="activeTab === 'maintenance'" (click)="switchTab('maintenance')">{{ 'FLEET.TAB_MAINTENANCE' | translate }}</button>
+      </div>
+      <button class="btn btn-ink" (click)="openAddVehicle()" *ngIf="canManage">
+        <span class="material-icons-round">add</span> {{ 'FLEET.ADD_VEHICLE' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'FLEET.KPI_TOTAL' | translate }}</span>
+      <span class="k-kpi-value">{{ stats?.totalVehicles ?? '—' }}</span>
+      <span class="k-kpi-note" *ngIf="stats">{{ 'FLEET.KPI_TOTAL_NOTE' | translate:{ count: stats.rented } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'FLEET.KPI_ASSIGNED' | translate }}</span>
+      <span class="k-kpi-value">{{ stats?.assigned ?? '—' }}</span>
+      <span class="k-kpi-note" *ngIf="stats">{{ 'FLEET.KPI_ASSIGNED_NOTE' | translate:{ count: stats.lateReturns } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'FLEET.KPI_AVAILABLE' | translate }}</span>
+      <span class="k-kpi-value">{{ stats?.available ?? '—' }}</span>
+      <span class="k-kpi-note">{{ 'FLEET.KPI_AVAILABLE_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'FLEET.KPI_MAINT' | translate }}</span>
+      <span class="k-kpi-value">{{ stats?.maintenance ?? '—' }}</span>
+      <span class="k-kpi-note">{{ 'FLEET.KPI_MAINT_NOTE' | translate:{ count: openOrders.length } }}</span>
+    </div>
+  </div>
 
   <!-- Messages -->
   <div class="alert alert-error" *ngIf="error" (click)="dismissMsg()">{{ error }}</div>
   <div class="alert alert-success" *ngIf="successMsg" (click)="dismissMsg()">{{ successMsg }}</div>
 
-  <!-- Tabs -->
-  <div class="tab-bar">
-    <button class="tab-btn" [class.active]="activeTab === 'vehicles'" (click)="switchTab('vehicles')">
-      <span class="material-icons-round">directions_car</span> {{ 'FLEET.TAB_VEHICLES' | translate }}
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')">
-      <span class="material-icons-round">swap_horiz</span> {{ 'FLEET.TAB_ASSIGNMENTS' | translate }}
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'maintenance'" (click)="switchTab('maintenance')">
-      <span class="material-icons-round">build</span> {{ 'FLEET.TAB_MAINTENANCE' | translate }}
-    </button>
-  </div>
-
   <!-- ══════════════ VEHICLES TAB ══════════════ -->
-  <div *ngIf="activeTab === 'vehicles'" class="tab-content">
-    <div class="toolbar">
-      <div class="search-group">
-        <input type="text" class="search-input" [placeholder]="'FLEET.SEARCH_PLACEHOLDER' | translate"
-               [(ngModel)]="vehicleSearch" (keyup.enter)="searchVehicles()">
+  <ng-container *ngIf="activeTab === 'vehicles'">
+    <section class="k-card">
+      <div class="fleet-toolbar">
+        <div class="k-search">
+          <span class="material-icons-round">search</span>
+          <input type="text" [placeholder]="'FLEET.SEARCH_PLACEHOLDER' | translate" [(ngModel)]="vehicleSearch" (keyup.enter)="searchVehicles()">
+        </div>
         <select class="filter-select" [(ngModel)]="vehicleStatusFilter" (change)="searchVehicles()">
           <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
           <option value="AVAILABLE">{{ 'FLEET.STATUS_AVAILABLE' | translate }}</option>
@@ -41,119 +71,137 @@
           <option value="">{{ 'FLEET.ALL_AGENTS' | translate }}</option>
           <option *ngFor="let a of rentalAgents" [value]="a">{{ a }}</option>
         </select>
-      </div>
-      <div class="toolbar-actions">
-        <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExportingExcel">
+        <button class="btn btn-outline toolbar-end" (click)="exportExcel()" [disabled]="isExportingExcel">
           <span class="material-icons-round" [class.spinning]="isExportingExcel">download</span> {{ 'FLEET.EXPORT_EXCEL' | translate }}
         </button>
-        <button class="btn btn-primary" (click)="openAddVehicle()" *ngIf="canManage">
-          <span class="material-icons-round">add</span> {{ 'FLEET.ADD_VEHICLE' | translate }}
+      </div>
+
+      <div class="loading-bar" *ngIf="isLoading"></div>
+
+      <div class="k-table-wrap">
+        <table class="k-table">
+          <thead>
+            <tr>
+              <th>{{ 'FLEET.COL_VEHICLE_CAR' | translate }}</th>
+              <th>{{ 'FLEET.COL_PLATE' | translate }}</th>
+              <th>{{ 'FLEET.COL_OWNERSHIP' | translate }}</th>
+              <th>{{ 'FLEET.COL_DOCS' | translate }}</th>
+              <th>{{ 'FLEET.COL_OPERATIONAL_STATUS' | translate }}</th>
+              <th>{{ 'FLEET.COL_CURRENT_CAPTAIN' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of vehicles">
+              <td>
+                <div class="vehicle-cell">
+                  <strong>{{ v.vehicleCode }}</strong>
+                  <span>{{ v.brand }} {{ v.model }} {{ v.year }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="plate" [title]="v.plateNumber">
+                  <span class="plate-digits">{{ plateParts(v.plateNumber).digits || v.plateNumber }}<small>{{ plateParts(v.plateNumber).letters }}</small></span>
+                  <span class="plate-ksa">KSA</span>
+                </span>
+                <div class="sub" *ngIf="v.operatingCardNumber">{{ 'FLEET.OPERATING_CARD' | translate }}: {{ v.operatingCardNumber }}</div>
+              </td>
+              <td>
+                <span class="k-badge" [ngClass]="ownershipTone(v.ownershipType)">{{ ownershipLabel(v.ownershipType) }}</span>
+                <div class="sub" *ngIf="v.rentalAgentName">{{ v.rentalAgentName }}</div>
+              </td>
+              <td>
+                <span class="k-badge dot" [ngClass]="docTone(v.documentAlertStatus)">
+                  {{ (v.documentAlertStatus === 'EXPIRED' ? 'FLEET.DOC_EXPIRED' : (v.documentAlertStatus === 'EXPIRING' ? 'FLEET.DOC_EXPIRING' : 'FLEET.DOC_VALID')) | translate }}
+                </span>
+                <div class="sub">
+                  {{ 'FLEET.REGISTRATION' | translate }} {{ v.registrationExpiryDate || '—' }} · {{ 'FLEET.INSPECTION' | translate }} {{ v.inspectionExpiryDate || v.inspectionDate || '—' }}
+                </div>
+              </td>
+              <td><span class="k-badge dot" [ngClass]="statusTone(v.status)">{{ statusLabel(v.status) }}</span></td>
+              <td>
+                <div class="k-person" *ngIf="v.currentCaptainName">
+                  <span class="k-avatar">{{ v.currentCaptainName | initials }}</span>
+                  <div>
+                    <strong>{{ v.currentCaptainName }}</strong>
+                    <span>{{ v.assignedSince ? ('FLEET.SINCE' | translate:{ date: (v.assignedSince | date:'yyyy-MM-dd') }) : v.currentCaptainCode }}</span>
+                  </div>
+                </div>
+                <button class="hand-btn" *ngIf="!v.currentCaptainName && v.status === 'AVAILABLE' && canManage" (click)="openAssignDialog(v)">
+                  <span class="material-icons-round">key</span> {{ 'FLEET.HAND_TO_CAPTAIN' | translate }}
+                </button>
+                <span class="k-muted" *ngIf="!v.currentCaptainName && (v.status !== 'AVAILABLE' || !canManage)">—</span>
+              </td>
+              <td class="k-actions">
+                <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" (click)="openEditVehicle(v)" *ngIf="canManage">
+                  <span class="material-icons-round">edit</span>
+                </button>
+                <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_MAINTENANCE' | translate" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED' && canManage">
+                  <span class="material-icons-round">build</span>
+                </button>
+                <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_HANDOVER_HISTORY' | translate" (click)="openHistory(v)">
+                  <span class="material-icons-round">history</span>
+                </button>
+                <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_MAINT_HISTORY' | translate" (click)="openMaintenanceHistory(v)">
+                  <span class="material-icons-round">plumbing</span>
+                </button>
+                <button class="k-icon-btn danger" [title]="'FLEET.TOOLTIP_DELETE' | translate" (click)="deleteVehicle(v)" *ngIf="canManage">
+                  <span class="material-icons-round">delete_outline</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="k-empty" *ngIf="vehicles.length === 0 && !isLoading">
+          <span class="material-icons-round">directions_car</span>
+          <p>{{ 'FLEET.NO_VEHICLES' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="k-pager" *ngIf="vehicles.length > 0">
+        <span class="k-pager-info">{{ 'FLEET.SHOWING' | translate:{ count: vehicles.length, total: vehicleTotal } }}</span>
+        <ng-container *ngIf="vehicleTotalPages > 1">
+          <button class="btn btn-outline btn-sm" (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">
+            <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
+          </button>
+          <span class="k-page-num">{{ vehiclePage + 1 }}</span>
+          <button class="btn btn-outline btn-sm" (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">
+            {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
+          </button>
+        </ng-container>
+      </div>
+    </section>
+
+    <!-- Open maintenance orders -->
+    <section class="k-card open-orders" *ngIf="openOrders.length > 0">
+      <div class="k-card-head">
+        <span class="k-icon-tile"><span class="material-icons-round">build</span></span>
+        <h3>{{ 'FLEET.OPEN_ORDERS' | translate }}</h3>
+        <span class="k-badge danger dot">{{ 'FLEET.OPEN_COUNT' | translate:{ count: openOrders.length } }}</span>
+      </div>
+      <div class="order-row" *ngFor="let m of openOrders">
+        <span class="order-icon"><span class="material-icons-round">build</span></span>
+        <div class="order-text">
+          <strong>{{ m.faultReason }} · {{ m.vehiclePlate }}</strong>
+          <span>
+            {{ m.workshopName || '—' }} ·
+            {{ m.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : (('FLEET.CAPTAIN_PREFIX' | translate) + (m.captainName || '')) }}
+          </span>
+        </div>
+        <div class="order-meta">
+          <strong *ngIf="m.totalCost">{{ m.totalCost | sar:'1.0-2' }}</strong>
+          <span>{{ m.openedAt | date:'yyyy-MM-dd' }}</span>
+        </div>
+        <button class="btn btn-outline btn-sm" *ngIf="canManage" (click)="openCloseMaintenanceDialog(m)">
+          <span class="material-icons-round">check_circle</span> {{ 'FLEET.BTN_CLOSE_MAINT' | translate }}
         </button>
       </div>
-    </div>
-
-    <div class="loading-bar" *ngIf="isLoading"></div>
-
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'FLEET.COL_CODE' | translate }}</th>
-            <th>{{ 'FLEET.COL_PLATE' | translate }}</th>
-            <th>{{ 'FLEET.COL_BRAND_MODEL' | translate }}</th>
-            <th>{{ 'FLEET.COL_OWNERSHIP' | translate }}</th>
-            <th>{{ 'FLEET.COL_REG_VIN' | translate }}</th>
-            <th>{{ 'FLEET.COL_EXPIRIES' | translate }}</th>
-            <th>{{ 'FLEET.COL_DOC_STATUS' | translate }}</th>
-            <th>{{ 'FLEET.COL_OPERATIONAL_STATUS' | translate }}</th>
-            <th>{{ 'FLEET.COL_CURRENT_CAPTAIN' | translate }}</th>
-            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let v of vehicles" [class.rented-row]="v.ownershipType === 'RENTED'" [class.lease-row]="v.ownershipType === 'LEASE_TO_OWN'">
-            <td class="vehicle-code-cell">
-              <span class="vehicle-code">{{ v.vehicleCode }}</span>
-            </td>
-            <td class="plate-cell">
-              {{ v.plateNumber }}
-              <div *ngIf="v.operatingCardNumber" class="text-muted" style="font-size:11px;">{{ 'FLEET.OPERATING_CARD' | translate }}: {{ v.operatingCardNumber }}</div>
-            </td>
-            <td>{{ v.brand }} {{ v.model }} <span class="year-tag" *ngIf="v.year">{{ v.year }}</span></td>
-            <td>
-              <span class="badge" [class.badge-rented]="v.ownershipType === 'RENTED'" [class.badge-owned]="v.ownershipType === 'OWNED'" [class.badge-lease]="v.ownershipType === 'LEASE_TO_OWN'" [class.badge-other]="v.ownershipType === 'OTHER'">
-                {{ ownershipLabel(v.ownershipType) }}
-              </span>
-              <span class="agent-name" *ngIf="v.rentalAgentName">
-                {{ v.rentalAgentName }}
-                <span *ngIf="v.rentalAgentCode" class="agent-code">({{ v.rentalAgentCode }})</span>
-              </span>
-            </td>
-            <td style="font-size: 12px;">
-              <div *ngIf="v.registrationNumber">{{ 'FLEET.REGISTRATION' | translate }}: <strong>{{ v.registrationNumber }}</strong></div>
-              <div *ngIf="v.vin" class="text-muted">{{ 'FLEET.VIN_CHASSIS' | translate }}: {{ v.vin }}</div>
-              <div *ngIf="!v.registrationNumber && !v.vin">—</div>
-            </td>
-            <td style="font-size: 12px;">
-              <div>{{ 'FLEET.REGISTRATION' | translate }}: {{ v.registrationExpiryDate || '—' }}</div>
-              <div>{{ 'FLEET.INSPECTION' | translate }}: {{ v.inspectionExpiryDate || v.inspectionDate || '—' }}</div>
-            </td>
-            <td>
-              <span class="badge"
-                    [class.badge-completed]="v.documentAlertStatus === 'VALID' || !v.documentAlertStatus"
-                    [class.badge-rented]="v.documentAlertStatus === 'EXPIRING'"
-                    [class.badge-cancelled]="v.documentAlertStatus === 'EXPIRED'">
-                {{ (v.documentAlertStatus === 'EXPIRED' ? 'FLEET.DOC_EXPIRED' : (v.documentAlertStatus === 'EXPIRING' ? 'FLEET.DOC_EXPIRING' : 'FLEET.DOC_VALID')) | translate }}
-              </span>
-              <div *ngFor="let alertMsg of v.documentAlerts" class="text-muted" style="font-size: 10px; color: #dc3545;">
-                {{ alertMsg }}
-              </div>
-            </td>
-            <td>
-              <span class="status-badge" [attr.data-status]="v.status">{{ statusLabel(v.status) }}</span>
-            </td>
-            <td>
-              <span *ngIf="v.currentCaptainName">{{ v.currentCaptainName }} ({{ v.currentCaptainCode }})</span>
-              <span class="text-muted" *ngIf="!v.currentCaptainName">—</span>
-            </td>
-            <td class="actions-cell">
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_ASSIGN' | translate" (click)="openAssignDialog(v)" *ngIf="v.status === 'AVAILABLE' && canManage">
-                <span class="material-icons-round">person_add</span>
-              </button>
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" (click)="openEditVehicle(v)" *ngIf="canManage">
-                <span class="material-icons-round">edit</span>
-              </button>
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_MAINTENANCE' | translate" (click)="openMaintenanceDialog(v)" *ngIf="v.status !== 'MAINTENANCE' && v.status !== 'DECOMMISSIONED' && canManage">
-                <span class="material-icons-round">build</span>
-              </button>
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_HANDOVER_HISTORY' | translate" (click)="openHistory(v)">
-                <span class="material-icons-round">history</span>
-              </button>
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_MAINT_HISTORY' | translate" (click)="openMaintenanceHistory(v)">
-                <span class="material-icons-round">plumbing</span>
-              </button>
-              <button class="icon-btn danger" [title]="'FLEET.TOOLTIP_DELETE' | translate" (click)="deleteVehicle(v)" *ngIf="canManage">
-                <span class="material-icons-round">delete</span>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="vehicles.length === 0 && !isLoading">
-            <td colspan="10" class="empty-row">{{ 'FLEET.NO_VEHICLES' | translate }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="pagination" *ngIf="vehicleTotalPages > 1">
-      <button (click)="prevPage('vehicle')" [disabled]="vehiclePage === 0">{{ 'COMMON.PREV' | translate }}</button>
-      <span>{{ vehiclePage + 1 }} / {{ vehicleTotalPages }}</span>
-      <button (click)="nextPage('vehicle')" [disabled]="vehiclePage >= vehicleTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
-    </div>
-  </div>
+    </section>
+  </ng-container>
 
   <!-- ══════════════ ASSIGNMENTS TAB ══════════════ -->
-  <div *ngIf="activeTab === 'assignments'" class="tab-content">
-    <div class="toolbar">
+  <section class="k-card" *ngIf="activeTab === 'assignments'">
+    <div class="fleet-toolbar">
       <select class="filter-select" [(ngModel)]="assignmentStatusFilter" (change)="loadAssignments()">
         <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
         <option value="ACTIVE">{{ 'FLEET.STATUS_ACTIVE' | translate }}</option>
@@ -164,8 +212,8 @@
 
     <div class="loading-bar" *ngIf="isLoading"></div>
 
-    <div class="table-container">
-      <table class="data-table">
+    <div class="k-table-wrap">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'FLEET.COL_VEHICLE' | translate }}</th>
@@ -175,44 +223,56 @@
             <th>{{ 'FLEET.COL_ACTUAL_RETURN' | translate }}</th>
             <th>{{ 'FLEET.COL_NEXT_CAPTAIN' | translate }}</th>
             <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
-            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of assignments" [class.late-row]="a.late">
-            <td>{{ a.vehicleBrand }} {{ a.vehicleModel }} — {{ a.vehiclePlate }}</td>
-            <td>{{ a.captainName }} ({{ a.captainCode }})</td>
+          <tr *ngFor="let a of assignments" [class.highlight]="a.late">
+            <td>
+              <div class="vehicle-cell">
+                <strong>{{ a.vehiclePlate }}</strong>
+                <span>{{ a.vehicleBrand }} {{ a.vehicleModel }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="k-person">
+                <span class="k-avatar">{{ a.captainName | initials }}</span>
+                <div><strong>{{ a.captainName }}</strong><span>{{ a.captainCode }}</span></div>
+              </div>
+            </td>
             <td>{{ a.assignedAt | date:'yyyy-MM-dd HH:mm' }}</td>
             <td>{{ a.expectedReturnAt | date:'yyyy-MM-dd HH:mm' }}</td>
             <td>{{ a.actualReturnAt ? (a.actualReturnAt | date:'yyyy-MM-dd HH:mm') : '—' }}</td>
             <td>{{ a.nextCaptainName ? a.nextCaptainName + ' (' + a.nextCaptainCode + ')' : '—' }}</td>
-            <td>
-              <span class="status-badge" [attr.data-status]="a.status">{{ statusLabel(a.status) }}</span>
-            </td>
-            <td class="actions-cell">
-              <button class="btn btn-sm btn-success" *ngIf="(a.status === 'ACTIVE' || a.status === 'LATE') && canManage"
-                      (click)="returnAssignment(a)">
+            <td><span class="k-badge dot" [ngClass]="statusTone(a.status)">{{ statusLabel(a.status) }}</span></td>
+            <td class="k-actions">
+              <button class="btn btn-outline btn-sm" *ngIf="(a.status === 'ACTIVE' || a.status === 'LATE') && canManage" (click)="returnAssignment(a)">
                 <span class="material-icons-round">assignment_return</span> {{ 'FLEET.BTN_RETURN' | translate }}
               </button>
             </td>
           </tr>
-          <tr *ngIf="assignments.length === 0 && !isLoading">
-            <td colspan="8" class="empty-row">{{ 'FLEET.NO_ASSIGNMENTS' | translate }}</td>
-          </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="assignments.length === 0 && !isLoading">
+        <span class="material-icons-round">swap_horiz</span>
+        <p>{{ 'FLEET.NO_ASSIGNMENTS' | translate }}</p>
+      </div>
     </div>
 
-    <div class="pagination" *ngIf="assignmentTotalPages > 1">
-      <button (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">{{ 'COMMON.PREV' | translate }}</button>
-      <span>{{ assignmentPage + 1 }} / {{ assignmentTotalPages }}</span>
-      <button (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
+    <div class="k-pager" *ngIf="assignmentTotalPages > 1">
+      <button class="btn btn-outline btn-sm" (click)="prevPage('assignment')" [disabled]="assignmentPage === 0">
+        <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
+      </button>
+      <span class="k-page-num">{{ assignmentPage + 1 }}</span>
+      <button class="btn btn-outline btn-sm" (click)="nextPage('assignment')" [disabled]="assignmentPage >= assignmentTotalPages - 1">
+        {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
+      </button>
     </div>
-  </div>
+  </section>
 
   <!-- ══════════════ MAINTENANCE TAB ══════════════ -->
-  <div *ngIf="activeTab === 'maintenance'" class="tab-content">
-    <div class="toolbar">
+  <section class="k-card" *ngIf="activeTab === 'maintenance'">
+    <div class="fleet-toolbar">
       <select class="filter-select" [(ngModel)]="maintenanceStatusFilter" (change)="loadMaintenance()">
         <option value="">{{ 'FLEET.ALL_STATUSES' | translate }}</option>
         <option value="IN_PROGRESS">{{ 'FLEET.STATUS_IN_PROGRESS' | translate }}</option>
@@ -223,8 +283,8 @@
 
     <div class="loading-bar" *ngIf="isLoading"></div>
 
-    <div class="table-container">
-      <table class="data-table">
+    <div class="k-table-wrap">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'FLEET.COL_VEHICLE' | translate }}</th>
@@ -234,57 +294,60 @@
             <th>{{ 'FLEET.COL_OPEN_DATE' | translate }}</th>
             <th>{{ 'FLEET.COL_COST' | translate }}</th>
             <th>{{ 'FLEET.COL_STATUS' | translate }}</th>
-            <th>{{ 'FLEET.COL_ACTIONS' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let m of maintenanceList">
-            <td>{{ m.vehicleBrand }} {{ m.vehicleModel }} — <span class="plate-cell">{{ m.vehiclePlate }}</span></td>
+            <td>
+              <div class="vehicle-cell">
+                <strong>{{ m.vehiclePlate }}</strong>
+                <span>{{ m.vehicleBrand }} {{ m.vehicleModel }}</span>
+              </div>
+            </td>
             <td>{{ m.faultReason }}</td>
             <td>{{ m.workshopName || '—' }}</td>
             <td>
-              <span class="badge" [class.badge-company]="m.costBearer === 'COMPANY'" [class.badge-captain]="m.costBearer === 'CAPTAIN'">
+              <span class="k-badge" [ngClass]="m.costBearer === 'COMPANY' ? 'brand' : 'info'">
                 {{ m.costBearer === 'COMPANY' ? ('FLEET.COMPANY' | translate) : (('FLEET.CAPTAIN_PREFIX' | translate) + (m.captainName || '')) }}
               </span>
             </td>
             <td>{{ m.openedAt | date:'yyyy-MM-dd' }}</td>
-            <td>{{ m.totalCost !== undefined ? (m.totalCost | sar:'1.0-2') : '—' }}</td>
-            <td>
-              <span class="badge" 
-                    [class.badge-rented]="m.status === 'IN_PROGRESS'" 
-                    [class.badge-completed]="m.status === 'COMPLETED'"
-                    [class.badge-cancelled]="m.status === 'CANCELLED'">
-                {{ (m.status === 'IN_PROGRESS' ? 'FLEET.STATUS_IN_PROGRESS' : m.status === 'COMPLETED' ? 'FLEET.STATUS_COMPLETED' : 'FLEET.STATUS_CANCELLED') | translate }}
-              </span>
-            </td>
-            <td class="actions-cell">
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="editMaintenance(m)">
+            <td class="strong">{{ m.totalCost !== undefined && m.totalCost !== null ? (m.totalCost | sar:'1.0-2') : '—' }}</td>
+            <td><span class="k-badge dot" [ngClass]="statusTone(m.status)">{{ statusLabel(m.status) }}</span></td>
+            <td class="k-actions">
+              <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_EDIT' | translate" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="editMaintenance(m)">
                 <span class="material-icons-round">edit</span>
               </button>
-              <button class="icon-btn" [title]="'FLEET.TOOLTIP_DETAILS' | translate" (click)="viewMaintenanceDetails(m)">
+              <button class="k-icon-btn" [title]="'FLEET.TOOLTIP_DETAILS' | translate" (click)="viewMaintenanceDetails(m)">
                 <span class="material-icons-round">visibility</span>
               </button>
-              <button class="btn btn-sm btn-success" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="openCloseMaintenanceDialog(m)" style="margin-right: 4px;">
+              <button class="btn btn-outline btn-sm" *ngIf="m.status === 'IN_PROGRESS' && canManage" (click)="openCloseMaintenanceDialog(m)">
                 <span class="material-icons-round">check_circle</span> {{ 'FLEET.BTN_CLOSE_MAINT' | translate }}
               </button>
-              <button class="icon-btn danger" *ngIf="m.status === 'IN_PROGRESS' && canManage" [title]="'COMMON.CANCEL' | translate" (click)="cancelMaintenance(m)">
+              <button class="k-icon-btn danger" *ngIf="m.status === 'IN_PROGRESS' && canManage" [title]="'COMMON.CANCEL' | translate" (click)="cancelMaintenance(m)">
                 <span class="material-icons-round">cancel</span>
               </button>
             </td>
           </tr>
-          <tr *ngIf="maintenanceList.length === 0 && !isLoading">
-            <td colspan="8" class="empty-row">{{ 'FLEET.NO_MAINTENANCE' | translate }}</td>
-          </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="maintenanceList.length === 0 && !isLoading">
+        <span class="material-icons-round">build</span>
+        <p>{{ 'FLEET.NO_MAINTENANCE' | translate }}</p>
+      </div>
     </div>
 
-    <div class="pagination" *ngIf="maintenanceTotalPages > 1">
-      <button (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">{{ 'COMMON.PREV' | translate }}</button>
-      <span>{{ maintenancePage + 1 }} / {{ maintenanceTotalPages }}</span>
-      <button (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">{{ 'COMMON.NEXT' | translate }}</button>
+    <div class="k-pager" *ngIf="maintenanceTotalPages > 1">
+      <button class="btn btn-outline btn-sm" (click)="prevPage('maintenance')" [disabled]="maintenancePage === 0">
+        <span class="material-icons-round k-flip">chevron_left</span> {{ 'COMMON.PREV' | translate }}
+      </button>
+      <span class="k-page-num">{{ maintenancePage + 1 }}</span>
+      <button class="btn btn-outline btn-sm" (click)="nextPage('maintenance')" [disabled]="maintenancePage >= maintenanceTotalPages - 1">
+        {{ 'COMMON.NEXT' | translate }} <span class="material-icons-round k-flip">chevron_right</span>
+      </button>
     </div>
-  </div>
+  </section>
 
   <!-- ══════════════ VEHICLE DIALOG ══════════════ -->
   <div class="dialog-overlay" *ngIf="showVehicleDialog" (click)="showVehicleDialog = false">

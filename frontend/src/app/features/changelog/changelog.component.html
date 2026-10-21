@@ -1,27 +1,28 @@
 <div class="changelog-page">
   <!-- ───────── Header ───────── -->
-  <div class="page-header">
-    <div class="header-right">
-      <span class="material-icons-round header-icon">history</span>
-      <h1>{{ 'CHANGELOG.TITLE' | translate }}</h1>
-      <span class="record-count" *ngIf="!isLoading">({{ totalElements }} {{ 'CHANGELOG.RECORDS_UNIT' | translate }})</span>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">history</span>{{ 'NAV.SECTION_SYSTEM' | translate }}</span>
+      <h1 class="page-title">{{ 'CHANGELOG.TITLE' | translate }}</h1>
+      <p class="k-page-sub" *ngIf="!isLoading">{{ totalElements }} {{ 'CHANGELOG.RECORDS_UNIT' | translate }}</p>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-outline" (click)="exportExcel()" [disabled]="isExporting || isLoading">
-        <span class="material-icons-round">table_view</span>
-        {{ 'COMMON.EXPORT_EXCEL' | translate }}
+    <div class="k-page-actions">
+      <button class="btn btn-glass" (click)="exportExcel()" [disabled]="isExporting || isLoading">
+      <span class="material-icons-round">table_view</span>
+      {{ 'COMMON.EXPORT_EXCEL' | translate }}
       </button>
-      <button class="btn btn-outline" (click)="exportPdf()" [disabled]="isExporting || isLoading">
-        <span class="material-icons-round">picture_as_pdf</span>
-        {{ 'COMMON.EXPORT_PDF' | translate }}
+      <button class="btn btn-glass" (click)="exportPdf()" [disabled]="isExporting || isLoading">
+      <span class="material-icons-round">picture_as_pdf</span>
+      {{ 'COMMON.EXPORT_PDF' | translate }}
       </button>
     </div>
   </div>
 
+  <section class="k-card changelog-card">
   <!-- ───────── Entity Tabs ───────── -->
-  <div class="entity-tabs">
+  <div class="k-chips module-chips">
     <button *ngFor="let tab of tabs"
-            class="tab-btn"
             [class.active]="activeTab === tab.key"
             (click)="switchTab(tab.key)">
       <span class="material-icons-round">{{ tab.icon }}</span>
@@ -173,4 +174,5 @@
     </button>
     <span class="page-info">{{ 'CHANGELOG.PAGE_INFO' | translate:{ page: page + 1, total: totalPages } }}</span>
   </div>
+  </section>
 </div>

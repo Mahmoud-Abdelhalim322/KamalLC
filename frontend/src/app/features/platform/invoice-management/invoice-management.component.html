@@ -1,21 +1,60 @@
 <div class="invoice-management-page animate-fade-in">
 
   <!-- Header -->
-  <div class="page-header">
-    <h1 class="page-title">{{ 'PLATFORM.INVOICES_TITLE' | translate }}</h1>
-    <p class="page-subtitle">{{ 'PLATFORM.INVOICES_SUBTITLE' | translate }}</p>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">receipt_long</span>{{ 'NAV.SECTION_PLATFORM' | translate }}</span>
+      <h1 class="page-title">{{ 'PLATFORM.INVOICES_TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'PLATFORM.INVOICES_SUBTITLE' | translate }}</p>
+    </div>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="loading">
-    <div class="spinner"></div>
-    <p>{{ 'PLATFORM.LOADING_INVOICES' | translate }}</p>
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_INV_COUNT' | translate }}</span>
+      <span class="k-kpi-value">{{ invoices.length }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_INV_COUNT_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_INV_PAID' | translate }}</span>
+      <span class="k-kpi-value">{{ paidTotal | sar:'1.0-0' }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_INV_PAID_NOTE' | translate:{ count: paid.length } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_INV_PENDING' | translate }}</span>
+      <span class="k-kpi-value">{{ pendingTotal | sar:'1.0-0' }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_INV_PENDING_NOTE' | translate:{ count: pending.length } }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'PLATFORM.KPI_INV_OVERDUE' | translate }}</span>
+      <span class="k-kpi-value">{{ overdueTotal | sar:'1.0-0' }}</span>
+      <span class="k-kpi-note">{{ 'PLATFORM.KPI_INV_OVERDUE_NOTE' | translate:{ count: overdue.length } }}</span>
+    </div>
   </div>
 
-  <!-- Table Card -->
-  <div class="card table-card" *ngIf="!loading">
-    <div class="table-responsive">
-      <table class="data-table">
+  <section class="k-card">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_INVOICE' | translate">
+      </div>
+      <div class="k-chips">
+        <button [class.active]="filter === 'ALL'" (click)="filter = 'ALL'">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="filter === 'PAID'" (click)="filter = 'PAID'">{{ 'PLATFORM.STATUS_PAID' | translate }}</button>
+        <button [class.active]="filter === 'PENDING'" (click)="filter = 'PENDING'">{{ 'PLATFORM.STATUS_PENDING' | translate }}</button>
+        <button [class.active]="filter === 'OVERDUE'" (click)="filter = 'OVERDUE'">{{ 'PLATFORM.STATUS_OVERDUE' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="k-empty" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>{{ 'PLATFORM.LOADING_INVOICES' | translate }}</p>
+    </div>
+
+    <div class="k-table-wrap" *ngIf="!loading">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'PLATFORM.COL_INVOICE_NUMBER' | translate }}</th>
@@ -29,29 +68,31 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let inv of invoices">
-            <td><code class="invoice-code">{{ inv.invoiceNumber }}</code></td>
-            <td><strong class="tenant-name">{{ inv.tenantName }}</strong></td>
-            <td>{{ inv.amount | sar:'1.0-0' }}</td>
-            <td>{{ inv.taxAmount | sar:'1.0-0' }}</td>
-            <td><strong class="total-amount">{{ inv.totalAmount | sar:'1.0-0' }}</strong></td>
-            <td>{{ inv.dueDate }}</td>
+          <tr *ngFor="let inv of visible" [class.highlight]="isOverdue(inv)">
+            <td class="strong k-ltr">{{ inv.invoiceNumber }}</td>
             <td>
-              <span class="badge" [ngClass]="inv.status === 'PAID' ? 'badge-success' : 'badge-warning'">
-                {{ (inv.status === 'PAID' ? 'PLATFORM.STATUS_PAID' : 'PLATFORM.STATUS_PENDING') | translate }}
+              <div class="k-person">
+                <span class="k-avatar ink">{{ inv.tenantName | initials }}</span>
+                <div><strong>{{ inv.tenantName }}</strong></div>
+              </div>
+            </td>
+            <td class="k-muted-strong">{{ inv.amount | number:'1.2-2' }}</td>
+            <td class="k-muted">{{ inv.taxAmount | number:'1.2-2' }}</td>
+            <td class="strong">{{ inv.totalAmount | sar:'1.2-2' }}</td>
+            <td [class.negative]="isOverdue(inv)">{{ inv.dueDate }}</td>
+            <td>
+              <span class="k-badge dot" [ngClass]="inv.status === 'PAID' ? 'success' : isOverdue(inv) ? 'danger' : 'warning'">
+                {{ (inv.status === 'PAID' ? 'PLATFORM.STATUS_PAID' : isOverdue(inv) ? 'PLATFORM.STATUS_OVERDUE' : 'PLATFORM.STATUS_PENDING') | translate }}
               </span>
             </td>
-            <td>{{ inv.paidAt ? (inv.paidAt | date:'yyyy/MM/dd HH:mm') : '-' }}</td>
-          </tr>
-          <tr *ngIf="invoices.length === 0 && !loading">
-            <td colspan="8" class="empty-cell">
-              <span class="material-icons-round empty-icon">receipt_long</span>
-              <p>{{ 'PLATFORM.NO_INVOICES' | translate }}</p>
-            </td>
+            <td class="k-muted">{{ inv.paidAt ? (inv.paidAt | date:'dd/MM/yyyy') : '—' }}</td>
           </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="visible.length === 0">
+        <span class="material-icons-round">receipt_long</span>
+        <p>{{ 'PLATFORM.NO_INVOICES' | translate }}</p>
+      </div>
     </div>
-  </div>
-
+  </section>
 </div>

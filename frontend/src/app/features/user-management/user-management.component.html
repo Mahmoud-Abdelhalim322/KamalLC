@@ -1,92 +1,99 @@
 <div class="page-container">
-  <div class="page-header">
-    <h1>{{ 'USER_MGMT.TITLE' | translate }}</h1>
-  </div>
-
-  <!-- Tabs -->
-  <div class="tab-bar">
-    <button class="tab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
-      <span class="material-icons-round">people</span> {{ 'USER_MGMT.TAB_USERS' | translate }}
-    </button>
-    <button class="tab" [class.active]="activeTab === 'roles'" (click)="activeTab = 'roles'">
-      <span class="material-icons-round">admin_panel_settings</span> {{ 'USER_MGMT.TAB_ROLES' | translate }}
-    </button>
-    <button class="tab" [class.active]="activeTab === 'allocations'" (click)="activeTab = 'allocations'">
-      <span class="material-icons-round">assignment_ind</span> {{ 'USER_MGMT.TAB_ALLOCATIONS' | translate }}
-    </button>
+  <!-- Header on the yellow band (Figma W23) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">manage_accounts</span>{{ 'NAV.SECTION_SYSTEM' | translate }}</span>
+      <h1 class="page-title">{{ 'USER_MGMT.TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'USER_MGMT.SUBTITLE' | translate }}</p>
+    </div>
+    <div class="k-page-actions">
+      <div class="k-tabs glass">
+        <button [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">{{ 'USER_MGMT.TAB_USERS' | translate }}</button>
+        <button [class.active]="activeTab === 'roles'" (click)="activeTab = 'roles'">{{ 'USER_MGMT.TAB_ROLES' | translate }}</button>
+        <button [class.active]="activeTab === 'allocations'" (click)="activeTab = 'allocations'">{{ 'USER_MGMT.TAB_ALLOCATIONS' | translate }}</button>
+      </div>
+      <button class="btn btn-ink" *ngIf="activeTab === 'users'" (click)="openUserModal()">
+        <span class="material-icons-round">person_add</span> {{ 'USER_MGMT.CREATE_ACCOUNT' | translate }}
+      </button>
+      <button class="btn btn-ink" *ngIf="activeTab === 'roles'" (click)="openRoleModal()">
+        <span class="material-icons-round">add</span> {{ 'USER_MGMT.ADD_ROLE' | translate }}
+      </button>
+    </div>
   </div>
 
   <!-- Users Tab -->
-  <div *ngIf="activeTab === 'users'" class="tab-content">
-    <div class="section-header">
-      <h2>{{ 'USER_MGMT.USERS_TITLE' | translate }}</h2>
-      <button class="btn btn-primary" (click)="openUserModal()">
-        <span class="material-icons-round">person_add</span> {{ 'USER_MGMT.CREATE_ACCOUNT' | translate }}
-      </button>
+  <section class="k-card" *ngIf="activeTab === 'users'">
+    <div class="k-card-head">
+      <span class="k-icon-tile"><span class="material-icons-round">group</span></span>
+      <h3>{{ 'USER_MGMT.USERS_TITLE' | translate }}</h3>
+      <span class="k-badge head-end">{{ 'USER_MGMT.ACCOUNTS_COUNT' | translate:{ count: users.length, active: activeUsers } }}</span>
     </div>
 
-    <div class="loading-state" *ngIf="isLoading">
+    <div class="k-empty" *ngIf="isLoading">
       <div class="spinner"></div>
-      <span>{{ 'USER_MGMT.LOADING' | translate }}</span>
+      <p>{{ 'USER_MGMT.LOADING' | translate }}</p>
     </div>
 
-    <div class="table-container" *ngIf="!isLoading">
-      <table class="data-table">
+    <div class="k-table-wrap" *ngIf="!isLoading">
+      <table class="k-table">
         <thead>
           <tr>
-            <th>{{ 'USER_MGMT.COL_USERNAME' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_DISPLAY_NAME' | translate }}</th>
+            <th>{{ 'USER_MGMT.COL_USER' | translate }}</th>
             <th>{{ 'USER_MGMT.COL_ROLE' | translate }}</th>
             <th>{{ 'USER_MGMT.COL_JOB_TITLE' | translate }}</th>
             <th>{{ 'USER_MGMT.COL_LINKED_STAFF' | translate }}</th>
             <th>{{ 'USER_MGMT.COL_STATUS' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_ACTIONS' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let u of users" class="table-row">
-            <td class="code-cell">{{ u.username }}</td>
-            <td>{{ u.displayName || '—' }}</td>
+          <tr *ngFor="let u of users" [class.highlight]="isPrimaryAdmin(u)">
             <td>
-              <span class="role-badge" [class.super-admin]="isPrimaryAdmin(u)">
+              <div class="k-person">
+                <span class="k-avatar" [class.ink]="isPrimaryAdmin(u)">{{ (u.displayName || u.username) | initials }}</span>
+                <div>
+                  <strong>{{ u.displayName || u.username }}</strong>
+                  <span class="k-ltr">&#64;{{ u.username }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="k-badge" [ngClass]="isPrimaryAdmin(u) ? 'ink' : 'brand'">
                 {{ (isPrimaryAdmin(u) ? 'USER_MGMT.ROLE_PRIMARY_ADMIN' : 'USER_MGMT.ROLE_ADMIN_STAFF') | translate }}
               </span>
             </td>
-            <td>{{ u.jobTitleLabel || '—' }}</td>
-            <td>{{ u.staffName ? u.staffCode + ' - ' + u.staffName : '—' }}</td>
+            <td class="k-muted-strong">{{ u.jobTitleLabel || '—' }}</td>
+            <td class="k-muted">{{ u.staffName ? u.staffName + ' (' + u.staffCode + ')' : '—' }}</td>
             <td>
-              <span class="status-badge" [class.status-active]="u.active" [class.status-inactive]="!u.active">
-                {{ (u.active ? 'USER_MGMT.STATUS_ACTIVE' : 'USER_MGMT.STATUS_INACTIVE') | translate }}
-              </span>
+              <button type="button" class="k-switch" [class.on]="u.active" [disabled]="isPrimaryAdmin(u)"
+                      (click)="toggleUserActive(u)" [title]="(u.active ? 'USER_MGMT.DEACTIVATE' : 'USER_MGMT.ACTIVATE') | translate">
+                <span></span>
+              </button>
             </td>
-            <td>
-              <div class="action-btns" *ngIf="!isPrimaryAdmin(u)">
-                <button class="icon-btn" (click)="openEditUserModal(u)" [title]="'USER_MGMT.EDIT_ACCOUNT' | translate">
+            <td class="k-actions">
+              <ng-container *ngIf="!isPrimaryAdmin(u)">
+                <button class="k-icon-btn" (click)="openEditUserModal(u)" [title]="'USER_MGMT.EDIT_ACCOUNT' | translate">
                   <span class="material-icons-round">edit</span>
                 </button>
-                <button class="icon-btn" (click)="toggleUserActive(u)" [title]="(u.active ? 'USER_MGMT.DEACTIVATE' : 'USER_MGMT.ACTIVATE') | translate">
-                  <span class="material-icons-round">{{ u.active ? 'block' : 'check_circle' }}</span>
+                <button class="k-icon-btn danger" (click)="deleteUser(u)" [title]="'USER_MGMT.DELETE' | translate">
+                  <span class="material-icons-round">delete_outline</span>
                 </button>
-                <button class="icon-btn danger" (click)="deleteUser(u)" [title]="'USER_MGMT.DELETE' | translate">
-                  <span class="material-icons-round">delete</span>
-                </button>
-              </div>
-              <span *ngIf="isPrimaryAdmin(u)" class="no-action-badge">{{ 'USER_MGMT.PROTECTED_ACCOUNT' | translate }}</span>
+              </ng-container>
+              <span *ngIf="isPrimaryAdmin(u)" class="k-badge">
+                <span class="material-icons-round protected-icon">shield</span>{{ 'USER_MGMT.PROTECTED_ACCOUNT' | translate }}
+              </span>
             </td>
           </tr>
-
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 
   <!-- Roles Tab -->
-  <div *ngIf="activeTab === 'roles'" class="tab-content">
-    <div class="section-header">
-      <h2>{{ 'USER_MGMT.ROLES_TITLE' | translate }}</h2>
-      <button class="btn btn-primary" (click)="openRoleModal()">
-        <span class="material-icons-round">add</span> {{ 'USER_MGMT.ADD_ROLE' | translate }}
-      </button>
+  <section class="k-card" *ngIf="activeTab === 'roles'">
+    <div class="k-card-head">
+      <span class="k-icon-tile"><span class="material-icons-round">admin_panel_settings</span></span>
+      <h3>{{ 'USER_MGMT.ROLES_TITLE' | translate }}</h3>
     </div>
 
     <div class="roles-grid">
@@ -112,7 +119,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- Create User Modal -->
   <div class="modal-backdrop" *ngIf="showUserModal" (click)="showUserModal = false">
@@ -228,55 +235,34 @@
     </div>
   </div>
 
-  <!-- Allocations Tab -->
-  <div *ngIf="activeTab === 'allocations'" class="tab-content">
-    <div class="section-header">
+  <!-- Captain allocation tab -->
+  <section class="k-card" *ngIf="activeTab === 'allocations'">
+    <div class="k-card-head">
+      <span class="k-icon-tile"><span class="material-icons-round">lock_person</span></span>
       <div>
-        <h2>{{ 'USER_MGMT.ALLOCATIONS_TITLE' | translate }}</h2>
-        <p class="section-subtitle">{{ 'USER_MGMT.ALLOCATIONS_SUBTITLE' | translate }}</p>
+        <h3>{{ 'USER_MGMT.ALLOCATIONS_TITLE' | translate }}</h3>
+        <p class="k-muted head-sub">{{ 'USER_MGMT.ALLOCATIONS_SUBTITLE' | translate }}</p>
       </div>
     </div>
 
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'USER_MGMT.COL_USERNAME' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_DISPLAY_NAME' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_ROLE' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_DATA_SCOPE' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_ASSIGNED_CAPTAINS' | translate }}</th>
-            <th>{{ 'USER_MGMT.COL_ACTIONS' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of allocations" class="table-row">
-            <td class="code-cell">{{ item.username }}</td>
-            <td>{{ item.displayName || '—' }}</td>
-            <td><span class="role-badge" [class.super-admin]="isPrimaryAdmin(item)">{{ isPrimaryAdmin(item) ? ('USER_MGMT.ROLE_PRIMARY_ADMIN' | translate) : item.role }}</span></td>
-            <td>
-              <span class="scope-pill" [class.scope-all]="item.dataScope === 'ALL_CAPTAINS'" [class.scope-restricted]="item.dataScope === 'ASSIGNED_ONLY'">
-                <span class="material-icons-round font-icon">{{ item.dataScope === 'ALL_CAPTAINS' ? 'public' : 'lock' }}</span>
-                {{ (item.dataScope === 'ALL_CAPTAINS' ? 'USER_MGMT.SCOPE_ALL_LABEL' : 'USER_MGMT.SCOPE_ASSIGNED_LABEL') | translate }}
-              </span>
-            </td>
-            <td>
-              <span class="count-badge" [class.has-captains]="item.assignedCaptainCount > 0">
-                {{ item.dataScope === 'ALL_CAPTAINS' ? ('USER_MGMT.ALL_CAPTAINS' | translate) : (item.assignedCaptainCount + ' ' + ('USER_MGMT.CAPTAINS_COUNT' | translate)) }}
-              </span>
-            </td>
-            <td>
-              <button *ngIf="!isPrimaryAdmin(item)" class="btn btn-sm btn-outline-primary" (click)="openAllocationModal(item.userId)">
-                <span class="material-icons-round">edit_attributes</span> {{ 'USER_MGMT.MANAGE_ALLOCATION_BTN' | translate }}
-              </button>
-              <span *ngIf="isPrimaryAdmin(item)" class="no-action-badge">{{ 'USER_MGMT.PERMANENT_FULL_SCOPE' | translate }}</span>
-            </td>
-          </tr>
-
-        </tbody>
-      </table>
+    <div class="alloc-row" *ngFor="let item of allocations">
+      <span class="alloc-icon" [class.restricted]="item.dataScope === 'ASSIGNED_ONLY'">
+        <span class="material-icons-round">{{ item.dataScope === 'ALL_CAPTAINS' ? 'public' : 'lock' }}</span>
+      </span>
+      <div class="alloc-text">
+        <strong>{{ item.displayName || item.username }}</strong>
+        <span>
+          {{ (item.dataScope === 'ALL_CAPTAINS' ? 'USER_MGMT.SCOPE_ALL_LABEL' : 'USER_MGMT.SCOPE_ASSIGNED_LABEL') | translate }} —
+          {{ item.dataScope === 'ALL_CAPTAINS' ? ('USER_MGMT.ALL_CAPTAINS' | translate) : (item.assignedCaptainCount + ' ' + ('USER_MGMT.CAPTAINS_COUNT' | translate)) }}
+          · {{ isPrimaryAdmin(item) ? ('USER_MGMT.ROLE_PRIMARY_ADMIN' | translate) : item.role }}
+        </span>
+      </div>
+      <button *ngIf="!isPrimaryAdmin(item)" class="btn btn-outline" (click)="openAllocationModal(item.userId)">
+        <span class="material-icons-round">tune</span> {{ 'USER_MGMT.MANAGE_ALLOCATION_BTN' | translate }}
+      </button>
+      <span *ngIf="isPrimaryAdmin(item)" class="k-badge">{{ 'USER_MGMT.PERMANENT_FULL_SCOPE' | translate }}</span>
     </div>
-  </div>
+  </section>
 
   <!-- Allocation Modal -->
   <div class="modal-backdrop" *ngIf="showAllocationModal" (click)="showAllocationModal = false">

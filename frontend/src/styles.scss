@@ -1,3 +1,6 @@
+@use 'shell';
+@use 'premium';
+
 /* =============================================
    Kamal Food — Global Styles
    Arabic-first, RTL layout
@@ -24,54 +27,72 @@
 }
 
 /* ---------- CSS Variables (Design Tokens) ---------- */
+/* Brand yellow leads; ink is an accent (pills, the KPI strip, avatars). Mirrors the captain app. */
 :root {
-  /* Primary palette */
-  --primary: #1B5E20;
-  --primary-light: #4CAF50;
-  --primary-dark: #0D3B12;
-  --primary-50: #E8F5E9;
-  --primary-100: #C8E6C9;
+  /* Brand */
+  --brand: #F5B000;
+  --brand-light: #FFD866;
+  --brand-deep: #C98A00;
+  --ink: #16171B;
+  --ink-soft: #2A2C33;
 
-  /* Accent */
-  --accent: #FF6F00;
-  --accent-light: #FFA040;
-  --accent-dark: #E65100;
+  /* Legacy names, remapped to the brand so existing components follow along */
+  --primary: #C98A00;
+  --primary-light: #F5B000;
+  --primary-dark: #8A5A00;
+  --primary-50: #FFF8E1;
+  --primary-100: #FFE9A8;
+
+  --accent: #16171B;
+  --accent-light: #2A2C33;
+  --accent-dark: #000000;
 
   /* Neutrals */
-  --bg-main: #F5F7FA;
+  --bg-main: #FAF8F4;
   --bg-card: #FFFFFF;
-  --bg-sidebar: #F5B000;
-  --bg-sidebar-hover: rgba(0, 0, 0, 0.08);
-  --bg-input: #F0F2F5;
+  --bg-sidebar: #FFFFFF;
+  --bg-header: #F5B000;
+  --bg-sidebar-active: #F5B000;
+  --bg-sidebar-hover: rgba(245, 176, 0, 0.12);
+  --bg-input: #F6F3EC;
 
-  --text-primary: #1A1A2E;
-  --text-secondary: #64748B;
-  --text-light: #94A3B8;
+  --text-primary: #16171B;
+  --text-secondary: #6B6F78;
+  --text-light: #9A9EA6;
   --text-white: #FFFFFF;
-  --text-sidebar: #000000;
+  --text-sidebar: #16171B;
 
   /* Status colors */
-  --success: #22C55E;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --info: #3B82F6;
+  --success: #1E9E5A;
+  --warning: #D98E04;
+  --danger: #DC2626;
+  --info: #2F6FD6;
 
   /* Borders & Shadows */
-  --border: #E2E8F0;
-  --border-light: #F1F5F9;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --border: #EEE9DF;
+  --border-light: #F3EFE7;
+  --shadow-sm: 0 1px 2px rgba(22, 23, 27, 0.04), 0 4px 14px rgba(22, 23, 27, 0.04);
+  --shadow-md: 0 6px 20px rgba(22, 23, 27, 0.07);
+  --shadow-lg: 0 12px 32px rgba(22, 23, 27, 0.10);
+  --shadow-xl: 0 24px 60px rgba(22, 23, 27, 0.16);
+  --shadow-float: 0 20px 50px rgba(22, 23, 27, 0.18);
+  --shadow-brand: 0 8px 20px rgba(201, 138, 0, 0.30);
+  --shadow-ink: 0 8px 20px rgba(22, 23, 27, 0.22);
+
+  /* Gradients */
+  --hero-gradient: linear-gradient(135deg, #FFC733 0%, #F5B000 58%, #E89900 100%);
+  --btn-gradient: linear-gradient(90deg, #FFD25E 0%, #F5B000 55%, #E09A00 100%);
+  --route-motif: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 620 300'><path d='M10 270 C 150 262 170 168 300 176 S 470 236 545 118' fill='none' stroke='%2316171B' stroke-opacity='.2' stroke-width='4' stroke-dasharray='2 12' stroke-linecap='round'/><path d='M-20 120 L 640 40' stroke='%23ffffff' stroke-opacity='.18' stroke-width='26'/><circle cx='10' cy='270' r='8' fill='%2316171B' fill-opacity='.18'/><circle cx='300' cy='176' r='6' fill='%23ffffff' fill-opacity='.75'/><path d='M545 62c-18 0-32 14-32 32 0 24 32 56 32 56s32-32 32-56c0-18-14-32-32-32z' fill='%2316171B' fill-opacity='.22'/><circle cx='545' cy='94' r='11' fill='%23ffffff' fill-opacity='.85'/></svg>");
 
   /* Spacing */
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 72px;
-  --header-height: 64px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --sidebar-width: 264px;
+  --sidebar-collapsed: 76px;
+  --header-height: 76px;
+  --hero-height: 300px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
 
   /* Transitions */
   --transition-fast: 0.15s ease;
@@ -159,22 +180,37 @@ input, textarea, select {
 }
 
 /* ---------- Scrollbar ---------- */
+/* Thin and invisible until the pointer is over the area that scrolls. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(22, 23, 27, 0.25) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-light);
+  background: transparent;
   border-radius: 10px;
 }
 
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(22, 23, 27, 0.25);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: rgba(22, 23, 27, 0.45);
 }
 
 /* ---------- Utility Classes ---------- */
@@ -208,9 +244,9 @@ input, textarea, select {
 /* ---------- Card ---------- */
 .card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   padding: 24px;
   transition: box-shadow var(--transition-normal);
 }
@@ -225,10 +261,10 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   transition: all var(--transition-fast);
   cursor: pointer;
   border: none;
@@ -236,40 +272,55 @@ input, textarea, select {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  color: var(--text-white);
-  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.3);
+  background: var(--btn-gradient);
+  color: var(--ink);
+  box-shadow: var(--shadow-brand);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(27, 94, 32, 0.4);
+  box-shadow: 0 10px 24px rgba(201, 138, 0, 0.38);
 }
 
-.btn-accent {
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  color: var(--text-white);
-  box-shadow: 0 2px 8px rgba(255, 111, 0, 0.3);
+/* Ink: the strong action on yellow surfaces */
+.btn-accent,
+.btn-ink {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: var(--shadow-ink);
 }
 
-.btn-accent:hover {
+.btn-accent .material-icons-round,
+.btn-ink .material-icons-round {
+  color: var(--brand);
+}
+
+.btn-accent:hover,
+.btn-ink:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255, 111, 0, 0.4);
+  background: var(--ink-soft);
 }
 
-.btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
+.btn-outline,
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
-.btn-outline:hover {
+.btn-outline:hover,
+.btn-secondary:hover {
   background: var(--primary-50);
+  border-color: var(--primary-100);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, var(--danger), #F87171);
-  color: var(--text-white);
+  background: #FDE7E7;
+  color: #991B1B;
+}
+
+.btn-danger:hover {
+  background: #FBD3D3;
 }
 
 .btn-sm {
@@ -304,8 +355,8 @@ input, textarea, select {
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  background: var(--bg-input);
-  border: 2px solid transparent;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 0.95rem;
   color: var(--text-primary);
@@ -313,9 +364,9 @@ input, textarea, select {
 }
 
 .form-input:focus {
-  border-color: var(--primary);
+  border-color: var(--brand);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+  box-shadow: 0 0 0 3px rgba(245, 176, 0, 0.18);
 }
 
 .form-input.error {
@@ -340,7 +391,7 @@ input, textarea, select {
 }
 
 .badge-success {
-  background: #DCFCE7;
+  background: #E3F6EA;
   color: #166534;
 }
 
@@ -360,13 +411,13 @@ input, textarea, select {
 }
 
 .badge-employee {
-  background: #E0E7FF;
-  color: #3730A3;
+  background: var(--primary-50);
+  color: var(--brand-deep);
 }
 
 .badge-freelance {
-  background: #FFF7ED;
-  color: #C2410C;
+  background: #EFEAFB;
+  color: #6B4FBB;
 }
 
 /* Document expiry — one palette so the dashboard tile, the captains-table badge and the
@@ -385,21 +436,19 @@ input, textarea, select {
 }
 
 .data-table th {
-  background: var(--bg-input);
+  background: var(--bg-main);
   padding: 12px 16px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   text-align: start;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
   padding: 14px 16px;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--border-light);
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
@@ -449,7 +498,7 @@ input, textarea, select {
   width: 32px;
   height: 32px;
   border: 3px solid var(--border);
-  border-top-color: var(--primary);
+  border-top-color: var(--brand);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

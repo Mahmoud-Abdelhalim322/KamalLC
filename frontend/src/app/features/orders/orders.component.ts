@@ -186,9 +186,8 @@ export class OrdersComponent implements OnInit {
     }, 0);
   }
 
-  /** Count of filtered rows' work days for the active legend filter */
+  /** Work days of the rows shown, narrowed to the active legend filter when there is one. */
   get filteredWorkDays(): number {
-    if (!this.activeLegendFilter) return 0;
     return this.filteredRows.reduce((sum, row) => sum + this.getCaptainWorkDays(row), 0);
   }
 

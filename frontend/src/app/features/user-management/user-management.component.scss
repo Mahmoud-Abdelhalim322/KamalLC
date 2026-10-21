@@ -1,4 +1,4 @@
-.page-container { max-width: 1400px; }
+.page-container { }
 
 .page-header {
   margin-bottom: 24px;
@@ -295,24 +295,8 @@
   border-top: 1px solid var(--border-light);
 }
 
-.btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 20px; border-radius: var(--radius-md);
-  font-size: 0.88rem; font-weight: 600; cursor: pointer;
-  transition: all var(--transition-fast); border: none;
-}
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
-  &:hover { box-shadow: 0 6px 18px rgba(76, 175, 80, 0.35); transform: translateY(-1px); }
-  .material-icons-round { font-size: 20px; }
-}
 
-.btn-secondary {
-  background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border);
-  &:hover { background: var(--bg-hover); }
-}
 
 .loading-state {
   display: flex; align-items: center; justify-content: center;
@@ -326,3 +310,29 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Premium layout (Figma W23) ---------- */
+.k-card-head {
+  .head-end { margin-inline-start: auto; }
+  .head-sub { margin: 2px 0 0; font-size: 0.78rem; }
+}
+.protected-icon { font-size: 13px; margin-inline-end: 4px; vertical-align: -2px; }
+
+.roles-grid { margin-top: 4px; }
+
+.alloc-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; border-radius: 16px; background: var(--bg-main);
+  .alloc-icon {
+    width: 36px; height: 36px; border-radius: 12px; background: #fff; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    .material-icons-round { font-size: 19px; color: var(--ink); }
+    &.restricted .material-icons-round { color: var(--brand-deep); }
+  }
+  .alloc-text {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+    strong { font-weight: 800; color: var(--ink); }
+    span { font-size: 0.78rem; color: var(--text-light); }
+  }
+  .btn { background: #fff; }
+}

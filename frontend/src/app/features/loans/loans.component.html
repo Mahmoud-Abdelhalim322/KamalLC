@@ -1,9 +1,34 @@
 <div class="loans-page">
-
-  <div class="page-header flex-between">
-    <div>
+  <!-- Header on the yellow band (Figma W15) -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">account_balance_wallet</span>{{ 'NAV.SECTION_OPERATIONS' | translate }}</span>
       <h1 class="page-title">{{ 'LOANS.TITLE' | translate }}</h1>
-      <p class="page-subtitle">{{ 'LOANS.SUBTITLE' | translate }}</p>
+      <p class="k-page-sub">{{ 'LOANS.SUBTITLE' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="k-kpi-strip">
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'LOANS.TOTAL_MEMBERS' | translate }}</span>
+      <span class="k-kpi-value">{{ filteredMembers.length | number }}</span>
+      <span class="k-kpi-note">{{ 'LOANS.KPI_MEMBERS_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'LOANS.MEMBERS_WITH_LOANS' | translate }}</span>
+      <span class="k-kpi-value">{{ membersWithLoans | number }}</span>
+      <span class="k-kpi-note">{{ 'LOANS.KPI_WITH_LOANS_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'LOANS.ACTIVE_LOANS' | translate }}</span>
+      <span class="k-kpi-value">{{ totals.activeLoanCount | number }}</span>
+      <span class="k-kpi-note">{{ 'LOANS.KPI_ACTIVE_NOTE' | translate }}</span>
+    </div>
+    <div class="k-kpi">
+      <span class="k-kpi-label">{{ 'LOANS.TOTAL_REMAINING' | translate }}</span>
+      <span class="k-kpi-value">{{ totals.totalRemaining | sar }}</span>
+      <span class="k-kpi-note">{{ 'LOANS.KPI_REMAINING_NOTE' | translate:{ amount: money(totals.totalOriginal) } }}</span>
     </div>
   </div>
 
@@ -12,120 +37,78 @@
     <button class="alert-close" (click)="errorMsg = ''">×</button>
   </div>
 
-  <!-- Summary cards -->
-  <div class="summary-cards">
-    <div class="summary-card">
-      <span class="material-icons-round card-icon">people</span>
-      <div class="card-body">
-        <span class="card-value">{{ filteredMembers.length }}</span>
-        <span class="card-label">{{ 'LOANS.TOTAL_MEMBERS' | translate }}</span>
+  <section class="k-card">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="'LOANS.SEARCH_PLACEHOLDER' | translate">
+      </div>
+      <div class="k-chips">
+        <button [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">{{ 'COMMON.ALL' | translate }}</button>
+        <button [class.active]="typeFilter === 'CAPTAIN'" (click)="typeFilter = 'CAPTAIN'; applyFilters()">{{ 'LOANS.TYPE_CAPTAIN' | translate }}</button>
+        <button [class.active]="typeFilter === 'WORKER'" (click)="typeFilter = 'WORKER'; applyFilters()">{{ 'LOANS.TYPE_WORKER' | translate }}</button>
+        <button [class.active]="typeFilter === 'MANAGER'" (click)="typeFilter = 'MANAGER'; applyFilters()">{{ 'LOANS.TYPE_MANAGER' | translate }}</button>
       </div>
     </div>
-    <div class="summary-card">
-      <span class="material-icons-round card-icon accent">account_balance_wallet</span>
-      <div class="card-body">
-        <span class="card-value">{{ membersWithLoans }}</span>
-        <span class="card-label">{{ 'LOANS.MEMBERS_WITH_LOANS' | translate }}</span>
-      </div>
-    </div>
-    <div class="summary-card">
-      <span class="material-icons-round card-icon warn">receipt_long</span>
-      <div class="card-body">
-        <span class="card-value">{{ totals.activeLoanCount }}</span>
-        <span class="card-label">{{ 'LOANS.ACTIVE_LOANS' | translate }}</span>
-      </div>
-    </div>
-    <div class="summary-card">
-      <span class="material-icons-round card-icon danger">trending_down</span>
-      <div class="card-body">
-        <span class="card-value">{{ money(totals.totalRemaining) }}</span>
-        <span class="card-label">{{ 'LOANS.TOTAL_REMAINING' | translate }}</span>
-      </div>
-    </div>
-  </div>
 
-  <!-- Filters -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <label class="filter-label">{{ 'LOANS.TYPE_FILTER' | translate }}</label>
-      <div class="btn-group">
-        <button class="btn btn-tab" [class.active]="typeFilter === 'ALL'" (click)="typeFilter = 'ALL'; applyFilters()">{{ 'COMMON.ALL' | translate }}</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'CAPTAIN'" (click)="typeFilter = 'CAPTAIN'; applyFilters()">{{ 'LOANS.TYPE_CAPTAIN' | translate }}</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'WORKER'" (click)="typeFilter = 'WORKER'; applyFilters()">{{ 'LOANS.TYPE_WORKER' | translate }}</button>
-        <button class="btn btn-tab" [class.active]="typeFilter === 'MANAGER'" (click)="typeFilter = 'MANAGER'; applyFilters()">{{ 'LOANS.TYPE_MANAGER' | translate }}</button>
+    <div class="k-empty" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>{{ 'COMMON.LOADING_DATA' | translate }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="k-table-wrap" *ngIf="filteredMembers.length > 0">
+        <table class="k-table">
+          <thead>
+            <tr>
+              <th>{{ 'LOANS.COL_NAME' | translate }}</th>
+              <th>{{ 'LOANS.COL_TYPE' | translate }}</th>
+              <th>{{ 'LOANS.COL_PHONE' | translate }}</th>
+              <th>{{ 'LOANS.COL_ACTIVE_LOANS' | translate }}</th>
+              <th>{{ 'LOANS.COL_ORIGINAL_AMOUNT' | translate }}</th>
+              <th>{{ 'LOANS.COL_REMAINING' | translate }}</th>
+              <th>{{ 'LOANS.COL_REPAID' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let member of filteredMembers" class="clickable-row" (click)="openMember(member)">
+              <td>
+                <div class="k-person">
+                  <span class="k-avatar">{{ member.memberName | initials }}</span>
+                  <div><strong>{{ member.memberName }}</strong><span>{{ member.memberCode }}</span></div>
+                </div>
+              </td>
+              <td><span class="k-badge" [ngClass]="typeTone(member.memberType)">{{ memberTypeLabel(member.memberType) }}</span></td>
+              <td class="k-ltr">{{ member.phone || '—' }}</td>
+              <td class="num">{{ member.activeLoanCount || '—' }}</td>
+              <td class="k-muted-strong">{{ member.totalOriginal > 0 ? (member.totalOriginal | sar) : '—' }}</td>
+              <td class="strong">{{ member.totalRemaining > 0 ? (member.totalRemaining | sar) : '—' }}</td>
+              <td>
+                <div class="repaid" *ngIf="member.totalOriginal > 0">
+                  <span class="k-progress"><i [style.width.%]="repaidPct(member)" [class.done]="repaidPct(member) >= 75"></i></span>
+                  <b>{{ repaidPct(member) }}%</b>
+                </div>
+              </td>
+              <td class="k-actions"><span class="k-icon-btn"><span class="material-icons-round k-flip">chevron_right</span></span></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">{{ 'LOANS.TOTAL_ROW' | translate }}</td>
+              <td>{{ totals.activeLoanCount }}</td>
+              <td>{{ totals.totalOriginal | sar }}</td>
+              <td>{{ totals.totalRemaining | sar }}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-    </div>
-    <div class="filter-group search-group">
-      <span class="material-icons-round search-icon">search</span>
-      <input type="text" class="form-input search-input" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
-             [placeholder]="'LOANS.SEARCH_PLACEHOLDER' | translate">
-    </div>
-  </div>
 
-  <!-- Loading -->
-  <div class="loading-section" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'COMMON.LOADING_DATA' | translate }}</p>
-  </div>
-
-  <!-- Table -->
-  <div class="card table-card" *ngIf="!isLoading">
-    <div class="table-responsive">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'LOANS.COL_CODE' | translate }}</th>
-            <th>{{ 'LOANS.COL_NAME' | translate }}</th>
-            <th>{{ 'LOANS.COL_TYPE' | translate }}</th>
-            <th>{{ 'LOANS.COL_PHONE' | translate }}</th>
-            <th class="num">{{ 'LOANS.COL_ACTIVE_LOANS' | translate }}</th>
-            <th class="num">{{ 'LOANS.COL_ORIGINAL_AMOUNT' | translate }}</th>
-            <th class="num">{{ 'LOANS.COL_REMAINING' | translate }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let member of filteredMembers" class="clickable-row" (click)="openMember(member)"
-              [class.has-loans]="member.activeLoanCount > 0">
-            <td class="code-cell">{{ member.memberCode }}</td>
-            <td>
-              <span class="member-name">{{ member.memberName }}</span>
-              <span class="member-name-en" *ngIf="member.memberNameEn">{{ member.memberNameEn }}</span>
-            </td>
-            <td><span class="type-badge" [attr.data-type]="member.memberType">{{ memberTypeLabel(member.memberType) }}</span></td>
-            <td class="phone-cell">{{ member.phone || '—' }}</td>
-            <td class="num">
-              <span class="loan-count" *ngIf="member.activeLoanCount > 0">{{ member.activeLoanCount }}</span>
-              <span class="no-loans" *ngIf="member.activeLoanCount === 0">—</span>
-            </td>
-            <td class="num">{{ member.totalOriginal > 0 ? money(member.totalOriginal) : '—' }}</td>
-            <td class="num">
-              <span [class.remaining-active]="member.totalRemaining > 0">
-                {{ member.totalRemaining > 0 ? money(member.totalRemaining) : '—' }}
-              </span>
-            </td>
-            <td>
-              <button class="btn btn-icon btn-sm" [title]="'LOAN_DETAIL.VIEW_DETAILS' | translate">
-                <span class="material-icons-round">chevron_left</span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot *ngIf="filteredMembers.length > 0">
-          <tr class="totals-row">
-            <td colspan="4">{{ 'LOANS.TOTAL_ROW' | translate }}</td>
-            <td class="num">{{ totals.activeLoanCount }}</td>
-            <td class="num">{{ money(totals.totalOriginal) }}</td>
-            <td class="num">{{ money(totals.totalRemaining) }}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-    <p class="empty-state" *ngIf="filteredMembers.length === 0">
-      <span class="material-icons-round">info</span>
-      {{ 'LOANS.NO_RESULTS' | translate }}
-    </p>
-  </div>
-
+      <div class="k-empty" *ngIf="filteredMembers.length === 0">
+        <span class="material-icons-round">info</span>
+        <p>{{ 'LOANS.NO_RESULTS' | translate }}</p>
+      </div>
+    </ng-container>
+  </section>
 </div>

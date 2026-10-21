@@ -1,83 +1,71 @@
-<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed">
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="sidebar-logo-img">
+  <aside class="shell-sidebar">
+    <div class="shell-brand">
+      <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="shell-logo">
+      <div class="shell-brand-text" *ngIf="!sidebarCollapsed">
+        <strong>{{ 'COMMON.COMPANY_NAME_SHORT' | translate }}</strong>
+        <span>{{ 'NAV.TAGLINE' | translate }}</span>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <ng-container *ngFor="let item of navItems">
-        <ng-container *ngIf="isVisible(item)">
-          <!-- Simple nav item (no children) -->
-          <a *ngIf="!item.children && item.route"
-             [routerLink]="item.route"
-             routerLinkActive="active"
-             class="nav-item"
-             [title]="item.translationKey ? (item.translationKey | translate) : item.label">
-            <span class="material-icons-round nav-icon">{{ item.icon }}</span>
-            <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.translationKey ? (item.translationKey | translate) : item.label }}</span>
-          </a>
-
-          <!-- Nav group with children -->
-          <div *ngIf="item.children" class="nav-group" [class.expanded]="item.expanded">
-            <button class="nav-item nav-group-toggle" (click)="toggleGroup(item)" [title]="item.translationKey ? (item.translationKey | translate) : item.label">
-              <span class="material-icons-round nav-icon">{{ item.icon }}</span>
-              <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.translationKey ? (item.translationKey | translate) : item.label }}</span>
-              <span class="material-icons-round nav-chevron" *ngIf="!sidebarCollapsed">
-                {{ item.expanded ? 'expand_less' : 'expand_more' }}
-              </span>
-            </button>
-            <div class="nav-group-children" *ngIf="item.expanded && !sidebarCollapsed">
-              <ng-container *ngFor="let child of item.children">
-                <a *ngIf="isVisible(child)"
-                   [routerLink]="child.route"
-                   routerLinkActive="active"
-                   class="nav-item nav-child"
-                   [title]="child.translationKey ? (child.translationKey | translate) : child.label">
-                  <span class="material-icons-round nav-icon">{{ child.icon }}</span>
-                  <span class="nav-label">{{ child.translationKey ? (child.translationKey | translate) : child.label }}</span>
-                </a>
-              </ng-container>
-            </div>
-          </div>
+    <nav class="shell-nav">
+      <ng-container *ngFor="let section of navSections">
+        <ng-container *ngIf="visibleItems(section) as items">
+          <ng-container *ngIf="items.length">
+            <div class="shell-section-label" *ngIf="section.labelKey && !sidebarCollapsed">{{ section.labelKey | translate }}</div>
+            <a *ngFor="let item of items"
+               [routerLink]="item.route"
+               routerLinkActive="active"
+               class="shell-nav-item"
+               [title]="item.translationKey ? (item.translationKey | translate) : item.label">
+              <span class="material-icons-round shell-nav-icon">{{ item.icon }}</span>
+              <span class="shell-nav-label" *ngIf="!sidebarCollapsed">{{ item.translationKey ? (item.translationKey | translate) : item.label }}</span>
+            </a>
+          </ng-container>
         </ng-container>
       </ng-container>
     </nav>
 
-    <div class="sidebar-footer">
-      <button class="nav-item logout-btn" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
-        <span class="material-icons-round nav-icon">logout</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.LOGOUT' | translate }}</span>
+    <div class="shell-user-card">
+      <div class="shell-avatar">{{ initials }}</div>
+      <div class="shell-user-text" *ngIf="!sidebarCollapsed">
+        <strong>{{ username }}</strong>
+        <span *ngIf="userRole">{{ userRole }}</span>
+      </div>
+      <button class="shell-logout" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
+        <span class="material-icons-round">logout</span>
       </button>
     </div>
   </aside>
 
-  <!-- Main Content -->
-  <div class="main-wrapper">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-start">
-        <button class="toggle-btn" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
-          <span class="material-icons-round">{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</span>
-        </button>
-      </div>
+  <!-- Main -->
+  <div class="shell-main" appHeroBand>
+    <div class="shell-hero" aria-hidden="true"></div>
 
-      <span class="header-company-name">{{ themeService.brandText() }}</span>
+    <header class="shell-topbar">
+      <form class="shell-search" (ngSubmit)="submitSearch()">
+        <span class="material-icons-round">search</span>
+        <input type="search" name="globalSearch" [(ngModel)]="globalSearch"
+               [placeholder]="'HEADER.SEARCH_PLACEHOLDER' | translate" autocomplete="off">
+      </form>
 
-      <div class="header-end">
-        <!-- Language Switcher in Top Bar -->
+      <div class="shell-topbar-end">
         <app-language-switcher mode="dropdown" variant="header"></app-language-switcher>
 
-        <!-- Notifications Bell -->
+        <div class="shell-scope" *ngIf="dataScopeInfo" [class.is-restricted]="dataScopeInfo.restricted"
+             [title]="dataScopeInfo.restricted ? ('HEADER.DATA_SCOPE_RESTRICTED_TOOLTIP' | translate) : ('HEADER.DATA_SCOPE_ALL_TOOLTIP' | translate)">
+          <span class="material-icons-round">{{ dataScopeInfo.restricted ? 'lock' : 'public' }}</span>
+          <span>{{ dataScopeInfo.restricted ? (dataScopeInfo.assignedCaptainCount + ' ' + ('HEADER.ASSIGNED_CAPTAINS' | translate)) : ('HEADER.ALL_CAPTAINS' | translate) }}</span>
+        </div>
+
+        <!-- Notifications -->
         <div class="notifications-wrapper">
-          <button class="notif-btn" (click)="toggleNotifications()" [title]="'HEADER.NOTIFICATIONS' | translate">
+          <button class="shell-glass-btn notif-btn" [class.is-open]="showNotifications" (click)="toggleNotifications()" [title]="'HEADER.NOTIFICATIONS' | translate">
             <span class="material-icons-round">notifications</span>
             <span class="notif-badge" *ngIf="notificationCount > 0">{{ notificationCount > 99 ? '99+' : notificationCount }}</span>
           </button>
 
-          <!-- Notifications Dropdown -->
           <div class="notif-dropdown" *ngIf="showNotifications">
             <div class="notif-header">
               <h3>
@@ -133,26 +121,19 @@
           </div>
         </div>
 
-        <div class="topbar-scope-badge" *ngIf="dataScopeInfo" [class.is-restricted]="dataScopeInfo.restricted"
-             [title]="dataScopeInfo.restricted ? ('HEADER.DATA_SCOPE_RESTRICTED_TOOLTIP' | translate) : ('HEADER.DATA_SCOPE_ALL_TOOLTIP' | translate)">
-          <span class="material-icons-round font-icon">{{ dataScopeInfo.restricted ? 'lock' : 'public' }}</span>
-          <span>{{ dataScopeInfo.restricted ? (dataScopeInfo.assignedCaptainCount + ' ' + ('HEADER.ASSIGNED_CAPTAINS' | translate)) : ('HEADER.ALL_CAPTAINS' | translate) }}</span>
-        </div>
-
-        <div class="user-info">
-          <div class="user-avatar">
+        <div class="shell-user-chip">
+          <div class="shell-avatar">
             <span class="material-icons-round">admin_panel_settings</span>
           </div>
-          <div class="user-details">
-            <span class="user-name">{{ username }}</span>
-            <span class="user-role" *ngIf="userRole">{{ userRole }}</span>
+          <div class="shell-user-text">
+            <strong>{{ username }}</strong>
+            <span *ngIf="userRole">{{ userRole }}</span>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Page Content -->
-    <main class="main-content">
+    <main class="shell-content">
       <router-outlet></router-outlet>
     </main>
   </div>

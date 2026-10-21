@@ -1,11 +1,16 @@
 <div class="form-page">
-  <div class="form-header">
-    <a [routerLink]="backRoute" class="back-btn">
-      <span class="material-icons-round">arrow_forward</span>
-    </a>
-    <div>
-      <h1>{{ pageTitle }}</h1>
-      <span class="code-preview" *ngIf="nextCode">{{ nextCode }}</span>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">person_add</span>{{ 'NAV.SECTION_MEMBERS' | translate }}</span>
+      <h1 class="page-title">{{ pageTitle }}</h1>
+      <p class="k-page-sub" *ngIf="nextCode">{{ nextCode }}</p>
+    </div>
+    <div class="k-page-actions">
+      <a [routerLink]="backRoute" class="btn btn-glass">
+        <span class="material-icons-round k-flip">arrow_back</span>
+        {{ 'COMMON.BACK' | translate }}
+      </a>
     </div>
   </div>
 

@@ -11,11 +11,12 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 
 import { TranslationService, TranslatePipe } from '../../core/i18n';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, InitialsPipe],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
@@ -25,6 +26,8 @@ export class UserManagementComponent implements OnInit {
 
   // Users
   users: UserResponse[] = [];
+
+  get activeUsers(): number { return this.users.filter(u => u.active).length; }
   jobTitles: JobTitleResponse[] = [];
   allPermissions: PermissionInfo[] = [];
   managerStaff: StaffResponse[] = [];

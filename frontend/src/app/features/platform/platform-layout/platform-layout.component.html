@@ -1,75 +1,57 @@
-<div class="platform-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed">
   <!-- Sidebar -->
-  <aside class="platform-sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="sidebar-logo-img">
+  <aside class="shell-sidebar">
+    <div class="shell-brand">
+      <img [src]="themeService.logoUrl()" [alt]="themeService.brandText()" class="shell-logo">
+      <div class="shell-brand-text" *ngIf="!sidebarCollapsed">
+        <strong>{{ 'COMMON.COMPANY_NAME_SHORT' | translate }}</strong>
+        <span class="platform-tag"><span class="material-icons-round">verified</span>{{ 'NAV.PLATFORM_TAGLINE' | translate }}</span>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <a routerLink="/platform/dashboard" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_DASHBOARD' | translate">
-        <span class="material-icons-round nav-icon">dashboard</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_DASHBOARD' | translate }}</span>
-      </a>
-      <a routerLink="/platform/tenants" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_TENANTS' | translate">
-        <span class="material-icons-round nav-icon">domain</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_TENANTS' | translate }}</span>
-      </a>
-      <a routerLink="/platform/plans" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_PLANS' | translate">
-        <span class="material-icons-round nav-icon">assignment</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_PLANS' | translate }}</span>
-      </a>
-      <a routerLink="/platform/subscriptions" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_SUBSCRIPTIONS' | translate">
-        <span class="material-icons-round nav-icon">credit_card</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_SUBSCRIPTIONS' | translate }}</span>
-      </a>
-      <a routerLink="/platform/invoices" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_INVOICES' | translate">
-        <span class="material-icons-round nav-icon">receipt_long</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_INVOICES' | translate }}</span>
-      </a>
-      <a routerLink="/platform/audit-log" routerLinkActive="active" class="nav-item" [title]="'NAV.PLATFORM_AUDIT_LOG' | translate">
-        <span class="material-icons-round nav-icon">manage_history</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.PLATFORM_AUDIT_LOG' | translate }}</span>
+    <nav class="shell-nav">
+      <div class="shell-section-label" *ngIf="!sidebarCollapsed">{{ 'NAV.SECTION_PLATFORM' | translate }}</div>
+      <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active" class="shell-nav-item" [title]="item.key | translate">
+        <span class="material-icons-round shell-nav-icon">{{ item.icon }}</span>
+        <span class="shell-nav-label" *ngIf="!sidebarCollapsed">{{ item.key | translate }}</span>
       </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <button class="nav-item logout-btn" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
-        <span class="material-icons-round nav-icon">logout</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{ 'NAV.LOGOUT' | translate }}</span>
+    <div class="shell-user-card">
+      <div class="shell-avatar">{{ initials }}</div>
+      <div class="shell-user-text" *ngIf="!sidebarCollapsed">
+        <strong>{{ authService.getDisplayName() }}</strong>
+        <span>{{ 'HEADER.ROLE_PLATFORM_ADMIN' | translate }}</span>
+      </div>
+      <button class="shell-logout" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
+        <span class="material-icons-round">logout</span>
       </button>
     </div>
   </aside>
 
-  <!-- Main Content Area -->
-  <div class="platform-main-wrapper">
-    <header class="platform-header">
-      <div class="header-start">
-        <button class="toggle-btn" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
-          <span class="material-icons-round">{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</span>
-        </button>
-      </div>
+  <!-- Main -->
+  <div class="shell-main" appHeroBand>
+    <div class="shell-hero" aria-hidden="true"></div>
 
-      <span class="header-company-name">{{ 'NAV.PLATFORM_TITLE' | translate }}</span>
+    <header class="shell-topbar">
+      <span class="shell-company-pill">{{ 'NAV.PLATFORM_TITLE' | translate }}</span>
 
-      <div class="header-end">
-        <!-- Language Switcher -->
+      <div class="shell-topbar-end">
         <app-language-switcher mode="dropdown" variant="header"></app-language-switcher>
 
-        <div class="user-info">
-          <div class="user-avatar">
+        <div class="shell-user-chip">
+          <div class="shell-avatar">
             <span class="material-icons-round">admin_panel_settings</span>
           </div>
-          <div class="user-details">
-            <span class="user-name">{{ authService.getDisplayName() }}</span>
-            <span class="user-role">{{ 'HEADER.ROLE_PLATFORM_ADMIN' | translate }}</span>
+          <div class="shell-user-text">
+            <strong>{{ authService.getDisplayName() }}</strong>
+            <span>{{ 'HEADER.ROLE_PLATFORM_ADMIN' | translate }}</span>
           </div>
         </div>
       </div>
     </header>
 
-    <main class="platform-main">
+    <main class="shell-content">
       <router-outlet></router-outlet>
     </main>
   </div>

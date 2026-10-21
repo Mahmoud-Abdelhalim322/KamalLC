@@ -1,5 +1,6 @@
 export const AR_TRANSLATIONS = {
   COMMON: {
+    CLEAR: 'مسح',
     APP_NAME: 'كمال فود',
     COMPANY_NAME: 'شركة كمال بن خلف السلمي للخدمات اللوجستية',
     COMPANY_NAME_SHORT: 'شركة كمال السلمي',
@@ -99,6 +100,14 @@ export const AR_TRANSLATIONS = {
     USER_MANAGEMENT: 'إدارة المستخدمين',
     SETTINGS: 'الإعدادات',
     LOGOUT: 'تسجيل الخروج',
+    TAGLINE: 'إدارة الكباتن والتوصيل',
+    PLATFORM_TAGLINE: 'إدارة المنصة',
+    SECTION_MEMBERS: 'الأعضاء',
+    SECTION_OPERATIONS: 'التشغيل',
+    SECTION_FINANCE: 'المالية والتقارير',
+    SECTION_ASSETS: 'الأصول والعهد',
+    SECTION_SYSTEM: 'النظام',
+    SECTION_PLATFORM: 'إدارة المنصة',
 
     // Platform navigation
     PLATFORM_DASHBOARD: 'لوحة تحكم المنصة',
@@ -111,6 +120,7 @@ export const AR_TRANSLATIONS = {
   },
 
   HEADER: {
+    SEARCH_PLACEHOLDER: 'ابحث عن كابتن بالاسم، الكود، الهوية أو الجوال…',
     NOTIFICATIONS: 'الإشعارات والتنبيهات',
     NOTIFICATIONS_EMPTY: 'لا توجد تنبيهات جديدة، جميع الوثائق سارية!',
     MARK_ALL_READ: 'تحديد الكل كمقروء',
@@ -138,6 +148,13 @@ export const AR_TRANSLATIONS = {
 
   AUTH: {
     LOGIN_TITLE: 'شركة كمال السلمي',
+    WELCOME_BACK: 'مرحباً بعودتك',
+    WELCOME_SUB: 'سجّل الدخول لمتابعة عمليات الكباتن والشيفتات والرواتب',
+    HERO_BADGE: 'نظام إدارة كباتن التوصيل',
+    HERO_TITLE: 'كل كابتن، كل شيفت، وكل ريال — في مكان واحد.',
+    FAST_DELIVERY_DESC: 'متابعة لحظية للشيفتات والطلبات',
+    INVENTORY_MANAGEMENT_DESC: 'الأسطول والعهد والوثائق في لوحة واحدة',
+    SECURITY_PRO_DESC: 'صلاحيات دقيقة وسجل مراجعة كامل',
     LOGIN_SUBTITLE: 'نظام الإدارة والخدمات اللوجستية',
     TAGLINE: 'الخدمات اللوجستية المتكاملة',
     FAST_DELIVERY: 'توصيل سريع',
@@ -156,6 +173,17 @@ export const AR_TRANSLATIONS = {
   },
 
   DASHBOARD: {
+    ALERTS_OPEN: '{{count}} تنبيهات مفتوحة',
+    EXPIRED_DOCS_LABEL: 'وثيقة منتهية الصلاحية',
+    UNMATCHED_LABEL: 'معرف + شفت غير مربوط',
+    LATE_RETURNS_LABEL: 'سيارات متأخرة عن الإرجاع',
+    COL_CAPTAIN: 'الكابتن',
+    COL_TYPE: 'النوع',
+    COL_SHIFTS: 'الشيفتات',
+    COL_ORDERS: 'الطلبات',
+    TARGET_ACHIEVED_SHORT: 'محققون',
+    QUICK_ACTIONS_SHORT: 'إجراءات سريعة',
+    ACTION_REPORTS: 'التقارير',
     HERO_TAG: 'مركز القيادة والعمليات التنفيذي',
     TITLE: 'لوحة التحكم والأداء الإستراتيجي',
     SUBTITLE_PERIOD: 'نظرة عامة شمولية من {{from}} إلى {{to}}',
@@ -235,6 +263,14 @@ export const AR_TRANSLATIONS = {
   },
 
   CAPTAINS: {
+    KPI_TOTAL: 'إجمالي الكباتن',
+    KPI_TOTAL_NOTE: 'حسب الفلتر الحالي',
+    KPI_ACTIVE: 'كباتن نشطون',
+    KPI_ACTIVE_NOTE: '{{count}} محقق للتارقت',
+    KPI_DOC_ALERTS: 'كباتن لديهم تنبيهات وثائق',
+    KPI_DOC_NOTE: '{{expired}} منتهية · {{expiring}} تنتهي قريباً',
+    KPI_MISSING: 'وثائق غير مسجلة',
+    KPI_MISSING_NOTE: 'بيانات تحتاج استكمال',
     TITLE: 'إدارة الكباتن',
     ADD_CAPTAIN: 'إضافة كابتن جديد',
     SEARCH_PLACEHOLDER: 'ابحث بالاسم، ID-KSLSC، رقم الهوية، الهاتف...',
@@ -495,6 +531,7 @@ export const AR_TRANSLATIONS = {
   },
 
   WORKERS: {
+    SUBTITLE: '{{count}} عامل — فنيو الصيانة والمستودع والنقل والإدارة المساندة',
     TITLE: 'العاملين',
     ADD_WORKER: 'إضافة عامل',
     SEARCH_PLACEHOLDER: 'بحث بالاسم أو الكود أو رقم الهوية...',
@@ -519,6 +556,8 @@ export const AR_TRANSLATIONS = {
   },
 
   MANAGERS: {
+    SUBTITLE: '{{count}} إداري — فريق الإدارة والإشراف',
+    SINCE: 'منذ {{date}}',
     TITLE: 'الإداريين',
     ADD_MANAGER: 'إضافة إداري',
     SEARCH_PLACEHOLDER: 'بحث بالاسم أو الكود أو الوظيفة...',
@@ -636,6 +675,14 @@ export const AR_TRANSLATIONS = {
   },
 
   NINJA_IDS: {
+    KPI_TOTAL: 'إجمالي المعرفات',
+    KPI_TOTAL_NOTE: 'لدى {{count}} موردين',
+    KPI_SUPPLIERS: 'الموردون',
+    KPI_SUPPLIERS_NOTE: '{{count}} نشط',
+    KPI_VIEW: 'نتائج العرض الحالي',
+    KPI_VIEW_ALL: 'كل الموردين',
+    ALL_SUPPLIERS: 'كل الموردين',
+    SHOWING: 'عرض {{count}} من {{total}}',
     TITLE: 'سجل معرفات الموردين',
     SUBTITLE: 'إدارة معرفات الموردين وتعيينها للكباتن',
     SUBTITLE_MANAGE: 'إدارة معرفات الموردين وربطها بالكباتن — {{count}} معرف',
@@ -719,6 +766,7 @@ export const AR_TRANSLATIONS = {
   },
 
   IMPORTS: {
+    DOWNLOAD_TEMPLATE_SHORT: 'تحميل القالب',
     TITLE: 'استيراد البيانات',
     SUBTITLE: 'استيراد كشوفات الشيفتات وبيانات الكباتن والخصومات وعمولات الإجازة',
     SUBTITLE_CAPTAINS: 'رفع ملف بيانات الكباتن ومعرفات الموردين',
@@ -846,6 +894,12 @@ export const AR_TRANSLATIONS = {
   },
 
   SHIFTS: {
+    KPI_SHIFTS: 'شفتات الفترة',
+    KPI_SHIFTS_NOTE: 'حسب الفلاتر الحالية',
+    KPI_PAGE_ORDERS: 'طلبات الصفحة الحالية',
+    KPI_PAGE_HOURS: 'ساعات الصفحة الحالية',
+    KPI_PAGE_PAY: 'صافي مستحقات الصفحة',
+    KPI_PAGE_NOTE: '{{count}} شفت معروض',
     TITLE: 'الشيفتات',
     SUBTITLE: 'كل شفت مستورد من المورد، وحساب مستحقات الكابتن عنه',
     IMPORT_DEDUCTIONS: 'استيراد خصومات المورد',
@@ -1070,6 +1124,11 @@ export const AR_TRANSLATIONS = {
   },
 
   LOANS: {
+    COL_REPAID: 'نسبة السداد',
+    KPI_MEMBERS_NOTE: 'كباتن وعاملين وإداريين',
+    KPI_WITH_LOANS_NOTE: 'لديهم سلف قائمة',
+    KPI_ACTIVE_NOTE: 'تُخصم من الرواتب شهرياً',
+    KPI_REMAINING_NOTE: 'من أصل {{amount}}',
     TITLE: 'إدارة السُلف',
     SUBTITLE: 'عرض وإدارة سلف جميع الأعضاء (كباتن، عاملين، إداريين)',
     TOTAL_MEMBERS: 'إجمالي الأعضاء',
@@ -1143,6 +1202,14 @@ export const AR_TRANSLATIONS = {
   },
 
   ORDERS: {
+    KPI_TOTAL_ORDERS: 'إجمالي الطلبات',
+    KPI_TOTAL_NOTE: 'من {{from}} إلى {{to}}',
+    KPI_AVG: 'متوسط الطلبات / الشفت',
+    KPI_AVG_NOTE: 'على {{count}} شفت',
+    KPI_RATE: 'نسبة تحقيق الهدف',
+    KPI_RATE_NOTE: 'الهدف {{target}} طلب',
+    KPI_CAPTAINS: 'الكباتن',
+    KPI_CAPTAINS_NOTE: 'عمولة بعد 18: {{count}} طلب',
     TITLE: 'لوحة تحكم تحقيق الطلبات',
     SUBTITLE: 'Daily Delivery Per Captain Report — أداء الكباتن اليومي والتنسيق الشرطي',
     FILTER_FROM: 'من',
@@ -1182,6 +1249,8 @@ export const AR_TRANSLATIONS = {
   },
 
   SUPPLIER_REVENUE: {
+    KPI_SUPPLIERS_NOTE: '{{count}} موردين',
+    KPI_NET_NOTE: 'بعد التسويات والإيراد الإضافي',
     TITLE: 'إيراد الموردين والتسويات المالية',
     SUBTITLE: 'تتبع إيرادات الموردين والطلبات وإدارة حركات الخصم والإضافة والبنود المالية',
     FILTER_FROM: 'من',
@@ -1411,6 +1480,22 @@ export const AR_TRANSLATIONS = {
   },
 
   FLEET: {
+    KPI_TOTAL: 'إجمالي السيارات',
+    KPI_TOTAL_NOTE: '{{count}} مستأجرة',
+    KPI_ASSIGNED: 'مسلّمة',
+    KPI_ASSIGNED_NOTE: '{{count}} متأخرة عن الإرجاع',
+    KPI_AVAILABLE: 'متاحة',
+    KPI_AVAILABLE_NOTE: 'جاهزة للتسليم',
+    KPI_MAINT: 'في الصيانة',
+    KPI_MAINT_NOTE: '{{count}} أمر صيانة مفتوح',
+    OPEN_ORDERS: 'أوامر صيانة جارية',
+    OPEN_COUNT: '{{count}} قيد التنفيذ',
+    SHOWING: 'عرض {{count}} من {{total}} سيارة',
+    COL_VEHICLE_CAR: 'السيارة',
+    COL_DOCS: 'الوثائق',
+    HAND_TO_CAPTAIN: 'تسليم لكابتن',
+    SINCE: 'منذ {{date}}',
+    SUBTITLE: 'السيارات، حركات التسليم والاستلام، وأوامر الصيانة',
     TITLE: 'أسطول السيارات',
     TAB_VEHICLES: 'السيارات',
     TAB_ASSIGNMENTS: 'حركات التسليم والاستلام',
@@ -1437,9 +1522,9 @@ export const AR_TRANSLATIONS = {
     COL_ACTIONS: 'إجراءات',
 
     // Document status badges
-    DOC_EXPIRED: 'منتهية 🔴',
-    DOC_EXPIRING: 'تنتهي قريباً 🟡',
-    DOC_VALID: 'سارية 🟢',
+    DOC_EXPIRED: 'منتهية',
+    DOC_EXPIRING: 'تنتهي قريباً',
+    DOC_VALID: 'سارية',
 
     OPERATING_CARD: 'بطاقة تشغيل',
     REGISTRATION: 'استمارة',
@@ -1605,6 +1690,14 @@ export const AR_TRANSLATIONS = {
   },
 
   INVENTORY: {
+    CAT_FIELDS: 'حقول التصنيف:',
+    NEW_CATEGORY: 'تصنيف جديد',
+    CUSTODY_LOG: 'سجل العهد',
+    SHOWING: 'عرض {{count}} من {{total}}',
+    SINCE: 'منذ {{date}}',
+    BTN_ASSIGN: 'تسليم',
+    BTN_RETURN: 'استلام',
+    SUBTITLE: 'الأصناف القابلة للتسليم كعهدة للكباتن',
     PAGE_TITLE: 'مخزن الأغراض',
     CATEGORIES: 'الفئات',
     ADD_CATEGORY: 'إضافة فئة',
@@ -1695,6 +1788,16 @@ export const AR_TRANSLATIONS = {
   },
 
   CUSTODY: {
+    KPI_CAPTAINS: 'كباتن لديهم عهد',
+    KPI_CAPTAINS_NOTE: 'بعهدة نشطة حالياً',
+    KPI_ACTIVE: 'عهد نشطة',
+    KPI_ACTIVE_NOTE: '{{vehicles}} سيارة · {{items}} صنف',
+    KPI_VEHICLES: 'سيارات مسلّمة',
+    KPI_VEHICLES_NOTE: 'من أسطول الشركة',
+    KPI_DEVICES: 'شرائح وهواتف',
+    KPI_DEVICES_NOTE: '{{count}} أصناف أخرى',
+    ACTIVE_ITEMS: 'العهد النشطة ({{count}})',
+    HISTORY_TITLE: 'سجل العهد',
     TITLE: 'سجل العهد',
     PAGE_TITLE: 'سجل العهد',
     SUBTITLE: 'تتبع عناصر العهدة المسلمة والمرتجعة للأعضاء',
@@ -1813,6 +1916,8 @@ export const AR_TRANSLATIONS = {
   },
 
   USER_MGMT: {
+    ACCOUNTS_COUNT: '{{count}} حسابات · {{active}} نشطة',
+    COL_USER: 'المستخدم',
     TITLE: 'إدارة المستخدمين',
     SUBTITLE: 'إدارة مستخدمي النظام والصلاحيات والأدوار',
     TAB_USERS: 'حسابات المستخدمين',
@@ -2082,6 +2187,38 @@ export const AR_TRANSLATIONS = {
   },
 
   PLATFORM: {
+    SEARCH_AUDIT: 'ابحث بالمستخدم أو التفاصيل...',
+    ALL_ACTIONS: 'كل الإجراءات',
+    ALL_TENANTS: 'كل الشركات',
+    KPI_TENANTS_TOTAL: 'إجمالي الشركات',
+    KPI_TENANTS_USERS_NOTE: '{{count}} مستخدم',
+    KPI_TENANTS_ACTIVE: 'نشطة',
+    KPI_TENANTS_CAPTAINS_NOTE: '{{count}} كابتن على المنصة',
+    KPI_TENANTS_TRIAL: 'تجريبية',
+    KPI_TENANTS_TRIAL_NOTE: 'اشتراك تجريبي',
+    KPI_TENANTS_SUSPENDED: 'موقوفة',
+    KPI_TENANTS_SUSPENDED_NOTE: 'تحتاج مراجعة',
+    KPI_SUBS_ACTIVE: 'اشتراكات نشطة',
+    KPI_SUBS_ACTIVE_NOTE: '{{yearly}} سنوية · {{monthly}} شهرية',
+    KPI_SUBS_EXPIRING: 'تنتهي خلال 30 يوم',
+    KPI_SUBS_AUTORENEW_NOTE: 'تجديد تلقائي لـ {{count}}',
+    KPI_SUBS_EXPIRED: 'منتهية',
+    KPI_SUBS_TOTAL_NOTE: 'من أصل {{count}} اشتراك',
+    KPI_SUBS_PAID: 'إجمالي المدفوع',
+    KPI_SUBS_PAID_NOTE: 'لكل الاشتراكات',
+    EXPIRING_SOON: 'ينتهي قريباً',
+    DAYS_LEFT: '{{count}} يوم',
+    SEARCH_TENANT: 'ابحث باسم الشركة...',
+    SEARCH_INVOICE: 'ابحث برقم الفاتورة أو الشركة...',
+    KPI_INV_COUNT: 'الفواتير الصادرة',
+    KPI_INV_COUNT_NOTE: 'كل الفترات',
+    KPI_INV_PAID: 'المحصّل',
+    KPI_INV_PAID_NOTE: '{{count}} فاتورة مدفوعة',
+    KPI_INV_PENDING: 'المعلّق',
+    KPI_INV_PENDING_NOTE: '{{count}} بانتظار الدفع',
+    KPI_INV_OVERDUE: 'المتأخر',
+    KPI_INV_OVERDUE_NOTE: '{{count}} فاتورة متأخرة',
+    STATUS_OVERDUE: 'متأخرة',
     // Executive Hero / Dashboard
     EXECUTIVE_BADGE: 'مركز التحكم والعمليات التنفيذي لمدير المنصة',
     DASHBOARD_TITLE: 'لوحة مؤشرات الأداء والنمو الاستراتيجي',

@@ -1,6 +1,5 @@
 .supplier-revenue-page {
-  max-width: 1600px;
-  position: relative;
+    position: relative;
 }
 
 .page-header {
@@ -521,4 +520,29 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ---------- Premium layout (Figma W17) ---------- */
+.k-card-head .head-tools {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.supplier-cell {
+  gap: 10px;
+
+  .supplier-tile {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.55);
+  }
+
+  div { display: flex; flex-direction: column; gap: 1px; }
+  strong { font-weight: 800; color: var(--ink); }
+  div span { font-size: 0.72rem; color: var(--text-light); }
 }

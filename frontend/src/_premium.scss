@@ -1,0 +1,1145 @@
+/* =============================================
+   Premium building blocks — the web kit from the Figma design
+   ("Web App · Premium", frame "Web Components"), as reusable classes.
+   Pages compose these instead of styling their own cards and strips.
+   ============================================= */
+
+/* ---------- Page header (sits on the yellow hero band) ---------- */
+.k-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  /* Without a KPI strip the band ends under the header and the body starts below it (Figma W20). */
+  margin-bottom: 64px;
+
+  &:has(+ .k-kpi-strip), &:has(+ .kpi-row), &:has(+ .summary-cards) { margin-bottom: 24px; }
+}
+
+.k-page-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.k-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(22, 23, 27, 0.65);
+
+  .material-icons-round { font-size: 15px; }
+}
+
+.app-shell .shell-content .k-page-titles .page-title {
+  font-size: 1.875rem;
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.k-page-sub {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(22, 23, 27, 0.72);
+}
+
+.k-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- KPI strip (ink, inside the hero band) ---------- */
+.k-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  padding: 18px 8px;
+  margin-bottom: 46px;
+  border-radius: 24px;
+  background: var(--ink);
+  box-shadow: var(--shadow-ink);
+}
+
+.k-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 24px;
+  min-width: 0;
+
+  & + .k-kpi { border-inline-start: 1px solid rgba(255, 255, 255, 0.12); }
+}
+
+.k-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #A1A1AE;
+}
+
+.k-kpi-value {
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #FFFFFF;
+
+  &.negative { color: #FF8A80; }
+  small { font-size: 0.8rem; font-weight: 600; color: #A1A1AE; }
+}
+
+.k-kpi-note {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* ---------- Card ---------- */
+.k-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.k-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  h2, h3 {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .k-card-sub {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-light);
+  }
+
+  .k-card-tools {
+    margin-inline-start: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.k-icon-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--primary-50);
+  color: var(--brand-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .material-icons-round { font-size: 19px; }
+
+  &.lg { width: 46px; height: 46px; border-radius: 14px; .material-icons-round { font-size: 22px; } }
+  &.danger { background: #FDE7E7; color: var(--danger); }
+  &.warning { background: #FFF1D2; color: #92400E; }
+  &.purple { background: #EFEAFB; color: #6B4FBB; }
+  &.brand { background: var(--brand); color: var(--ink); }
+  &.ink { background: var(--ink); color: var(--brand); }
+}
+
+/* ---------- Badges ---------- */
+.k-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+
+  &.dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &.success { background: #E3F6EA; color: #166534; }
+  &.warning { background: #FFF1D2; color: #92400E; }
+  &.danger { background: #FDE7E7; color: #991B1B; }
+  &.info { background: #E6EFFC; color: #1E40AF; }
+  &.purple { background: #EFEAFB; color: #6B4FBB; }
+  &.brand { background: var(--primary-50); color: var(--brand-deep); }
+  &.ink { background: var(--ink); color: var(--brand); }
+}
+
+/* ---------- Segmented tabs ---------- */
+.k-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--bg-input);
+
+  button {
+    padding: 7px 14px;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: background var(--transition-fast), color var(--transition-fast);
+
+    &:hover { color: var(--ink); }
+
+    &.active {
+      background: var(--ink);
+      color: #FFFFFF;
+    }
+  }
+
+  /* On the yellow band */
+  &.glass {
+    background: rgba(255, 255, 255, 0.55);
+
+    button { color: rgba(22, 23, 27, 0.7); }
+    button.active { background: #FFFFFF; color: var(--ink); box-shadow: var(--shadow-sm); }
+  }
+}
+
+/* ---------- Table ---------- */
+.k-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: auto;
+  background: var(--bg-card);
+}
+
+.k-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 12px 20px;
+    background: var(--bg-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  tbody tr { transition: background var(--transition-fast); }
+  tbody tr:hover, tbody tr.highlight { background: var(--primary-50); }
+  .num { font-weight: 700; }
+  .strong { font-weight: 800; }
+}
+
+.k-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  > div > strong { display: block; font-size: 0.875rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  > div > span { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text-light); white-space: nowrap; }
+}
+
+.k-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  color: var(--brand-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 800;
+
+  &.ink { background: var(--ink); color: var(--brand); }
+}
+
+.k-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 800;
+
+  &.first { background: var(--brand); color: var(--ink); }
+}
+
+/* ---------- Grids ---------- */
+.k-row {
+  display: flex;
+  gap: 24px;
+  /* Cards in a row share one height, as on the Figma frames — no ragged gaps. */
+  align-items: stretch;
+  margin-bottom: 24px;
+
+  > .k-grow { flex: 1; min-width: 0; }
+}
+
+.k-grid {
+  display: grid;
+  gap: 16px;
+
+  &.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  &.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  &.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
+  .k-row { flex-direction: column; > * { width: 100% !important; } }
+  .k-grid.cols-3, .k-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Alert tiles ---------- */
+.k-alert-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #FDE7E7;
+  color: #991B1B;
+  transition: transform var(--transition-fast);
+
+  &:hover { transform: translateY(-2px); }
+
+  &.warning { background: #FFF1D2; color: #92400E; }
+  &.info { background: #E6EFFC; color: #1E40AF; }
+
+  .k-alert-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .k-alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .material-icons-round { font-size: 22px; }
+  }
+
+  .k-alert-count { font-size: 1.75rem; font-weight: 900; line-height: 1; }
+  .k-alert-title { font-size: 1rem; font-weight: 800; }
+  .k-alert-desc { font-size: 0.8125rem; font-weight: 500; opacity: 0.8; }
+
+  .k-alert-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+
+    .material-icons-round { font-size: 16px; }
+  }
+}
+
+/* Arrows that point along the reading direction */
+:root[dir="rtl"] .k-flip,
+html[dir="rtl"] .k-flip { transform: scaleX(-1); }
+
+/* ---------- Stat card ---------- */
+.k-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+
+  &[href]:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  .k-stat-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .k-stat-label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
+  .k-stat-value { display: block; font-size: 1.75rem; font-weight: 800; line-height: 1.4; color: var(--ink); word-break: break-word; }
+  .k-stat-note { font-size: 0.75rem; font-weight: 500; color: var(--text-light); }
+}
+
+/* ---------- Quick action tile ---------- */
+.k-action-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-card);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+
+  &:hover { border-color: var(--primary-100); background: var(--primary-50); }
+
+  .k-icon-tile { width: 36px; height: 36px; }
+}
+
+/* ---------- Legend row ---------- */
+.k-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+
+  i { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  strong { margin-inline-start: auto; font-size: 0.875rem; font-weight: 800; color: var(--ink); }
+}
+
+.k-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 16px;
+  color: var(--text-light);
+  font-size: 0.875rem;
+  text-align: center;
+
+  .material-icons-round { font-size: 36px; }
+}
+
+/* ---------- Glass button (secondary action on the yellow band) ---------- */
+.btn-glass {
+  /* Secondary actions on the yellow band are solid white in the kit (W/Button · White). */
+  background: #FFFFFF;
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(22, 23, 27, 0.06);
+
+  &:hover { background: var(--bg-main); }
+}
+
+/* ---------- Search field ---------- */
+.k-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  .material-icons-round { font-size: 20px; color: var(--text-light); }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--ink);
+
+    &::placeholder { color: var(--text-light); }
+  }
+
+  &:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(245, 176, 0, 0.18); }
+}
+
+/* ---------- Filter chips ---------- */
+.k-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+
+    .material-icons-round { font-size: 16px; }
+
+    &:hover { border-color: var(--primary-100); color: var(--ink); }
+
+    &.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--brand);
+    }
+  }
+}
+
+/* ---------- Bulk selection bar ---------- */
+.k-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: #FFFFFF;
+
+  strong { font-size: 0.875rem; font-weight: 700; }
+  .btn { margin-inline-start: auto; }
+}
+
+.k-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+
+  &.on { background: var(--brand); border-color: var(--brand); color: var(--ink); }
+  .material-icons-round { font-size: 14px; }
+}
+
+.k-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+/* ---------- Icon button ---------- */
+.k-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+
+  .material-icons-round { font-size: 20px; }
+
+  &:hover { background: var(--bg-input); color: var(--ink); }
+  &.danger:hover { background: #FDE7E7; color: var(--danger); }
+}
+
+/* ---------- Pager ---------- */
+.k-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .k-pager-info {
+    margin-inline-end: auto;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .k-page-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--ink);
+    color: var(--brand);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 800;
+  }
+}
+
+/* =============================================
+   Legacy bridge — pages not yet rebuilt on the k-* blocks use these class names.
+   Scoped under the shell so it outranks each component's own (encapsulated) rules.
+   ============================================= */
+.app-shell .shell-content {
+  /* Header: title block on the start side, actions on the end side, both on the yellow band */
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+
+    > .header-actions,
+    > .header-right,
+    > .header-controls,
+    > .page-actions,
+    > .flex-center {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 { font-size: 1.875rem; font-weight: 900; color: var(--ink); }
+  }
+
+  /* Title and subtitle written straight into the header: stack them. */
+  .page-header:has(> h1) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  /* Rows of headline figures → the ink KPI strip */
+  .kpi-row,
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0;
+    padding: 18px 8px;
+    margin-bottom: 24px;
+    border: none;
+    border-radius: 24px;
+    background: var(--ink);
+    box-shadow: var(--shadow-ink);
+
+    .kpi,
+    .summary-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 2px;
+      padding: 4px 22px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      min-width: 0;
+
+      & + .kpi,
+      & + .summary-card { border-inline-start: 1px solid rgba(255, 255, 255, 0.12); }
+    }
+
+    .kpi { flex-direction: column; }
+
+    .kpi-label,
+    .card-label { font-size: 0.75rem; font-weight: 500; color: #A1A1AE !important; }
+
+    .kpi-value,
+    .card-value { font-size: 1.5rem; font-weight: 800; color: #FFFFFF !important; }
+
+    .card-icon { display: none; }
+    .card-body { display: flex; flex-direction: column; gap: 2px; }
+    .card-body .card-label { order: -1; }
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(22, 23, 27, 0.72);
+  }
+
+  /* Tables */
+  .table-wrap,
+  .table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-sm);
+    overflow: auto;
+  }
+
+  .data-table {
+    border-collapse: collapse;
+
+    th {
+      padding: 12px 20px;
+      background: var(--bg-main);
+      border-bottom: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 20px;
+      border-bottom: none;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    tbody tr:hover { background: var(--primary-50); }
+  }
+
+  /* Filter tabs → chips */
+  .filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    box-shadow: none;
+
+    &.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--brand);
+    }
+  }
+
+  .filter-tabs { background: transparent; padding: 0; gap: 8px; border: none; }
+
+  /* Search */
+  .search-box {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    box-shadow: none;
+
+    &:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(245, 176, 0, 0.18); }
+  }
+
+  /* Empty + loading states */
+  .empty-state {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    color: var(--text-light);
+  }
+
+  /* Pagination */
+  .pagination {
+    border-top: 1px solid var(--border);
+    background: transparent;
+  }
+}
+
+/* Tone aliases for the class names existing components already return, so their
+   logic stays as it is and the template just adds `k-badge`. */
+.k-badge {
+  &.status-active, &.badge-success, &.doc-valid { background: #E3F6EA; color: #166534; }
+  &.status-terminated, &.doc-expired, &.badge-danger { background: #FDE7E7; color: #991B1B; }
+  &.doc-expiring, &.badge-warning, &.status-on_leave, &.status-on-leave { background: #FFF1D2; color: #92400E; }
+  &.doc-missing { background: #EFEAFB; color: #6B4FBB; }
+  &.badge-info { background: #E6EFFC; color: #1E40AF; }
+  &.status-inactive, &.no-data { background: var(--bg-input); color: var(--text-secondary); }
+}
+
+/* ---------- Person card (card-grid listings, Figma W07) ---------- */
+.k-person-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+
+  .k-person-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .k-avatar { width: 52px; height: 52px; font-size: 1.05rem; }
+    strong { display: block; font-size: 1rem; font-weight: 800; color: var(--ink); }
+    > div > span { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--text-secondary); }
+    .k-icon-btn { margin-inline-start: auto; }
+  }
+
+  .k-person-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: var(--bg-main);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+
+    .material-icons-round { font-size: 16px; color: var(--text-light); }
+    .spacer { flex: 1; }
+  }
+
+  .k-person-card-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    a {
+      margin-inline-start: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--brand-deep);
+      .material-icons-round { font-size: 16px; }
+    }
+  }
+}
+
+/* ---------- Toolbar + table helpers ---------- */
+.k-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .k-search { flex: 1; max-width: 460px; }
+  .k-chips, .k-tabs { margin-inline-start: auto; }
+
+  /* Directly on the canvas, outside a card */
+  &.outside { margin-bottom: 20px; }
+}
+
+.k-pager.outside { margin-top: 20px; }
+
+.k-table {
+  .k-check-col { width: 18px; padding-inline-end: 0; }
+  .k-actions { width: 1%; white-space: nowrap; }
+  a.k-person { color: inherit; }
+}
+
+.k-muted { color: var(--text-light); }
+.k-muted-strong { font-weight: 700; color: var(--text-secondary); }
+.k-ltr { direction: ltr; unicode-bidi: plaintext; }
+
+/* ---------- Inline filter field (date / select with a leading icon) ---------- */
+.k-field-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-light);
+
+  .material-icons-round { font-size: 18px; }
+
+  /* On the yellow band: borderless white, like the kit's white buttons */
+  &.on-band { border: none; box-shadow: 0 4px 14px rgba(22, 23, 27, 0.06); }
+
+  input, select {
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--ink);
+    color-scheme: light;
+  }
+
+  &:focus-within { border-color: var(--brand); }
+}
+
+.k-avatar.unlinked { background: #FFF1D2; color: #92400E; .material-icons-round { font-size: 16px; } }
+
+.k-table {
+  td.positive { color: #166534; font-weight: 700; }
+  td.negative { color: var(--danger); font-weight: 700; }
+  td.nowrap { white-space: nowrap; }
+
+  tfoot td {
+    padding: 13px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-main);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: var(--ink);
+  }
+}
+
+/* ---------- Progress bar ---------- */
+.k-progress {
+  display: inline-block;
+  width: 90px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+  vertical-align: middle;
+
+  i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--brand);
+    &.done { background: var(--success); }
+  }
+
+  &.danger i { background: var(--danger); }
+}
+
+/* ---------- Profile header (detail pages, Figma W04/W08) ---------- */
+.k-page-lead {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.k-avatar.xl {
+  width: 76px;
+  height: 76px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  border: 4px solid rgba(255, 255, 255, 0.6);
+}
+
+.k-page-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.k-badge {
+  &.type-employee { background: var(--primary-50); color: var(--brand-deep); }
+  &.type-freelance { background: #EFEAFB; color: #6B4FBB; }
+}
+
+/* =============================================
+   Legacy bridge, part 2 — tabs, modals and dialogs, form sections, cards, alerts.
+   ============================================= */
+.app-shell .shell-content {
+  /* Tab bars → ink segmented tabs */
+  .tab-bar,
+  .settings-nav-tabs,
+  .entity-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 4px;
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 14px;
+    background: var(--bg-input);
+    box-shadow: none;
+  }
+
+  .tab-bar .tab-btn,
+  .tab-bar .tab,
+  .settings-nav-tabs .tab-btn,
+  .entity-tabs .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+
+    .material-icons-round { font-size: 18px; }
+
+    &:hover { color: var(--ink); }
+
+    &.active {
+      background: var(--ink);
+      color: #FFFFFF;
+
+      .material-icons-round { color: var(--brand); }
+    }
+  }
+
+  /* Cards */
+  .card,
+  .form-card,
+  .form-section,
+  .info-card,
+  .detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-title,
+  .form-section > .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.0625rem;
+    font-weight: 800;
+    color: var(--ink);
+    border: none;
+
+    > .material-icons-round {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--primary-50);
+      color: var(--brand-deep);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+    }
+  }
+
+  /* Plain search inputs and selects */
+  .search-input,
+  .filter-select {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink);
+
+    &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(245, 176, 0, 0.18); }
+  }
+
+  /* Alerts */
+  .alert {
+    border: none;
+    border-radius: 16px;
+    font-weight: 600;
+  }
+
+  .alert-danger, .alert-error { background: #FDE7E7; color: #991B1B; }
+  .alert-success { background: #E3F6EA; color: #166534; }
+}
+
+/* Modals and dialogs (rendered inside the page, but cover the whole app) */
+.app-shell {
+  .modal-overlay,
+  .modal-backdrop,
+  .dialog-overlay {
+    background: rgba(22, 23, 27, 0.5) !important;
+    backdrop-filter: none !important;
+  }
+
+  .modal,
+  .modal-content,
+  .dialog {
+    border: none;
+    border-radius: 28px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-float);
+  }
+
+  .modal-header {
+    border-bottom: none;
+    background: transparent;
+
+    h2, h3 { font-size: 1.25rem; font-weight: 900; color: var(--ink); }
+  }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+  }
+
+  .modal-footer,
+  .modal-actions,
+  .dialog-actions {
+    border-top: none;
+    background: transparent;
+    gap: 10px;
+  }
+
+  .dialog h3,
+  .dialog h2 { font-size: 1.25rem; font-weight: 900; color: var(--ink); }
+  .dialog-subtitle { color: var(--text-secondary); }
+}
+
+/* ---------- Switch (W23 · account status) ---------- */
+.k-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: #E4E1DA;
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-fast);
+
+  span {
+    position: absolute;
+    top: 3px;
+    inset-inline-start: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(22, 23, 27, 0.2);
+    transition: inset-inline-start var(--transition-fast);
+  }
+
+  &.on { background: #16A34A; }
+  &.on span { inset-inline-start: 21px; }
+  &:disabled { cursor: default; opacity: 0.85; }
+}

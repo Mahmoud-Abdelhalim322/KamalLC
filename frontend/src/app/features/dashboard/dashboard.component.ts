@@ -7,15 +7,24 @@ import { TranslationService, TranslatePipe } from '../../core/i18n';
 import { SarPipe } from '../../shared/pipes/sar.pipe';
 import { ApiResponse, CaptainPerformance, DashboardData } from '../../core/models/api.models';
 
+/** Card tint: brand for normal figures, the status tones when a figure needs attention. */
+type CardTone = 'brand' | 'danger' | 'warning' | 'purple';
+
 interface DashboardCard {
   icon: string;
   label: string;
   value: string | number;
-  color: string;
-  bgColor: string;
+  tone: CardTone;
   subtext?: string;
   link?: string;
   linkParams?: Record<string, string>;
+}
+
+/** One arc of the target donut; the SVG circle has a circumference of 100, so lengths are percentages. */
+interface RingSegment {
+  length: number;
+  offset: number;
+  tone: 'success' | 'brand' | 'danger';
 }
 
 @Component({
@@ -44,15 +53,13 @@ export class DashboardComponent implements OnInit {
   leaderboardTimeframe: 'MONTH' | 'WEEK' = 'MONTH';
   leaderboardTab: 'TOP' | 'BOTTOM' = 'TOP';
 
-  // SVG Donut Calculations
+  // Fleet bar shares (percent of all vehicles)
   assignedPct = 0;
   availablePct = 0;
   maintenancePct = 0;
 
-  // Fleet SVG Dash offsets
-  assignedDash = '0 100';
-  availableDash = '0 100';
-  maintenanceDash = '0 100';
+  // Target donut
+  targetSegments: RingSegment[] = [];
 
   ngOnInit(): void {
     // Initialize with current month as default
@@ -87,6 +94,7 @@ export class DashboardComponent implements OnInit {
             this.expiredDocuments = d.expiredDocuments;
 
             this.calculateFleetChart(d);
+            this.calculateTargetRing(d);
             this.buildCards(d);
           }
         },
@@ -137,15 +145,35 @@ export class DashboardComponent implements OnInit {
     this.assignedPct = Math.round((d.assignedVehicles / total) * 100);
     this.availablePct = Math.round((d.availableVehicles / total) * 100);
     this.maintenancePct = Math.round((d.maintenanceVehicles / total) * 100);
+  }
 
-    // Circumference = 2 * PI * R (R=15.915 => ~100)
-    const pAssigned = Math.min(100, Math.max(0, this.assignedPct));
-    const pAvailable = Math.min(100 - pAssigned, Math.max(0, this.availablePct));
-    const pMaint = Math.max(0, 100 - pAssigned - pAvailable);
+  /** Achieved / near / below target as consecutive arcs, with a small gap between them. */
+  private calculateTargetRing(d: DashboardData): void {
+    const parts: [number, RingSegment['tone']][] = [
+      [d.captainsAtTarget || 0, 'success'],
+      [d.captainsNearTarget || 0, 'brand'],
+      [d.captainsBelowTarget || 0, 'danger'],
+    ];
+    const total = parts.reduce((sum, [n]) => sum + n, 0);
+    const gap = parts.filter(([n]) => n > 0).length > 1 ? 1.2 : 0;
+    let start = 0;
+    this.targetSegments = [];
+    for (const [n, tone] of parts) {
+      if (!total || !n) continue;
+      const share = (n / total) * 100;
+      this.targetSegments.push({ length: Math.max(share - gap, 0.5), offset: 25 - start, tone });
+      start += share;
+    }
+  }
 
-    this.assignedDash = `${pAssigned} ${100 - pAssigned}`;
-    this.availableDash = `${pAvailable} ${100 - pAvailable}`;
-    this.maintenanceDash = `${pMaint} ${100 - pMaint}`;
+  get openAlerts(): number {
+    if (!this.data) return 0;
+    return (this.expiredDocuments > 0 ? 1 : 0) + (this.hasUnmatched ? 1 : 0) + (this.data.lateReturns > 0 ? 1 : 0);
+  }
+
+  /** Two-letter monogram for a captain avatar. */
+  initials(name: string): string {
+    return (name || '').trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('');
   }
 
   private buildCards(d: DashboardData): void {
@@ -155,8 +183,7 @@ export class DashboardComponent implements OnInit {
         icon: 'people',
         label: isAr ? 'الكباتن النشطين' : 'Active Captains',
         value: d.totalActiveCaptains,
-        color: '#1B5E20',
-        bgColor: '#E8F5E9',
+        tone: 'brand',
         subtext: isAr ? `${d.captainsAtTarget} محقق للتارقت` : `${d.captainsAtTarget} at target`,
         link: '/captains'
       },
@@ -164,8 +191,7 @@ export class DashboardComponent implements OnInit {
         icon: 'work_history',
         label: isAr ? 'شفتات الفترة' : 'Period Shifts',
         value: d.shiftsThisMonth,
-        color: '#1565C0',
-        bgColor: '#E3F2FD',
+        tone: 'brand',
         subtext: isAr ? `${d.shiftsLast7Days} شفت آخر 7 أيام بالفترة` : `${d.shiftsLast7Days} shifts last 7 days`,
         link: '/shifts'
       },
@@ -173,8 +199,7 @@ export class DashboardComponent implements OnInit {
         icon: 'shopping_bag',
         label: isAr ? 'الطلبات المنفذة' : 'Fulfilled Orders',
         value: d.ordersThisMonth.toLocaleString(),
-        color: '#2E7D32',
-        bgColor: '#E8F5E9',
+        tone: 'brand',
         subtext: isAr ? `متوسط ${d.avgOrdersPerShift || 0} طلب/شفت` : `Avg ${d.avgOrdersPerShift || 0} orders/shift`,
         link: '/reports'
       },
@@ -182,27 +207,24 @@ export class DashboardComponent implements OnInit {
         icon: 'warning',
         label: isAr ? 'معرفات غير مطابقة' : 'Unmatched IDs',
         value: d.unmatchedNinjaIds,
-        color: d.unmatchedNinjaIds > 0 ? '#C62828' : '#2E7D32',
-        bgColor: d.unmatchedNinjaIds > 0 ? '#FFEBEE' : '#E8F5E9',
+        tone: d.unmatchedNinjaIds > 0 ? 'danger' : 'brand',
         subtext: isAr ? `${d.unmatchedShifts} شفت غير مربوط` : `${d.unmatchedShifts} unlinked shifts`,
-        link: '/suppliers'
+        link: '/ninja-ids'
       },
       ...this.documentCards(d),
       {
         icon: 'directions_car',
         label: isAr ? 'السيارات (متاحة / إجمالي)' : 'Vehicles (Avail / Total)',
         value: `${d.availableVehicles} / ${d.totalVehicles}`,
-        color: '#0D47A1',
-        bgColor: '#E3F2FD',
+        tone: 'brand',
         subtext: isAr ? `استغلال ${d.fleetUtilizationRate || 0}%` : `${d.fleetUtilizationRate || 0}% utilization`,
         link: '/fleet'
       },
-      ...(d.lateReturns > 0 ? [{
+      ...(d.lateReturns > 0 ? [<DashboardCard>{
         icon: 'alarm',
         label: isAr ? 'تأخيرات إرجاع السيارات' : 'Overdue Vehicle Returns',
         value: d.lateReturns,
-        color: '#B71C1C',
-        bgColor: '#FFEBEE',
+        tone: 'danger',
         subtext: isAr ? 'تحتاج متابعة مع الكباتن' : 'Requires follow-up',
         link: '/fleet'
       }] : []),
@@ -210,8 +232,7 @@ export class DashboardComponent implements OnInit {
         icon: 'account_balance_wallet',
         label: isAr ? 'العهد النشطة' : 'Active Custodies',
         value: d.activeCustodyItems,
-        color: '#4A148C',
-        bgColor: '#F3E5F5',
+        tone: 'brand',
         subtext: isAr ? 'أجهزة وسيارات وبطاقات' : 'Devices, vehicles & cards',
         link: '/custody'
       },
@@ -219,8 +240,7 @@ export class DashboardComponent implements OnInit {
         icon: 'cloud_upload',
         label: isAr ? 'آخر ملف استيراد' : 'Last Import File',
         value: d.lastImportFile || (isAr ? 'لا يوجد' : 'None'),
-        color: '#E65100',
-        bgColor: '#FFF3E0',
+        tone: 'brand',
         subtext: d.lastImportResult || '',
         link: '/imports'
       }
@@ -236,8 +256,7 @@ export class DashboardComponent implements OnInit {
         icon: 'event_busy',
         label: isAr ? 'وثائق منتهية' : 'Expired Docs',
         value: d.expiredDocuments,
-        color: '#C62828',
-        bgColor: '#FFEBEE',
+        tone: 'danger',
         subtext: isAr ? 'إجبارية التجديد' : 'Mandatory renewal',
         link: '/captains',
         linkParams: { alert: 'EXPIRED' }
@@ -248,8 +267,7 @@ export class DashboardComponent implements OnInit {
         icon: 'schedule',
         label: isAr ? 'وثائق على وشك الانتهاء' : 'Expiring Soon Docs',
         value: d.expiringDocuments,
-        color: '#E65100',
-        bgColor: '#FFF3E0',
+        tone: 'warning',
         subtext: isAr ? `خلال ${d.currentAlertDays || 30} يوم` : `Within ${d.currentAlertDays || 30} days`,
         link: '/captains',
         linkParams: { alert: 'EXPIRING' }
@@ -260,8 +278,7 @@ export class DashboardComponent implements OnInit {
         icon: 'help_outline',
         label: isAr ? 'وثائق غير مسجلة' : 'Missing Documents',
         value: d.missingDocuments,
-        color: '#6A1B9A',
-        bgColor: '#F3E5F5',
+        tone: 'purple',
         subtext: isAr ? 'بيانات غير مكملة' : 'Incomplete data',
         link: '/captains',
         linkParams: { alert: 'MISSING' }

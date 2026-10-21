@@ -1,50 +1,29 @@
 <div class="imports-page">
-  <div class="page-header">
-    <div>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">upload_file</span>{{ 'NAV.SECTION_OPERATIONS' | translate }}</span>
       <h1 class="page-title">{{ 'IMPORTS.TITLE' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ activeTab === 'captains'
+      <p class="k-page-sub">{{ activeTab === 'captains'
             ? ('IMPORTS.SUBTITLE_CAPTAINS' | translate)
             : activeTab === 'reports'
               ? ('IMPORTS.SUBTITLE_REPORTS' | translate)
               : activeTab === 'deductions'
                 ? ('IMPORTS.SUBTITLE_DEDUCTIONS' | translate)
-                : ('IMPORTS.SUBTITLE_VACATION' | translate) }}
-      </p>
+                : ('IMPORTS.SUBTITLE_VACATION' | translate) }}</p>
     </div>
-    <button class="btn btn-outline" (click)="downloadTemplate()">
-      <span class="material-icons-round">download</span>
-      {{ activeTab === 'captains'
-          ? ('IMPORTS.DOWNLOAD_TEMPLATE_EXCEL' | translate)
-          : activeTab === 'reports'
-            ? ('IMPORTS.DOWNLOAD_TEMPLATE_REPORT' | translate)
-            : activeTab === 'deductions'
-              ? ('IMPORTS.DOWNLOAD_TEMPLATE_DEDUCTIONS' | translate)
-              : ('IMPORTS.DOWNLOAD_TEMPLATE_VACATION' | translate) }}
-    </button>
   </div>
 
-  <!-- ================================================================ TABS -->
-  <div class="filter-tabs">
-    <button class="filter-tab" [class.active]="activeTab === 'captains'"
-            (click)="setTab('captains')">
-      <span class="material-icons-round">badge</span>
-      {{ 'IMPORTS.TAB_CAPTAINS_FULL' | translate }}
-    </button>
-    <button class="filter-tab" [class.active]="activeTab === 'reports'"
-            (click)="setTab('reports')">
-      <span class="material-icons-round">assessment</span>
-      {{ 'IMPORTS.TAB_REPORTS_FULL' | translate }}
-    </button>
-    <button class="filter-tab" [class.active]="activeTab === 'deductions'"
-            (click)="setTab('deductions')">
-      <span class="material-icons-round">money_off</span>
-      {{ 'IMPORTS.TAB_DEDUCTIONS_FULL' | translate }}
-    </button>
-    <button class="filter-tab" [class.active]="activeTab === 'vacation-commission'"
-            (click)="setTab('vacation-commission')">
-      <span class="material-icons-round">beach_access</span>
-      {{ 'IMPORTS.TAB_VACATION_FULL' | translate }}
+  <!-- ====================================================== IMPORT TYPES (Figma W11) -->
+  <div class="type-cards">
+    <button type="button" class="type-card" *ngFor="let t of importTypes" [class.active]="activeTab === t.key" (click)="setTab(t.key)">
+      <span class="type-check" *ngIf="activeTab === t.key"><span class="material-icons-round">check</span></span>
+      <span class="k-icon-tile lg" [class.brand]="activeTab === t.key"><span class="material-icons-round">{{ t.icon }}</span></span>
+      <strong>{{ t.title | translate }}</strong>
+      <span class="type-desc">{{ t.desc | translate }}</span>
+      <span class="type-link" (click)="$event.stopPropagation(); setTab(t.key); downloadTemplate()">
+        <span class="material-icons-round">download</span>{{ 'IMPORTS.DOWNLOAD_TEMPLATE_SHORT' | translate }}
+      </span>
     </button>
   </div>
 
@@ -95,8 +74,9 @@
   </div>
 
   <!-- ======================================================== UPLOAD ZONE -->
-  <div class="upload-section"
+  <div class="upload-section k-row"
        *ngIf="!captainPreview && !shiftPreview && !deductionPreview && !captainResult && !shiftResult && !deductionResult">
+    <div class="k-card upload-card">
     <div class="upload-zone"
          [class.dragging]="isDragging"
          [class.uploading]="isUploading"
@@ -128,9 +108,10 @@
         <p>{{ 'IMPORTS.ANALYZING_FILE' | translate }}</p>
       </div>
     </div>
+    </div>
 
     <!-- Expected sheet layout -->
-    <div class="columns-card">
+    <div class="k-card columns-card">
       <h3 class="columns-title">
         <span class="material-icons-round">view_column</span>
         {{ 'IMPORTS.COLUMNS_TITLE' | translate }}

@@ -1,21 +1,44 @@
 <div class="audit-log-page animate-fade-in">
 
   <!-- Header -->
-  <div class="page-header">
-    <h1 class="page-title">{{ 'PLATFORM.AUDIT_TITLE' | translate }}</h1>
-    <p class="page-subtitle">{{ 'PLATFORM.AUDIT_SUBTITLE' | translate }}</p>
+  <!-- Header on the yellow band -->
+  <div class="k-page-head">
+    <div class="k-page-titles">
+      <span class="k-crumb"><span class="material-icons-round">policy</span>{{ 'NAV.SECTION_PLATFORM' | translate }}</span>
+      <h1 class="page-title">{{ 'PLATFORM.AUDIT_TITLE' | translate }}</h1>
+      <p class="k-page-sub">{{ 'PLATFORM.AUDIT_SUBTITLE' | translate }}</p>
+    </div>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="loading">
-    <div class="spinner"></div>
-    <p>{{ 'PLATFORM.LOADING_AUDIT' | translate }}</p>
-  </div>
+  <section class="k-card">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <span class="material-icons-round">search</span>
+        <input type="text" [(ngModel)]="search" [placeholder]="'PLATFORM.SEARCH_AUDIT' | translate">
+      </div>
+      <label class="k-field-inline">
+        <span class="material-icons-round">bolt</span>
+        <select [(ngModel)]="actionFilter">
+          <option value="">{{ 'PLATFORM.ALL_ACTIONS' | translate }}</option>
+          <option *ngFor="let a of actions" [value]="a">{{ a }}</option>
+        </select>
+      </label>
+      <label class="k-field-inline">
+        <span class="material-icons-round">domain</span>
+        <select [(ngModel)]="tenantFilter">
+          <option value="">{{ 'PLATFORM.ALL_TENANTS' | translate }}</option>
+          <option *ngFor="let t of tenantNames" [value]="t">{{ t }}</option>
+        </select>
+      </label>
+    </div>
 
-  <!-- Table Card -->
-  <div class="card table-card" *ngIf="!loading">
-    <div class="table-responsive">
-      <table class="data-table">
+    <div class="k-empty" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>{{ 'PLATFORM.LOADING_AUDIT' | translate }}</p>
+    </div>
+
+    <div class="k-table-wrap" *ngIf="!loading">
+      <table class="k-table">
         <thead>
           <tr>
             <th>{{ 'PLATFORM.COL_DATETIME' | translate }}</th>
@@ -27,26 +50,28 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of logs">
-            <td class="date-cell">{{ log.createdAt | date:'yyyy/MM/dd HH:mm:ss' }}</td>
+          <tr *ngFor="let log of visible">
+            <td class="k-muted-strong k-ltr">{{ log.createdAt | date:'dd/MM/yyyy · HH:mm' }}</td>
             <td>
-              <strong class="actor-name">{{ log.actorUsername }}</strong>
-              <span class="actor-role" *ngIf="log.actorRole"> ({{ log.actorRole }})</span>
+              <div class="k-person">
+                <span class="k-avatar ink">{{ log.actorUsername | initials }}</span>
+                <div>
+                  <strong>{{ log.actorUsername }}</strong>
+                  <span *ngIf="log.actorRole">{{ log.actorRole }}</span>
+                </div>
+              </div>
             </td>
-            <td><span class="badge badge-action">{{ log.action }}</span></td>
-            <td>{{ log.entityType || '-' }}</td>
-            <td>{{ log.tenantName || '-' }}</td>
-            <td><code class="details-code">{{ log.details || '-' }}</code></td>
-          </tr>
-          <tr *ngIf="logs.length === 0 && !loading">
-            <td colspan="6" class="empty-cell">
-              <span class="material-icons-round empty-icon">history_toggle_off</span>
-              <p>{{ 'PLATFORM.NO_AUDIT_LOGS' | translate }}</p>
-            </td>
+            <td><span class="k-badge dot" [ngClass]="actionTone(log.action)">{{ log.action }}</span></td>
+            <td class="k-muted-strong">{{ log.entityType || '—' }}</td>
+            <td>{{ log.tenantName || '—' }}</td>
+            <td><code class="details-code">{{ log.details || '—' }}</code></td>
           </tr>
         </tbody>
       </table>
+      <div class="k-empty" *ngIf="visible.length === 0">
+        <span class="material-icons-round">history_toggle_off</span>
+        <p>{{ 'PLATFORM.NO_AUDIT_LOGS' | translate }}</p>
+      </div>
     </div>
-  </div>
-
+  </section>
 </div>
